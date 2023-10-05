@@ -35,7 +35,7 @@
 
               if(m_QueueFamilies.Graphics != m_QueueFamilies.Presentation)
               {
-                uint32_t indices[] = {m_QueueFamilies.Graphics,m_QueueFamilies.Presentation};
+                uint32_t indices[] = { (uint32_t)m_QueueFamilies.Graphics,(uint32_t)m_QueueFamilies.Presentation};
                 createinfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
                 createinfo.queueFamilyIndexCount = 2;
                 
@@ -68,7 +68,7 @@
             Images.resize(ImageCount);
             vkGetSwapchainImagesKHR(m_Device,m_SwapChain,&ImageCount,Images.data());
 
-            for(int i =0;i < ImageCount;i++){
+            for(uint32_t i =0;i < ImageCount;i++){
 
                 m_SwapChainImages[i].SetImage(Images[i]);
                 m_SwapChainImages[i].CreateView(m_SwapChainFormat,VK_IMAGE_ASPECT_COLOR_BIT,m_Device);

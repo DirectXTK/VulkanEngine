@@ -1,5 +1,5 @@
 project "Application"
-    kind "WindowedApp"
+    kind "StaticLib"
     language "C++"
     cppdialect "C++17"
     staticruntime "on"
@@ -30,13 +30,13 @@ project "Application"
     }
 
     defines{
-        "LINUX"
+        "WINDOWS"
     }
 
     filter{"configurations:Debug"}
       runtime "Debug"
       symbols "on"
 
-    filter{"configurations:Debug"}
+    filter{"configurations:Release"}
       runtime "Release"
       optimize "on"

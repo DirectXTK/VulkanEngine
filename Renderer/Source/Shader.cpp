@@ -1,36 +1,34 @@
 #include "Shader.h"
 
-       Shader::Shader(const char* Path,VkDevice device){
-                std::ifstream file(Path,std::ios::binary);
-                std::vector<char> ByteCode{};
-                uint32_t Size{};
-                
-                m_Device =device;
+     
 
-                file.seekg(0,file.end);
-
-                Size = file.tellg();
-                ByteCode.resize(Size);
+        VkShaderModule ShaderDesc::CreateShader(const ShaderDesc& desc,VkDevice device)
+        {
+            std::ifstream file(desc.Path, std::ios::binary);
+            std::vector<char> ByteCode{};
+            VkShaderModule ShaderModule{};
+            uint32_t Size{};
 
 
-                file.seekg(0,file.beg);
+            file.seekg(0, file.end);
 
-                file.read(ByteCode.data(),Size);
-
-                VkShaderModuleCreateInfo info{};
-                info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-                info.codeSize = Size;
-                info.pCode = (uint32_t*)ByteCode.data();
+            Size = file.tellg();
+            ByteCode.resize(Size);
 
 
-                VkResult result = vkCreateShaderModule(device,&info,nullptr,&m_ShaderModule);
-                if(result != VK_SUCCESS)
-                      Core::Log(ErrorType::Error,"Failed to create shader module.");
+            file.seekg(0, file.beg);
 
-       }
+            file.read(ByteCode.data(), Size);
+
+            VkShaderModuleCreateInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            info.codeSize = Size;
+            info.pCode = (uint32_t*)ByteCode.data();
 
 
-        Shader::~Shader(){
+            VkResult result = vkCreateShaderModule(device, &info, nullptr, &ShaderModule);
+            if (result != VK_SUCCESS)
+                Core::Log(ErrorType::Error, "Failed to create shader module.");
+            return ShaderModule;
 
-              vkDestroyShaderModule(m_Device,m_ShaderModule,nullptr);
         }

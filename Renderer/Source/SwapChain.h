@@ -19,10 +19,11 @@ class SwapChain{
         VkExtent2D GetExtent(){return m_SwapChainExtent;}
         VkFormat GetFormat(){return m_SwapChainFormat;}
 
-        uint32_t GetSwapChainImageCount(){ return m_SwapChainImages.size();}
+        uint32_t GetSwapChainImageCount(){ return (uint32_t)m_SwapChainImages.size();}
         Image* GetSwapChainImage(uint32_t Index){ return &m_SwapChainImages[Index];}
         
          void CreateSwapChain();
+         void ReCreateSwapChain();
 
          ~SwapChain();
     private:

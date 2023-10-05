@@ -4,7 +4,7 @@
 
                     VkImageView* views{};
                     views = new VkImageView[Attachmentcount];
-                    for(int i=0;i < Attachmentcount;i++){
+                    for(uint32_t  i=0;i < Attachmentcount;i++){
                         views[i] = attachment[i].GetImageView();
                     }
 

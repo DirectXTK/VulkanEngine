@@ -19,7 +19,7 @@ void InputSystem::DispatchEventM(MouseEvent& event)
 	
 }
 float InputSystem::GetScroll(){
-	return scrolly;
+	return (float)scrolly;
 }
 
 void InputSystem::DispatchEventK(KeyBoardEvent& event)

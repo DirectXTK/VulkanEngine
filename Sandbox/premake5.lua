@@ -1,5 +1,5 @@
-project "Renderer"
-    kind "StaticLib"
+project "Sandbox"
+    kind "WindowedApp"
     language "C++"
     cppdialect "C++17"
     staticruntime "on"
@@ -11,24 +11,29 @@ project "Renderer"
         "Source/**.cpp",
         "Source/**.h"
     }
-
-    defines{
-        "WINDOWS"
+    
+    links{
+      "vulkan-1.lib",
+      "glfw3.lib",
+      "Renderer",
+      "Application"
     }
 
     includedirs{
-      "%{wks.location}/Application/Source/",
+      "%{wks.location}/Include",
+
       "%{wks.location}/Include/vulkan/",
-      "%{wks.location}/Include"
+      "%{wks.location}/Renderer/Source/",
+      "%{wks.location}/Application/Source/"
+
     }
 
-     libdirs{
+    libdirs{
         "%{wks.location}/Libs"
     }
 
-    links{
-      "vulkan-1.lib",
-      "glfw3.lib"
+    defines{
+        "WINDOWS"
     }
 
     filter{"configurations:Debug"}

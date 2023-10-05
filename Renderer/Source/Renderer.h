@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include "Image.h"
 #include "Buffer.h"
+#include "VulkanInstance.h"
 #define MAX_FRAME_DRAWS 2
 struct Vertex{
     Float3 Position{};
@@ -18,8 +19,12 @@ struct Vertex{
 	//Float2 TexCoord{ 0.0f,0.0f };
 	//int TexID{ -1 };
 };
+struct DrawCommand {
+    uint32_t VertexCount{};
+    uint32_t BufferOffset{};
+};
 struct RendererDesc{
-    uint32_t VertexCountPerDrawCall{1000};
+    uint32_t VertexCountPerDrawCall{100};
 };
 class Renderer{
  public:
@@ -33,6 +38,7 @@ class Renderer{
     void DrawParticle();
     Buffer* GetCustomBuffer(uint32_t index) { return m_PickingImageBuffer; }
 
+    VkExtent2D GetViewPortExtent() { return m_SwapChain->GetExtent(); }
 
     void EndFrame();
 
@@ -40,12 +46,21 @@ class Renderer{
 
     ~Renderer();
 private:
+    void StartRecordingCommands();
+    void StopRecordingCommands();
+
+    void DrawBatch();
+
+
+    void CreateNewBufferForBatch();
 
     void Flush(bool LastFrame);
 
     void CreateInstance();
     void CreateFrameBuffers();
     void CreateCommandBuffers();
+
+    QueueFamilies m_QueueFamilies{};
 
     uint32_t m_CurrentFrame{};
 
@@ -61,6 +76,7 @@ private:
 
     uint32_t m_ImageIndex{};
     std::vector<VkCommandBuffer> m_CommandBuffers{};
+    VkCommandBuffer m_CurrentCommandBuffer{};
     VkCommandBuffer m_TransferCommandBuffer{};
     std::vector<FrameBuffer> m_FrameBuffers{};
     std::vector<Image> m_ColorAttachments{};
@@ -79,8 +95,15 @@ private:
     std::vector<VkSemaphore> m_RenderFinishedS{};
     std::vector<VkFence> m_DrawFences{};
     //Buffers
-    VertexBuffer* m_VertexBuffer{};
-    IndexBuffer m_IndexBuffer{};
+    std::vector<Buffer*> m_VertexBuffers{};
+
+    std::vector<Buffer*> m_IndexBuffers{};
+    uint32_t* m_Indices{};
+
+    std::vector<Buffer*> m_StaggingBuffers{ };
+
+
+
     UniformBuffer* m_UniformBuffers{};
     //Descriptors 
 
@@ -97,12 +120,11 @@ private:
     void CreateLogicalDevice();
     void CreateSurface(GLFWwindow* window,VkSurfaceKHR* surface);
 
-    QueueFamilies GetQueueFamilies(VkPhysicalDevice device);
 
-    bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
-    bool IsDeviceSiutable(VkPhysicalDevice device);
     bool IsExtensionsSupported(std::vector<const char*> extensions);
     void CreateSamaphore();
+    //Batch Rendering
+    std::vector<DrawCommand> m_DrawCommands{};
 
     //One frame data
     Vertex* m_Vertices{};
