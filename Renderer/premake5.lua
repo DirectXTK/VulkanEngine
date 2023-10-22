@@ -2,7 +2,6 @@ project "Renderer"
     kind "StaticLib"
     language "C++"
     cppdialect "C++17"
-    staticruntime "on"
 
     targetdir("../bin".. outputdir.."/%{prj.name}")
     objdir("../bin-int".. outputdir.."/%{prj.name}")
@@ -18,7 +17,9 @@ project "Renderer"
 
     includedirs{
       "%{wks.location}/Application/Source/",
+      "%{wks.location}/Include/",
       "%{wks.location}/Include/vulkan/",
+
       "%{wks.location}/Include"
     }
 
@@ -34,6 +35,7 @@ project "Renderer"
     filter{"configurations:Debug"}
       runtime "Debug"
       symbols "on"
+      staticruntime "off"
 
     filter{"configurations:Release"}
       runtime "Release"

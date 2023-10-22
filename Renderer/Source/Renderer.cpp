@@ -4,13 +4,12 @@
 #include "Device.h"
  Renderer::Renderer(RendererDesc desc,GLFWwindow* window){
    m_Window = window;
-
+   m_ClearColor = desc.ClearColor;
     //m_VertexBufferSize = 3*100;
    //Create vulkan instance
    InstanceDesc instancedesc{};
    instancedesc.ApiVersion = VK_API_VERSION_1_2;
    instancedesc.ValidationLayersEnabled = true;
-
      m_Instance = VulkanInstance::CreateInstance(instancedesc,&m_Messenger);
 
     CreateSurface(window,&m_Surface);
@@ -35,6 +34,7 @@
         for(int i =0;i < MAX_FRAME_DRAWS;i++){
         m_UniformBuffers[i].Init(m_Device,m_PhysicalDevice,sizeof(glm::mat4));
      
+
         }
           m_DescriptorLayout.Init(m_Device);
         m_DescriptorLayout.WriteTo(m_Device,*m_UniformBuffers[0].GetBuffer(),sizeof(glm::mat4));
@@ -479,7 +479,7 @@ void Renderer::StopRecordingCommands()
 void Renderer::DrawBatch()
 {
     VkDeviceSize Offset{ 0 };
-    VkClearValue ClearColor[] = { {1.0f,0.0f,0.0f,0.0f},{0.0f,0.0f} };
+    VkClearValue ClearColor[] = { {m_ClearColor.r,m_ClearColor.g,m_ClearColor.b,m_ClearColor.a},{0.0f,0.0f} };
 
     VkRenderPassBeginInfo RenderPassBeginInfo{};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

@@ -1,4 +1,7 @@
 #include "Image.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb-master/stb_image.h"
+#include "RendCore.h"
     Image::Image(VkPhysicalDevice pdevice,VkDevice device,VkFormat format,VkSharingMode sharemode,VkImageUsageFlags usage,VkMemoryPropertyFlags propflags,VkImageTiling tilling,uint32_t Width, uint32_t Height,VkImageLayout initformat ){
        m_Device = device;
        m_PDevice = pdevice; 
@@ -44,6 +47,37 @@
           m_ImageSize = memreq.size;
           CreateView(format,VK_IMAGE_ASPECT_COLOR_BIT,device);
     }
+    Image::Image(std::string Path)
+    {
+       // LoadTextureData(Path);
+
+
+    }
+    unsigned char* Image::LoadTextureData(std::string Path,int* Width,int* Height)
+    {
+        std::string RealPath = "Textures/" + Path;
+        stbi_uc* image = stbi_load(RealPath.c_str(), &m_Width, &m_Height, &m_ChannelCount, STBI_rgb_alpha);
+
+        if (!image)
+        {
+            Core::Log(ErrorType::Error, "Failed to load texture file ", RealPath);
+            return nullptr;
+        }
+        m_ImageData = new Float4[m_Width * m_Height];
+        for (int y = 0; y < m_Height; y++) {
+
+            for (int x = 0; x < m_Width; x++) {
+                m_ImageData[x + (y * m_Width)].r = image[(x * 4) + (y * m_Width * 4) + 0]/255.f;
+                m_ImageData[x + (y * m_Width)].g = image[(x * 4) + (y * m_Width * 4) + 1]/255.f;
+                m_ImageData[x + (y * m_Width)].b = image[(x * 4) + (y * m_Width * 4) + 2]/255.f;
+                m_ImageData[x + (y * m_Width)].a = image[(x * 4) + (y * m_Width * 4) + 3]/255.f;
+
+
+            }
+        }
+    
+        return (unsigned char*)image;
+    }
     VkImageView Image::CreateView(VkFormat format,VkImageAspectFlags aspectflags ,VkDevice device){
 
             VkImageViewCreateInfo createinfo{};
@@ -76,21 +110,22 @@
             return m_View;
 
     }
-    Float2 Image::ReadPixel(uint32_t x, uint32_t y){
-      void* map{};
-        Float2* imagedata{};
-        Float2 Ret{};
-      
-        imagedata = new Float2[m_Width*m_Height];
-          Core::Log(ErrorType::Error,"With and height",m_Width,m_Height);
-
-        VkDeviceSize offset{0};
-      
-        vkMapMemory(m_Device,m_Memory,offset,m_ImageSize,0,&map);
-        memcpy(imagedata,map,m_ImageSize);
-        vkUnmapMemory(m_Device,m_Memory);
+    void Image::UploadImageData()
+    {
+        void* map{};
+            m_ImageData = new Float4[m_Width * m_Height];
+       
 
 
-        Ret=imagedata[x+(y*m_Width)];
-      return Ret;
+        
+
+        VkDeviceSize offset{ 0 };
+
+        vkMapMemory(m_Device, m_Memory, offset, m_ImageSize, 0, &map);
+        memcpy(m_ImageData, map, m_ImageSize);
+        vkUnmapMemory(m_Device, m_Memory);
+
+    }
+    Float4 Image::ReadPixel(uint32_t x, uint32_t y){
+      return m_ImageData[x + (y * m_Width)];
     }

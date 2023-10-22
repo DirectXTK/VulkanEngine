@@ -211,7 +211,7 @@ QueueFamilies VulkanInstance::GetQueueFamilies(VkPhysicalDevice device,VkSurface
         if (Properties[i].queueCount > 0 && Presentation)
             Families.Presentation = i;
 
-        Core::Log(ErrorType::Error, Families.Graphics, " ", Families.Presentation);
+        //Core::Log(ErrorType::Error, Families.Graphics, " ", Families.Presentation);
 
         if (Families.IsValid()) {
 

@@ -26,9 +26,14 @@ public:
 	void Save(void* data, uint32_t DataCount, SerializerFormat* format, uint32_t formatCount, SerializerClassDesc* classdesc);
 
 	 //Load functions
+	void StartLoading(std::string Path);
+	void StopLoading();
+	void* Load(uint64_t* Out_DataCount);
 	 ~Serializer();
 private:
 	SerializerFormat* m_Formats{};
 	uint32_t m_FormatCount{};
 	std::ofstream m_OutputFile{};
+	std::ifstream m_InputFile{};
+
 };

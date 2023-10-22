@@ -63,7 +63,6 @@
             std::vector<VkImage> Images{};
             
             vkGetSwapchainImagesKHR(m_Device,m_SwapChain,&ImageCount,nullptr);
-            Core::Log(ErrorType::Error,"Image count ",ImageCount);
             m_SwapChainImages.resize(ImageCount);
             Images.resize(ImageCount);
             vkGetSwapchainImagesKHR(m_Device,m_SwapChain,&ImageCount,Images.data());
@@ -118,7 +117,6 @@
      VkSurfaceFormatKHR SwapChain::GetBestSurfaceFormat(){
 
 
-    Core::Log(ErrorType::FatalError,m_Details.SurfaceFormats.size());
           if(m_Details.SurfaceFormats.size()==1&& m_Details.SurfaceFormats[0].format ==VK_FORMAT_UNDEFINED)
           {
             Core::Log(ErrorType::Info,"All formats are supported.");

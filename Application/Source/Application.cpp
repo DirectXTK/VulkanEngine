@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "AppTime.h"
  Application::Application(ApplicationSpecs specs){
     //init glfw
      m_ApplicationLayer = (ApplicationLayer*)m_LayerController.CreateLayer(new ApplicationLayer(specs));
@@ -15,6 +16,9 @@
  void Application::Run(){
      m_Window = m_ApplicationLayer->GetWindow();
     while(!glfwWindowShouldClose(m_Window->GetHandle())){
+        
+        m_DeltaTime = Time::GetTimeMs() - m_LastFrameTime;
+        m_LastFrameTime = Time::GetTimeMs();
         m_Renderer->BeginFrame(m_Camera->GetViewProj());
 
         m_LayerController.UpdateLayers();
@@ -44,13 +48,16 @@
 
       m_Window = new Window(m_Specs.WindowWidth, m_Specs.WindowHeight, m_Specs.WindowTitle);
       RendererDesc desc{};
-      desc.VertexCountPerDrawCall = 4 * 1000;
+      desc.VertexCountPerDrawCall = 4 * 100000;
+      desc.ClearColor = m_Specs.ClearColor;
 
 
       m_Renderer = new Renderer(desc, m_Window->GetHandle());
       m_InputSystem.Init(m_Window->GetHandle());
 
       m_Camera.Init({ -1.5f,-1.5f }, { 3.0f,3.0f });
+
+      Image image("Map2.png");
  }
 
   void ApplicationLayer::OnUpdate()

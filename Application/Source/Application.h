@@ -8,6 +8,9 @@ struct ApplicationSpecs{
     uint32_t WindowHeight{500};
      uint32_t WindowWidth{500};
     std::string WindowTitle{"Untitled"};
+
+    //Renderer stuff
+    Float4 ClearColor{ 1.0f,1.0f,1.0f,1.0f };
 };
 
 class ApplicationLayer:public Layer {
@@ -38,6 +41,7 @@ class Application {
 public:
     Application(ApplicationSpecs specs);
     void AddLayer(Layer* layer);
+    float GetDeltaTime() { return m_DeltaTime; }
     void Run();
 private:
     Renderer* m_Renderer{};
@@ -47,4 +51,7 @@ private:
 
     LayerController m_LayerController{ };
     ApplicationLayer* m_ApplicationLayer{ };
+
+    double m_DeltaTime{};
+    double m_LastFrameTime{};
 };

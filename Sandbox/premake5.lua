@@ -2,7 +2,6 @@ project "Sandbox"
     kind "WindowedApp"
     language "C++"
     cppdialect "C++17"
-    staticruntime "on"
 
     targetdir("../bin".. outputdir.."/%{prj.name}")
     objdir("../bin-int".. outputdir.."/%{prj.name}")
@@ -24,6 +23,7 @@ project "Sandbox"
 
       "%{wks.location}/Include/vulkan/",
       "%{wks.location}/Renderer/Source/",
+      "%{wks.location}/Include/",
       "%{wks.location}/Application/Source/"
 
     }
@@ -39,6 +39,8 @@ project "Sandbox"
     filter{"configurations:Debug"}
       runtime "Debug"
       symbols "on"
+      staticruntime "off"
+
 
     filter{"configurations:Release"}
       runtime "Release"

@@ -25,6 +25,7 @@ struct DrawCommand {
 };
 struct RendererDesc{
     uint32_t VertexCountPerDrawCall{100};
+    Float4 ClearColor{};
 };
 class Renderer{
  public:
@@ -136,6 +137,9 @@ private:
     uint32_t m_DrawCallCount{};
     //TEMP(Testing)
     Buffer* m_PickingImageBuffer{};
+
+    //FrameBuffer stuffs
+    Float4 m_ClearColor{};
 
     
 };

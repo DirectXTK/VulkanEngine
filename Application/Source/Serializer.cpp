@@ -15,6 +15,8 @@ void Serializer::Save(void* data,uint32_t DataCount, SerializerFormat* formats,u
 	}
 
 	uint64_t Offset{};
+
+	m_OutputFile << "DataCount=" << DataCount << "\n";
 	for(int d=0;d < DataCount;d++){
 		m_OutputFile << classdesc->ClassName<<"\n";
 		for (int j = 0; j < formatCount; j++) {
@@ -97,49 +99,26 @@ void Serializer::Save(void* data,uint32_t DataCount, SerializerFormat* formats,u
 
 
 }
-void Save(std::string Path, void* data, uint64_t Size, SerializerFormat* formats,uint32_t FormatCount)
+void Serializer::StartLoading(std::string Path)
 {
-	
-
-	std::ofstream output(Path);
-	SerializerFormat format = formats[0];
-	uint64_t Offset{};
-
-	for (uint32_t i = 0; i < Size; i++) {
-		for (uint32_t j = 0; j < FormatCount; j++) {
-				output << formats[j].keyword;
-				for (uint32_t d = 0; d < formats[j].count; d++) {
-					if(d !=0)
-						output << formats[j].PaddingBetweenCount;
-					switch (formats[j].format) {
-					case Format::STRING: {
-						output << *(std::string*)((char*)data + Offset);
-						Offset += sizeof(std::string);
-						break;
-					}
-					case Format::UINT32: {
-						output << *(uint32_t*)((char*)data + Offset);
-						Offset += sizeof(uint32_t);
-						break;
-					}
-					default: {
-						std::cout << "No such format\n";
-						break;
-					}
-					}
-				}
-				output << "\n";
-		}
-		//Offset=i*
-
-			
-		
-	}
-
-
-
-	output.close();
+	m_InputFile = std::ifstream(Path);
 }
+void Serializer::StopLoading()
+{
+	m_InputFile.close();
+}
+void* Serializer::Load(uint64_t* Out_DataCount)
+{
+	if(!m_InputFile.is_open())
+	return nullptr;
+
+
+
+
+
+
+}
+
 
 void Serializer::StopSaving()
 {
