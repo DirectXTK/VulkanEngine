@@ -3,6 +3,7 @@
         Buffer::Buffer(BufferDesc desc){
 
             m_Device = desc.Device;
+            m_Desc = desc;
 
             VkBufferCreateInfo createinfo{};
             createinfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;

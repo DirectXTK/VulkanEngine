@@ -83,7 +83,9 @@
 
         m_VertexBuffers.push_back(new Buffer(VertexBufferDesc));
 
+       // VertexBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex)*20000;
 
+        //Buffer* vertexdwadad = new Buffer(VertexBufferDesc);
 
         m_Vertices = new Vertex[m_VertexCount];
 
@@ -96,7 +98,7 @@
         StaggingBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
         m_StaggingBuffers.push_back(new Buffer(StaggingBufferDesc));
-        
+        //temp
 
         m_Indices = new uint32_t[(uint32_t)(m_VertexCount*1.5)];
         uint32_t offset{};
@@ -185,7 +187,7 @@
 
             if (m_CurrentFrame == 1)
                 vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0].GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer->GetBuffer(), 1, &copyregion);
-        
+            
           
 
 
@@ -196,30 +198,33 @@
 
 
         m_VertexBuffers.push_back(new Buffer(m_VertexBuffers[0]->GetBufferDesc()));
-
-        m_IndexBuffers.push_back(new Buffer(m_IndexBuffers[0]->GetBufferDesc()));
-        m_IndexBuffers[m_IndexBuffers.size() - 1]->UploadToBuffer(m_Device, m_Indices, uint64_t(m_VertexCount * 1.5f * sizeof(uint32_t)));
-
         m_StaggingBuffers.push_back(new Buffer(m_StaggingBuffers[0]->GetBufferDesc()));
 
+
+       // m_IndexBuffers.push_back(new Buffer(m_IndexBuffers[0]->GetBufferDesc()));
+      //  m_IndexBuffers[m_IndexBuffers.size() - 1]->UploadToBuffer(m_Device, m_Indices, uint64_t(m_VertexCount * 1.5f * sizeof(uint32_t)));
+
+        
     }
     void Renderer::Flush(bool LastFrame){
-       // if (m_DrawCallCount == m_VertexBuffers.size())
-           // CreateNewBufferForBatch();
+
+        m_DrawCommands.push_back({ m_VertexPointer,m_DrawCallCount });
+
+        if (m_DrawCallCount == m_VertexBuffers.size())
+            CreateNewBufferForBatch();
 
 
 
            m_UniformBuffers[0].UploadToBuffer(m_Device,&m_CameraViewProj,sizeof(glm::mat4));
 
-           m_StaggingBuffers[0]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
+           m_StaggingBuffers[m_DrawCallCount]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
 
            VkBufferCopy region{};
            region.size = sizeof(Vertex) * m_VertexPointer;
 
            if (m_VertexPointer != 0)
            {
-               vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBuffers[0]->GetBuffer(), *m_VertexBuffers[0]->GetBuffer(), 1, &region);
-               DrawBatch();
+               vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBuffers[m_DrawCallCount]->GetBuffer(), *m_VertexBuffers[m_DrawCallCount]->GetBuffer(), 1, &region);
 
            }
           
@@ -237,6 +242,7 @@
 
 
         Flush(true);
+        DrawBatch();
 
 
         StopRecordingCommands();
@@ -460,6 +466,7 @@ Renderer::~Renderer(){
 
 void Renderer::StartRecordingCommands()
 {
+ 
     VkCommandBufferBeginInfo bufferbegininfo{};
     bufferbegininfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -469,16 +476,19 @@ void Renderer::StartRecordingCommands()
     vkResetCommandBuffer(m_CurrentCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
     vkBeginCommandBuffer(m_CurrentCommandBuffer, &bufferbegininfo);
     vkCmdBindPipeline(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+
+
 }
 
 void Renderer::StopRecordingCommands()
 {
+
     vkEndCommandBuffer(m_CurrentCommandBuffer);
+    m_DrawCommands.resize(0);
 }
 
 void Renderer::DrawBatch()
 {
-    VkDeviceSize Offset{ 0 };
     VkClearValue ClearColor[] = { {m_ClearColor.r,m_ClearColor.g,m_ClearColor.b,m_ClearColor.a},{0.0f,0.0f} };
 
     VkRenderPassBeginInfo RenderPassBeginInfo{};
@@ -491,17 +501,19 @@ void Renderer::DrawBatch()
     RenderPassBeginInfo.framebuffer = m_FrameBuffers[m_CurrentFrame].GetFrameBuffer(0);
 
 
-
+    VkDeviceSize Offset{ 0 };
     vkCmdBeginRenderPass(m_CurrentCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    for (int i = 0; i < m_DrawCommands.size(); i++) {
 
-     vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBuffers[0]->GetBuffer(), &Offset);
+        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBuffers[i]->GetBuffer(), &Offset);
 
-     vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
-     vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, m_DescriptorLayout.GetDescriptorSet(), 0, nullptr);
+        vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, m_DescriptorLayout.GetDescriptorSet(), 0, nullptr);
 
-     vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_VertexPointer * 1.5f), 1, 0, 0, 0);
+        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommands[i].VertexCount * 1.5f), 1, 0, 0, 0);
 
-
+    }
     vkCmdEndRenderPass(m_CurrentCommandBuffer);
+
 }

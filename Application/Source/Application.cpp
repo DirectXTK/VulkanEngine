@@ -28,13 +28,6 @@
     }
  }
 
-
-
-
-
-
-
-
  ApplicationLayer::ApplicationLayer(ApplicationSpecs specs) : Layer("ApplicationLayer")
  {
      m_Specs = specs;
@@ -48,7 +41,7 @@
 
       m_Window = new Window(m_Specs.WindowWidth, m_Specs.WindowHeight, m_Specs.WindowTitle);
       RendererDesc desc{};
-      desc.VertexCountPerDrawCall = 4 * 100000;
+      desc.VertexCountPerDrawCall = 4 * 10000;
       desc.ClearColor = m_Specs.ClearColor;
 
 

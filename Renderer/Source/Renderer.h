@@ -20,8 +20,8 @@ struct Vertex{
 	//int TexID{ -1 };
 };
 struct DrawCommand {
-    uint32_t VertexCount{};
-    uint32_t BufferOffset{};
+    uint64_t VertexCount{};
+    uint32_t BufferIndex{};
 };
 struct RendererDesc{
     uint32_t VertexCountPerDrawCall{100};
@@ -96,12 +96,10 @@ private:
     std::vector<VkSemaphore> m_RenderFinishedS{};
     std::vector<VkFence> m_DrawFences{};
     //Buffers
-    std::vector<Buffer*> m_VertexBuffers{};
 
     std::vector<Buffer*> m_IndexBuffers{};
     uint32_t* m_Indices{};
 
-    std::vector<Buffer*> m_StaggingBuffers{ };
 
 
 
@@ -124,8 +122,6 @@ private:
 
     bool IsExtensionsSupported(std::vector<const char*> extensions);
     void CreateSamaphore();
-    //Batch Rendering
-    std::vector<DrawCommand> m_DrawCommands{};
 
     //One frame data
     Vertex* m_Vertices{};
@@ -140,6 +136,10 @@ private:
 
     //FrameBuffer stuffs
     Float4 m_ClearColor{};
+    //Batch renderer
+    std::vector<Buffer*> m_StaggingBuffers{ };
+    std::vector<Buffer*> m_VertexBuffers{};
+    std::vector<DrawCommand> m_DrawCommands{};
 
     
 };
