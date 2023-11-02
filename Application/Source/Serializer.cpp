@@ -56,27 +56,27 @@ void Serializer::Save(void* data,uint32_t DataCount, SerializerFormat* formats,u
 					break;
 				}
 				case Format::UINT16: {
-					m_OutputFile << *(uint16_t*)((char*)data + Offset );
+					m_OutputFile << *(uint16_t*)((char*)data + Offset + (i * sizeof(uint16_t)));
 					break;
 				}
 				case Format::UINT32: {
-					m_OutputFile << *(uint32_t*)((char*)data + Offset );
+					m_OutputFile << *(uint32_t*)((char*)data + Offset + (i * sizeof(uint32_t)));
 					break;
 				}
 				case Format::UINT64: {
-					m_OutputFile << *(uint64_t*)((char*)data + Offset );
+					m_OutputFile << *(uint64_t*)((char*)data + Offset + (i * sizeof(uint64_t)));
 					break;
 				}
 				case Format::INT16: {
-					m_OutputFile << *(int16_t*)((char*)data + Offset );
+					m_OutputFile << *(int16_t*)((char*)data + Offset + (i * sizeof(int16_t)));
 					break;
 				}
 				case Format::INT32: {
-					m_OutputFile << *(int32_t*)((char*)data + Offset );
+					m_OutputFile << *(int32_t*)((char*)data + Offset + (i * sizeof(int32_t)));
 					break;
 				}
 				case Format::INT64: {
-					m_OutputFile << *(int64_t*)((char*)data + Offset );
+					m_OutputFile << *(int64_t*)((char*)data + Offset + (i * sizeof(int64_t)));
 					break;
 				}
 				case Format::FLOAT: {
@@ -84,13 +84,14 @@ void Serializer::Save(void* data,uint32_t DataCount, SerializerFormat* formats,u
 					break;
 				}
 				case Format::DOUBLE: {
-					m_OutputFile << *(double*)((char*)data + Offset );
+					m_OutputFile << *(double*)((char*)data + Offset + (i * sizeof(double)));
 					break;
 				}
 				case Format::CHAR: {
-					m_OutputFile << *(char*)((char*)data + Offset);
+					m_OutputFile << *(char*)((char*)data + Offset + (i * sizeof(char)));
 					break;
 				}
+
 
 				
 				default: {
@@ -263,33 +264,45 @@ void Serializer::FillContainerWithData(char* Data, uint64_t*DataOffset, std::str
 		break;
 	}
 	case Format::UINT16: {
-		uint16_t converteddata = std::stoi(line);
+		uint16_t converteddata = std::stoul(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(uint16_t));
+		*DataOffset += sizeof(uint16_t);
+
 		break;
 	}
 	case Format::UINT32: {
-		uint32_t converteddata = std::stoi(line);
+		uint32_t converteddata = std::stoul(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(uint32_t));
+		*DataOffset += sizeof(uint32_t);
+
 		break;
 	}
 	case Format::UINT64: {
-		uint64_t converteddata = std::stoi(line);
+		uint64_t converteddata = std::stoull(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(uint64_t));
+		*DataOffset += sizeof(uint64_t);
+
 		break;
 	}
 	case Format::INT16: {
 		int16_t converteddata = std::stoi(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(int16_t));
+		*DataOffset += sizeof(int16_t);
+
 		break;
 	}
 	case Format::INT32: {
 		int32_t converteddata = std::stoi(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(int32_t));
+		*DataOffset += sizeof(int32_t);
+
 		break;
 	}
 	case Format::INT64: {
-		int64_t converteddata = std::stoi(line);
+		int64_t converteddata = std::stoll(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(uint64_t));
+		*DataOffset += sizeof(int64_t);
+
 		break;
 	}
 	case Format::FLOAT: {
@@ -302,6 +315,8 @@ void Serializer::FillContainerWithData(char* Data, uint64_t*DataOffset, std::str
 	case Format::DOUBLE: {
 		double converteddata = std::stod(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(double));
+		*DataOffset += sizeof(double);
+
 		break;
 	}
 	case Format::CHAR: {
@@ -309,6 +324,8 @@ void Serializer::FillContainerWithData(char* Data, uint64_t*DataOffset, std::str
 			break;
 		char converteddata = line[0];
 		memcpy(Data + *DataOffset, &converteddata, sizeof(char));
+		*DataOffset += sizeof(char);
+
 		break;
 	}
 

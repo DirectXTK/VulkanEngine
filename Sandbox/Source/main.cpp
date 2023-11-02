@@ -6,6 +6,7 @@ struct Unit {
     Float3 Position{};
     Float2 Size{};
     Float4 Color{};
+    uint64_t ID{};
 };
 class SandboxLayer :public Layer {
 public:
@@ -19,8 +20,9 @@ public:
             unit.Position = { Core::RandomFloat(-1.0f,1.0f),Core::RandomFloat(-1.0f,1.0f),0.0f };
             unit.Size = { Core::RandomFloat(0.0f,0.2f),Core::RandomFloat(0.0f,0.2f) };
             unit.Color = { Core::RandomFloat(0.0f,1.0f), Core::RandomFloat(0.0f,1.0f), Core::RandomFloat(0.0f,1.0f),1.0f };
+            unit.ID = Core::RandomUInt64(0,std::numeric_limits<uint64_t>::max());
             unit.Name = "Ting galvot";
-           //m_Units.push_back(unit);
+          // m_Units.push_back(unit);
         }
         SerializerClassDesc desc{};
         desc.ClassName = "Unit";
@@ -32,7 +34,9 @@ public:
             {"Name=",Format::STRING,1,"",offsetof(Unit,Name)},
             {"Position=",Format::FLOAT,3,",",offsetof(Unit,Position)},
             {"Size=",Format::FLOAT,2,",",offsetof(Unit,Size)},
-            {"Color=",Format::FLOAT,4,",",offsetof(Unit,Color)}
+            {"Color=",Format::FLOAT,4,",",offsetof(Unit,Color)},
+            {"ID=",Format::UINT64,1,"",offsetof(Unit,ID)},
+
         };
 
        
@@ -40,15 +44,15 @@ public:
         uint64_t DataCount{ };
         Serializer serializer{};
        //serializer.Init(formats, 3);
-        //serializer.StartSaving("C:\\Users\\jasiu\\Desktop\\TestingSave.txt");
+    //    serializer.StartSaving("C:\\Users\\jasiu\\Desktop\\TestingSave.txt");
 
-        //serializer.Save(m_Units.data(), m_Units.size(), formats, 4, &desc);
+      //  serializer.Save(m_Units.data(), m_Units.size(), formats, 5, &desc);
 
-       // serializer.StopSaving();
+    //   serializer.StopSaving();
 
        serializer.StartLoading("C:\\Users\\jasiu\\Desktop\\TestingSave.txt");
 
-       Unit* data = (Unit*)serializer.Load(&DataCount);
+      Unit* data = (Unit*)serializer.Load(&DataCount);
 
        serializer.StopLoading();
        m_Units.resize(DataCount);
@@ -58,6 +62,8 @@ public:
            m_Units[i].Position = data[i].Position;
           m_Units[i].Size = data[i].Size;
             m_Units[i].Color = data[i].Color;
+            m_Units[i].ID = data[i].ID;
+
 
         }
         
@@ -65,7 +71,7 @@ public:
     }
     void OnUpdate()override {
         for (int i = 0; i < m_Units.size(); i++) {
-            m_Renderer->DrawQuad(m_Units[i].Position, m_Units[i].Color, m_Units[i].Size, nullptr, 55);
+            m_Renderer->DrawQuad(m_Units[i].Position, m_Units[i].Color, m_Units[i].Size, nullptr, m_Units[i].ID);
           }
     }
     void OnDestroy()override {
