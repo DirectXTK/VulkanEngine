@@ -104,6 +104,7 @@
     <ClInclude Include="Source\InputSystem.h" />
     <ClInclude Include="Source\Layer.h" />
     <ClInclude Include="Source\LogSystem.h" />
+    <ClInclude Include="Source\RandomGenerator.h" />
     <ClInclude Include="Source\Serializer.h" />
     <ClInclude Include="Source\Utils.h" />
     <ClInclude Include="Source\Window.h" />
@@ -115,6 +116,7 @@
     <ClCompile Include="Source\InputSystem.cpp" />
     <ClCompile Include="Source\Layer.cpp" />
     <ClCompile Include="Source\LogSystem.cpp" />
+    <ClCompile Include="Source\RandomGenerator.cpp" />
     <ClCompile Include="Source\Serializer.cpp" />
     <ClCompile Include="Source\Window.cpp" />
     <ClCompile Include="Source\AppTime.cpp" />

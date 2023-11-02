@@ -5,7 +5,7 @@ struct SerializerFormat {
 	Format format{};
 	uint32_t count{};
 	std::string PaddingBetweenCount{};
-	bool ignorespaces{ false };
+	uint32_t Offset{  };
 };
 struct SerializerClassDesc {
 	std::string ClassName{};
@@ -31,9 +31,14 @@ public:
 	void* Load(uint64_t* Out_DataCount);
 	 ~Serializer();
 private:
+	void FillContainerWithData(char* Data, uint64_t*DataOffset, std::string line, SerializerFormat format);
 	SerializerFormat* m_Formats{};
 	uint32_t m_FormatCount{};
 	std::ofstream m_OutputFile{};
+
+	//Input data
+	uint64_t m_InputDataOffset{};
+	std::string m_InputData{};
 	std::ifstream m_InputFile{};
 
 };

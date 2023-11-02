@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <vector>
 #include <chrono>
+#include <random>
 #include <thread>
 enum class Format{INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE,CHAR,STRING};
 struct Float2 {
