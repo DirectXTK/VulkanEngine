@@ -16,13 +16,18 @@ public:
 	bool IsMouseClicked(MouseCodes codes);
 	float GetScroll();
 	Float2 GetMousePos();
+	Float2 GetWorldMousePos(Float2 CameraPosition, Float2 CameraScale, Float2 ViewportExtent);
 	//Every frame
 	void ResetInput();
 private:
 	bool m_KeyCodes[256];
 
 	MouseEvent m_MouseEvents[7];
+
 	Float2 m_MousePos{};
+	bool m_MouseClick[3]{};
+	bool m_MouseHold[3]{};
+
 
 	GLFWwindow* m_CurrentWindow{};
 

@@ -105,6 +105,7 @@
     <ClInclude Include="Source\Descriptor.h" />
     <ClInclude Include="Source\Device.h" />
     <ClInclude Include="Source\FrameBuffer.h" />
+    <ClInclude Include="Source\GUI.h" />
     <ClInclude Include="Source\Image.h" />
     <ClInclude Include="Source\IndexBuffer.h" />
     <ClInclude Include="Source\Pipeline.h" />
@@ -124,6 +125,7 @@
     <ClCompile Include="Source\Descriptor.cpp" />
     <ClCompile Include="Source\Device.cpp" />
     <ClCompile Include="Source\FrameBuffer.cpp" />
+    <ClCompile Include="Source\GUI.cpp" />
     <ClCompile Include="Source\Image.cpp" />
     <ClCompile Include="Source\IndexBuffer.cpp" />
     <ClCompile Include="Source\Pipeline.cpp" />

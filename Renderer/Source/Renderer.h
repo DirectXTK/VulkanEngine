@@ -1,4 +1,9 @@
 #pragma once
+#define DEMO_FEATURES
+#ifdef DEMO_FEATURES
+#include "GUI.h"
+#endif
+
 #include "SwapChain.h"
 #include "Shader.h"
 #include "CommandPool.h"
@@ -12,6 +17,9 @@
 #include "Buffer.h"
 #include "VulkanInstance.h"
 #define MAX_FRAME_DRAWS 2
+
+class InputSystem;
+
 struct Vertex{
     Float3 Position{};
 	Float4 Color{};
@@ -29,12 +37,13 @@ struct RendererDesc{
 };
 class Renderer{
  public:
-    Renderer(RendererDesc desc,GLFWwindow* window);
+    Renderer(RendererDesc desc,GLFWwindow* window,InputSystem* inputsystem);
 
-    void BeginFrame(glm::mat4 viewproj);
+    void BeginFrame(Camera2D* camera);
 
+    //GUI
 
-
+    //
     void DrawQuad(Float3 Position,Float4 Color,Float2 Size,Image* image,uint64_t ID);
     void DrawParticle();
     Buffer* GetCustomBuffer(uint32_t index) { return m_PickingImageBuffer; }
@@ -140,8 +149,9 @@ private:
     std::vector<Buffer*> m_StaggingBuffers{ };
     std::vector<Buffer*> m_VertexBuffers{};
     std::vector<DrawCommand> m_DrawCommands{};
-
     
+    Camera2D m_Camera{};
+
 };
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallBack(VkDebugUtilsMessageSeverityFlagBitsEXT messageseverity,VkDebugUtilsMessageTypeFlagsEXT messagetype,const VkDebugUtilsMessengerCallbackDataEXT* pcallbackdata,void* puserData );
  

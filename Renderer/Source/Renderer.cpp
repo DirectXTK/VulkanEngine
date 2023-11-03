@@ -2,7 +2,8 @@
 #include "SwapChain.h"
 #include "Pipeline.h"
 #include "Device.h"
- Renderer::Renderer(RendererDesc desc,GLFWwindow* window){
+#include "InputSystem.h"
+ Renderer::Renderer(RendererDesc desc,GLFWwindow* window, InputSystem* inputsystem){
    m_Window = window;
    m_ClearColor = desc.ClearColor;
     //m_VertexBufferSize = 3*100;
@@ -143,12 +144,15 @@
 
 
         m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
+
+        //Initialize GUI renderer
  }
-    void Renderer::BeginFrame(glm::mat4 viewproj){
+    void Renderer::BeginFrame(Camera2D* camera){
                //RecordCommands(m_VertexCount,0);
 
             m_DrawCallCount =0;
-            m_CameraViewProj =viewproj;
+            m_Camera = *camera;
+            m_CameraViewProj = m_Camera.GetViewProj();
 
             VkSwapchainKHR swapchain = m_SwapChain->GetSwapChain();
         
@@ -191,8 +195,8 @@
           
 
 
-
     }
+   
     void Renderer::CreateNewBufferForBatch()
     {
 

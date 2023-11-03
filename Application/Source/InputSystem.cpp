@@ -54,13 +54,57 @@ Float2 InputSystem::GetMousePos()
 	glfwGetCursorPos(m_CurrentWindow,&x,&y);
 	return {(float)x,(float)y};
 }
+Float2 InputSystem::GetWorldMousePos(Float2 CameraPosition, Float2 CameraScale,Float2 ViewportExtent)
+{
+	Float2 MousePos = GetMousePos();
+
+	//std::cout << "X:" << MousePos.x << " Y:" << MousePos.y << "\n";
+
+
+	MousePos.x = ((MousePos.x / ViewportExtent.x) / (CameraScale.x));
+	MousePos.y = (1.0f - (MousePos.y / ViewportExtent.y)) / (CameraScale.y);
+
+	MousePos.x += CameraPosition.x / CameraScale.x * 0.5f;
+	MousePos.y += CameraPosition.y / CameraScale.y * 0.5f;
+
+	//MousePos.x /=   (camera->GetScale().x);
+	//MousePos.y /=   (camera->GetScale().y);
+
+
+
+	return MousePos;
+}
 bool InputSystem::IsMouseClicked(MouseCodes codes)
 {
-	return glfwGetMouseButton(m_CurrentWindow,(int)codes);
+	return glfwGetMouseButton(m_CurrentWindow,(int)codes)&& !m_MouseHold[(int)codes];
 }
 
 void InputSystem::ResetInput()
 {
 		scrolly=0;
 		scrollx =0;
+
+		m_MouseClick[0] = glfwGetMouseButton(m_CurrentWindow, (int)MouseCodes::LEFT);
+		m_MouseClick[1] = glfwGetMouseButton(m_CurrentWindow, (int)MouseCodes::RIGHT);
+		m_MouseClick[2] = glfwGetMouseButton(m_CurrentWindow, (int)MouseCodes::SCROLL);
+
+		if (m_MouseClick[0])
+			m_MouseHold[0] = true;
+		else
+			m_MouseHold[0] = false;
+
+
+		if (m_MouseClick[1])
+			m_MouseHold[1] = true;
+		else
+			m_MouseHold[1] = false;
+
+
+		if (m_MouseClick[2])
+			m_MouseHold[2] = true;
+		else
+			m_MouseHold[2] = false;
+
+	
+
 }

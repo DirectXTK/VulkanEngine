@@ -4,6 +4,7 @@
 #include "Window.h"
 #include "InputSystem.h"
 #include "Layer.h"
+class InputSystem;
 struct ApplicationSpecs{
     uint32_t WindowHeight{500};
      uint32_t WindowWidth{500};
@@ -13,45 +14,37 @@ struct ApplicationSpecs{
     Float4 ClearColor{ 1.0f,1.0f,1.0f,1.0f };
 };
 
-class ApplicationLayer:public Layer {
-public:
-    ApplicationLayer( ApplicationSpecs spces);
-     void OnCreate()override;
-     void OnUpdate()override;
-     void OnGUI()override;
-     void OnDestroy()override;
 
-     //Get functions
-     Window* GetWindow() { return m_Window; }
-     Renderer* GetRenderer() { return m_Renderer; }
-     Camera2D* GetCamera() { return &m_Camera; }
-private:
-    Renderer* m_Renderer{};
-    Window* m_Window{};
-    InputSystem m_InputSystem{};
-    Camera2D m_Camera;
-    ApplicationSpecs m_Specs{  };
-
-
-    //Controlls
-    float m_Move{ -1.0 };
-    float m_Direct{ 0.005f };
-};
 class Application {
 public:
     Application(ApplicationSpecs specs);
     void AddLayer(Layer* layer);
     float GetDeltaTime() { return m_DeltaTime; }
+
+    Float2 GetMousePos();
+    Float2 GetMousePosNorm();
+    Float2 GetWorldMousePos();
+
+
+
     void Run();
 private:
-    Renderer* m_Renderer{};
     Window* m_Window{};
-    InputSystem m_InputSystem{};
-    Camera2D* m_Camera{};
 
     LayerController m_LayerController{ };
-    ApplicationLayer* m_ApplicationLayer{ };
 
     double m_DeltaTime{};
     double m_LastFrameTime{};
+   
+public:
+    //GUI Renderer
+    Renderer* m_Renderer{};
+    Camera2D m_Camera{};
+    InputSystem m_InputSystem{};
+
+
+#ifdef GUI_HEADER
+    GUIRenderer* m_GUIRenderer{};
+#endif
+
 };

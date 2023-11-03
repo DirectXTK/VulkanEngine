@@ -97,6 +97,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\Testing\TestingLayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Renderer\Renderer.vcxproj">
@@ -105,6 +106,9 @@
     <ProjectReference Include="..\Application\Application.vcxproj">
       <Project>{D9DE78AF-4594-F1A4-CE88-EB7B3A3DE8A8}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\Testing\TestingLayer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
