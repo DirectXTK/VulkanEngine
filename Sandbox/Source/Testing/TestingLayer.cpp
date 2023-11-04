@@ -66,7 +66,7 @@ void TestingLayer::OnUpdate(double deltatime)
 
         Float2 a = buffer->ReadPixel((uint32_t)inputsystem->GetMousePos().x, (uint32_t)inputsystem->GetMousePos().y, renderer->GetViewPortExtent().width, renderer->GetViewPortExtent().height);
         uint64_t* ID = (uint64_t*)&a;
-        Core::Log(ErrorType::Info, "ID ", *ID);
+       // Core::Log(ErrorType::Info, "ID ", *ID);
     }
 
 

@@ -189,7 +189,7 @@
 
 
 
-            if (m_CurrentFrame == 1)
+            if (m_CurrentFrame ==1)
                 vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0].GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer->GetBuffer(), 1, &copyregion);
             
           

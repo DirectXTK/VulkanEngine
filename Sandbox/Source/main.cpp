@@ -17,10 +17,25 @@ public:
 
     }
     void OnGUI()override {
-        if (m_App->m_GUIRenderer->Button({0.0f,0.0f},{1.0f,0.0f,0.0f,1.0f},{0.1f,0.1f}))
-            std::cout << "Raudons\n";
-        if (m_App->m_GUIRenderer->Button({ 0.5f,0.0f }, { 0.0f,0.0f,1.0f,1.0f }, { 0.1f,0.1f }))
-            std::cout << "Melyns\n";
+    
+        bool* CloseButton{};
+
+        if (m_App->m_GUIRenderer->Button({ 0.5f,0.0f }, { 0.0f,1.0f,0.0f,1.0f }, { 0.2f,0.2f }, MouseCodes::RIGHT,true, &CloseButton)) {
+            if(m_App->m_GUIRenderer->Button({ 0.5f,0.0f }, { 0.0f,0.5f,0.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT,false)) {
+                std::cout << "Pirmas\n";
+                *CloseButton = false;
+            }
+           if( m_App->m_GUIRenderer->Button({ 0.5f,-0.21f }, { 0.0f,0.5f,0.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, false) ){
+                std::cout << "Antras\n";
+                *CloseButton = false;
+
+            }
+
+        }
+
+       
+
+
     }
 private:
 };
