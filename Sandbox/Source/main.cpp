@@ -11,28 +11,13 @@ public:
 
     }
     void OnUpdate(double deltatime)override {
-        //m_App->m_Renderer->DrawQuad({ 0.0f,0.0f,0.0f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.10f,0.1f }, nullptr, 6);
     }
     void OnDestroy()override {
 
     }
     void OnGUI()override {
     
-        bool* CloseButton{};
-
-        if (m_App->m_GUIRenderer->Button({ 0.5f,0.0f }, { 0.0f,1.0f,0.0f,1.0f }, { 0.2f,0.2f }, MouseCodes::RIGHT,true, &CloseButton)) {
-            if(m_App->m_GUIRenderer->Button({ 0.5f,0.0f }, { 0.0f,0.5f,0.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT,false)) {
-                std::cout << "Pirmas\n";
-                *CloseButton = false;
-            }
-           if( m_App->m_GUIRenderer->Button({ 0.5f,-0.21f }, { 0.0f,0.5f,0.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, false) ){
-                std::cout << "Antras\n";
-                *CloseButton = false;
-
-            }
-
-        }
-
+       
        
 
 

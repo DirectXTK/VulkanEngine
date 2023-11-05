@@ -45,8 +45,6 @@
  }
 
  void Application::Run(){
-     Camera2D guicamera{};
-     guicamera.Init({ 0.0f,0.0f }, { 1.0f,1.0f });
     while(!glfwWindowShouldClose(m_Window->GetHandle())){
         
         m_DeltaTime = Time::GetTimeMs() - m_LastFrameTime;
@@ -55,10 +53,10 @@
         m_GUIRenderer->BeginGUI();
 
         m_LayerController.UpdateLayers(m_DeltaTime);
-        m_LayerController.UpdateGUILayers();
         
         m_Renderer->EndFrame();
 
+        m_LayerController.UpdateGUILayers();
       
         m_InputSystem.ResetInput();
         glfwSwapBuffers(m_Window->GetHandle());
