@@ -1,5 +1,8 @@
 #define DEMO_FEATURES
 #include "Testing/TestingLayer.h"
+#include "Testing/GUITesting.h"
+#include "Testing/SerializationTesting.h"
+
 #include "Utils.h"
 
 class SandboxLayer :public Layer {
@@ -32,8 +35,8 @@ int main() {
     specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
 
     Application app(specs);
-    app.AddLayer(new TestingLayer());
-    app.AddLayer(new SandboxLayer());
+    app.AddLayer(new SerializationTestingLayer());
+    //app.AddLayer(new SandboxLayer());
     app.Run();
   
 
