@@ -11,7 +11,7 @@
 
      m_Window = new Window(specs.WindowWidth, specs.WindowHeight, specs.WindowTitle);
      RendererDesc desc{};
-     desc.VertexCountPerDrawCall = 4 * 10000;
+     desc.VertexCountPerDrawCall = 4 * 10;
      desc.ClearColor = specs.ClearColor;
 
 
@@ -53,10 +53,10 @@
         m_GUIRenderer->BeginGUI();
 
         m_LayerController.UpdateLayers(m_DeltaTime);
-        
+        m_LayerController.UpdateGUILayers();
+
         m_Renderer->EndFrame();
 
-        m_LayerController.UpdateGUILayers();
       
         m_InputSystem.ResetInput();
         glfwSwapBuffers(m_Window->GetHandle());
