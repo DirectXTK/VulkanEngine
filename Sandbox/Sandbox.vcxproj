@@ -96,10 +96,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Testing\SerializationTesting.cpp" />
-    <ClCompile Include="Source\Testing\GUITesting.cpp" />
+    <ClCompile Include="Examples\Testing\SerializationTesting.cpp" />
+    <ClCompile Include="Examples\Testing\GUITesting.cpp" />
     <ClCompile Include="Source\main.cpp" />
-    <ClCompile Include="Source\Testing\TestingLayer.cpp" />
+    <ClCompile Include="Examples\Testing\TestingLayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Renderer\Renderer.vcxproj">
@@ -110,9 +110,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Testing\SerializationTesting.h" />
-    <ClInclude Include="Source\Testing\GUITesting.h" />
-    <ClInclude Include="Source\Testing\TestingLayer.h" />
+    <ClInclude Include="Examples\Testing\SerializationTesting.h" />
+    <ClInclude Include="Examples\Testing\GUITesting.h" />
+    <ClInclude Include="Examples\Testing\TestingLayer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

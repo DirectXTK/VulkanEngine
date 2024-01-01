@@ -1,8 +1,7 @@
 #define DEMO_FEATURES
-#include "Testing/TestingLayer.h"
-#include "Testing/GUITesting.h"
-#include "Testing/SerializationTesting.h"
-
+#include "..//Examples/Testing/GUITesting.h"
+#include "..//Examples/Testing/SerializationTesting.h"
+#include "..//Examples/Testing/TestingLayer.h"
 #include "Utils.h"
 
 class SandboxLayer :public Layer {
@@ -28,17 +27,6 @@ public:
 private:
 };
 int main() {
-    ApplicationSpecs specs{};
-    specs.WindowWidth = 500;
-    specs.WindowHeight = 500;
-    specs.WindowTitle = "Vulkan";
-    specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
-
-    Application app(specs);
-    app.AddLayer(new SerializationTestingLayer());
-    //app.AddLayer(new SandboxLayer());
-    app.Run();
-  
 
 
 
