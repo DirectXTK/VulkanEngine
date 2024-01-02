@@ -13,6 +13,7 @@ protected:
     Layer(std::string name);
 
     std::string m_LayerName{};
+public:
     Application* m_App{};
 };
 class LayerController{
