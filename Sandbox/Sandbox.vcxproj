@@ -66,7 +66,7 @@
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\Libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -96,10 +96,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Examples\Testing\SerializationTesting.cpp" />
     <ClCompile Include="Examples\Testing\GUITesting.cpp" />
-    <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Examples\Testing\SerializationTesting.cpp" />
     <ClCompile Include="Examples\Testing\TestingLayer.cpp" />
+    <ClCompile Include="Source\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Renderer\Renderer.vcxproj">
@@ -110,8 +110,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Examples\Testing\SerializationTesting.h" />
     <ClInclude Include="Examples\Testing\GUITesting.h" />
+    <ClInclude Include="Examples\Testing\SerializationTesting.h" />
     <ClInclude Include="Examples\Testing\TestingLayer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

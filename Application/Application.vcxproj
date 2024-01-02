@@ -99,6 +99,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Source\AppCore.h" />
+    <ClInclude Include="Source\AppTime.h" />
     <ClInclude Include="Source\Application.h" />
     <ClInclude Include="Source\Event.h" />
     <ClInclude Include="Source\InputSystem.h" />
@@ -108,9 +109,9 @@
     <ClInclude Include="Source\Serializer.h" />
     <ClInclude Include="Source\Utils.h" />
     <ClInclude Include="Source\Window.h" />
-    <ClInclude Include="Source\AppTime.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\AppTime.cpp" />
     <ClCompile Include="Source\Application.cpp" />
     <ClCompile Include="Source\Event.cpp" />
     <ClCompile Include="Source\InputSystem.cpp" />
@@ -119,7 +120,6 @@
     <ClCompile Include="Source\RandomGenerator.cpp" />
     <ClCompile Include="Source\Serializer.cpp" />
     <ClCompile Include="Source\Window.cpp" />
-    <ClCompile Include="Source\AppTime.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Renderer\Renderer.vcxproj">

@@ -16,7 +16,7 @@ project "Renderer"
     }
 
     includedirs{
-      "%{wks.location}/Application/Source/",
+      "%{prj.location}/../Application/Source/",
       "%{wks.location}/Include/",
       "%{wks.location}/Include/vulkan/",
 
