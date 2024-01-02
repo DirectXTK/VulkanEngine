@@ -1,5 +1,5 @@
 #include "RandomGenerator.h"
-
+#include <random>
 std::random_device rd;
 std::mt19937 engine(rd());
 float Core::RandomFloat(float Min, float Max)

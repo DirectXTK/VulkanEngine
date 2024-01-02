@@ -1,5 +1,5 @@
 #pragma once
-#include "AppCore.h"
+#include <stdint.h>
 namespace Core {
 
 	float RandomFloat(float Min, float Max);
