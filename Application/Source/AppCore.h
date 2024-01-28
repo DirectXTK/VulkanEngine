@@ -19,6 +19,7 @@
 enum class Format{INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE,CHAR,STRING};
 
 #define SEC(x) 1000*x
+#define DLLEXPORT __declspec(dllexport)
 
 struct GUUID {
     uint64_t ID{};

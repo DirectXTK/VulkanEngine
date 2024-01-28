@@ -2,6 +2,8 @@
 #include "..//Examples/Testing/GUITesting.h"
 #include "..//Examples/Testing/SerializationTesting.h"
 #include "..//Examples/Testing/TestingLayer.h"
+#include "..//Examples/Testing/DLLLoadingLayer.h"
+
 #include "Utils.h"
 
 class SandboxLayer :public Layer {
@@ -28,8 +30,12 @@ private:
 };
 int main() {
 
-
-
+    ApplicationSpecs specs{};
+    specs.ClearColor = { 0.5f,0.5,0.5f,0.0f };
+    specs.WindowTitle = "OPA";
+    Application app(specs);
+    app.AddLayer(new DLLLoadingLayer());
+    app.Run();
 
    
     return 1;
