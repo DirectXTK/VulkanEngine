@@ -33,7 +33,7 @@ int main() {
     specs.ClearColor = { 0.5f,0.5,0.5f,0.0f };
     specs.WindowTitle = "OPA";
     Application app(specs);
-    app.AddLayer(new DLLLoadingLayer());
+    app.AddLayer(new SerializationTestingLayer());
     app.Run();
 
    

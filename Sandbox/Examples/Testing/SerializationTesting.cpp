@@ -179,6 +179,10 @@ void SerializationTestingLayer::Load()
     for (uint32_t i = 0; i < NumOfUnits; i++) {
         m_Units[i] = units[i];
     }
+    std::string TRAITS[5];
+    for (int i = 0; i < 5; i++) {
+        TRAITS[i]=m_Units[0].Traits[i];
+    }
 }
 
 void MakeUnitRandom(Unit* unit)
