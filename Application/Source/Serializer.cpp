@@ -250,62 +250,70 @@ void Serializer::FillContainerWithData(char* Data, uint64_t*DataOffset, std::str
 	//	*str = std::string();
 	//	*str = line;
 		//memcpy(Data + *DataOffset, line.data(), line.size());
-		*DataOffset += sizeof(std::string);
+		*DataOffset += format.Offset;
 		break;
 	}
 	case Format::UINT16: {
 		uint16_t converteddata = std::stoul(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(uint16_t));
-		*DataOffset += sizeof(uint16_t);
+		*DataOffset += format.Offset;
+
 
 		break;
 	}
 	case Format::UINT32: {
 		uint32_t converteddata = std::stoul(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(uint32_t));
-		*DataOffset += sizeof(uint32_t);
+		*DataOffset += format.Offset;
+
 
 		break;
 	}
 	case Format::UINT64: {
 		uint64_t converteddata = std::stoull(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(uint64_t));
-		*DataOffset += sizeof(uint64_t);
+		*DataOffset += format.Offset;
+
 
 		break;
 	}
 	case Format::INT16: {
 		int16_t converteddata = std::stoi(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(int16_t));
-		*DataOffset += sizeof(int16_t);
+		*DataOffset += format.Offset;
+
 
 		break;
 	}
 	case Format::INT32: {
 		int32_t converteddata = std::stoi(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(int32_t));
-		*DataOffset += sizeof(int32_t);
+		*DataOffset += format.Offset;
+
 
 		break;
 	}
 	case Format::INT64: {
 		int64_t converteddata = std::stoll(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(uint64_t));
-		*DataOffset += sizeof(int64_t);
+		*DataOffset += format.Offset;
+
 
 		break;
 	}
 	case Format::FLOAT: {
 		float converteddata = std::stof(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(float));
-		*DataOffset += sizeof(float);
+		*DataOffset += format.Offset;
+
 
 		break;
 	}
 	case Format::DOUBLE: {
 		double converteddata = std::stod(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(double));
-		*DataOffset += sizeof(double);
+		*DataOffset += format.Offset;
+
 
 		break;
 	}
@@ -314,7 +322,8 @@ void Serializer::FillContainerWithData(char* Data, uint64_t*DataOffset, std::str
 			break;
 		char converteddata = line[0];
 		memcpy(Data + *DataOffset, &converteddata, sizeof(char));
-		*DataOffset += sizeof(char);
+		*DataOffset += format.Offset;
+
 
 		break;
 	}
