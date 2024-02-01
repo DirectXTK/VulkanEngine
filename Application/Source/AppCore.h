@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <thread>
 #include <queue>
+#include <limits>
 
 #include "RandomGenerator.h"
 #include "AppTime.h"

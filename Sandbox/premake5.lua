@@ -19,17 +19,16 @@ project "Sandbox"
     }
 
     includedirs{
-      "%{wks.location}/Include",
+      "%{prj.location}/..//Include",
 
-      "%{wks.location}/Include/vulkan/",
-      "%{wks.location}/Renderer/Source/",
-      "%{wks.location}/Include/",
-      "%{wks.location}/Application/Source/"
+      "%{prj.location}/../Include/vulkan/",
+      "%{prj.location}/../Renderer/Source/",
+      "%{prj.location}/../Application/Source/"
 
     }
 
     libdirs{
-        "%{wks.location}/Libs"
+        "%{prj.location}/../Libs"
     }
 
     defines{

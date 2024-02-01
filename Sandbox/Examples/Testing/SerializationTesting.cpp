@@ -194,7 +194,7 @@ void MakeUnitRandom(Unit* unit)
     for (int i = 0; i < TraitCount; i++) {
         unit->Traits[i] = std::string();
         unit->Traits[i] = TRAITS[Core::RandomUInt32(0, 8)];
-        unit->ID = Core::RandomUInt64(0, std::numeric_limits<uint64_t>::max());
+        unit->ID = Core::RandomUInt64(0, (std::numeric_limits<uint64_t>::max)());
     }
     
 

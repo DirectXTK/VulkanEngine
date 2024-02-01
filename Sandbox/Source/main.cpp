@@ -29,7 +29,6 @@ public:
 private:
 };
 int main() {
-
     ApplicationSpecs specs{};
     specs.ClearColor = { 0.5f,0.5,0.5f,0.0f };
     specs.WindowTitle = "OPA";

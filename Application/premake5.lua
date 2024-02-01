@@ -18,15 +18,14 @@ project "Application"
     }
 
     includedirs{
-      "%{wks.location}/Include",
+      "%{prj.location}/../Include",
 
-      "%{wks.location}/Include/vulkan/",
-      "%{wks.location}/Include/",
-      "%{wks.location}/Renderer/Source/"
+      "%{prj.location}/../Include/vulkan/",
+      "%{prj.location}/../Renderer/Source/"
     }
 
     libdirs{
-        "%{wks.location}/Libs"
+        "%{prj.location}/../Libs"
     }
 
     defines{
