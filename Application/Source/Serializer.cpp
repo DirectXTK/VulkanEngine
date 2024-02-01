@@ -355,66 +355,84 @@ void Serializer::FillContainerWithDataDynamic(char* Data, uint64_t* Index, std::
 	}
 	case Format::UINT16: {
 		uint16_t converteddata = std::stoul(line);
-		memcpy(Data + *Index, &converteddata, sizeof(uint16_t));
-		*Index += sizeof(uint16_t);
+		uint16_t* dst{};
+		memcpy(&dst, Data, sizeof(void*));
+		dst[*Index] = converteddata;
 
 		break;
 	}
 	case Format::UINT32: {
 		uint32_t converteddata = std::stoul(line);
-		memcpy(Data + *Index, &converteddata, sizeof(uint32_t));
-		*Index += sizeof(uint32_t);
+		uint32_t* dst{};
+		memcpy(&dst, Data, sizeof(void*));
+		dst[*Index] = converteddata;
+
+		//*Index += sizeof(uint32_t);
 
 		break;
 	}
 	case Format::UINT64: {
 		uint64_t converteddata = std::stoull(line);
-		memcpy(Data + *Index, &converteddata, sizeof(uint64_t));
-		*Index += sizeof(uint64_t);
+		uint64_t* dst{};
+		memcpy(&dst, Data, sizeof(void*));
+		dst[*Index] = converteddata;
+
 
 		break;
 	}
 	case Format::INT16: {
 		int16_t converteddata = std::stoi(line);
-		memcpy(Data + *Index, &converteddata, sizeof(int16_t));
-		*Index += sizeof(int16_t);
+		int16_t* dst{};
+		memcpy(&dst, Data, sizeof(void*));
+		dst[*Index] = converteddata;
 
 		break;
 	}
 	case Format::INT32: {
 		int32_t converteddata = std::stoi(line);
-		memcpy(Data + *Index, &converteddata, sizeof(int32_t));
-		*Index += sizeof(int32_t);
+		int32_t* dst{};
+		memcpy(&dst, Data, sizeof(void*));
+		dst[*Index] = converteddata;
+
 
 		break;
 	}
 	case Format::INT64: {
 		int64_t converteddata = std::stoll(line);
-		memcpy(Data + *Index, &converteddata, sizeof(uint64_t));
-		*Index += sizeof(int64_t);
+		int64_t* dst{};
+		memcpy(&dst, Data, sizeof(void*));
+		dst[*Index] = converteddata;
+
 
 		break;
 	}
 	case Format::FLOAT: {
 		float converteddata = std::stof(line);
-		memcpy(Data + *Index, &converteddata, sizeof(float));
-		*Index += sizeof(float);
+		float* dst{};
+		memcpy(&dst, Data, sizeof(void*));
+		dst[*Index] = converteddata;
+
 
 		break;
 	}
 	case Format::DOUBLE: {
 		double converteddata = std::stod(line);
-		memcpy(Data + *Index, &converteddata, sizeof(double));
-		*Index += sizeof(double);
+		double* dst{};
+		memcpy(&dst, Data, sizeof(void*));
+		dst[*Index] = converteddata;
+
 
 		break;
 	}
 	case Format::CHAR: {
 		if (line.size() == 0)
 			break;
-		char converteddata = line[0];
-		memcpy(Data + *Index, &converteddata, sizeof(char));
 		*Index += sizeof(char);
+		char converteddata = line[*Index];
+		char* dst{};
+		memcpy(&dst, Data, sizeof(void*));
+		dst[*Index] = converteddata;
+
 
 		break;
 	}
@@ -439,48 +457,48 @@ void Serializer::AllocateSpaceForDynamicArray(char* Data, uint32_t NumOffAlloc,u
 		break;
 	}
 	case Format::UINT16: {
-		std::string* address = (std::string*)(Data + *Offset);
-		address = new std::string[NumOffAlloc];
+		uint16_t* temp = new uint16_t[NumOffAlloc];
+		memcpy((Data + *Offset), &temp, sizeof(uint16_t*));
 		break;
 	}
 	case Format::UINT32: {
-		std::string* address = (std::string*)(Data + *Offset);
-		address = new std::string[NumOffAlloc];
+		uint32_t* temp = new uint32_t[NumOffAlloc];
+		memcpy((Data + *Offset), &temp, sizeof(uint32_t*));
 		break;
 	}
 	case Format::UINT64: {
-		std::string* address = (std::string*)(Data + *Offset);
-		address = new std::string[NumOffAlloc];
+		uint64_t* temp = new uint64_t[NumOffAlloc];
+		memcpy((Data + *Offset), &temp, sizeof(uint64_t*));
 		break;
 	}
 	case Format::INT16: {
-		std::string* address = (std::string*)(Data + *Offset);
-		address = new std::string[NumOffAlloc];
+		int16_t* temp = new int16_t[NumOffAlloc];
+		memcpy((Data + *Offset), &temp, sizeof(int16_t*));
 		break;
 	}
 	case Format::INT32: {
-		std::string* address = (std::string*)(Data + *Offset);
-		address = new std::string[NumOffAlloc];
+		int32_t* temp = new int32_t[NumOffAlloc];
+		memcpy((Data + *Offset), &temp, sizeof(int32_t*));
 		break;
 	}
 	case Format::INT64: {
-		std::string* address = (std::string*)(Data +*Offset);
-		address = new std::string[NumOffAlloc];
+		int64_t* temp = new int64_t[NumOffAlloc];
+		memcpy((Data + *Offset), &temp, sizeof(int64_t*));
 		break;
 	}
 	case Format::FLOAT: {
-		std::string* address = (std::string*)(Data + *Offset);
-		address = new std::string[NumOffAlloc];
+		float* temp = new float[NumOffAlloc];
+		memcpy((Data + *Offset), &temp, sizeof(float*));
 		break;
 	}
 	case Format::DOUBLE: {
-		std::string* address = (std::string*)(Data + *Offset);
-		address = new std::string[NumOffAlloc];
+		double* temp = new double[NumOffAlloc];
+		memcpy((Data + *Offset), &temp, sizeof(double*));
 		break;
 	}
 	case Format::CHAR: {
-		std::string* address = (std::string*)(Data + *Offset);
-		address = new std::string[NumOffAlloc];
+		char* temp = new char[NumOffAlloc];
+		memcpy((Data + *Offset), &temp, sizeof(char*));
 		break;
 	}
 

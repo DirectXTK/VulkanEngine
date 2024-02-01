@@ -19,6 +19,8 @@ struct Unit {
     uint32_t TraitCount{};
     uint64_t ID{};
     std::string Name{};
+    uint32_t* Index{};
+    uint32_t IndexCount{};
 };
 SerializationTestingLayer::SerializationTestingLayer() : Layer("SerializationTestingLayer")
 {
@@ -152,13 +154,14 @@ void SerializationTestingLayer::Save()
     {"TraitCount=",Format::UINT32,1,",",offsetof(Unit,TraitCount) },
     {"GUUID=",Format::UINT64,1,",",offsetof(Unit,ID) },
     {"Name=",Format::STRING,1,",",offsetof(Unit,Name) },
-
+    {"Index=",Format::UINT32,-1,",",offsetof(Unit,Index) },
+    {"IndexCount=",Format::UINT32,1,",",offsetof(Unit,IndexCount) },
     };
 
     SerializerClassDesc desc{ "Unit",sizeof(Unit)," ","" };
     Serializer serializer;
     serializer.StartSaving("C:\\Users\\jasiu\\Desktop\\TestingSave.txt");
-    serializer.Save(m_Units.data(), m_Units.size(), format, 6, &desc);
+    serializer.Save(m_Units.data(), m_Units.size(), format, 8, &desc);
     serializer.StopSaving();
 }
 
@@ -192,6 +195,11 @@ void MakeUnitRandom(Unit* unit)
     unit->Name = "MAKINGTHESTRINGLONGSOOTODISABLETHESMALLSTRINGOPTIMIZATION";
     uint32_t TraitCount = Core::RandomUInt32(0, 8);
     unit->TraitCount = TraitCount;
+    unit->IndexCount = 5;
+    unit->Index = new uint32_t[unit->IndexCount];
+    for (uint32_t i = 0; i < unit->IndexCount; i++) {
+        unit->Index[i] = i * 5;
+    }
     if (TraitCount == 0)
         return;
     unit->Traits = new std::string[TraitCount];
