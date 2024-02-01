@@ -191,9 +191,12 @@ void* Serializer::Load(uint64_t* Out_DataCount)
 				//Dynamic 
 				uint32_t formatCountDynamic{};
 				uint64_t OldOffset{Offset};
+				//Padding prefixes sufixes
+				uint32_t ExtraSize = classdesc.MemberPrefix.size() + classdesc.MemberSuffix.size();
 				Offset = m_InputData.find("\n", Offset) + 1;
+
 				line = m_InputData.substr(Offset, m_InputData.find("\n", Offset) - Offset);
-				formatCountDynamic = std::stoi(line.substr(formats[j+1].keyword.size()+1,line.find("\n")- formats[j + 1].keyword.size()));
+				formatCountDynamic = std::stoi(line.substr(formats[j + 1].keyword.size() + ExtraSize, line.find("\n") - formats[j + 1].keyword.size() + ExtraSize));
 				Offset = OldOffset;
 
 				AllocateSpaceForDynamicArray(Data,formatCountDynamic,&DataOffset,formats[j].format);
