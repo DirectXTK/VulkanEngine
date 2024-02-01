@@ -212,7 +212,6 @@ void* Serializer::Load(uint64_t* Out_DataCount)
 						Offset = m_InputData.find(formats[j].PaddingBetweenCount, Offset) + 1;
 						//return Data;
 					}
-					ArrayIndex++;
 				}
 				if(formatCountDynamic ==0)
 				Offset = m_InputData.find("\n", Offset) + 1;
