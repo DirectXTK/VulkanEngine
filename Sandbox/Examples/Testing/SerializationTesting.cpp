@@ -21,6 +21,9 @@ struct Unit {
     std::string Name{};
     uint32_t* Index{};
     uint32_t IndexCount{};
+    void** Data{};
+    Format* Formats{};
+    uint32_t FormatCount{};
 };
 SerializationTestingLayer::SerializationTestingLayer() : Layer("SerializationTestingLayer")
 {
@@ -143,6 +146,77 @@ void SerializationTestingLayer::OnDestroy()
 {
 }
 
+void SerializationTestingLayer::AllocSpaceAndFillData(void** DataPtr,Format format,uint32_t Index)
+{
+    switch (format) {
+    case Format::STRING: {
+        DataPtr[Index] = new std::string();
+        *(std::string*)DataPtr[Index] = "LafaTafa";
+        break;
+    }
+    case Format::UINT16: {
+        DataPtr[Index] = new uint16_t();
+        *(uint16_t*)DataPtr[Index] = 16;
+
+        break;
+    }
+    case Format::UINT32: {
+        DataPtr[Index] = new uint32_t();
+        *(uint32_t*)DataPtr[Index] = 32;
+
+        break;
+    }
+    case Format::UINT64: {
+        DataPtr[Index] = new uint64_t();
+        *(uint64_t*)DataPtr[Index] = 64;
+
+        break;
+    }
+    case Format::INT16: {
+        DataPtr[Index] = new int16_t();
+        *(int16_t*)DataPtr[Index] = -16;
+
+        break;
+    }
+    case Format::INT32: {
+        DataPtr[Index] = new uint32_t();
+        *(uint32_t*)DataPtr[Index] = -32;
+
+        break;
+    }
+    case Format::INT64: {
+        DataPtr[Index] = new uint64_t();
+        *(uint64_t*)DataPtr[Index] = -64;
+
+        break;
+    }
+    case Format::FLOAT: {
+        DataPtr[Index] = new float();
+        *(float*)DataPtr[Index] = 64.4;
+
+        break;
+    }
+    case Format::DOUBLE: {
+        DataPtr[Index] = new double();
+        *(double*)DataPtr[Index] = 64.44;
+
+        break;
+    }
+    case Format::CHAR: {
+        DataPtr[Index] = new char();
+        *(char*)DataPtr[Index] = 'C';
+
+        break;
+    }
+
+
+    default: {
+        std::cout << "No such format\n";
+        return;
+    }
+    }
+}
+
 void SerializationTestingLayer::Save()
 {
    
@@ -156,12 +230,16 @@ void SerializationTestingLayer::Save()
     {"Name=",Format::STRING,1,",",offsetof(Unit,Name) },
     {"Index=",Format::UINT32,-1,",",offsetof(Unit,Index) },
     {"IndexCount=",Format::UINT32,1,",",offsetof(Unit,IndexCount) },
+    {"Data=",Format::FORMAT,-1,",",offsetof(Unit,Data) },
+    {"Formats=",Format::UINT32,-1,",",offsetof(Unit,Formats) },
+    {"FormatCount=",Format::UINT32,1,",",offsetof(Unit,FormatCount) },
+
     };
 
     SerializerClassDesc desc{ "Unit",sizeof(Unit)," ","" };
     Serializer serializer;
     serializer.StartSaving("C:\\Users\\jasiu\\Desktop\\TestingSave.txt");
-    serializer.Save(m_Units.data(), m_Units.size(), format, 8, &desc);
+    serializer.Save(m_Units.data(), m_Units.size(), format, ARRAYSIZE(format), &desc);
     serializer.StopSaving();
 }
 
@@ -182,13 +260,12 @@ void SerializationTestingLayer::Load()
     for (uint32_t i = 0; i < NumOfUnits; i++) {
         m_Units[i] = units[i];
     }
-    std::string TRAITS[5];
-    for (int i = 0; i < 5; i++) {
-        TRAITS[i]=m_Units[0].Traits[i];
-    }
+  
+
+
 }
 
-void MakeUnitRandom(Unit* unit)
+void SerializationTestingLayer::MakeUnitRandom(Unit* unit)
 {
     unit->Position = { Core::RandomFloat(-1.0,1.0f),Core::RandomFloat(-1.0,1.0f) };
     unit->Color = { Core::RandomFloat(0.0,1.0f),Core::RandomFloat(0.0,1.0f),Core::RandomFloat(0.0,1.0f) };
@@ -197,6 +274,26 @@ void MakeUnitRandom(Unit* unit)
     unit->TraitCount = TraitCount;
     unit->IndexCount = 5;
     unit->Index = new uint32_t[unit->IndexCount];
+
+    unit->FormatCount = Core::RandomUInt32(0, 8);
+    unit->Formats = new Format[unit->FormatCount];
+    unit->Data = new void* [unit->FormatCount];
+
+    for (uint32_t i = 0; i < unit->FormatCount; i++) {
+
+    unit->Formats[i] = (Format)Core::RandomUInt32(1,10);
+    AllocSpaceAndFillData(unit->Data, unit->Formats[i], i);
+
+    }
+
+
+    
+   
+
+
+
+
+
     for (uint32_t i = 0; i < unit->IndexCount; i++) {
         unit->Index[i] = i * 5;
     }

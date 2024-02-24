@@ -33,11 +33,18 @@ public:
 	 ~Serializer();
 private:
 	void FillContainerWithData(char* Data, uint64_t*DataOffset, std::string line, SerializerFormat format);
-	void FillContainerWithDataDynamic(char* Data, uint64_t* DataOffset, std::string line, Format format);
+	void FillContainerWithDataDynamic(char* Data, uint64_t* DataOffset,  uint64_t ArraySize ,std::string line, Format format);
+	void FillContainerWithDataDynamicCustomData(char* Data, uint64_t* DataOffset, uint64_t ArraySize, std::string line, Format format);
 
+
+	void GetDynamicFormats(std::string* line, SerializerFormat format, Format* formats, uint32_t FormatCount);
 	void AllocateSpaceForDynamicArray(char* Data, uint32_t NumOffAlloc, uint64_t* Offset, Format format);
+	void AllocateSpaceForDynamicArrayCustomFormat(char* Member, uint32_t NumOffAlloc, uint64_t* Offset, Format* format);
+	
 
 	void DynamicArrayType(void* data, uint32_t Offset, Format format, uint32_t Index);
+	void DynamicArrayTypePP(void* data, uint32_t Offset, Format format, uint32_t Index);
+
 	void StackArrayType(void* data, uint32_t Offset, Format format, uint32_t Index);
 	SerializerFormat* m_Formats{};
 	uint32_t m_FormatCount{};

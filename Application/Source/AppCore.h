@@ -17,7 +17,8 @@
 #include "RandomGenerator.h"
 #include "AppTime.h"
 
-enum class Format{INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE,CHAR,STRING};
+//Format means any format
+enum class Format{NULLFORMAT,INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE,CHAR,STRING,FORMAT};
 
 #define SEC(x) 1000*x
 #define DLLEXPORT __declspec(dllexport)

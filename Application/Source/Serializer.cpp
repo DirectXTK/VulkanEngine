@@ -45,7 +45,10 @@ void Serializer::Save(void* data,uint32_t DataCount, SerializerFormat* formats,u
 			Offset = format->Offset + d * classdesc->Stride;
 
 			if (variablecount == -1) {
-				variablecount = *(int64_t*)((char*)data + Offset + formats[j + 1].Offset-format->Offset);
+				if(format->format == Format::FORMAT)
+					variablecount = *(int64_t*)((char*)data + Offset + formats[j + 2].Offset - format->Offset);
+				else
+					variablecount = *(int64_t*)((char*)data + Offset + formats[j + 1].Offset-format->Offset);
 			}
 
 				m_OutputFile << classdesc->MemberPrefix << format->keyword;
@@ -53,10 +56,25 @@ void Serializer::Save(void* data,uint32_t DataCount, SerializerFormat* formats,u
 				if (i != 0)
 					m_OutputFile << format->PaddingBetweenCount;
 
-				if (format->count == -1)
-					DynamicArrayType(data, Offset, format->format, i);
-				else
+				if (format->count == -1) {
+					Format currentFormat = format->format;
+					if (currentFormat == Format::FORMAT)
+					{
+						uint64_t address = *(uint64_t*)((char*)data + Offset+ formats[j + 1].Offset- format->Offset);
+						currentFormat = ((Format*)address)[i];
+						DynamicArrayTypePP(data, Offset, currentFormat, i);
+
+					}
+					else {
+						DynamicArrayType(data, Offset, currentFormat, i);
+
+					}
+
+				}
+				else {
+
 					StackArrayType(data, Offset, format->format, i);
+				}
 
 
 
@@ -188,37 +206,80 @@ void* Serializer::Load(uint64_t* Out_DataCount)
 					}
 				}
 			else {
-				//Dynamic 
-				uint32_t formatCountDynamic{};
-				uint64_t OldOffset{Offset};
-				//Padding prefixes sufixes
-				uint32_t ExtraSize = classdesc.MemberPrefix.size() + classdesc.MemberSuffix.size();
-				Offset = m_InputData.find("\n", Offset) + 1;
+				//Dynamic format
+				if (formats[j].format == Format::FORMAT) {
+					uint32_t formatCountDynamic{};
+					Format* dynamicformats{};
+					std::string formatline{};
+					uint64_t OldOffset{ Offset };
+					//Padding prefixes sufixes
+					uint32_t ExtraSize = classdesc.MemberPrefix.size() + classdesc.MemberSuffix.size();
 
-				line = m_InputData.substr(Offset, m_InputData.find("\n", Offset) - Offset);
-				formatCountDynamic = std::stoi(line.substr(formats[j + 1].keyword.size() + ExtraSize, line.find("\n") - formats[j + 1].keyword.size() + ExtraSize));
-				Offset = OldOffset;
+					Offset = m_InputData.find("\n", Offset) + 1;
+					formatline = m_InputData.substr(Offset, m_InputData.find("\n", Offset) - Offset);
 
-				AllocateSpaceForDynamicArray(Data,formatCountDynamic,&DataOffset,formats[j].format);
+					Offset = m_InputData.find("\n", Offset) + 1;
 
-					uint64_t ArrayIndex{};
-				for (uint32_t d = 0; d < formatCountDynamic; d++) {
 
-					if (d == formatCountDynamic-1) {
-						line = m_InputData.substr(Offset, m_InputData.find("\n", Offset) - Offset);
-						FillContainerWithDataDynamic((Data+DataOffset), &ArrayIndex, line, formats[j].format);
+					line = m_InputData.substr(Offset, m_InputData.find("\n", Offset) - Offset);
+					formatCountDynamic = std::stoi(line.substr(formats[j + 2].keyword.size() + ExtraSize, line.find("\n") - formats[j + 2].keyword.size() + ExtraSize));
+					dynamicformats = new Format[formatCountDynamic];
+					Offset = OldOffset;
+
+					GetDynamicFormats(&formatline,formats[j+1], dynamicformats,formatCountDynamic);
+					AllocateSpaceForDynamicArrayCustomFormat((Data+DataOffset), formatCountDynamic, &DataOffset, dynamicformats);
+
+					for (uint64_t d = 0; d < formatCountDynamic; d++) {
+
+						if (d == formatCountDynamic - 1) {
+							line = m_InputData.substr(Offset, m_InputData.find("\n", Offset) - Offset);
+							FillContainerWithDataDynamicCustomData((Data + DataOffset), &d, formatCountDynamic, line,dynamicformats[d]);
+							Offset = m_InputData.find("\n", Offset) + 1;
+						}
+						else {
+							line = m_InputData.substr(Offset, m_InputData.find(formats[j].PaddingBetweenCount, Offset) - Offset);
+							FillContainerWithDataDynamicCustomData((Data + DataOffset), &d, formatCountDynamic, line, dynamicformats[d]);
+						
+							Offset = m_InputData.find(formats[j].PaddingBetweenCount, Offset) + 1;
+							//return Data;
+						}
+					}
+					if (formatCountDynamic == 0)
 						Offset = m_InputData.find("\n", Offset) + 1;
-					}
-					else {
-						line = m_InputData.substr(Offset, m_InputData.find(formats[j].PaddingBetweenCount, Offset) - Offset);
-						FillContainerWithDataDynamic((Data + DataOffset), &ArrayIndex, line, formats[j].format);
-						Offset = m_InputData.find(formats[j].PaddingBetweenCount, Offset) + 1;
-						ArrayIndex++;
-						//return Data;
-					}
+
 				}
-				if(formatCountDynamic ==0)
-				Offset = m_InputData.find("\n", Offset) + 1;
+				else {
+
+					//Dynamic 
+					uint32_t formatCountDynamic{};
+					uint64_t OldOffset{ Offset };
+					//Padding prefixes sufixes
+					uint32_t ExtraSize = classdesc.MemberPrefix.size() + classdesc.MemberSuffix.size();
+					Offset = m_InputData.find("\n", Offset) + 1;
+
+					line = m_InputData.substr(Offset, m_InputData.find("\n", Offset) - Offset);
+					formatCountDynamic = std::stoi(line.substr(formats[j + 1].keyword.size()+ ExtraSize, line.find("\n") - formats[j + 1].keyword.size()+ ExtraSize));
+					Offset = OldOffset;
+
+					AllocateSpaceForDynamicArray(Data, formatCountDynamic, &DataOffset, formats[j].format);
+
+					for (uint64_t d = 0; d < formatCountDynamic; d++) {
+
+						if (d == formatCountDynamic - 1) {
+							line = m_InputData.substr(Offset, m_InputData.find("\n", Offset) - Offset);
+							FillContainerWithDataDynamic((Data + DataOffset), &d,1, line, formats[j].format);
+							Offset = m_InputData.find("\n", Offset) + 1;
+						}
+						else {
+							line = m_InputData.substr(Offset, m_InputData.find(formats[j].PaddingBetweenCount, Offset) - Offset);
+							FillContainerWithDataDynamic((Data + DataOffset), &d,1, line, formats[j].format);
+							Offset = m_InputData.find(formats[j].PaddingBetweenCount, Offset) + 1;
+							//return Data;
+						}
+					}
+					if (formatCountDynamic == 0)
+						Offset = m_InputData.find("\n", Offset) + 1;
+				}
 			}
 		}
 
@@ -339,7 +400,7 @@ void Serializer::FillContainerWithData(char* Data, uint64_t*DataOffset, std::str
 	}
 }
 
-void Serializer::FillContainerWithDataDynamic(char* Data, uint64_t* Index, std::string line, Format format)
+void Serializer::FillContainerWithDataDynamic(char* Data, uint64_t* Index,uint64_t ArraySize, std::string line, Format format)
 {
 	switch (format) {
 	case Format::STRING: {
@@ -392,6 +453,7 @@ void Serializer::FillContainerWithDataDynamic(char* Data, uint64_t* Index, std::
 		int32_t converteddata = std::stoi(line);
 		int32_t* dst{};
 		memcpy(&dst, Data, sizeof(void*));
+		//*(int32_t*)Data[*Index] = converteddata;
 		dst[*Index] = converteddata;
 
 
@@ -409,7 +471,7 @@ void Serializer::FillContainerWithDataDynamic(char* Data, uint64_t* Index, std::
 	case Format::FLOAT: {
 		float converteddata = std::stof(line);
 		float* dst{};
-		memcpy(&dst, Data, sizeof(void*));
+		memcpy(&dst, Data, sizeof(void*)* ArraySize);
 		dst[*Index] = converteddata;
 
 
@@ -442,6 +504,128 @@ void Serializer::FillContainerWithDataDynamic(char* Data, uint64_t* Index, std::
 		std::cout << "No such format\n";
 		return;
 	}
+	}
+}
+
+void Serializer::FillContainerWithDataDynamicCustomData(char* Data, uint64_t* Index, uint64_t ArraySize, std::string line, Format format)
+{
+	void** ArrayPtr = (void**)Data;
+	void** dst = (void**)*ArrayPtr;
+	switch (format) {
+	case Format::STRING: {
+
+		std::string* Member = (std::string*)dst[*Index];
+		*Member = line;
+		break;
+	}
+	case Format::UINT16: {
+		uint16_t converteddata = std::stoul(line);
+		uint16_t* Member = (uint16_t*)dst[*Index];
+		*Member = converteddata;
+
+		break;
+	}
+	case Format::UINT32: {
+		uint32_t converteddata = std::stoul(line);
+		uint32_t* Member = (uint32_t*)dst[*Index];
+		*Member = converteddata;
+
+		//*Index += sizeof(uint32_t);
+
+		break;
+	}
+	case Format::UINT64: {
+		uint64_t converteddata = std::stoull(line);
+		uint64_t* Member = (uint64_t*)dst[*Index];
+		*Member = converteddata;
+
+
+		break;
+	}
+	case Format::INT16: {
+		int16_t converteddata = std::stoi(line);
+		int16_t* Member = (int16_t*)dst[*Index];
+		*Member = converteddata;
+
+		break;
+	}
+	case Format::INT32: {
+		int32_t converteddata = std::stoi(line);
+		uint32_t* Member = (uint32_t*)dst[*Index];
+		*Member = converteddata;
+		//memcpy(&dst, ((void**)Data)[*Index], sizeof(void*));
+		//*(int32_t*)Data[*Index] = converteddata;
+
+
+		break;
+	}
+	case Format::INT64: {
+		int64_t converteddata = std::stoll(line);
+		int64_t* Member = (int64_t*)dst[*Index];
+		*Member = converteddata;
+
+
+		break;
+	}
+	case Format::FLOAT: {
+		float converteddata = std::stof(line);
+		float* Member = (float*)dst[*Index];
+		*Member = converteddata;
+		//memcpy(&dst, ((void**)Data)[*Index], sizeof(void*));
+		//*(int32_t*)Data[*Index] = converteddata;
+
+
+
+
+		break;
+	}
+	case Format::DOUBLE: {
+		double converteddata = std::stod(line);
+		double* Member = (double*)dst[*Index];
+		*Member = converteddata;
+
+
+		break;
+	}
+	case Format::CHAR: {
+		if (line.size() == 0)
+			break;
+		char converteddata = line[0];
+		char* Member = (char*)dst[*Index];
+		*Member = converteddata;
+
+
+		break;
+	}
+
+
+	default: {
+		std::cout << "No such format\n";
+		return;
+	}
+	}
+}
+
+void Serializer::GetDynamicFormats(std::string* line, SerializerFormat format, Format* formats,uint32_t FormatCount)
+{
+
+
+	std::string temp = *line;
+	uint32_t Offset{};
+		Offset = format.keyword.size() + 1;
+	for (uint32_t d = 0; d < FormatCount; d++) {
+		if (d == FormatCount - 1) {
+			temp = line->substr(Offset, line->find("\n", Offset) - Offset);
+			uint32_t converteddata = std::stoul(temp);
+			formats[d] = (Format)converteddata;
+		}
+		else {
+			temp = line->substr(Offset, line->find(format.PaddingBetweenCount, Offset) - Offset);
+			uint32_t converteddata = std::stoul(temp);
+			formats[d] = (Format)converteddata;
+			//return Data;
+		}
+		Offset += line->find(format.PaddingBetweenCount,Offset)-Offset+1;
 	}
 }
 
@@ -511,6 +695,80 @@ void Serializer::AllocateSpaceForDynamicArray(char* Data, uint32_t NumOffAlloc,u
 	}
 }
 
+void Serializer::AllocateSpaceForDynamicArrayCustomFormat(char* member, uint32_t NumOffAlloc, uint64_t* Offset, Format* format)
+{
+	void** address = (void**)member;
+	*address = new void* [NumOffAlloc];
+	void** arrayres = (void**)*address;
+
+
+	for (uint32_t i = 0; i < NumOffAlloc; i++) {
+
+
+		switch (format[i]) {
+		case Format::STRING: {
+			arrayres[i] = new std::string();
+			break;
+		}
+		case Format::UINT16: {
+			arrayres[i] = new uint16_t();
+
+			break;
+		}
+		case Format::UINT32: {
+
+			arrayres[i] = new uint32_t();
+
+			break;
+		}
+		case Format::UINT64: {
+			arrayres[i] = new uint64_t();
+
+			break;
+		}
+		case Format::INT16: {
+			arrayres[i] = new int16_t();
+
+			break;
+		}
+		case Format::INT32: {
+			arrayres[i] = new int32_t();
+
+			break;
+		}
+		case Format::INT64: {
+			arrayres[i] = new int64_t();
+
+			break;
+		}
+		case Format::FLOAT: {
+			arrayres[i] = new float();
+
+			break;
+		}
+		case Format::DOUBLE: {
+			arrayres[i] = new double();
+
+			break;
+		}
+		case Format::CHAR: {
+			arrayres[i] = new char();
+
+			break;
+		}
+
+
+
+		default: {
+			std::cout << "No such format\n";
+			return;
+		}
+		}
+
+
+	}
+}
+
 void Serializer::DynamicArrayType(void* data, uint32_t Offset, Format format, uint32_t Index)
 {
 	switch (format) {
@@ -564,6 +822,63 @@ void Serializer::DynamicArrayType(void* data, uint32_t Offset, Format format, ui
 		m_OutputFile << ((char*)address)[Index];
 		break;
 	}
+	
+
+
+
+	default: {
+		std::cout << "No such format\n";
+		break;
+	}
+	}
+}
+
+void Serializer::DynamicArrayTypePP(void* data, uint32_t Offset, Format format, uint32_t Index)
+{
+	uint64_t addressnumber = *(uint64_t*)((char*)data + Offset);
+	void* address = ((void**)addressnumber)[Index];
+	switch (format) {
+	case Format::STRING: {
+		m_OutputFile << *((std::string*)address);
+		break;
+	}
+	case Format::UINT16: {
+		m_OutputFile << *((uint16_t*)address);
+		break;
+	}
+	case Format::UINT32: {
+		m_OutputFile << *((uint32_t*)address);
+		break;
+	}
+	case Format::UINT64: {
+		m_OutputFile << *((uint64_t*)address);
+		break;
+	}
+	case Format::INT16: {
+		m_OutputFile << *((int16_t*)address);
+		break;
+	}
+	case Format::INT32: {
+		m_OutputFile << *((int32_t*)address);
+		break;
+	}
+	case Format::INT64: {
+		m_OutputFile << *((int64_t*)address);
+		break;
+	}
+	case Format::FLOAT: {
+		m_OutputFile << *((float*)address);
+		break;
+	}
+	case Format::DOUBLE: {
+		m_OutputFile << *((double*)address);
+		break;
+	}
+	case Format::CHAR: {
+		m_OutputFile << *((char*)address);
+		break;
+	}
+
 
 
 

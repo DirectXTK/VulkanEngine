@@ -14,6 +14,9 @@ public:
     //Get functions
 
 private:
+    void AllocSpaceAndFillData(void** DataPtr,Format format,uint32_t Index);
+    void MakeUnitRandom(Unit* unit);
+
     void Save();
     void Load();
 
@@ -23,4 +26,3 @@ private:
     float m_Move{ -1.0 };
     float m_Direct{ 0.005f };
 };
-void MakeUnitRandom(Unit* unit);
