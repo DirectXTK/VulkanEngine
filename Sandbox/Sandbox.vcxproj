@@ -101,6 +101,7 @@
     <ClCompile Include="Examples\Testing\SerializationTesting.cpp" />
     <ClCompile Include="Examples\Testing\TestingLayer.cpp" />
     <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Examples\Testing\TextureTestingLayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Renderer\Renderer.vcxproj">
@@ -115,6 +116,7 @@
     <ClInclude Include="Examples\Testing\GUITesting.h" />
     <ClInclude Include="Examples\Testing\SerializationTesting.h" />
     <ClInclude Include="Examples\Testing\TestingLayer.h" />
+    <ClInclude Include="Examples\Testing\TextureTestingLayer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

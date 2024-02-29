@@ -1,11 +1,11 @@
 #include "Descriptor.h"
 
-   void DescriptorLayout::Init(VkDevice device){
+   void DescriptorLayout::Init(VkDevice device,VkDescriptorType type,VkShaderStageFlags stageflags){
         VkDescriptorSetLayoutBinding binding{};
-        binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        binding.descriptorType = type;
         binding.descriptorCount =1;
         binding.binding = 0;
-        binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        binding.stageFlags = stageflags;
 
         VkDescriptorSetLayoutCreateInfo createinfo{};
         createinfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -61,4 +61,27 @@
             
           //  write.pBufferInfo
           vkUpdateDescriptorSets(device,1,&write,0,nullptr);
+    }
+
+    void DescriptorLayout::WriteToTexture(VkDevice device,  VkImageView imageview,VkSampler sampler)
+    {
+        VkDescriptorImageInfo info{};
+        info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        info.imageView = imageview;
+        info.sampler = sampler;
+
+
+
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        write.dstSet = m_DescriptorSet;
+        write.dstArrayElement = 0;
+        write.dstBinding = 0;
+        write.descriptorCount = 1;
+        write.pImageInfo = &info;
+        
+
+        //  write.pBufferInfo
+        vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
     }

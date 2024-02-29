@@ -24,7 +24,7 @@ struct Vertex{
     Float3 Position{};
 	Float4 Color{};
 	uint64_t ID{0};
-	//Float2 TexCoord{ 0.0f,0.0f };
+	Float2 TexCoords{ 0.0f,0.0f };
 	//int TexID{ -1 };
 };
 struct DrawCommand {
@@ -115,7 +115,8 @@ private:
     UniformBuffer* m_UniformBuffers{};
     //Descriptors 
 
-    DescriptorLayout m_DescriptorLayout{};
+    DescriptorLayout* m_DescriptorLayout{};
+    uint32_t m_DescriptorSetCount{};
     //Debug
     VkDebugUtilsMessengerEXT m_Messenger{};
     void CreateDebugger();

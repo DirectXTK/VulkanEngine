@@ -80,12 +80,12 @@ VkRenderPass Pipeline::CreateRenderPass(VkDevice device, VkFormat format) {
     return RenderPass;
 }
 
-VkPipelineLayout Pipeline::CreatePipelineLayout(VkDevice device,VkDescriptorSetLayout* DescriptorSetLayout)
+VkPipelineLayout Pipeline::CreatePipelineLayout(VkDevice device,VkDescriptorSetLayout* DescriptorSetLayout,uint32_t DescriptorSetCount)
 {
     VkPipelineLayout PipelineLayout{};
     VkPipelineLayoutCreateInfo pipelinelayout{};
     pipelinelayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelinelayout.setLayoutCount = 1;
+    pipelinelayout.setLayoutCount = DescriptorSetCount;
     pipelinelayout.pSetLayouts = DescriptorSetLayout;
     pipelinelayout.pushConstantRangeCount = 0;
 

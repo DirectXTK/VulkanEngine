@@ -1,6 +1,5 @@
 #include "Image.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb-master/stb_image.h"
+
 #include "RendCore.h"
     Image::Image(VkPhysicalDevice pdevice,VkDevice device,VkFormat format,VkSharingMode sharemode,VkImageUsageFlags usage,VkMemoryPropertyFlags propflags,VkImageTiling tilling,uint32_t Width, uint32_t Height,VkImageLayout initformat ){
        m_Device = device;
@@ -47,37 +46,8 @@
           m_ImageSize = memreq.size;
           CreateView(format,VK_IMAGE_ASPECT_COLOR_BIT,device);
     }
-    Image::Image(std::string Path)
-    {
-       // LoadTextureData(Path);
 
-
-    }
-    unsigned char* Image::LoadTextureData(std::string Path,int* Width,int* Height)
-    {
-        std::string RealPath = "Textures/" + Path;
-        stbi_uc* image = stbi_load(RealPath.c_str(), &m_Width, &m_Height, &m_ChannelCount, STBI_rgb_alpha);
-
-        if (!image)
-        {
-            Core::Log(ErrorType::Error, "Failed to load texture file ", RealPath);
-            return nullptr;
-        }
-        m_ImageData = new Float4[m_Width * m_Height];
-        for (int y = 0; y < m_Height; y++) {
-
-            for (int x = 0; x < m_Width; x++) {
-                m_ImageData[x + (y * m_Width)].r = image[(x * 4) + (y * m_Width * 4) + 0]/255.f;
-                m_ImageData[x + (y * m_Width)].g = image[(x * 4) + (y * m_Width * 4) + 1]/255.f;
-                m_ImageData[x + (y * m_Width)].b = image[(x * 4) + (y * m_Width * 4) + 2]/255.f;
-                m_ImageData[x + (y * m_Width)].a = image[(x * 4) + (y * m_Width * 4) + 3]/255.f;
-
-
-            }
-        }
     
-        return (unsigned char*)image;
-    }
     VkImageView Image::CreateView(VkFormat format,VkImageAspectFlags aspectflags ,VkDevice device){
 
             VkImageViewCreateInfo createinfo{};
@@ -109,6 +79,26 @@
 
             return m_View;
 
+    }
+    void Image::CopyDataFromBuffer(Context context, Buffer* buffer, VkCommandBuffer commandbuffer)
+    {
+        VkBufferImageCopy region{  };
+        region.bufferOffset = 0;
+        region.bufferRowLength = m_Width;
+        region.bufferImageHeight = m_Height;
+
+        region.imageExtent.width = m_Width;
+        region.imageExtent.height = m_Height;
+        region.imageExtent.depth = 1;
+        region.imageOffset = { 0,0,0 };
+
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageSubresource.mipLevel = 0;
+
+
+        vkCmdCopyBufferToImage(commandbuffer, *buffer->GetBuffer(), m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
     }
     void Image::UploadImageData()
     {

@@ -98,6 +98,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Context.h" />
     <ClInclude Include="Source\Buffer.h" />
     <ClInclude Include="Source\Camera.h" />
     <ClInclude Include="Source\CommandBuffer.h" />
@@ -116,8 +117,10 @@
     <ClInclude Include="Source\UniformBuffer.h" />
     <ClInclude Include="Source\VertexBuffer.h" />
     <ClInclude Include="Source\VulkanInstance.h" />
+    <ClInclude Include="Source\Texture.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Context.cpp" />
     <ClCompile Include="Source\Buffer.cpp" />
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\CommandBuffer.cpp" />
@@ -136,6 +139,7 @@
     <ClCompile Include="Source\UniformBuffer.cpp" />
     <ClCompile Include="Source\VertexBuffer.cpp" />
     <ClCompile Include="Source\VulkanInstance.cpp" />
+    <ClCompile Include="Source\Texture.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -17,7 +17,7 @@ struct PipelineDesc {
 
 class Pipeline {
 public:
-	static VkPipelineLayout CreatePipelineLayout(VkDevice device, VkDescriptorSetLayout* DescriptorSetLayout);
+	static VkPipelineLayout CreatePipelineLayout(VkDevice device, VkDescriptorSetLayout* DescriptorSetLayout,uint32_t DescriptorSetCount);
 	static VkPipeline CreatePipeline(PipelineDesc& desc, VkDevice device);
 	static VkRenderPass CreateRenderPass(VkDevice device, VkFormat format);
 

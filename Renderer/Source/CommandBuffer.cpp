@@ -14,3 +14,66 @@ VkCommandPool CommandBuffer::CreatCommandPool(VkDevice Device,uint32_t QueueInde
 
     return CommandPool;
 }
+
+VkCommandBuffer CommandBuffer::CreateCommandBuffer(Context context,VkCommandPool pool)
+{
+    VkCommandBuffer outcommandbuffer{};
+
+    VkCommandBufferAllocateInfo allocinfo{};
+    allocinfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocinfo.commandPool = pool;
+    allocinfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocinfo.commandBufferCount = 1;
+
+    VkResult result = vkAllocateCommandBuffers(context->Device, &allocinfo,&outcommandbuffer);
+    if (result != VK_SUCCESS)
+        Core::Log(ErrorType::Error, "Failed to create command buffers.");
+
+
+
+    VkCommandBufferAllocateInfo allocinfo2{};
+    allocinfo2.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocinfo2.commandPool = pool;
+    allocinfo2.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocinfo2.commandBufferCount = 1;
+
+    result = vkAllocateCommandBuffers(context->Device, &allocinfo2, &outcommandbuffer);
+    if (result != VK_SUCCESS)
+        Core::Log(ErrorType::Error, "Failed to create command buffers.");
+
+    return outcommandbuffer;
+}
+
+VkCommandBuffer CommandBuffer::StartSingleUseCommandBuffer(Context context, VkCommandPool pool)
+{
+    VkCommandBuffer outcommandbuffer = CreateCommandBuffer(context,pool);
+
+    VkCommandBufferBeginInfo begininfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    begininfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(outcommandbuffer, &begininfo);
+
+    return outcommandbuffer;
+}
+
+void CommandBuffer::EndSingleUseCommandBuffer(Context context,VkCommandPool pool, VkCommandBuffer commandBuffer)
+{
+    VkFenceCreateInfo FenceCreateInfo{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+    FenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    VkFence fence{};
+    vkCreateFence(context->Device, &FenceCreateInfo, nullptr, &fence);
+    vkResetFences(context->Device, 1, &fence);
+
+
+    VkSubmitInfo SubmitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+    SubmitInfo.commandBufferCount = 1;
+    SubmitInfo.pCommandBuffers = &commandBuffer;
+
+
+    vkEndCommandBuffer(commandBuffer);
+    vkQueueSubmit(context->GraphicsQueue, 1, &SubmitInfo, fence);
+
+    vkWaitForFences(context->Device, 1, &fence, true, 5*10000);
+    vkFreeCommandBuffers(context->Device, pool, 1, &commandBuffer);
+}

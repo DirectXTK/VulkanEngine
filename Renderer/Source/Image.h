@@ -1,12 +1,13 @@
 #pragma once
 #include "RendCore.h"
+#include "Context.h"
+#include "Buffer.h"
 class Image{
     public:
     Image(VkPhysicalDevice pdevice,VkDevice device,VkFormat format,VkSharingMode sharemode,VkImageUsageFlags usage,VkMemoryPropertyFlags propflags,VkImageTiling tilling,uint32_t Width, uint32_t Height,VkImageLayout initformat = VK_IMAGE_LAYOUT_UNDEFINED);
     Image(std::string Path);
     Image() {}
 
-      unsigned char* LoadTextureData(std::string Path,int* Width,int* Height);
 
     VkImageView CreateView(VkFormat format,VkImageAspectFlags aspectflags ,VkDevice device);
     VkImage GetImage(){return m_Image;}
@@ -14,6 +15,7 @@ class Image{
     int GetSize(){return m_ImageSize;}
     VkExtent2D GetExtent(){return {(uint32_t)m_Width,(uint32_t)m_Height};}
 
+    void CopyDataFromBuffer(Context context, Buffer* buffer, VkCommandBuffer commandbuffer);
 
     void SetImage(VkImage image){m_Image = image;}
     //Uploads the latest data.

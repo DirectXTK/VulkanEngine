@@ -3,19 +3,21 @@
 #include "Pipeline.h"
 #include "Device.h"
 #include "InputSystem.h"
- Renderer::Renderer(RendererDesc desc,GLFWwindow* window, InputSystem* inputsystem){
-   m_Window = window;
-   m_ClearColor = desc.ClearColor;
+#include "Texture.h"
+#include "Context.h"
+Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem) {
+    m_Window = window;
+    m_ClearColor = desc.ClearColor;
     //m_VertexBufferSize = 3*100;
    //Create vulkan instance
-   InstanceDesc instancedesc{};
-   instancedesc.ApiVersion = VK_API_VERSION_1_2;
-   instancedesc.ValidationLayersEnabled = true;
-     m_Instance = VulkanInstance::CreateInstance(instancedesc,&m_Messenger);
+    InstanceDesc instancedesc{};
+    instancedesc.ApiVersion = VK_API_VERSION_1_2;
+    instancedesc.ValidationLayersEnabled = true;
+    m_Instance = VulkanInstance::CreateInstance(instancedesc, &m_Messenger);
 
-    CreateSurface(window,&m_Surface);
+    CreateSurface(window, &m_Surface);
 
-    m_PhysicalDevice = VulkanInstance::GetPhysicalDevice(m_Instance,m_Surface);
+    m_PhysicalDevice = VulkanInstance::GetPhysicalDevice(m_Instance, m_Surface);
     m_SwapChainDetails = SwapChain::GetSwapChainCapabilities(m_PhysicalDevice, m_Surface);
 
     m_QueueFamilies = VulkanInstance::GetQueueFamilies(m_PhysicalDevice, m_Surface);
@@ -24,128 +26,166 @@
 
 
 
-     m_SwapChain = new SwapChain(m_Instance,m_PhysicalDevice,m_Device,m_Surface, m_QueueFamilies);
+    m_SwapChain = new SwapChain(m_Instance, m_PhysicalDevice, m_Device, m_Surface, m_QueueFamilies);
     m_SwapChainDetails = m_SwapChain->GetSwapChainCapabilities();
 
-        m_SwapChain->CreateSwapChain();
-
-      
-             //Matrices
-        m_UniformBuffers = new UniformBuffer[MAX_FRAME_DRAWS];
-        for(int i =0;i < MAX_FRAME_DRAWS;i++){
-        m_UniformBuffers[i].Init(m_Device,m_PhysicalDevice,sizeof(glm::mat4));
-     
-
-        }
-          m_DescriptorLayout.Init(m_Device);
-        m_DescriptorLayout.WriteTo(m_Device,*m_UniformBuffers[0].GetBuffer(),sizeof(glm::mat4));
-
-        m_RenderPass = Pipeline::CreateRenderPass(m_Device, m_SwapChain->GetFormat());
-        m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device,m_DescriptorLayout.GetDescriptorLayout());
-
-        PipelineDesc pipelineDesc{};
-        pipelineDesc.RenderPass = m_RenderPass;
-        pipelineDesc.PipelineLayout = m_PipelineLayout;
-        pipelineDesc.VertexStageInputCount = 3;
-        pipelineDesc.VertexInputStride = sizeof(Vertex);
-        pipelineDesc.VertexStageInput = new VertexStageInputAttrib[pipelineDesc.VertexStageInputCount];
-        pipelineDesc.VertexStageInput[0] = { VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex,Position),0,0 };
-        pipelineDesc.VertexStageInput[1] = { VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(Vertex,Color),1,0 };
-        pipelineDesc.VertexStageInput[2] = { VK_FORMAT_R32G32_UINT,offsetof(Vertex,ID),2,0 };
-
-        pipelineDesc.Viewport = { 0,0,(float)m_SwapChain->GetExtent().width,(float)m_SwapChain->GetExtent().height,0.0f,1.0f };
+    m_SwapChain->CreateSwapChain();
 
 
-       m_Pipeline =  Pipeline::CreatePipeline(pipelineDesc, m_Device);
-
-        VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice,{ VK_FORMAT_R32G32_UINT },VK_IMAGE_TILING_OPTIMAL,VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
-
-         m_ColorAttachments.resize(MAX_FRAME_DRAWS);
-         for(int i =0;i < m_ColorAttachments.size();i++){
-
-              m_ColorAttachments[i]=Image(m_PhysicalDevice,m_Device,format,VK_SHARING_MODE_EXCLUSIVE,VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT,VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,VK_IMAGE_TILING_OPTIMAL,m_SwapChain->GetExtent().width,m_SwapChain->GetExtent().height);
-        }
-        CreateFrameBuffers();
+    //Matrices
+    m_UniformBuffers = new UniformBuffer[MAX_FRAME_DRAWS];
+    for (int i = 0; i < MAX_FRAME_DRAWS; i++) {
+        m_UniformBuffers[i].Init(m_Device, m_PhysicalDevice, sizeof(glm::mat4));
 
 
-        CreateCommandBuffers();
-        CreateSamaphore();
-     
-
-        m_VertexCount = desc.VertexCountPerDrawCall;
-        BufferDesc VertexBufferDesc{};
-        VertexBufferDesc.SizeBytes = desc.VertexCountPerDrawCall*sizeof(Vertex);
-        VertexBufferDesc.Usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT| VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-        VertexBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
-        VertexBufferDesc.Physdevice = m_PhysicalDevice;
-        VertexBufferDesc.Device = m_Device;
-        VertexBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ;
+    }
+   
 
 
-        m_VertexBuffers.push_back(new Buffer(VertexBufferDesc));
-
-       // VertexBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex)*20000;
-
-        //Buffer* vertexdwadad = new Buffer(VertexBufferDesc);
-
-        m_Vertices = new Vertex[m_VertexCount];
-
-        BufferDesc StaggingBufferDesc{};
-        StaggingBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex);
-        StaggingBufferDesc.Usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        StaggingBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
-        StaggingBufferDesc.Physdevice = m_PhysicalDevice;
-        StaggingBufferDesc.Device = m_Device;
-        StaggingBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-
-        m_StaggingBuffers.push_back(new Buffer(StaggingBufferDesc));
-        //temp
-
-        m_Indices = new uint32_t[(uint32_t)(m_VertexCount*1.5)];
-        uint32_t offset{};
-        for(int i =0;i < m_VertexCount*1.5;i+=6){
-                
-            m_Indices[i] = offset;
-            m_Indices[i+1] = offset+1;
-            m_Indices[i+2] = offset+2;
-
-            m_Indices[i+3] = offset+2;
-            m_Indices[i+4] = offset+3;
-            m_Indices[i+5] = offset;
-           offset+=4;
-        }
+    m_DescriptorLayout = new DescriptorLayout[2];
 
 
-        BufferDesc IndexBufferDesc{};
-        IndexBufferDesc.SizeBytes = uint64_t(desc.VertexCountPerDrawCall * sizeof(uint32_t)*1.5f);
-        IndexBufferDesc.Usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-        IndexBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
-        IndexBufferDesc.Physdevice = m_PhysicalDevice;
-        IndexBufferDesc.Device = m_Device;
-        IndexBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    m_DescriptorLayout[0].Init(m_Device,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT);
+   
+
+    m_DescriptorLayout[1].Init(m_Device, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+   
+
+    m_RenderPass = Pipeline::CreateRenderPass(m_Device, m_SwapChain->GetFormat());
+
+    VkDescriptorSetLayout* descriptorsetlayout = new VkDescriptorSetLayout[2];
+    descriptorsetlayout[0] = *m_DescriptorLayout[0].GetDescriptorLayout();
+    descriptorsetlayout[1] = *m_DescriptorLayout[1].GetDescriptorLayout();
+
+    m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device, descriptorsetlayout,2);
+
+    PipelineDesc pipelineDesc{};
+    pipelineDesc.RenderPass = m_RenderPass;
+    pipelineDesc.PipelineLayout = m_PipelineLayout;
+    pipelineDesc.VertexStageInputCount = 4;
+    pipelineDesc.VertexInputStride = sizeof(Vertex);
+    pipelineDesc.VertexStageInput = new VertexStageInputAttrib[pipelineDesc.VertexStageInputCount];
+    pipelineDesc.VertexStageInput[0] = { VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex,Position),0,0 };
+    pipelineDesc.VertexStageInput[1] = { VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(Vertex,Color),1,0 };
+    pipelineDesc.VertexStageInput[2] = { VK_FORMAT_R32G32_UINT,offsetof(Vertex,ID),2,0 };
+    pipelineDesc.VertexStageInput[3] = { VK_FORMAT_R32G32_SFLOAT,offsetof(Vertex,TexCoords),3,0 };
+
+
+    pipelineDesc.Viewport = { 0,0,(float)m_SwapChain->GetExtent().width,(float)m_SwapChain->GetExtent().height,0.0f,1.0f };
+
+
+    m_Pipeline = Pipeline::CreatePipeline(pipelineDesc, m_Device);
+
+    VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_R32G32_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
+
+    m_ColorAttachments.resize(MAX_FRAME_DRAWS);
+    for (int i = 0; i < m_ColorAttachments.size(); i++) {
+
+        m_ColorAttachments[i] = Image(m_PhysicalDevice, m_Device, format, VK_SHARING_MODE_EXCLUSIVE, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_TILING_OPTIMAL, m_SwapChain->GetExtent().width, m_SwapChain->GetExtent().height);
+    }
+    CreateFrameBuffers();
+
+
+    CreateCommandBuffers();
+    CreateSamaphore();
+
+
+    m_VertexCount = desc.VertexCountPerDrawCall;
+    BufferDesc VertexBufferDesc{};
+    VertexBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex);
+    VertexBufferDesc.Usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    VertexBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
+    VertexBufferDesc.Physdevice = m_PhysicalDevice;
+    VertexBufferDesc.Device = m_Device;
+    VertexBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+
+    m_VertexBuffers.push_back(new Buffer(VertexBufferDesc));
+
+    // VertexBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex)*20000;
+
+     //Buffer* vertexdwadad = new Buffer(VertexBufferDesc);
+
+    m_Vertices = new Vertex[m_VertexCount];
+
+    BufferDesc StaggingBufferDesc{};
+    StaggingBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex);
+    StaggingBufferDesc.Usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    StaggingBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
+    StaggingBufferDesc.Physdevice = m_PhysicalDevice;
+    StaggingBufferDesc.Device = m_Device;
+    StaggingBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+    m_StaggingBuffers.push_back(new Buffer(StaggingBufferDesc));
+    //temp
+
+    m_Indices = new uint32_t[(uint32_t)(m_VertexCount * 1.5)];
+    uint32_t offset{};
+    for (int i = 0; i < m_VertexCount * 1.5; i += 6) {
+
+        m_Indices[i] = offset;
+        m_Indices[i + 1] = offset + 1;
+        m_Indices[i + 2] = offset + 2;
+
+        m_Indices[i + 3] = offset + 2;
+        m_Indices[i + 4] = offset + 3;
+        m_Indices[i + 5] = offset;
+        offset += 4;
+    }
+
+
+    BufferDesc IndexBufferDesc{};
+    IndexBufferDesc.SizeBytes = uint64_t(desc.VertexCountPerDrawCall * sizeof(uint32_t) * 1.5f);
+    IndexBufferDesc.Usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    IndexBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
+    IndexBufferDesc.Physdevice = m_PhysicalDevice;
+    IndexBufferDesc.Device = m_Device;
+    IndexBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
 
 
 
-        m_IndexBuffers.push_back(new Buffer(IndexBufferDesc));
-        m_IndexBuffers[0]->UploadToBuffer(m_Device, m_Indices, uint64_t(m_VertexCount * 1.5 * sizeof(uint32_t)));
+    m_IndexBuffers.push_back(new Buffer(IndexBufferDesc));
+    m_IndexBuffers[0]->UploadToBuffer(m_Device, m_Indices, uint64_t(m_VertexCount * 1.5 * sizeof(uint32_t)));
 
-        //VkFormat format2 = Core::ChooseBestFormat(m_PhysicalDevice,{ VK_FORMAT_R32G32_UINT },VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
+    //VkFormat format2 = Core::ChooseBestFormat(m_PhysicalDevice,{ VK_FORMAT_R32G32_UINT },VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
 
-   // m_FrameImageIndexed = new Image(m_PhysicalDevice,m_Device,format2,VK_SHARING_MODE_EXCLUSIVE,VK_IMAGE_USAGE_STORAGE_BIT,  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT           ,VK_IMAGE_TILING_OPTIMAL,m_SwapChain->GetExtent().width,m_SwapChain->GetExtent().height);
+// m_FrameImageIndexed = new Image(m_PhysicalDevice,m_Device,format2,VK_SHARING_MODE_EXCLUSIVE,VK_IMAGE_USAGE_STORAGE_BIT,  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT           ,VK_IMAGE_TILING_OPTIMAL,m_SwapChain->GetExtent().width,m_SwapChain->GetExtent().height);
 
-        BufferDesc PickingImageBufferDesc{};
-        PickingImageBufferDesc.SizeBytes = m_ColorAttachments[0].GetSize();
-        PickingImageBufferDesc.Usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-        PickingImageBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
-        PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
-        PickingImageBufferDesc.Device = m_Device;
-        PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ;
+    BufferDesc PickingImageBufferDesc{};
+    PickingImageBufferDesc.SizeBytes = m_ColorAttachments[0].GetSize();
+    PickingImageBufferDesc.Usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    PickingImageBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
+    PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
+    PickingImageBufferDesc.Device = m_Device;
+    PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
 
-        m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
+    m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
 
-        //Initialize GUI renderer
+    //TEMP code
+    Context context = new ContextData();
+    context->PDevice = m_PhysicalDevice;
+    context->Device = m_Device;
+    context->CommandPool = m_GraphicsPool.GetCommandPool();
+    context->GraphicsQueue = m_GraphicsQ;
+    context->QueueFamil = m_QueueFamilies;
+
+    uint32_t* Pixels = new uint32_t[10 * 10*4];
+   
+
+    for (int i = 0; i < 10 * 10; i++) {
+        Pixels[i] = 0xFFFFFFFF;
+    }
+
+
+    Texture texture(context, "C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture1.png");
+
+    //Initialize GUI renderer
+    m_DescriptorLayout[0].WriteTo(m_Device, *m_UniformBuffers[0].GetBuffer(), sizeof(glm::mat4));
+   m_DescriptorLayout[1].WriteToTexture(m_Device, texture.GetImageView(), texture.GetSampler());
+    
  }
     void Renderer::BeginFrame(Camera2D* camera){
                //RecordCommands(m_VertexCount,0);
@@ -326,6 +366,10 @@
         m_Vertices[m_VertexPointer+2].ID = ID;
         m_Vertices[m_VertexPointer+3].ID = ID;
 
+        m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
+        m_Vertices[m_VertexPointer + 1].TexCoords = {0.0f,0.0f};
+        m_Vertices[m_VertexPointer + 2].TexCoords = {1.0f,0.0f};
+        m_Vertices[m_VertexPointer + 3].TexCoords = {1.0f,1.0f};
 
 
         m_VertexPointer+=4;
@@ -513,7 +557,10 @@ void Renderer::DrawBatch()
 
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
-        vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, m_DescriptorLayout.GetDescriptorSet(), 0, nullptr);
+        VkDescriptorSet DescriptorSets[] = { *m_DescriptorLayout[0].GetDescriptorSet(),*m_DescriptorLayout[1].GetDescriptorSet() };
+
+        vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
+
 
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommands[i].VertexCount * 1.5f), 1, 0, 0, 0);
 

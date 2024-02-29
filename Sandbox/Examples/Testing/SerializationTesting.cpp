@@ -136,7 +136,7 @@ void SerializationTestingLayer::OnGUI()
     if (m_App->m_GUIRenderer->Button({ 0.5f,0.0f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, false)) {
         Load();
     }
-    if (m_App->m_GUIRenderer->Button({ -0.5f,0.0f }, { 0.0f,0.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, false)) {
+    if (m_App->m_GUIRenderer->Button({ -0.5f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, false)) {
         m_Units.push_back(Unit());
         MakeUnitRandom(&m_Units[m_Units.size() - 1]);
     }
