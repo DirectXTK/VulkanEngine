@@ -15,6 +15,7 @@
 #include <cstring>
 #include <array>
 #include <set>
+
 class Image;
 const std::vector<const char*> g_DeviceExtensions={VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 struct QueueFamilies{

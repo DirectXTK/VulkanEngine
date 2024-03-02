@@ -44,7 +44,9 @@ class Renderer{
     //GUI
 
     //
-    void DrawQuad(Float3 Position,Float4 Color,Float2 Size,Image* image,uint64_t ID);
+    void DrawQuad(Float3 Position,Float4 Color,Float2 Size,Image* image,uint64_t ID,Float2 TexCoords[4] = nullptr);
+    void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
+
     void DrawParticle();
     Buffer* GetCustomBuffer(uint32_t index) { return m_PickingImageBuffer; }
 
@@ -114,9 +116,9 @@ private:
 
     UniformBuffer* m_UniformBuffers{};
     //Descriptors 
+    DescriptorPool m_DescriptorPool{};
+    DescriptorSet m_DescriptorSetCamera{};
 
-    DescriptorLayout* m_DescriptorLayout{};
-    uint32_t m_DescriptorSetCount{};
     //Debug
     VkDebugUtilsMessengerEXT m_Messenger{};
     void CreateDebugger();
@@ -152,6 +154,12 @@ private:
     std::vector<DrawCommand> m_DrawCommands{};
     
     Camera2D m_Camera{};
+    //Texturing
+    DescriptorSet m_DescriptorSetTextures{};
+
+    //Constant data
+    uint32_t m_TextureSlotCount{};
+
 
 };
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallBack(VkDebugUtilsMessageSeverityFlagBitsEXT messageseverity,VkDebugUtilsMessageTypeFlagsEXT messagetype,const VkDebugUtilsMessengerCallbackDataEXT* pcallbackdata,void* puserData );

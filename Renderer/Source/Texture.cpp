@@ -5,66 +5,11 @@
 #include "stb-master/stb_image.h"
 Texture::Texture(Context context,uint32_t Width, uint32_t Height,uint32_t ChannelCount,uint32_t* Pixels)
 {
-	/*m_Width = Width;
+	m_Context = context;
+	m_Width = Width;
 	m_Height = Height;
 	m_ChannelCount = ChannelCount;
 	CreateTexture(Pixels);
-
-	Image imageloading;
-	unsigned char* imagedata = imageloading.LoadTextureData(Path, (int*)&m_Width, (int*)&m_Height, (int*)&m_ChannelCount);
-
-
-	m_Context = context;
-	VkDeviceSize texturesize = m_Width * m_Height * m_ChannelCount;
-	VkFormat ImageFormat = VK_FORMAT_R8G8B8A8_UNORM;
-
-	//create stagging buffer
-	BufferDesc bufferdesc{};
-	bufferdesc.Device = context->Device;
-	bufferdesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-	bufferdesc.Physdevice = context->PDevice;
-	bufferdesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
-	bufferdesc.SizeBytes = texturesize;
-	bufferdesc.Usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-	Buffer stagging(bufferdesc);
-	stagging.UploadToBuffer(context->Device, imagedata, texturesize);
-
-
-	VkCommandBuffer TempCommandBuffer = CommandBuffer::StartSingleUseCommandBuffer(context, context->CommandPool);
-
-	TrasitionFormat(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, TempCommandBuffer);
-
-
-	image.CopyDataFromBuffer(context, &stagging, TempCommandBuffer);
-
-
-	TrasitionFormat(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, TempCommandBuffer);
-
-	CommandBuffer::EndSingleUseCommandBuffer(context, context->CommandPool, TempCommandBuffer);
-
-	//Create Sampler //TEMP
-	VkSamplerCreateInfo samplercreateinfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-	samplercreateinfo.minFilter = VK_FILTER_LINEAR;
-	samplercreateinfo.magFilter = VK_FILTER_LINEAR;
-	samplercreateinfo.anisotropyEnable = false;
-	samplercreateinfo.maxAnisotropy = 0;
-	samplercreateinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplercreateinfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplercreateinfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplercreateinfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-	samplercreateinfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplercreateinfo.unnormalizedCoordinates = false;
-	samplercreateinfo.compareOp = VK_COMPARE_OP_ALWAYS;
-	samplercreateinfo.compareEnable = false;
-	samplercreateinfo.mipLodBias = 0.0f;
-	samplercreateinfo.maxLod = 0.0f;
-	samplercreateinfo.minLod = 0.0f;
-
-	VkResult result = vkCreateSampler(context->Device, &samplercreateinfo, nullptr, &m_Sampler);
-	if (result != VK_SUCCESS)
-		Core::Log(ErrorType::Error, "Failed to create texture sampler.");
-		*/
 }
 
 Texture::Texture(Context context, std::string Path)
@@ -251,7 +196,7 @@ void Texture::CreateTexture(void* initData)
 
 	//Create texture and view
 
-	CreateImageAndView(VK_FORMAT_R8G8B8A8_UNORM,VK_SHARING_MODE_EXCLUSIVE,VK_IMAGE_TILING_OPTIMAL,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,VK_IMAGE_LAYOUT_UNDEFINED);
+	CreateImageAndView(ImageFormat,VK_SHARING_MODE_EXCLUSIVE,VK_IMAGE_TILING_OPTIMAL,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,VK_IMAGE_LAYOUT_UNDEFINED);
 
 	VkCommandBuffer TempCommandBuffer = CommandBuffer::StartSingleUseCommandBuffer(m_Context, m_Context->CommandPool);
 
