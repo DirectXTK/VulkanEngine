@@ -34,6 +34,7 @@ struct GUUID {
     GUUID(uint64_t a) {
         ID = a;
     }
+ 
     bool operator!=(const GUUID& other) {
         if (other.ID != ID)
             return true;

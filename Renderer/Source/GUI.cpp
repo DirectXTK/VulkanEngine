@@ -17,7 +17,7 @@ bool GUIRenderer::Button(Float2 Position,Float4 Color,Float2 Size,MouseCodes mou
 
 	if (m_CurrentButton == m_ButtonIDs.size())
 		m_ButtonIDs[m_CurrentButton] = { false,Core::RandomUInt64(0, std::numeric_limits<uint64_t>::max()) };
-	renderer->DrawQuad({ Position.x,Position.y,0.0f }, Color, Size, nullptr, m_ButtonIDs[m_CurrentButton].ID.ID);
+	renderer->DrawQuad({ Position.x,Position.y,0.0f }, Color, Size, m_ButtonIDs[m_CurrentButton].ID.ID);
 
 	if(IsPressed)
 		*IsPressed = &m_ButtonIDs[m_CurrentButton].IsPressed;

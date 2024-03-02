@@ -5,9 +5,12 @@
 #include "InputSystem.h"
 #include "Texture.h"
 #include "Context.h"
-Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem) {
+#include "AssetManager.h"
+
+Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem,AssetManager* assetManager) {
     m_Window = window;
     m_ClearColor = desc.ClearColor;
+    m_AssetManager = assetManager;
     //m_VertexBufferSize = 3*100;
    //Create vulkan instance
     InstanceDesc instancedesc{};
@@ -56,12 +59,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     context->QueueFamil = m_QueueFamilies;
 
     m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT);
-    m_DescriptorPool.AddDescriptorType(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    m_DescriptorPool.AddDescriptorType(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
     m_DescriptorPool.CreatePool(context);
 
     m_DescriptorSetCamera.Init(context,1 ,m_DescriptorPool.GetPool(), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    m_DescriptorSetTextures.Init(context,2, m_DescriptorPool.GetPool(), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_DescriptorSetTextures.Init(context,4, m_DescriptorPool.GetPool(), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
    
 
@@ -76,13 +79,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     PipelineDesc pipelineDesc{};
     pipelineDesc.RenderPass = m_RenderPass;
     pipelineDesc.PipelineLayout = m_PipelineLayout;
-    pipelineDesc.VertexStageInputCount = 4;
+    pipelineDesc.VertexStageInputCount = 5;
     pipelineDesc.VertexInputStride = sizeof(Vertex);
     pipelineDesc.VertexStageInput = new VertexStageInputAttrib[pipelineDesc.VertexStageInputCount];
     pipelineDesc.VertexStageInput[0] = { VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex,Position),0,0 };
     pipelineDesc.VertexStageInput[1] = { VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(Vertex,Color),1,0 };
     pipelineDesc.VertexStageInput[2] = { VK_FORMAT_R32G32_UINT,offsetof(Vertex,ID),2,0 };
     pipelineDesc.VertexStageInput[3] = { VK_FORMAT_R32G32_SFLOAT,offsetof(Vertex,TexCoords),3,0 };
+    pipelineDesc.VertexStageInput[4] = { VK_FORMAT_R32_UINT,offsetof(Vertex,TextureID),4,0 };
+
 
 
     pipelineDesc.Viewport = { 0,0,(float)m_SwapChain->GetExtent().width,(float)m_SwapChain->GetExtent().height,0.0f,1.0f };
@@ -181,24 +186,28 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-    uint32_t* Pixels = new uint32_t[10 * 10*4];
+    uint32_t* Pixels = new uint32_t[1];
    
   
 
-    for (int i = 0; i < 10 * 10; i++) {
+    for (int i = 0; i < 1; i++) {
         Pixels[i] = 0xFFFFFFFF;
     }
     context->CommandPool = m_GraphicsPool.GetCommandPool();
 
 
-    Texture texture(context, "C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture1.png");
-    Texture texture2(context, "C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture2.png");
+    Texture WhiteTexture(context, 1, 1, 4, Pixels);
+
+
 
 
     //Initialize GUI renderer
     m_DescriptorSetCamera.WriteTo(0, *m_UniformBuffers[0].GetBuffer(), sizeof(glm::mat4));
-    m_DescriptorSetTextures.WriteToTexture(0, texture.GetImageView(), texture.GetSampler());
-    m_DescriptorSetTextures.WriteToTexture(1, texture2.GetImageView(), texture2.GetSampler());
+    m_DescriptorSetTextures.WriteToTexture(0, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
+    m_DescriptorSetTextures.WriteToTexture(1, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
+    m_DescriptorSetTextures.WriteToTexture(2, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
+    m_DescriptorSetTextures.WriteToTexture(3, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
+
 
 
 
@@ -267,6 +276,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         
     }
     void Renderer::Flush(bool LastFrame){
+
+        uint32_t Index{1};
+        for (auto& it : m_Textures) {
+            m_DescriptorSetTextures.WriteToTexture(Index, it.second.texture->GetImageView(), it.second.texture->GetSampler());
+            Index++;
+        }
 
         m_DrawCommands.push_back({ m_VertexPointer,m_DrawCallCount });
 
@@ -356,18 +371,24 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     }
 
-    void Renderer::DrawQuad(Float3 Position,Float4 Color,Float2 Size,Image* image,uint64_t ID,Float2 TexCoords[4]) {
+    void Renderer::DrawQuad(Float3 Position,Float4 Color,Float2 Size,GUUID TextureHandle,uint64_t ID,Float2 TexCoords[4]) {
         
         if(m_VertexPointer+4> m_VertexCount)
             Flush(false);
+        if (m_Textures.find(TextureHandle) == m_Textures.end()) {
 
+            m_Textures[TextureHandle] = { m_AssetManager->GetResource<Texture>(TextureHandle) ,(uint32_t)m_Textures.size()+1};
+        }
 
         m_Vertices[m_VertexPointer].Position ={Position.x-Size.x,Position.y-Size.y} ;
         m_Vertices[m_VertexPointer+1].Position = {Position.x-Size.x,Position.y+Size.y};
         m_Vertices[m_VertexPointer+2].Position = {Position.x+Size.x,Position.y+Size.y};
         m_Vertices[m_VertexPointer+3].Position = {Position.x+Size.x,Position.y-Size.y};
 
-
+        m_Vertices[m_VertexPointer].TextureID = m_Textures[TextureHandle].Index;
+        m_Vertices[m_VertexPointer + 1].TextureID = m_Textures[TextureHandle].Index;
+        m_Vertices[m_VertexPointer + 2].TextureID = m_Textures[TextureHandle].Index;
+        m_Vertices[m_VertexPointer + 3].TextureID = m_Textures[TextureHandle].Index;
 
 
         m_Vertices[m_VertexPointer].Color = Color;
@@ -403,8 +424,41 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     }
 
+  
+
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID)
     {
+        if (m_VertexPointer + 4 > m_VertexCount)
+            Flush(false);
+
+        m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
+        m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
+        m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
+        m_Vertices[m_VertexPointer + 3].Position = { Position.x + Size.x,Position.y - Size.y };
+
+
+
+
+        m_Vertices[m_VertexPointer].Color = Color;
+        m_Vertices[m_VertexPointer + 1].Color = Color;
+        m_Vertices[m_VertexPointer + 2].Color = Color;
+        m_Vertices[m_VertexPointer + 3].Color = Color;
+
+
+
+        m_Vertices[m_VertexPointer].ID = ID;
+        m_Vertices[m_VertexPointer + 1].ID = ID;
+        m_Vertices[m_VertexPointer + 2].ID = ID;
+        m_Vertices[m_VertexPointer + 3].ID = ID;
+
+            m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
+            m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
+            m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,0.0f };
+            m_Vertices[m_VertexPointer + 3].TexCoords = { 1.0f,1.0f };
+     
+
+
+        m_VertexPointer += 4;
     }
 
     void Renderer::DrawParticle()
@@ -528,6 +582,18 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::Statistics(){
 
         Core::Log(ErrorType::Info,"Draw call count",m_DrawCallCount);
+    }
+
+    Texture* Renderer::LoadTexture(std::string Path)
+    {
+        Context context = new ContextData();
+        context->Device = m_Device;
+        context->PDevice = m_PhysicalDevice;
+        context->GraphicsQueue = m_GraphicsQ;
+        context->QueueFamil = m_QueueFamilies;
+        context->CommandPool = m_GraphicsPool.GetCommandPool();
+        Texture*texture = new Texture(context, Path);
+        return texture;
     }
 
 

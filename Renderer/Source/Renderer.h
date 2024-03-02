@@ -16,16 +16,17 @@
 #include "Image.h"
 #include "Buffer.h"
 #include "VulkanInstance.h"
+#include "Texture.h"
 #define MAX_FRAME_DRAWS 2
 
 class InputSystem;
-
+class AssetManager;
 struct Vertex{
     Float3 Position{};
 	Float4 Color{};
 	uint64_t ID{0};
 	Float2 TexCoords{ 0.0f,0.0f };
-	//int TexID{ -1 };
+	uint32_t TextureID{ 0 };
 };
 struct DrawCommand {
     uint64_t VertexCount{};
@@ -37,14 +38,14 @@ struct RendererDesc{
 };
 class Renderer{
  public:
-    Renderer(RendererDesc desc,GLFWwindow* window,InputSystem* inputsystem);
+    Renderer(RendererDesc desc,GLFWwindow* window,InputSystem* inputsystem,AssetManager* assetManager);
 
     void BeginFrame(Camera2D* camera);
 
     //GUI
 
     //
-    void DrawQuad(Float3 Position,Float4 Color,Float2 Size,Image* image,uint64_t ID,Float2 TexCoords[4] = nullptr);
+    void DrawQuad(Float3 Position,Float4 Color,Float2 Size,GUUID TextureHandle,uint64_t ID,Float2 TexCoords[4] = nullptr);
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
     void DrawParticle();
@@ -55,6 +56,8 @@ class Renderer{
     void EndFrame();
 
     void Statistics();
+
+    Texture* LoadTexture(std::string Path);
 
     ~Renderer();
 private:
@@ -156,10 +159,16 @@ private:
     Camera2D m_Camera{};
     //Texturing
     DescriptorSet m_DescriptorSetTextures{};
+    struct TextureRenderingData {
+        Texture* texture{};
+        uint32_t Index{};
+    };
+    std::unordered_map<GUUID, TextureRenderingData> m_Textures{};
 
     //Constant data
     uint32_t m_TextureSlotCount{};
 
+    AssetManager* m_AssetManager{};
 
 };
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallBack(VkDebugUtilsMessageSeverityFlagBitsEXT messageseverity,VkDebugUtilsMessageTypeFlagsEXT messagetype,const VkDebugUtilsMessengerCallbackDataEXT* pcallbackdata,void* puserData );

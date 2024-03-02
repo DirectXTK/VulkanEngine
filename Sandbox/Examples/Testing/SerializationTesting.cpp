@@ -24,6 +24,7 @@ struct Unit {
     void** Data{};
     Format* Formats{};
     uint32_t FormatCount{};
+    GUUID TextureHandle{};
 };
 SerializationTestingLayer::SerializationTestingLayer() : Layer("SerializationTestingLayer")
 {
@@ -113,10 +114,10 @@ void SerializationTestingLayer::OnUpdate(double deltatime)
         }
         // Core::Log(ErrorType::Info, "ID ", *ID);
     }
-
+  
     for (uint32_t i = 0; i < m_Units.size(); i++) {
         Unit* unit = &m_Units[i];
-        m_App->m_Renderer->DrawQuad({ unit->Position.x,unit->Position.y,0.0f }, { unit->Color.r,unit->Color.g,unit->Color.b,1.0f }, { 0.08f,0.08f }, nullptr,unit->ID);
+        m_App->m_Renderer->DrawQuad({ unit->Position.x,unit->Position.y,0.0f }, { unit->Color.r,unit->Color.g,unit->Color.b,1.0f },{ 0.08f,0.08f },unit->TextureHandle, unit->ID);
     }
 
 
@@ -278,6 +279,20 @@ void SerializationTestingLayer::MakeUnitRandom(Unit* unit)
     unit->FormatCount = Core::RandomUInt32(0, 8);
     unit->Formats = new Format[unit->FormatCount];
     unit->Data = new void* [unit->FormatCount];
+
+    GUUID lafa = std::hash<std::string>{}("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture1.png");
+    GUUID lafa2 = std::hash<std::string>{}("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture2.png");
+    GUUID lafa3 = std::hash<std::string>{}("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture3.png");
+
+
+    GUUID ids[3];
+    ids[0] = lafa;
+    ids[1] = lafa2;
+    ids[2] = lafa3;
+
+    unit->TextureHandle = ids[Core::RandomUInt64(0,2)];
+   
+
 
     for (uint32_t i = 0; i < unit->FormatCount; i++) {
 

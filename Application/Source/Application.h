@@ -4,7 +4,7 @@
 #include "Window.h"
 #include "InputSystem.h"
 #include "Layer.h"
-class InputSystem;
+#include "AssetManager.h"
 struct ApplicationSpecs{
     uint32_t WindowHeight{500};
      uint32_t WindowWidth{500};
@@ -25,7 +25,7 @@ public:
     Float2 GetMousePosNorm();
     Float2 GetWorldMousePos();
 
-
+    AssetManager* GetAssetManager() { return &m_AssetManager; }
 
     void Run();
 private:
@@ -41,6 +41,7 @@ public:
     Renderer* m_Renderer{};
     Camera2D m_Camera{};
     InputSystem m_InputSystem{};
+    AssetManager m_AssetManager{};
 
 
 #ifdef GUI_HEADER

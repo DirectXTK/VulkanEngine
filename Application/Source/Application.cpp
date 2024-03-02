@@ -1,5 +1,7 @@
 #include "Application.h"
 #include "AppTime.h"
+#include "AssetManager.h"
+
  Application::Application(ApplicationSpecs specs){
     //init glfw
      //m_ApplicationLayer = (ApplicationLayer*)m_LayerController.CreateLayer(new ApplicationLayer(specs));
@@ -11,16 +13,22 @@
 
      m_Window = new Window(specs.WindowWidth, specs.WindowHeight, specs.WindowTitle);
      RendererDesc desc{};
-     desc.VertexCountPerDrawCall = 4 * 10;
+     desc.VertexCountPerDrawCall = 4 * 1000;
      desc.ClearColor = specs.ClearColor;
 
 
      m_InputSystem.Init(m_Window->GetHandle());
-     m_Renderer = new Renderer(desc, m_Window->GetHandle(), &m_InputSystem);
+     m_Renderer = new Renderer(desc, m_Window->GetHandle(), &m_InputSystem,&m_AssetManager);
 
      m_Camera.Init({ -1.5f,-1.5f }, { 3.0f,3.0f });
 
      m_GUIRenderer = new GUIRenderer(this);
+     m_AssetManager.Init(this);
+     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture1.png",ResourceType::TEXTURE);
+     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture2.png",ResourceType::TEXTURE);
+     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture3.png",ResourceType::TEXTURE);
+     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture4.png",ResourceType::TEXTURE);
+
  }
 
  void Application::AddLayer(Layer* layer)

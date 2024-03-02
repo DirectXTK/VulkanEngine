@@ -118,6 +118,7 @@
     <ClInclude Include="Source\VertexBuffer.h" />
     <ClInclude Include="Source\VulkanInstance.h" />
     <ClInclude Include="Source\Texture.h" />
+    <ClInclude Include="TextureFrontEnd.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Context.cpp" />
@@ -140,6 +141,7 @@
     <ClCompile Include="Source\VertexBuffer.cpp" />
     <ClCompile Include="Source\VulkanInstance.cpp" />
     <ClCompile Include="Source\Texture.cpp" />
+    <ClCompile Include="TextureFrontEnd.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
