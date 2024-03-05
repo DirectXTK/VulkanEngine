@@ -113,6 +113,7 @@
     <ClInclude Include="Source\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\AppCore.cpp" />
     <ClCompile Include="Source\AssetManager.cpp" />
     <ClCompile Include="Source\AppTime.cpp" />
     <ClCompile Include="Source\Application.cpp" />

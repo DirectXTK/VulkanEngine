@@ -13,7 +13,7 @@
 
      m_Window = new Window(specs.WindowWidth, specs.WindowHeight, specs.WindowTitle);
      RendererDesc desc{};
-     desc.VertexCountPerDrawCall = 4 * 1000;
+     desc.VertexCountPerDrawCall = 4*3 ;
      desc.ClearColor = specs.ClearColor;
 
 
@@ -24,10 +24,9 @@
 
      m_GUIRenderer = new GUIRenderer(this);
      m_AssetManager.Init(this);
-     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture1.png",ResourceType::TEXTURE);
-     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture2.png",ResourceType::TEXTURE);
-     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture3.png",ResourceType::TEXTURE);
-     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture4.png",ResourceType::TEXTURE);
+     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\",ResourceType::TEXTURE);
+
+     m_Renderer->InitializePipeline(m_AssetManager.GetResourceCount(ResourceType::TEXTURE));
 
  }
 

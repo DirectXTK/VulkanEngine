@@ -212,8 +212,8 @@ void Texture::CreateTexture(void* initData)
 
 	//Create Sampler //TEMP
 	VkSamplerCreateInfo samplercreateinfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-	samplercreateinfo.minFilter = VK_FILTER_LINEAR;
-	samplercreateinfo.magFilter = VK_FILTER_LINEAR;
+	samplercreateinfo.minFilter = VK_FILTER_NEAREST;
+	samplercreateinfo.magFilter = VK_FILTER_NEAREST;
 	samplercreateinfo.anisotropyEnable = false;
 	samplercreateinfo.maxAnisotropy = 0;
 	samplercreateinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;

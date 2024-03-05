@@ -280,15 +280,12 @@ void SerializationTestingLayer::MakeUnitRandom(Unit* unit)
     unit->Formats = new Format[unit->FormatCount];
     unit->Data = new void* [unit->FormatCount];
 
-    GUUID lafa = std::hash<std::string>{}("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture1.png");
-    GUUID lafa2 = std::hash<std::string>{}("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture2.png");
-    GUUID lafa3 = std::hash<std::string>{}("C:\\Repos\\VulkanEngine\\Resources\\Textures\\Texture3.png");
 
 
     GUUID ids[3];
-    ids[0] = lafa;
-    ids[1] = lafa2;
-    ids[2] = lafa3;
+    ids[0] = GetResourceHandle("Examples\\BLOOD_KNIGHT.png");
+    ids[1] = GetResourceHandle("Texture2.png");
+    ids[2] = GetResourceHandle("Texture3.png");
 
     unit->TextureHandle = ids[Core::RandomUInt64(0,2)];
    

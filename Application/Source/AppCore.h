@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include "LogSystem.h"
 #include <algorithm>
+#include <filesystem>
 #include <vector>
 #include <chrono>
 #include <random>
@@ -47,6 +48,7 @@ struct GUUID {
 
 
 };
+GUUID GetResourceHandle(std::string Path);
 inline bool operator==(const GUUID& l, const GUUID& r) {
     if (l.ID == r.ID)
         return true;

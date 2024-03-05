@@ -16,10 +16,16 @@ public:
     VkDescriptorPool m_DescriptorPool{};
     VkDescriptorSet m_DescriptorSet{};
 };
-
+struct DescriptorSetDescription {
+    Context context{};
+    uint32_t DescriptorCount{};
+    VkDescriptorPool DescriptorPool{};
+    VkDescriptorType Type{};
+    VkShaderStageFlags StageFlags{};
+};
 class DescriptorSet {
 public:
-    void Init(Context context,  uint32_t DescriptorCount, VkDescriptorPool descriptorPool, VkDescriptorType type,VkShaderStageFlags stageFlags);
+    void Init(DescriptorSetDescription desc);
 
     VkDescriptorSet GetDescriptorSet() { return m_DescriptorSet; }
     VkDescriptorSetLayout GetDescriptorLayout() { return m_DescriptorSetLayout; }

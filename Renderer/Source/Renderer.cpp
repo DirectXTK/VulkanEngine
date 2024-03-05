@@ -59,41 +59,29 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     context->QueueFamil = m_QueueFamilies;
 
     m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT);
-    m_DescriptorPool.AddDescriptorType(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
     m_DescriptorPool.CreatePool(context);
 
-    m_DescriptorSetCamera.Init(context,1 ,m_DescriptorPool.GetPool(), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    m_DescriptorSetTextures.Init(context,4, m_DescriptorPool.GetPool(), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    DescriptorSetDescription CameraDescriptordesc{ context };
+    CameraDescriptordesc.DescriptorCount = 1;
+    CameraDescriptordesc.DescriptorPool = m_DescriptorPool.GetPool();
+    CameraDescriptordesc.StageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    CameraDescriptordesc.Type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+    m_DescriptorSetCamera.Init(CameraDescriptordesc);
+
+    DescriptorSetDescription TextureDescriptordesc{ context };
+    TextureDescriptordesc.DescriptorCount = 4;
+    TextureDescriptordesc.DescriptorPool = m_DescriptorPool.GetPool();
+    TextureDescriptordesc.StageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    TextureDescriptordesc.Type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+   // m_DescriptorSetTextures.Init(TextureDescriptordesc);
 
    
 
     m_RenderPass = Pipeline::CreateRenderPass(m_Device, m_SwapChain->GetFormat());
 
-    VkDescriptorSetLayout* descriptorsetlayout = new VkDescriptorSetLayout[2];
-    descriptorsetlayout[0] = m_DescriptorSetCamera.GetDescriptorLayout();
-    descriptorsetlayout[1] = m_DescriptorSetTextures.GetDescriptorLayout();
-
-    m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device, descriptorsetlayout,2);
-
-    PipelineDesc pipelineDesc{};
-    pipelineDesc.RenderPass = m_RenderPass;
-    pipelineDesc.PipelineLayout = m_PipelineLayout;
-    pipelineDesc.VertexStageInputCount = 5;
-    pipelineDesc.VertexInputStride = sizeof(Vertex);
-    pipelineDesc.VertexStageInput = new VertexStageInputAttrib[pipelineDesc.VertexStageInputCount];
-    pipelineDesc.VertexStageInput[0] = { VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex,Position),0,0 };
-    pipelineDesc.VertexStageInput[1] = { VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(Vertex,Color),1,0 };
-    pipelineDesc.VertexStageInput[2] = { VK_FORMAT_R32G32_UINT,offsetof(Vertex,ID),2,0 };
-    pipelineDesc.VertexStageInput[3] = { VK_FORMAT_R32G32_SFLOAT,offsetof(Vertex,TexCoords),3,0 };
-    pipelineDesc.VertexStageInput[4] = { VK_FORMAT_R32_UINT,offsetof(Vertex,TextureID),4,0 };
-
-
-
-    pipelineDesc.Viewport = { 0,0,(float)m_SwapChain->GetExtent().width,(float)m_SwapChain->GetExtent().height,0.0f,1.0f };
-
-
-    m_Pipeline = Pipeline::CreatePipeline(pipelineDesc, m_Device);
+ 
 
     VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_R32G32_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
 
@@ -195,25 +183,83 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
     context->CommandPool = m_GraphicsPool.GetCommandPool();
 
-
-    Texture WhiteTexture(context, 1, 1, 4, Pixels);
+    m_BlankWhiteTexture = new Texture(context, 1, 1,4, Pixels);
 
 
 
 
     //Initialize GUI renderer
     m_DescriptorSetCamera.WriteTo(0, *m_UniformBuffers[0].GetBuffer(), sizeof(glm::mat4));
-    m_DescriptorSetTextures.WriteToTexture(0, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
-    m_DescriptorSetTextures.WriteToTexture(1, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
-    m_DescriptorSetTextures.WriteToTexture(2, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
-    m_DescriptorSetTextures.WriteToTexture(3, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
+   // m_DescriptorSetTextures.WriteToTexture(0, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
+  //  m_DescriptorSetTextures.WriteToTexture(1, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
+   // m_DescriptorSetTextures.WriteToTexture(2, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
+  //  m_DescriptorSetTextures.WriteToTexture(3, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
 
-
+    m_Context = new ContextData();
+    m_Context->Device = m_Device;
+    m_Context->PDevice = m_PhysicalDevice;
+    m_Context->QueueFamil = m_QueueFamilies;
+    m_Context->GraphicsQueue = m_GraphicsQ;
+    m_Context->CommandPool = m_GraphicsPool.GetCommandPool();
 
 
  }
+ void Renderer::InitializePipeline(uint64_t MaxTextureCount)
+ {
+     uint32_t DescriptorPoolSize = std::ceil((float)MaxTextureCount / (float)m_TextureSlotCount);
+     for (uint64_t i = 0; i < DescriptorPoolSize; i++) {
+
+     m_DescriptorPoolTextures.AddDescriptorType(m_TextureSlotCount, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+     }
+     m_DescriptorPoolTextures.CreatePool(m_Context);
+
+     DescriptorSetDescription DescriptorDesc{};
+     DescriptorDesc.context = m_Context;
+     DescriptorDesc.DescriptorCount = 4;
+     DescriptorDesc.DescriptorPool = m_DescriptorPoolTextures.GetPool();
+     DescriptorDesc.StageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+     DescriptorDesc.Type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+
+
+     VkDescriptorSetLayout* descriptorsetlayout = new VkDescriptorSetLayout[DescriptorPoolSize+1];
+     descriptorsetlayout[0] = m_DescriptorSetCamera.GetDescriptorLayout();
+        uint32_t a{};
+     for (uint32_t i = 0; i < DescriptorPoolSize; i++) {
+         m_DescriptorSetTextures.emplace_back();
+         m_DescriptorSetTextures[i].Init(DescriptorDesc);
+        descriptorsetlayout[i+1] = m_DescriptorSetTextures[i].GetDescriptorLayout();
+        for (uint32_t j = 0; j < m_TextureSlotCount; j++) {
+         m_DescriptorSetTextures[i].WriteToTexture(j, m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
+        }
+
+     }
+
+
+     m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device, descriptorsetlayout, DescriptorPoolSize+1);
+     
+     PipelineDesc pipelineDesc{};
+     pipelineDesc.RenderPass = m_RenderPass;
+     pipelineDesc.PipelineLayout = m_PipelineLayout;
+     pipelineDesc.VertexStageInputCount = 5;
+     pipelineDesc.VertexInputStride = sizeof(Vertex);
+     pipelineDesc.VertexStageInput = new VertexStageInputAttrib[pipelineDesc.VertexStageInputCount];
+     pipelineDesc.VertexStageInput[0] = { VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex,Position),0,0 };
+     pipelineDesc.VertexStageInput[1] = { VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(Vertex,Color),1,0 };
+     pipelineDesc.VertexStageInput[2] = { VK_FORMAT_R32G32_UINT,offsetof(Vertex,ID),2,0 };
+     pipelineDesc.VertexStageInput[3] = { VK_FORMAT_R32G32_SFLOAT,offsetof(Vertex,TexCoords),3,0 };
+     pipelineDesc.VertexStageInput[4] = { VK_FORMAT_R32_UINT,offsetof(Vertex,TextureID),4,0 };
+
+
+
+     pipelineDesc.Viewport = { 0,0,(float)m_SwapChain->GetExtent().width,(float)m_SwapChain->GetExtent().height,0.0f,1.0f };
+
+
+     m_Pipeline = Pipeline::CreatePipeline(pipelineDesc, m_Device);
+ }
     void Renderer::BeginFrame(Camera2D* camera){
                //RecordCommands(m_VertexCount,0);
+       
 
             m_DrawCallCount =0;
             m_Camera = *camera;
@@ -278,8 +324,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::Flush(bool LastFrame){
 
         uint32_t Index{1};
+ 
         for (auto& it : m_Textures) {
-            m_DescriptorSetTextures.WriteToTexture(Index, it.second.texture->GetImageView(), it.second.texture->GetSampler());
+            m_DescriptorSetTextures[m_DrawCallCount].WriteToTexture(Index, it.second.texture->GetImageView(), it.second.texture->GetSampler());
             Index++;
         }
 
@@ -288,8 +335,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         if (m_DrawCallCount == m_VertexBuffers.size())
             CreateNewBufferForBatch();
 
-
-
+ 
            m_UniformBuffers[0].UploadToBuffer(m_Device,&m_CameraViewProj,sizeof(glm::mat4));
 
            m_StaggingBuffers[m_DrawCallCount]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
@@ -300,7 +346,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
            if (m_VertexPointer != 0)
            {
                vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBuffers[m_DrawCallCount]->GetBuffer(), *m_VertexBuffers[m_DrawCallCount]->GetBuffer(), 1, &region);
-
            }
           
 
@@ -311,7 +356,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
  
             m_VertexPointer=0;
             m_DrawCallCount++;
-            
+            m_Textures.clear();
+
     }
     void Renderer::EndFrame(){
 
@@ -373,7 +419,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     void Renderer::DrawQuad(Float3 Position,Float4 Color,Float2 Size,GUUID TextureHandle,uint64_t ID,Float2 TexCoords[4]) {
         
-        if(m_VertexPointer+4> m_VertexCount)
+        if(m_VertexPointer+4> m_VertexCount||m_Textures.size() ==m_TextureSlotCount)
             Flush(false);
         if (m_Textures.find(TextureHandle) == m_Textures.end()) {
 
@@ -436,7 +482,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
         m_Vertices[m_VertexPointer + 3].Position = { Position.x + Size.x,Position.y - Size.y };
 
-
+        m_Vertices[m_VertexPointer].TextureID = 0;
+        m_Vertices[m_VertexPointer + 1].TextureID = 0;
+        m_Vertices[m_VertexPointer + 2].TextureID = 0;
+        m_Vertices[m_VertexPointer + 3].TextureID = 0;
 
 
         m_Vertices[m_VertexPointer].Color = Color;
@@ -652,7 +701,7 @@ void Renderer::DrawBatch()
 
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
-        VkDescriptorSet DescriptorSets[] = { m_DescriptorSetCamera.GetDescriptorSet(),m_DescriptorSetTextures.GetDescriptorSet() };
+        VkDescriptorSet DescriptorSets[] = { m_DescriptorSetCamera.GetDescriptorSet(),m_DescriptorSetTextures[i].GetDescriptorSet()};
 
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 

@@ -38,7 +38,10 @@ struct RendererDesc{
 };
 class Renderer{
  public:
+     //Initialization functions
     Renderer(RendererDesc desc,GLFWwindow* window,InputSystem* inputsystem,AssetManager* assetManager);
+    void InitializePipeline(uint64_t MaxTextureCount);
+    //
 
     void BeginFrame(Camera2D* camera);
 
@@ -59,6 +62,8 @@ class Renderer{
 
     Texture* LoadTexture(std::string Path);
 
+
+
     ~Renderer();
 private:
     void StartRecordingCommands();
@@ -74,6 +79,8 @@ private:
     void CreateInstance();
     void CreateFrameBuffers();
     void CreateCommandBuffers();
+
+    Context m_Context{};
 
     QueueFamilies m_QueueFamilies{};
 
@@ -158,15 +165,16 @@ private:
     
     Camera2D m_Camera{};
     //Texturing
-    DescriptorSet m_DescriptorSetTextures{};
+    uint32_t m_TextureSlotCount{4};
+    Texture* m_BlankWhiteTexture{};
+    DescriptorPool m_DescriptorPoolTextures{};
+    std::vector<DescriptorSet> m_DescriptorSetTextures{};
     struct TextureRenderingData {
         Texture* texture{};
         uint32_t Index{};
     };
     std::unordered_map<GUUID, TextureRenderingData> m_Textures{};
 
-    //Constant data
-    uint32_t m_TextureSlotCount{};
 
     AssetManager* m_AssetManager{};
 

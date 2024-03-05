@@ -3,15 +3,15 @@
  
 
 
-    void DescriptorSet::Init(Context context,uint32_t DescriptorCount, VkDescriptorPool descriptorPool, VkDescriptorType type, VkShaderStageFlags stageFlags)
+    void DescriptorSet::Init(DescriptorSetDescription desc)
     {
-        m_Context = context;
+        m_Context = desc.context;
 
         VkDescriptorSetLayoutBinding binding{};
-        binding.descriptorType = type;
-        binding.descriptorCount = DescriptorCount;
+        binding.descriptorType = desc.Type;
+        binding.descriptorCount = desc.DescriptorCount;
         binding.binding = 0;
-        binding.stageFlags = stageFlags;
+        binding.stageFlags = desc.StageFlags;
 
         VkDescriptorSetLayoutCreateInfo createinfo{};
         createinfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -26,7 +26,7 @@
         VkDescriptorSetAllocateInfo allocinfo{};
         allocinfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocinfo.descriptorSetCount = 1;
-        allocinfo.descriptorPool = descriptorPool;
+        allocinfo.descriptorPool = desc.DescriptorPool;
         allocinfo.pSetLayouts = &m_DescriptorSetLayout;
 
         result = vkAllocateDescriptorSets(m_Context->Device, &allocinfo, &m_DescriptorSet);
