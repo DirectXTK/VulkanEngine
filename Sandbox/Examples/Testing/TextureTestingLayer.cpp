@@ -13,7 +13,7 @@ void TextureTestingLayer::OnCreate()
     m_Units.push_back({ GetResourceHandle("Texture4.png"),{0.4f,0.0f} });
 
 
-    m_Units.push_back({ 0,{0.4f,0.0f},GetResourceHandle("Examples\\Test1.json")});
+    m_Units.push_back({ 0,{0.4f,0.0f},GetResourceHandle("Examples\\Test2.json")});
 
 }
 
