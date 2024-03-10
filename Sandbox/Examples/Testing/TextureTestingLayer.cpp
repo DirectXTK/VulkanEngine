@@ -13,6 +13,7 @@ void TextureTestingLayer::OnCreate()
     m_Units.push_back({ GetResourceHandle("Texture4.png"),{0.4f,0.0f} });
 
 
+    m_Units.push_back({ 0,{0.4f,0.0f},GetResourceHandle("Examples\\Test1.json")});
 
 }
 
@@ -76,7 +77,12 @@ void TextureTestingLayer::OnUpdate(double DeltaTime)
 
 
 	for (uint32_t i = 0; i < m_Units.size(); i++) {
+        if(m_Units[i].TextureHandle !=0)
 		m_App->m_Renderer->DrawQuad(m_Units[i].Position, { 1.0f,1.0f,1.0f,1.0f }, { 0.04f,0.04f },m_Units[i].TextureHandle, 0);
+        else 
+            m_App->m_Renderer->DrawQuadWithAtlas(m_Units[i].Position, { 1.0f,1.0f,1.0f,1.0f }, { 0.04f,0.04f },m_Units[i].TextureAtlasHandle,0,m_TextureIndex);
+        
+
 	}
 }
 
@@ -86,6 +92,10 @@ void TextureTestingLayer::OnGUI()
         m_Units.push_back({ GetResourceHandle("Examples\\BLOOD_KNIGHT.png"),{Core::RandomFloat(-1.0f,1.0f),Core::RandomFloat(-1.0f,1.0f)}});
 
 	}
+    if (m_App->m_GUIRenderer->Button({ -0.2f,0.2f }, { 0.0f,0.0f,1.0f,1.0f }, { 0.01f,0.01f }, MouseCodes::LEFT, false)) {
+        m_TextureIndex++;
+
+    }
 }
 
 void TextureTestingLayer::OnDestroy()

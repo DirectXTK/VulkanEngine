@@ -254,3 +254,107 @@ void Texture::CopyDataFromBuffer(VkCommandBuffer CommandBuffer,VkBuffer BufferSr
 
 	vkCmdCopyBufferToImage(CommandBuffer, BufferSrc, ImageDst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 }
+
+TextureAtlas::TextureAtlas(Context context,Float2 OneTextureSize, Texture* texture)
+{
+	m_TextureCount = (texture->GetWidth() * texture->GetHeight()) / (OneTextureSize.x * OneTextureSize.y);
+
+
+	uint32_t CountPerWidth = texture->GetWidth() / OneTextureSize.x;
+	uint32_t CountPerHeight = texture->GetHeight() / OneTextureSize.y;
+
+	m_TextureAtlasData = new TextureAtlasCoords[m_TextureCount];
+	for (uint32_t y = 0; y < CountPerHeight; y++) {
+
+		for (uint32_t x = 0; x < CountPerWidth; x++) {
+			m_TextureAtlasData[x + y * CountPerWidth].Points[0] = { x*(OneTextureSize.x/ texture->GetWidth()),1.0f-y * (OneTextureSize.x / texture->GetWidth()) };
+			m_TextureAtlasData[x + y * CountPerWidth].Points[1] = { x * (OneTextureSize.x / texture->GetWidth()),1.0f - (y+1) * (OneTextureSize.x / texture->GetWidth()) };
+			m_TextureAtlasData[x + y * CountPerWidth].Points[2] = { (x+1) * (OneTextureSize.x / texture->GetWidth()),1.0f - (y+1) * (OneTextureSize.x / texture->GetWidth()) };
+			m_TextureAtlasData[x + y * CountPerWidth].Points[3] = { (x+1) * (OneTextureSize.x / texture->GetWidth()),1.0f - y * (OneTextureSize.x / texture->GetWidth()) };
+
+			m_TextureAtlasData[x + y * CountPerWidth].SizeX = (uint32_t)OneTextureSize.x;
+			m_TextureAtlasData[x + y * CountPerWidth].SizeY = (uint32_t)OneTextureSize.x;
+
+
+
+		}
+	}
+}
+
+TextureAtlas::TextureAtlas(Context context, std::string PathToAtlas,Texture* texture)
+{
+	m_Texture = texture;
+
+	uint64_t Offset{};
+	std::vector<TextureAtlasCoords> AtlasCoords{};
+
+	uint64_t TextureWidth{};
+	uint64_t TextureHeight{};
+
+	TextureWidth = m_Texture->GetWidth();
+	TextureHeight = m_Texture->GetHeight();
+
+	uint64_t TileLocX{};
+	uint64_t TileLocY{};
+
+	uint64_t TileSizeX{};
+	uint64_t TileSizeY{};
+
+
+	std::string Data{};
+	std::string Member{};
+	uint64_t DataSize{};
+	std::ifstream input(PathToAtlas);
+	if (!input.is_open()) {
+		Core::Log(ErrorType::Error, "Failed to create texture atlas invalid PathToMetaData.");
+		return;
+	}
+	input.seekg(0,input.end);
+	DataSize = input.tellg();
+	Data.resize(DataSize);
+	input.seekg(0, input.beg);
+	input.read(Data.data(), DataSize);
+
+	Offset = Data.find("\"frame\"", Offset);
+	while (Offset != (uint64_t )- 1) {
+		TextureAtlasCoords atlas{};
+		
+
+		Offset = Data.find("x", Offset) + 4;
+		TileLocX = std::stoi(Data.substr(Offset, Data.find(",") - Offset));
+		Offset = Data.find("y", Offset) + 4;
+		TileLocY = std::stoi(Data.substr(Offset, Data.find(",") - Offset));
+		Offset = Data.find("w", Offset) + 4;
+		TileSizeX = std::stoi(Data.substr(Offset, Data.find(",") - Offset));
+		Offset = Data.find("h", Offset) + 4;
+		TileSizeY = std::stoi(Data.substr(Offset, Data.find("}"-1) - Offset));
+
+		atlas.Points[0] = { (float)TileLocX / (float)TextureWidth,1.0f - (float)TileLocY / (float)TextureHeight };
+		atlas.Points[1] = { (float)TileLocX / (float)TextureWidth,1.0f - ((float)TileLocY+TileSizeY) / (float)TextureHeight };
+		atlas.Points[2] = { (float)(TileLocX+ TileSizeX) / (float)TextureWidth,1.0f - (float)(TileLocY+ TileSizeY) / (float)TextureHeight };
+		atlas.Points[3] = { (float)(TileLocX+ TileSizeX) / (float)TextureWidth,1.0f - (float)TileLocY / (float)TextureHeight };
+
+
+		//m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
+		//m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
+		//m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,0.0f };
+		//m_Vertices[m_VertexPointer + 3].TexCoords = { 1.0f,1.0f };
+		AtlasCoords.push_back(atlas);
+		Offset = Data.find("\"frame\"", Offset);
+
+	}
+
+	m_TextureAtlasData = new TextureAtlasCoords[AtlasCoords.size()];
+	memcpy(m_TextureAtlasData, AtlasCoords.data(), sizeof(TextureAtlasCoords) * AtlasCoords.size());
+
+
+}
+
+Float2* TextureAtlas::GetTexCoords(uint32_t Index)
+{
+	return m_TextureAtlasData[Index].Points;
+}
+
+TextureAtlas::~TextureAtlas()
+{
+}

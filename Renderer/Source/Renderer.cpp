@@ -6,7 +6,6 @@
 #include "Texture.h"
 #include "Context.h"
 #include "AssetManager.h"
-
 Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem,AssetManager* assetManager) {
     m_Window = window;
     m_ClearColor = desc.ClearColor;
@@ -206,7 +205,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
  }
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
  {
-     uint32_t DescriptorPoolSize = std::ceil((float)MaxTextureCount / (float)m_TextureSlotCount);
+     uint32_t DescriptorPoolSize = std::ceil((float)(MaxTextureCount*10) / (float)m_TextureSlotCount);
      for (uint64_t i = 0; i < DescriptorPoolSize; i++) {
 
      m_DescriptorPoolTextures.AddDescriptorType(m_TextureSlotCount, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
@@ -414,22 +413,21 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
      
        m_CurrentFrame=(m_CurrentFrame+1)%MAX_FRAME_DRAWS;
 
-
     }
 
-    void Renderer::DrawQuad(Float3 Position,Float4 Color,Float2 Size,GUUID TextureHandle,uint64_t ID,Float2 TexCoords[4]) {
-        
-        if(m_VertexPointer+4> m_VertexCount||m_Textures.size() ==m_TextureSlotCount)
+    void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, Float2 TexCoords[4])
+    {
+        if (m_VertexPointer + 4 > m_VertexCount || m_Textures.size() == m_TextureSlotCount - 1)
             Flush(false);
         if (m_Textures.find(TextureHandle) == m_Textures.end()) {
 
-            m_Textures[TextureHandle] = { m_AssetManager->GetResource<Texture>(TextureHandle) ,(uint32_t)m_Textures.size()+1};
+            m_Textures[TextureHandle] = { m_AssetManager->GetResource<Texture>(TextureHandle) ,(uint32_t)m_Textures.size() + 1 };
         }
 
-        m_Vertices[m_VertexPointer].Position ={Position.x-Size.x,Position.y-Size.y} ;
-        m_Vertices[m_VertexPointer+1].Position = {Position.x-Size.x,Position.y+Size.y};
-        m_Vertices[m_VertexPointer+2].Position = {Position.x+Size.x,Position.y+Size.y};
-        m_Vertices[m_VertexPointer+3].Position = {Position.x+Size.x,Position.y-Size.y};
+        m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
+        m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
+        m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
+        m_Vertices[m_VertexPointer + 3].Position = { Position.x + Size.x,Position.y - Size.y };
 
         m_Vertices[m_VertexPointer].TextureID = m_Textures[TextureHandle].Index;
         m_Vertices[m_VertexPointer + 1].TextureID = m_Textures[TextureHandle].Index;
@@ -438,16 +436,16 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
         m_Vertices[m_VertexPointer].Color = Color;
-        m_Vertices[m_VertexPointer+1].Color = Color;
-        m_Vertices[m_VertexPointer+2].Color = Color;
-        m_Vertices[m_VertexPointer+3].Color = Color;
+        m_Vertices[m_VertexPointer + 1].Color = Color;
+        m_Vertices[m_VertexPointer + 2].Color = Color;
+        m_Vertices[m_VertexPointer + 3].Color = Color;
 
 
 
         m_Vertices[m_VertexPointer].ID = ID;
-        m_Vertices[m_VertexPointer+1].ID = ID;
-        m_Vertices[m_VertexPointer+2].ID = ID;
-        m_Vertices[m_VertexPointer+3].ID = ID;
+        m_Vertices[m_VertexPointer + 1].ID = ID;
+        m_Vertices[m_VertexPointer + 2].ID = ID;
+        m_Vertices[m_VertexPointer + 3].ID = ID;
 
         if (TexCoords == nullptr)
         {
@@ -464,9 +462,53 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         }
 
 
-        m_VertexPointer+=4;
+        m_VertexPointer += 4;
 
-       
+
+    }
+
+    void Renderer::DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID,uint64_t TextureIndex)
+    {
+        TextureAtlas* atlas = m_AssetManager->GetResource<TextureAtlas>(textureatlas);
+        if (m_VertexPointer + 4 > m_VertexCount || m_Textures.size() == m_TextureSlotCount - 1)
+            Flush(false);
+        if (m_Textures.find(textureatlas) == m_Textures.end()) {
+
+            m_Textures[textureatlas] = { atlas->GetTexture() ,(uint32_t)m_Textures.size() + 1};
+        }
+
+        m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
+        m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
+        m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
+        m_Vertices[m_VertexPointer + 3].Position = { Position.x + Size.x,Position.y - Size.y };
+
+        m_Vertices[m_VertexPointer].TextureID = m_Textures[textureatlas].Index;
+        m_Vertices[m_VertexPointer + 1].TextureID = m_Textures[textureatlas].Index;
+        m_Vertices[m_VertexPointer + 2].TextureID = m_Textures[textureatlas].Index;
+        m_Vertices[m_VertexPointer + 3].TextureID = m_Textures[textureatlas].Index;
+
+
+        m_Vertices[m_VertexPointer].Color = Color;
+        m_Vertices[m_VertexPointer + 1].Color = Color;
+        m_Vertices[m_VertexPointer + 2].Color = Color;
+        m_Vertices[m_VertexPointer + 3].Color = Color;
+
+
+
+        m_Vertices[m_VertexPointer].ID = ID;
+        m_Vertices[m_VertexPointer + 1].ID = ID;
+        m_Vertices[m_VertexPointer + 2].ID = ID;
+        m_Vertices[m_VertexPointer + 3].ID = ID;
+
+            m_Vertices[m_VertexPointer].TexCoords = atlas->GetTexCoords(TextureIndex)[0];
+            m_Vertices[m_VertexPointer + 1].TexCoords = atlas->GetTexCoords(TextureIndex)[1];
+            m_Vertices[m_VertexPointer + 2].TexCoords = atlas->GetTexCoords(TextureIndex)[2];
+            m_Vertices[m_VertexPointer + 3].TexCoords = atlas->GetTexCoords(TextureIndex)[3];
+          
+
+
+        m_VertexPointer += 4;
+
 
     }
 
@@ -688,7 +730,7 @@ void Renderer::DrawBatch()
     RenderPassBeginInfo.renderPass = m_RenderPass;
     RenderPassBeginInfo.renderArea.offset = { 0,0 };
     RenderPassBeginInfo.renderArea.extent = m_SwapChain->GetExtent();
-    RenderPassBeginInfo.pClearValues = ClearColor;
+    RenderPassBeginInfo.pClearValues = ClearColor;          
     RenderPassBeginInfo.clearValueCount = 2;
     RenderPassBeginInfo.framebuffer = m_FrameBuffers[m_CurrentFrame].GetFrameBuffer(0);
 

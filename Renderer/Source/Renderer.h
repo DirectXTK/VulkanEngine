@@ -31,6 +31,7 @@ struct Vertex{
 struct DrawCommand {
     uint64_t VertexCount{};
     uint32_t BufferIndex{};
+
 };
 struct RendererDesc{
     uint32_t VertexCountPerDrawCall{100};
@@ -49,6 +50,8 @@ class Renderer{
 
     //
     void DrawQuad(Float3 Position,Float4 Color,Float2 Size,GUUID TextureHandle,uint64_t ID,Float2 TexCoords[4] = nullptr);
+    void DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
+
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
     void DrawParticle();
@@ -62,7 +65,7 @@ class Renderer{
 
     Texture* LoadTexture(std::string Path);
 
-
+    Context GetContext() { return m_Context; }
 
     ~Renderer();
 private:

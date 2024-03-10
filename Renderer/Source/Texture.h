@@ -23,6 +23,10 @@ public:
 	VkImage GetImage() { return m_Image; }
 	VkSampler GetSampler() { return m_Sampler; }
 
+	uint32_t GetWidth() { return m_Width; }
+	uint32_t GetHeight() { return m_Height; }
+
+
 	~Texture();
 private:
 
@@ -43,5 +47,29 @@ private:
 
 	VkDeviceMemory m_DeviceMemory{};
 	VkDeviceSize m_DeviceSize{};
+};
+
+class TextureAtlas {
+public:
+	//use this if size of textures are the same and they are packed and the size is known
+	TextureAtlas(Context context,Float2 OneTextureSize, Texture* texture);
+	TextureAtlas(Context context, std::string PathToMetaData,Texture* texture);
+
+
+	Float2* GetTexCoords(uint32_t Index);
+	uint32_t GetOneTextureWidth(uint32_t Index) { return m_TextureAtlasData[Index].SizeX; }
+	uint32_t GetOneTextureHeight(uint32_t Index) { return m_TextureAtlasData[Index].SizeY; }
+
+	Texture* GetTexture() { return m_Texture; }
+
+	~TextureAtlas();
+private:
+	struct TextureAtlasCoords {
+		Float2 Points[4];
+		uint64_t SizeX, SizeY{};
+	};
+	uint32_t m_TextureCount{};
+	TextureAtlasCoords* m_TextureAtlasData{};
+	Texture* m_Texture{};
 };
 

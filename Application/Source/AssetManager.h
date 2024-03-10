@@ -1,6 +1,6 @@
 #pragma once
 #include "AppCore.h"
-enum class ResourceType{UNDIFINED,TEXTURE,TEXTUREATLAS,SHADER};
+enum class ResourceType{UNDIFINED,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER};
 
 class Application;
 class AssetManager

@@ -13,7 +13,7 @@
 
      m_Window = new Window(specs.WindowWidth, specs.WindowHeight, specs.WindowTitle);
      RendererDesc desc{};
-     desc.VertexCountPerDrawCall = 4*3 ;
+     desc.VertexCountPerDrawCall = 4*100 ;
      desc.ClearColor = specs.ClearColor;
 
 
@@ -25,6 +25,8 @@
      m_GUIRenderer = new GUIRenderer(this);
      m_AssetManager.Init(this);
      m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\",ResourceType::TEXTURE);
+     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", ResourceType::TEXTUREATLAS);
+
 
      m_Renderer->InitializePipeline(m_AssetManager.GetResourceCount(ResourceType::TEXTURE));
 
