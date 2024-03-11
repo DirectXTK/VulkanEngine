@@ -31,35 +31,44 @@ struct Vertex{
 struct DrawCommand {
     uint64_t VertexCount{};
     uint32_t BufferIndex{};
+    uint32_t DescriptorSetTextureIndex{};
 
 };
 struct RendererDesc{
     uint32_t VertexCountPerDrawCall{100};
     Float4 ClearColor{};
 };
-class Renderer{
- public:
-     //Initialization functions
-    Renderer(RendererDesc desc,GLFWwindow* window,InputSystem* inputsystem,AssetManager* assetManager);
-    void InitializePipeline(uint64_t MaxTextureCount);
+class Renderer {
+public:
+    //Initialization functions
+    Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem, AssetManager* assetManager);
+    void InitializePipeline( uint64_t MaxTextureCount);
     //
 
     void BeginFrame(Camera2D* camera);
 
     //GUI
+    void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
+    void DrawQuadWithAtlasGUI(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
+    void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, Float2 TexCoords[4] = nullptr);
 
     //
-    void DrawQuad(Float3 Position,Float4 Color,Float2 Size,GUUID TextureHandle,uint64_t ID,Float2 TexCoords[4] = nullptr);
+    void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, Float2 TexCoords[4] = nullptr);
     void DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
 
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
+    //Particles
     void DrawParticle();
+
+
     Buffer* GetCustomBuffer(uint32_t index) { return m_PickingImageBuffer; }
 
     VkExtent2D GetViewPortExtent() { return m_SwapChain->GetExtent(); }
 
+    void EndGUIFrame();
     void EndFrame();
+
 
     void Statistics();
 
@@ -73,10 +82,12 @@ private:
     void StopRecordingCommands();
 
     void DrawBatch();
+    void DrawGUIBatch();
 
 
     void CreateNewBufferForBatch();
 
+    void FlushGUI();
     void Flush(bool LastFrame);
 
     void CreateInstance();
@@ -137,12 +148,12 @@ private:
     void CreateDebugger();
 
 
-    void RecordCommands(uint32_t VertexCount,uint32_t IndexCount);
+    void RecordCommands(uint32_t VertexCount, uint32_t IndexCount);
 
     void CreatePipeline();
     void GetPhysicalDevice();
     void CreateLogicalDevice();
-    void CreateSurface(GLFWwindow* window,VkSurfaceKHR* surface);
+    void CreateSurface(GLFWwindow* window, VkSurfaceKHR* surface);
 
 
     bool IsExtensionsSupported(std::vector<const char*> extensions);
@@ -165,7 +176,19 @@ private:
     std::vector<Buffer*> m_StaggingBuffers{ };
     std::vector<Buffer*> m_VertexBuffers{};
     std::vector<DrawCommand> m_DrawCommands{};
-    
+
+    //GUi stuff
+    std::vector<Buffer*> m_StaggingGUIBuffers{};
+    std::vector<Buffer*> m_VertexGUIBuffers{};
+    std::vector<DrawCommand> m_DrawGUICommands{};
+    Vertex* m_VerticesGUI{};
+    uint64_t m_VertexMaxCountGUI{100*4};
+    uint64_t m_VertexPointerGUI{};
+    DescriptorSet m_GUICameraDescriptor{};
+    Buffer* m_UniformGUICameraBuffer{};
+
+    //
+
     Camera2D m_Camera{};
     //Texturing
     uint32_t m_TextureSlotCount{4};
@@ -177,6 +200,10 @@ private:
         uint32_t Index{};
     };
     std::unordered_map<GUUID, TextureRenderingData> m_Textures{};
+    //GUI
+    std::vector<DescriptorSet> m_DescriptorSetTexturesGUI{};
+    std::unordered_map<GUUID, TextureRenderingData> m_TexturesGUI{};
+    uint32_t m_DrawCallCountGUI{};
 
 
     AssetManager* m_AssetManager{};

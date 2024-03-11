@@ -41,7 +41,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
     }
-   
+    BufferDesc UniformBufferDesc{};
+    UniformBufferDesc.Device = m_Device;
+    UniformBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    UniformBufferDesc.Physdevice = m_PhysicalDevice;
+    UniformBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
+    UniformBufferDesc.Usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    UniformBufferDesc.SizeBytes = sizeof(glm::mat4);
+
+    m_UniformGUICameraBuffer = new Buffer(UniformBufferDesc);
 
   
     
@@ -58,6 +66,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     context->QueueFamil = m_QueueFamilies;
 
     m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT);
+    m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT);
+
 
     m_DescriptorPool.CreatePool(context);
 
@@ -68,6 +78,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     CameraDescriptordesc.Type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
     m_DescriptorSetCamera.Init(CameraDescriptordesc);
+    m_GUICameraDescriptor.Init(CameraDescriptordesc);
 
     DescriptorSetDescription TextureDescriptordesc{ context };
     TextureDescriptordesc.DescriptorCount = 4;
@@ -107,11 +118,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
     m_VertexBuffers.push_back(new Buffer(VertexBufferDesc));
+    VertexBufferDesc.SizeBytes = m_VertexMaxCountGUI * sizeof(Vertex);
+    m_VertexGUIBuffers.push_back(new Buffer(VertexBufferDesc));
+
+
 
     // VertexBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex)*20000;
 
      //Buffer* vertexdwadad = new Buffer(VertexBufferDesc);
-
+    m_VerticesGUI = new Vertex[m_VertexMaxCountGUI];
     m_Vertices = new Vertex[m_VertexCount];
 
     BufferDesc StaggingBufferDesc{};
@@ -123,6 +138,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     StaggingBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
     m_StaggingBuffers.push_back(new Buffer(StaggingBufferDesc));
+    StaggingBufferDesc.SizeBytes = m_VertexMaxCountGUI * sizeof(Vertex);
+    m_StaggingGUIBuffers.push_back(new Buffer(StaggingBufferDesc));
+
     //temp
 
     m_Indices = new uint32_t[(uint32_t)(m_VertexCount * 1.5)];
@@ -186,9 +204,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-
     //Initialize GUI renderer
     m_DescriptorSetCamera.WriteTo(0, *m_UniformBuffers[0].GetBuffer(), sizeof(glm::mat4));
+    m_GUICameraDescriptor.WriteTo(0, *m_UniformGUICameraBuffer->GetBuffer(), sizeof(glm::mat4));
+
    // m_DescriptorSetTextures.WriteToTexture(0, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
   //  m_DescriptorSetTextures.WriteToTexture(1, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
    // m_DescriptorSetTextures.WriteToTexture(2, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
@@ -205,7 +224,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
  }
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
  {
-     uint32_t DescriptorPoolSize = std::ceil((float)(MaxTextureCount*10) / (float)m_TextureSlotCount);
+     uint32_t DescriptorPoolSize = std::ceil((float)(MaxTextureCount*10) / (float)m_TextureSlotCount)*2;
      for (uint64_t i = 0; i < DescriptorPoolSize; i++) {
 
      m_DescriptorPoolTextures.AddDescriptorType(m_TextureSlotCount, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
@@ -219,23 +238,33 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
      DescriptorDesc.StageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
      DescriptorDesc.Type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
+     
+
+     VkDescriptorSetLayout* descriptorsetlayout = new VkDescriptorSetLayout[3];
 
 
-     VkDescriptorSetLayout* descriptorsetlayout = new VkDescriptorSetLayout[DescriptorPoolSize+1];
-     descriptorsetlayout[0] = m_DescriptorSetCamera.GetDescriptorLayout();
-        uint32_t a{};
-     for (uint32_t i = 0; i < DescriptorPoolSize; i++) {
+        uint32_t Offset{ 0 };
+     for (uint32_t i = 0; i < uint32_t(DescriptorPoolSize*0.5f); i++) {
          m_DescriptorSetTextures.emplace_back();
          m_DescriptorSetTextures[i].Init(DescriptorDesc);
-        descriptorsetlayout[i+1] = m_DescriptorSetTextures[i].GetDescriptorLayout();
+
+         m_DescriptorSetTexturesGUI.emplace_back();
+         m_DescriptorSetTexturesGUI[i].Init(DescriptorDesc);
+
+
         for (uint32_t j = 0; j < m_TextureSlotCount; j++) {
          m_DescriptorSetTextures[i].WriteToTexture(j, m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
+         m_DescriptorSetTexturesGUI[i].WriteToTexture(j, m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
+
         }
-
      }
+     
+        descriptorsetlayout[0] = m_DescriptorSetCamera.GetDescriptorLayout();
+        descriptorsetlayout[1] = m_DescriptorSetTextures[0].GetDescriptorLayout();
+        descriptorsetlayout[2] = m_GUICameraDescriptor.GetDescriptorLayout();
 
 
-     m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device, descriptorsetlayout, DescriptorPoolSize+1);
+     m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device, descriptorsetlayout,3);
      
      PipelineDesc pipelineDesc{};
      pipelineDesc.RenderPass = m_RenderPass;
@@ -259,7 +288,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::BeginFrame(Camera2D* camera){
                //RecordCommands(m_VertexCount,0);
        
-
+            m_DrawCallCountGUI = 0;
             m_DrawCallCount =0;
             m_Camera = *camera;
             m_CameraViewProj = m_Camera.GetViewProj();
@@ -306,6 +335,99 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
     }
+
+    void Renderer::DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, uint64_t ID)
+    {
+        if (m_VertexPointerGUI + 4 > m_VertexMaxCountGUI)
+            Flush(false);
+
+        m_VerticesGUI[m_VertexPointerGUI].Position = { Position.x - Size.x,Position.y - Size.y };
+        m_VerticesGUI[m_VertexPointerGUI + 1].Position = { Position.x - Size.x,Position.y + Size.y };
+        m_VerticesGUI[m_VertexPointerGUI + 2].Position = { Position.x + Size.x,Position.y + Size.y };
+        m_VerticesGUI[m_VertexPointerGUI + 3].Position = { Position.x + Size.x,Position.y - Size.y };
+
+        m_VerticesGUI[m_VertexPointerGUI].TextureID = 0;
+        m_VerticesGUI[m_VertexPointerGUI + 1].TextureID = 0;
+        m_VerticesGUI[m_VertexPointerGUI + 2].TextureID = 0;
+        m_VerticesGUI[m_VertexPointerGUI + 3].TextureID = 0;
+
+
+        m_VerticesGUI[m_VertexPointerGUI].Color = Color;
+        m_VerticesGUI[m_VertexPointerGUI + 1].Color = Color;
+        m_VerticesGUI[m_VertexPointerGUI + 2].Color = Color;
+        m_VerticesGUI[m_VertexPointerGUI + 3].Color = Color;
+
+
+
+        m_VerticesGUI[m_VertexPointerGUI].ID = ID;
+        m_VerticesGUI[m_VertexPointerGUI + 1].ID = ID;
+        m_VerticesGUI[m_VertexPointerGUI + 2].ID = ID;
+        m_VerticesGUI[m_VertexPointerGUI + 3].ID = ID;
+
+        m_VerticesGUI[m_VertexPointerGUI].TexCoords = { 0.0f,1.0f };
+        m_VerticesGUI[m_VertexPointerGUI + 1].TexCoords = { 0.0f,0.0f };
+        m_VerticesGUI[m_VertexPointerGUI + 2].TexCoords = { 1.0f,0.0f };
+        m_VerticesGUI[m_VertexPointerGUI + 3].TexCoords = { 1.0f,1.0f };
+
+
+
+        m_VertexPointerGUI += 4;
+    }
+
+    void Renderer::DrawQuadWithAtlasGUI(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex)
+    {
+    }
+
+    void Renderer::DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, Float2 TexCoords[4])
+    {
+        if (m_VertexPointerGUI + 4 > m_VertexMaxCountGUI || m_TexturesGUI.size() == m_TextureSlotCount - 1)
+            Flush(false);
+        if (m_TexturesGUI.find(TextureHandle) == m_TexturesGUI.end()) {
+
+            m_TexturesGUI[TextureHandle] = { m_AssetManager->GetResource<Texture>(TextureHandle) ,(uint32_t)m_TexturesGUI.size() + 1 };
+        }
+
+        m_VerticesGUI[m_VertexPointerGUI].Position = { Position.x - Size.x,Position.y - Size.y };
+        m_VerticesGUI[m_VertexPointerGUI + 1].Position = { Position.x - Size.x,Position.y + Size.y };
+        m_VerticesGUI[m_VertexPointerGUI + 2].Position = { Position.x + Size.x,Position.y + Size.y };
+        m_VerticesGUI[m_VertexPointerGUI + 3].Position = { Position.x + Size.x,Position.y - Size.y };
+
+        m_VerticesGUI[m_VertexPointerGUI].TextureID = m_TexturesGUI[TextureHandle].Index;
+        m_VerticesGUI[m_VertexPointerGUI + 1].TextureID = m_TexturesGUI[TextureHandle].Index;
+        m_VerticesGUI[m_VertexPointerGUI + 2].TextureID = m_TexturesGUI[TextureHandle].Index;
+        m_VerticesGUI[m_VertexPointerGUI + 3].TextureID = m_TexturesGUI[TextureHandle].Index;
+
+
+        m_VerticesGUI[m_VertexPointerGUI].Color = Color;
+        m_VerticesGUI[m_VertexPointerGUI + 1].Color = Color;
+        m_VerticesGUI[m_VertexPointerGUI + 2].Color = Color;
+        m_VerticesGUI[m_VertexPointerGUI + 3].Color = Color;
+
+
+
+        m_VerticesGUI[m_VertexPointerGUI].ID = ID;
+        m_VerticesGUI[m_VertexPointerGUI + 1].ID = ID;
+        m_VerticesGUI[m_VertexPointerGUI + 2].ID = ID;
+        m_VerticesGUI[m_VertexPointerGUI + 3].ID = ID;
+
+        if (TexCoords == nullptr)
+        {
+            m_VerticesGUI[m_VertexPointerGUI].TexCoords = { 0.0f,1.0f };
+            m_VerticesGUI[m_VertexPointerGUI + 1].TexCoords = { 0.0f,0.0f };
+            m_VerticesGUI[m_VertexPointerGUI + 2].TexCoords = { 1.0f,0.0f };
+            m_VerticesGUI[m_VertexPointerGUI + 3].TexCoords = { 1.0f,1.0f };
+        }
+        else {
+            m_VerticesGUI[m_VertexPointerGUI].TexCoords = TexCoords[0];
+            m_VerticesGUI[m_VertexPointerGUI + 1].TexCoords = TexCoords[1];
+            m_VerticesGUI[m_VertexPointerGUI + 2].TexCoords = TexCoords[2];
+            m_VerticesGUI[m_VertexPointerGUI + 3].TexCoords = TexCoords[3];
+        }
+
+
+        m_VertexPointerGUI += 4;
+
+    }
    
     void Renderer::CreateNewBufferForBatch()
     {
@@ -319,6 +441,43 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
       //  m_IndexBuffers[m_IndexBuffers.size() - 1]->UploadToBuffer(m_Device, m_Indices, uint64_t(m_VertexCount * 1.5f * sizeof(uint32_t)));
 
         
+    }
+    void Renderer::FlushGUI()
+    {
+        uint32_t Index{ 1 };
+
+        for (auto& it : m_TexturesGUI) {
+            m_DescriptorSetTexturesGUI[m_DrawCallCountGUI].WriteToTexture(Index, it.second.texture->GetImageView(), it.second.texture->GetSampler());
+            Index++;
+        }
+
+
+        m_DrawGUICommands.push_back({ m_VertexPointerGUI,0 });
+
+        //if (m_DrawCallCount == m_VertexBuffers.size())
+            //CreateNewBufferForBatch();
+
+        glm::mat4 Identity = glm::identity<glm::mat4>();
+        m_UniformGUICameraBuffer->UploadToBuffer(m_Device, &Identity, sizeof(glm::mat4));
+
+        m_StaggingGUIBuffers[0]->UploadToBuffer(m_Device, m_VerticesGUI, sizeof(Vertex) * m_VertexPointerGUI);
+
+        VkBufferCopy region{};
+        region.size = sizeof(Vertex) * m_VertexPointerGUI;
+
+        if (m_VertexPointerGUI != 0)
+        {
+            vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingGUIBuffers[0]->GetBuffer(), *m_VertexGUIBuffers[0]->GetBuffer(), 1, &region);
+        }
+
+
+
+
+
+
+
+        m_VertexPointerGUI = 0;
+        m_TexturesGUI.clear();
     }
     void Renderer::Flush(bool LastFrame){
 
@@ -358,10 +517,20 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_Textures.clear();
 
     }
+    void Renderer::EndGUIFrame()
+    {
+
+
+
+        FlushGUI();
+
+
+    }
     void Renderer::EndFrame(){
 
 
         Flush(true);
+        EndGUIFrame();
         DrawBatch();
 
 
@@ -412,7 +581,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
      
        m_CurrentFrame=(m_CurrentFrame+1)%MAX_FRAME_DRAWS;
-
     }
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, Float2 TexCoords[4])
@@ -672,7 +840,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
  
     void Renderer::Statistics(){
 
-        Core::Log(ErrorType::Info,"Draw call count",m_DrawCallCount);
+        Core::Log(ErrorType::Info,"Draw call count",m_DrawCallCount+m_DrawCallCountGUI);
     }
 
     Texture* Renderer::LoadTexture(std::string Path)
@@ -719,6 +887,7 @@ void Renderer::StopRecordingCommands()
 
     vkEndCommandBuffer(m_CurrentCommandBuffer);
     m_DrawCommands.resize(0);
+    m_DrawGUICommands.resize(0);
 }
 
 void Renderer::DrawBatch()
@@ -751,6 +920,27 @@ void Renderer::DrawBatch()
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommands[i].VertexCount * 1.5f), 1, 0, 0, 0);
 
     }
+    DrawGUIBatch();
     vkCmdEndRenderPass(m_CurrentCommandBuffer);
 
+}
+
+void Renderer::DrawGUIBatch()
+{
+
+    VkDeviceSize Offset{ 0 };
+    for (int i = 0; i < m_DrawGUICommands.size(); i++) {
+
+        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexGUIBuffers[i]->GetBuffer(), &Offset);
+
+        vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
+
+        VkDescriptorSet DescriptorSets[] = { m_GUICameraDescriptor.GetDescriptorSet(),m_DescriptorSetTexturesGUI[i].GetDescriptorSet()};
+
+        vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
+
+
+        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawGUICommands[i].VertexCount * 1.5f), 1, 0, 0, 0);
+
+    }
 }

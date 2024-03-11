@@ -9,7 +9,7 @@ void GUIRenderer::BeginGUI()
 {
 	m_CurrentButton = 0;
 }
-bool GUIRenderer::Button(Float2 Position,Float4 Color,Float2 Size,MouseCodes mousecode,bool SavesState, bool Dragable,bool** IsPressed)
+bool GUIRenderer::Button(Float2 Position,Float4 Color,Float2 Size,MouseCodes mousecode,GUUID TextureHandle,bool SavesState, bool Dragable,bool** IsPressed)
 {
 	Renderer* renderer = m_Application->m_Renderer;
 	InputSystem* inputsystem = &m_Application->m_InputSystem;
@@ -17,7 +17,10 @@ bool GUIRenderer::Button(Float2 Position,Float4 Color,Float2 Size,MouseCodes mou
 
 	if (m_CurrentButton == m_ButtonIDs.size())
 		m_ButtonIDs[m_CurrentButton] = { false,Core::RandomUInt64(0, std::numeric_limits<uint64_t>::max()) };
-	renderer->DrawQuad({ Position.x,Position.y,0.0f }, Color, Size, m_ButtonIDs[m_CurrentButton].ID.ID);
+	if(TextureHandle ==0)
+		renderer->DrawQuadGUI({ Position.x,Position.y,0.0f }, Color, Size, m_ButtonIDs[m_CurrentButton].ID.ID);
+	else
+		renderer->DrawQuadGUI({ Position.x,Position.y,0.0f }, Color, Size, TextureHandle,m_ButtonIDs[m_CurrentButton].ID.ID );
 
 	if(IsPressed)
 		*IsPressed = &m_ButtonIDs[m_CurrentButton].IsPressed;

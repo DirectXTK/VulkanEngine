@@ -88,11 +88,11 @@ void TextureTestingLayer::OnUpdate(double DeltaTime)
 
 void TextureTestingLayer::OnGUI()
 {
-	if (m_App->m_GUIRenderer->Button({ -0.2f,0.0f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.01f,0.01f }, MouseCodes::LEFT, false)) {
+	if (m_App->m_GUIRenderer->Button({ 0.0f,-0.9f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, GetResourceHandle("GUI\\SpawnButton.png"), false)) {
         m_Units.push_back({ GetResourceHandle("Examples\\BLOOD_KNIGHT.png"),{Core::RandomFloat(-1.0f,1.0f),Core::RandomFloat(-1.0f,1.0f)}});
 
 	}
-    if (m_App->m_GUIRenderer->Button({ -0.2f,0.2f }, { 0.0f,0.0f,1.0f,1.0f }, { 0.01f,0.01f }, MouseCodes::LEFT, false)) {
+    if (m_App->m_GUIRenderer->Button({ 0.2f,-0.9f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, GetResourceHandle("GUI\\ChangeTextureButton.png"), false)) {
         m_TextureIndex++;
 
     }

@@ -1,6 +1,8 @@
 #include "AssetManager.h"
 #include "Renderer.h"
 #include "Application.h"
+#include <Windows.h>
+
 void AssetManager::Init(Application* app)
 {
 	m_APP = app;
@@ -9,8 +11,10 @@ void AssetManager::LoadAllResources(std::string FolderPath, ResourceType TypesTo
 {
 	std::string FilePath{};
 	switch (TypesToLoad) {
-
 	case ResourceType::TEXTURE: {
+		std::wstring str{};
+		str.resize(200);
+		GetModuleFileName(nullptr, str.data(), 200);
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 			FilePath = dir_entry.path().string();
 			size_t LocOfPng = FilePath.find(".png", 0);
