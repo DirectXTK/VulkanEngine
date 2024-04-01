@@ -37,6 +37,7 @@ struct DrawCommand {
 struct RendererDesc{
     uint32_t VertexCountPerDrawCall{100};
     Float4 ClearColor{};
+    Camera2D* InitialCamera{nullptr}; //optional
 };
 class Renderer {
 public:
@@ -63,6 +64,7 @@ public:
 
 
     Buffer* GetCustomBuffer(uint32_t index) { return m_PickingImageBuffer; }
+    Buffer* GetViewportWithID();
 
     VkExtent2D GetViewPortExtent() { return m_SwapChain->GetExtent(); }
 

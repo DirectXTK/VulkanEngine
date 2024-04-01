@@ -14,6 +14,8 @@ void TextureTestingLayer::OnCreate()
 
 
     m_Units.push_back({ 0,{0.4f,0.0f},GetResourceHandle("Examples\\Test2.json")});
+    Camera2D* camera = &m_App->m_Camera;
+    camera->SetScale({m_Zoom,m_Zoom});
 
 }
 

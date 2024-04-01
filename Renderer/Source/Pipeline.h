@@ -13,6 +13,8 @@ struct PipelineDesc {
 	VkViewport Viewport{};
 	VkPipelineLayout PipelineLayout{};
 	uint32_t VertexInputStride{};
+
+
 };
 
 class Pipeline {

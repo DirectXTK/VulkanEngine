@@ -14,6 +14,7 @@
 #include <thread>
 #include <queue>
 #include <limits>
+#include <chrono>
 
 #include "RandomGenerator.h"
 #include "AppTime.h"
@@ -70,8 +71,24 @@ namespace std {
         }
     };
 }
+struct Double2 {
+    Double2() = default;
+    union {
+        struct {
+            double x, y;
+        };
+        struct {
+            double r, g;
+        };
+    };
+};
 struct Float2 {
     Float2()=default;
+    Float2& operator+=(const Float2& rh) {
+        x += rh.x;
+        y += rh.y;
+        return *this;
+    }
     union{
         struct{
         float r,g;
