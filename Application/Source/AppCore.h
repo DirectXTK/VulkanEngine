@@ -42,8 +42,17 @@ struct GUUID {
             return true;
         return false;
     }
-    GUUID& operator=(int b) {
-        ID += (uint32_t)b;
+    bool operator==(const GUUID& other) {
+        if (other.ID == ID)
+            return true;
+        return false;
+    }
+    GUUID& operator=(uint32_t b) {
+        ID = b;
+        return *this;
+    }
+    GUUID& operator=(uint64_t b) {
+        ID = b;
         return *this;
     }
 
