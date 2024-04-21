@@ -12,7 +12,7 @@ private:
 	struct Unit {
 		GUUID TextureHandle{};
 		Float3 Position{};
-		GUUID TextureAtlasHandle{};
+		uint32_t TextureIndex{0};
 	};
 	std::vector<Unit> m_Units{};
 	uint32_t m_TextureIndex{};

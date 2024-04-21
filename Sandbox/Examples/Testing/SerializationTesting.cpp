@@ -283,9 +283,9 @@ void SerializationTestingLayer::MakeUnitRandom(Unit* unit)
 
 
     GUUID ids[3];
-    ids[0] = GetResourceHandle("Examples\\BLOOD_KNIGHT.png");
-    ids[1] = GetResourceHandle("Texture2.png");
-    ids[2] = GetResourceHandle("Texture3.png");
+    ids[0] = Core::GetStringHash("Examples\\BLOOD_KNIGHT.png");
+    ids[1] = Core::GetStringHash("Texture2.png");
+    ids[2] = Core::GetStringHash("Texture3.png");
 
     unit->TextureHandle = ids[Core::RandomUInt64(0,2)];
    

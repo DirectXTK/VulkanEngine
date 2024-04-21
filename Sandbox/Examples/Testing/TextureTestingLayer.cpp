@@ -6,14 +6,14 @@ TextureTestingLayer::TextureTestingLayer(): Layer("TextureTestingLayer")
 
 void TextureTestingLayer::OnCreate()
 {
-	m_Units.push_back({ GetResourceHandle("Examples\\BLOOD_KNIGHT.png"),{0.0f,0.0f} });
-    m_Units.push_back({ GetResourceHandle("Texture1.png"),{0.1f,0.0f} });
-    m_Units.push_back({ GetResourceHandle("Texture2.png"),{0.2f,0.0f} });
-    m_Units.push_back({ GetResourceHandle("Texture3.png"),{0.3f,0.0f} });
-    m_Units.push_back({ GetResourceHandle("Texture4.png"),{0.4f,0.0f} });
+	m_Units.push_back({ Core::GetStringHash("Examples\\BLOOD_KNIGHT.png"),{0.0f,0.0f} });
+    m_Units.push_back({ Core::GetStringHash("Texture1.png"),{0.1f,0.0f} });
+    m_Units.push_back({ Core::GetStringHash("Texture2.png"),{0.2f,0.0f} });
+    m_Units.push_back({ Core::GetStringHash("Texture3.png"),{0.3f,0.0f} });
+    m_Units.push_back({ Core::GetStringHash("Texture4.png"),{0.4f,0.0f} });
 
 
-    m_Units.push_back({ 0,{0.4f,0.0f},GetResourceHandle("Examples\\Test2.json")});
+    m_Units.push_back({ Core::GetStringHash("Examples\\Test2.json"),  { 0.4f,0.0f },0 });
     Camera2D* camera = &m_App->m_Camera;
     camera->SetScale({m_Zoom,m_Zoom});
 
@@ -75,14 +75,11 @@ void TextureTestingLayer::OnUpdate(double DeltaTime)
 
         camera->SetScale({m_Zoom,m_Zoom});
     }
-
+    
 
 
 	for (uint32_t i = 0; i < m_Units.size(); i++) {
-        if(m_Units[i].TextureHandle !=0)
-		m_App->m_Renderer->DrawQuad(m_Units[i].Position, { 1.0f,1.0f,1.0f,1.0f }, { 0.04f,0.04f },m_Units[i].TextureHandle, 0);
-        else 
-            m_App->m_Renderer->DrawQuadWithAtlas(m_Units[i].Position, { 1.0f,1.0f,1.0f,1.0f }, { 0.04f,0.04f },m_Units[i].TextureAtlasHandle,0,m_TextureIndex);
+		m_App->m_Renderer->DrawQuad(m_Units[i].Position, { 1.0f,1.0f,1.0f,1.0f }, { 0.04f,0.04f },m_Units[i].TextureHandle, 0,m_Units[i].TextureIndex);
         
 
 	}
@@ -90,12 +87,12 @@ void TextureTestingLayer::OnUpdate(double DeltaTime)
 
 void TextureTestingLayer::OnGUI()
 {
-	if (m_App->m_GUIRenderer->Button({ 0.0f,-0.9f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, GetResourceHandle("GUI\\SpawnButton.png"), false)) {
-        m_Units.push_back({ GetResourceHandle("Examples\\BLOOD_KNIGHT.png"),{Core::RandomFloat(-1.0f,1.0f),Core::RandomFloat(-1.0f,1.0f)}});
+	if (m_App->m_GUIRenderer->Button({ 0.0f,-0.9f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton.png"), false)) {
+        m_Units.push_back({ Core::GetStringHash("Examples\\BLOOD_KNIGHT.png"),{Core::RandomFloat(-1.0f,1.0f),Core::RandomFloat(-1.0f,1.0f)}});
 
 	}
-    if (m_App->m_GUIRenderer->Button({ 0.2f,-0.9f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, GetResourceHandle("GUI\\ChangeTextureButton.png"), false)) {
-        m_TextureIndex++;
+    if (m_App->m_GUIRenderer->Button({ 0.2f,-0.9f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\ChangeTextureButton.png"), false)) {
+        m_Units[5].TextureIndex++;
 
     }
 }

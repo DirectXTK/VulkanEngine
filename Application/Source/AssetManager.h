@@ -1,8 +1,9 @@
 #pragma once
 #include "AppCore.h"
 
-enum class ResourceType{UNDIFINED,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER};
+enum class ResourceType{UNDIFINED,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER,AI,ANIMATION};
 
+class Texture;
 class Application;
 class AssetManager
 {
@@ -15,6 +16,10 @@ public:
 		return (T*)m_Resources[Handle];
 	}
 private:
+
+	void LoadAnimation(const std::string& FolderPath);
+	Texture* LoadTexture(const std::string& TexturePath);
+
 	std::unordered_map<GUUID, void*> m_Resources{};
 	std::unordered_map<ResourceType, uint64_t> m_ResourceCount;
 	Application* m_APP{};

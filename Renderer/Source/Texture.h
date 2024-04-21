@@ -16,6 +16,7 @@ public:
 	Texture(Context context,uint32_t Width, uint32_t Height,uint32_t ChannelCount,uint32_t* Pixels);
 	Texture(Context context,std::string Path);
 
+
 	void TrasitionFormat(VkImageLayout OldLayout, VkImageLayout NewLayout, VkCommandBuffer CommandBuffer);
 	void CopyFromBuffer(VkDevice device, Buffer* srcbuffer, VkCommandBuffer commandbuffer);
 
@@ -25,6 +26,9 @@ public:
 
 	uint32_t GetWidth() { return m_Width; }
 	uint32_t GetHeight() { return m_Height; }
+	//texture atlas
+	//returns 4 points
+	Float2* GetTextureCoords(uint32_t Index) { return m_TextureAtlasData[Index].Points; }
 
 
 	~Texture();
@@ -34,6 +38,7 @@ private:
 	void CreateImageAndView(VkFormat Format, VkSharingMode ShareMode, VkImageTiling ImageTilling, VkImageUsageFlags UsageFlags, VkMemoryPropertyFlags MemoryPropertyFlags, VkImageLayout InitialImageLayout);
 	unsigned char* LoadTextureDataFromFile(std::string Path);
 	void CreateTexture(void* initData);
+	void CreateTextureAtlas(const std::string& MetaData);
 
 	void CopyDataFromBuffer(VkCommandBuffer CommandBuffer, VkBuffer BufferSrc, VkImage ImageDst);
 
@@ -47,6 +52,13 @@ private:
 
 	VkDeviceMemory m_DeviceMemory{};
 	VkDeviceSize m_DeviceSize{};
+	//Texture atlas
+	struct TextureAtlasCoords {
+		Float2 Points[4];
+		uint64_t SizeX, SizeY{};
+	};
+	uint32_t m_TextureCount{};
+	TextureAtlasCoords* m_TextureAtlasData{};
 };
 
 class TextureAtlas {

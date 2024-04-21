@@ -587,24 +587,33 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
        m_CurrentFrame=(m_CurrentFrame+1)%MAX_FRAME_DRAWS;
     }
 
-    void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, Float2 TexCoords[4])
+    void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,uint32_t TextureIndex)
     {
         if (m_VertexPointer + 4 > m_VertexCount || m_Textures.size() == m_TextureSlotCount - 1)
             Flush(false);
-        if (m_Textures.find(TextureHandle) == m_Textures.end()) {
+        if (TextureHandle != 0) {
+            if (m_Textures.find(TextureHandle) == m_Textures.end()) {
 
-            m_Textures[TextureHandle] = { m_AssetManager->GetResource<Texture>(TextureHandle) ,(uint32_t)m_Textures.size() + 1 };
+                m_Textures[TextureHandle] = { m_AssetManager->GetResource<Texture>(TextureHandle) ,(uint32_t)m_Textures.size() + 1 };
+            }
+            TextureRenderingData texture = m_Textures[TextureHandle];
+            Texture* texturetest = m_AssetManager->GetResource<Texture>(TextureHandle);
+            m_Vertices[m_VertexPointer].TextureID = texture.Index;
+            m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
+            m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
+            m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
+
+            m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[0];
+            m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[1];
+            m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[2];
+            m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[3];
         }
-
         m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
         m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
         m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
         m_Vertices[m_VertexPointer + 3].Position = { Position.x + Size.x,Position.y - Size.y };
 
-        m_Vertices[m_VertexPointer].TextureID = m_Textures[TextureHandle].Index;
-        m_Vertices[m_VertexPointer + 1].TextureID = m_Textures[TextureHandle].Index;
-        m_Vertices[m_VertexPointer + 2].TextureID = m_Textures[TextureHandle].Index;
-        m_Vertices[m_VertexPointer + 3].TextureID = m_Textures[TextureHandle].Index;
+      
 
 
         m_Vertices[m_VertexPointer].Color = Color;
@@ -619,19 +628,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_Vertices[m_VertexPointer + 2].ID = ID;
         m_Vertices[m_VertexPointer + 3].ID = ID;
 
-        if (TexCoords == nullptr)
-        {
-            m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
-            m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
-            m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,0.0f };
-            m_Vertices[m_VertexPointer + 3].TexCoords = { 1.0f,1.0f };
-        }
-        else {
-            m_Vertices[m_VertexPointer].TexCoords = TexCoords[0];
-            m_Vertices[m_VertexPointer + 1].TexCoords = TexCoords[1];
-            m_Vertices[m_VertexPointer + 2].TexCoords = TexCoords[2];
-            m_Vertices[m_VertexPointer + 3].TexCoords = TexCoords[3];
-        }
+           
+       
 
 
         m_VertexPointer += 4;

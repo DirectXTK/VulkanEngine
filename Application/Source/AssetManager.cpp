@@ -2,7 +2,7 @@
 #include "Renderer.h"
 #include "Application.h"
 #include <Windows.h>
-
+#include "Animator.h"
 void AssetManager::Init(Application* app)
 {
 	m_APP = app;
@@ -17,9 +17,7 @@ void AssetManager::LoadAllResources(std::string FolderPath, ResourceType TypesTo
 		GetModuleFileName(nullptr, str.data(), 200);
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 			FilePath = dir_entry.path().string();
-			size_t LocOfPng = FilePath.find(".png", 0);
-			if (LocOfPng == (uint64_t)-1)
-				continue;
+		
 			Texture* texture = m_APP->m_Renderer->LoadTexture(FilePath);
 			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
 			size_t t = std::hash<std::string>{}(FilePath);
@@ -70,6 +68,10 @@ void AssetManager::LoadAllResources(std::string FolderPath, ResourceType TypesTo
 		break;
 
 	}
+	case ResourceType::ANIMATION: {
+		LoadAnimation(FolderPath);
+		break;
+	}
 
 	default: {
 		Core::Log(ErrorType::Error, "Invalid ResourceType.");
@@ -78,5 +80,41 @@ void AssetManager::LoadAllResources(std::string FolderPath, ResourceType TypesTo
 	}
 
 
+}
+
+void AssetManager::LoadAnimation(const std::string& FolderPath)
+{
+	std::string TexturePath{};
+	std::string FilePath{};
+	for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
+
+
+		FilePath = dir_entry.path().string();
+		size_t MetaDataPath = FilePath.find(".json", 0);
+		if (MetaDataPath == (uint64_t)-1)
+			continue;
+		TexturePath = FilePath.substr(FilePath.find("."), 4);
+		FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
+		//Load texture
+		Texture* texture =LoadTexture(TexturePath);
+
+		//Load animation
+		size_t atlasGUUID = std::hash<std::string>{}(FilePath);
+		m_Resources[atlasGUUID] = new Animator(FilePath, texture);
+		m_ResourceCount[ResourceType::ANIMATION]++;
+
+
+	
+	}
+}
+
+Texture* AssetManager::LoadTexture(const std::string& TexturePath)
+{
+		Texture* texture = m_APP->m_Renderer->LoadTexture(TexturePath);
+
+		size_t t = std::hash<std::string>{}(TexturePath);
+		m_ResourceCount[ResourceType::TEXTURE]++;
+		m_Resources[t] = texture;
+		return texture;
 }
 

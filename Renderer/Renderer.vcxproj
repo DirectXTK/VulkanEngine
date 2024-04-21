@@ -98,6 +98,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Animator.h" />
     <ClInclude Include="Source\Context.h" />
     <ClInclude Include="Source\Buffer.h" />
     <ClInclude Include="Source\Camera.h" />
@@ -121,6 +122,7 @@
     <ClInclude Include="TextureFrontEnd.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Animator.cpp" />
     <ClCompile Include="Source\Context.cpp" />
     <ClCompile Include="Source\Buffer.cpp" />
     <ClCompile Include="Source\Camera.cpp" />

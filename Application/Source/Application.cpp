@@ -27,7 +27,7 @@
      m_GUIRenderer = new GUIRenderer(this,false);
      m_AssetManager.Init(this);
      m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\",ResourceType::TEXTURE);
-     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", ResourceType::TEXTUREATLAS);
+     //m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", ResourceType::TEXTUREATLAS);
 
 
      m_Renderer->InitializePipeline(m_AssetManager.GetResourceCount(ResourceType::TEXTURE));

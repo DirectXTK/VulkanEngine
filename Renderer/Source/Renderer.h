@@ -54,7 +54,7 @@ public:
     void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, Float2 TexCoords[4] = nullptr);
 
     //
-    void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, Float2 TexCoords[4] = nullptr);
+    void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,uint32_t TextureIndex=0);
     void DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
 
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);

@@ -15,11 +15,27 @@ Texture::Texture(Context context,uint32_t Width, uint32_t Height,uint32_t Channe
 Texture::Texture(Context context, std::string Path)
 {
 	m_Context = context;
-	unsigned char* InitData = LoadTextureDataFromFile(Path);
-	if (InitData) {
+	std::string Extension= Core::GetFileExtension(Path);
+	//Loads texture normaly
+	if (Extension == "png") {
+		unsigned char* InitData = LoadTextureDataFromFile(Path);
+		if (InitData) {
 
-		CreateTexture(InitData);
-		delete[] InitData;
+			CreateTexture(InitData);
+			delete[] InitData;
+		}
+		
+	}//Loads texture as an atlas
+	else if (Extension == "json") {
+		std::string TexturePath = Path.substr(0, Path.find("."));
+		TexturePath += ".png";
+		unsigned char* InitData = LoadTextureDataFromFile(TexturePath);
+		if (InitData) {
+
+			CreateTexture(InitData);
+			CreateTextureAtlas(Path);
+			delete[] InitData;
+		}
 	}
 }
 
@@ -231,6 +247,78 @@ void Texture::CreateTexture(void* initData)
 	VkResult result = vkCreateSampler(m_Context->Device, &samplercreateinfo, nullptr, &m_Sampler);
 	if (result != VK_SUCCESS)
 		Core::Log(ErrorType::Error, "Failed to create texture sampler.");
+	m_TextureAtlasData = new TextureAtlasCoords();
+	m_TextureCount = 1;
+
+	m_TextureAtlasData->Points[0] = { 0.0f,1.0f };
+	m_TextureAtlasData->Points[1] = { 0.0f,0.0f };
+	m_TextureAtlasData->Points[2] = { 1.0f,0.0f };
+	m_TextureAtlasData->Points[3] = { 1.0f,1.0f };
+
+
+}
+
+void Texture::CreateTextureAtlas(const std::string& MetaData)
+{
+
+	uint64_t Offset{};
+	std::vector<TextureAtlasCoords> AtlasCoords{};
+
+
+
+	uint64_t TileLocX{};
+	uint64_t TileLocY{};
+
+	uint64_t TileSizeX{};
+	uint64_t TileSizeY{};
+
+
+	std::string Data{};
+	std::string Member{};
+	uint64_t DataSize{};
+	std::ifstream input(MetaData);
+	if (!input.is_open()) {
+		Core::Log(ErrorType::Error, "Failed to create texture atlas invalid PathToMetaData.");
+		return;
+	}
+	input.seekg(0, input.end);
+	DataSize = input.tellg();
+	Data.resize(DataSize);
+	input.seekg(0, input.beg);
+	input.read(Data.data(), DataSize);
+
+	Offset = Data.find("\"frame\"", Offset);
+	while (Offset != (uint64_t)-1) {
+		TextureAtlasCoords atlas{};
+
+
+		Offset = Data.find("x", Offset) + 4;
+		TileLocX = std::stoi(Data.substr(Offset, Data.find(",") - Offset));
+		Offset = Data.find("y", Offset) + 4;
+		TileLocY = std::stoi(Data.substr(Offset, Data.find(",") - Offset));
+		Offset = Data.find("w", Offset) + 4;
+		TileSizeX = std::stoi(Data.substr(Offset, Data.find(",") - Offset));
+		Offset = Data.find("h", Offset) + 4;
+		TileSizeY = std::stoi(Data.substr(Offset, Data.find("}" - 1) - Offset));
+
+		atlas.Points[0] = { (float)TileLocX / (float)m_Width,1.0f - (float)TileLocY / (float)m_Height };
+		atlas.Points[1] = { (float)TileLocX / (float)m_Width,1.0f - ((float)TileLocY + TileSizeY) / (float)m_Height };
+		atlas.Points[2] = { (float)(TileLocX + TileSizeX) / (float)m_Width,1.0f - (float)(TileLocY + TileSizeY) / (float)m_Height };
+		atlas.Points[3] = { (float)(TileLocX + TileSizeX) / (float)m_Width,1.0f - (float)TileLocY / (float)m_Height };
+
+
+		//m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
+		//m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
+		//m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,0.0f };
+		//m_Vertices[m_VertexPointer + 3].TexCoords = { 1.0f,1.0f };
+		AtlasCoords.push_back(atlas);
+		Offset = Data.find("\"frame\"", Offset);
+
+	}
+
+	m_TextureAtlasData = new TextureAtlasCoords[AtlasCoords.size()];
+	memcpy(m_TextureAtlasData, AtlasCoords.data(), sizeof(TextureAtlasCoords) * AtlasCoords.size());
+
 
 }
 

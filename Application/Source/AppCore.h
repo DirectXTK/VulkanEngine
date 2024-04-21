@@ -72,7 +72,11 @@ struct GUUID {
 
 
 };
-GUUID GetResourceHandle(std::string Path);
+namespace Core {
+    GUUID GetStringHash(std::string Path);
+    std::string GetFileExtension(const std::string& File);
+
+}
 inline bool operator==(const GUUID& l, const GUUID& r) {
     if (l.ID == r.ID)
         return true;
@@ -110,6 +114,11 @@ struct Float2 {
     Float2& operator+=(const Float2& rh) {
         x += rh.x;
         y += rh.y;
+        return *this;
+    }
+    Float2& operator*=(const Float2& rh) {
+        x *= rh.x;
+        y *= rh.y;
         return *this;
     }
     union{
