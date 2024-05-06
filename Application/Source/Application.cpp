@@ -26,7 +26,9 @@
 
      m_GUIRenderer = new GUIRenderer(this,false);
      m_AssetManager.Init(this);
-     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\",ResourceType::TEXTURE);
+   //  m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\",ResourceType::TEXTURE);
+     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Animation\\", ResourceType::ANIMATION);
+
      //m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", ResourceType::TEXTUREATLAS);
 
 

@@ -93,10 +93,11 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 		size_t MetaDataPath = FilePath.find(".json", 0);
 		if (MetaDataPath == (uint64_t)-1)
 			continue;
-		TexturePath = FilePath.substr(FilePath.find("."), 4);
-		FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
-		//Load texture
-		Texture* texture =LoadTexture(TexturePath);
+
+		//FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
+		//Load texture only works if it uses atlases
+		//TODO: CHange so it support seperate textures also.
+		Texture* texture =LoadTexture(FilePath);
 
 		//Load animation
 		size_t atlasGUUID = std::hash<std::string>{}(FilePath);
@@ -112,7 +113,10 @@ Texture* AssetManager::LoadTexture(const std::string& TexturePath)
 {
 		Texture* texture = m_APP->m_Renderer->LoadTexture(TexturePath);
 
-		size_t t = std::hash<std::string>{}(TexturePath);
+		std::string Temp = TexturePath.substr(0, TexturePath.find("."));
+		Temp += ".png";
+
+		size_t t = std::hash<std::string>{}(Temp);
 		m_ResourceCount[ResourceType::TEXTURE]++;
 		m_Resources[t] = texture;
 		return texture;

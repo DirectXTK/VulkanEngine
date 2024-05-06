@@ -4,6 +4,8 @@
 #include "..//Examples/Testing/TestingLayer.h"
 #include "..//Examples/Testing/DLLLoadingLayer.h"
 #include "../Examples/Testing/TextureTestingLayer.h"
+#include "../Examples/Testing/AnimationTestingLayer.h"
+
 #include "Utils.h"
 
 class SandboxLayer :public Layer {
@@ -33,7 +35,7 @@ int main() {
     specs.ClearColor = { 0.5f,0.5,0.5f,0.0f };
     specs.WindowTitle = "OPA";
     Application app(specs);
-    app.AddLayer(new TextureTestingLayer());
+    app.AddLayer(new AnimationTestingLayer());
     app.Run();
 
    
