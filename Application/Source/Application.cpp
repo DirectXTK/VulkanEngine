@@ -15,7 +15,7 @@
      m_Camera.Init({ -1.5f,-1.5f }, { 1.0f,1.0f });
 
      RendererDesc desc{};
-     desc.VertexCountPerDrawCall = 4*100 ;
+     desc.VertexCountPerDrawCall = 4*1000;
      desc.ClearColor = specs.ClearColor;
      desc.InitialCamera = &m_Camera;
 
