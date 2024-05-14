@@ -4,25 +4,28 @@
 class Animator
 {
 public:
+	Animator() {};
 	//pass texture if you use textureatlases.
-	Animator(const std::string& Path, Texture* texture);
+	Animator(const std::string& Path, GUUID TextureID);
 	//This Doesn't use textureatlases
 	Animator(const std::string& Path);
 
-	void AddStage(std::string StageName, float* Duration, Texture** textures, uint32_t FrameCount);
 
 	void Update(float DeltaTime);
 	void SetStage(const std::string& Stage);
-	Texture* GetFrame();
+
+	GUUID GetCurrentTextureID();
+	GUUID GetAnimationID();
+
 	uint32_t GetTextureIndex();
-	Float2* GetTextureCoords();
+
 private:
 	struct Stage {
 		uint32_t From{};
 		uint32_t To{};
 	};
 	struct StageInfo {
-		Texture* Texture{};
+		GUUID TextureID{};
 		uint32_t TextureIndex{};
 		float Duration{};
 	};
@@ -35,5 +38,6 @@ private:
 	StageInfo m_CurrentStageInfo{  };
 
 	float m_CurrentDuration{};
+	GUUID m_AnimationID{};
 };
 

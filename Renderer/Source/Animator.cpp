@@ -1,5 +1,5 @@
 #include "Animator.h"
-Animator::Animator(const std::string& Path,Texture* texture)
+Animator::Animator(const std::string& Path,GUUID TextureID)
 {
 	//Texture data
 
@@ -25,7 +25,7 @@ Animator::Animator(const std::string& Path,Texture* texture)
 			StageInfo stageinfo{};
 			uint64_t Duration{};
 
-			stageinfo.Texture = texture;
+			stageinfo.TextureID = TextureID;
 			stageinfo.TextureIndex = TextureIndex;
 			Duration = std::stoull(Data.substr(Index, Data.find("\n",Index) -Index));
 			stageinfo.Duration = (float)Duration;
@@ -64,19 +64,7 @@ Animator::Animator(const std::string& Path,Texture* texture)
 
 
 }
-void Animator::AddStage(std::string StageName, float* Duration, Texture** textures, uint32_t FrameCount) {
 
-	/*StageInfo stageinfo{};
-	stageinfo.m_Textures = textures;
-	stageinfo.Duration = new float[FrameCount];
-	stageinfo.FrameCount = FrameCount;
-	for (uint32_t i = 0; i <FrameCount; i++) {
-		stageinfo.Duration[i] = Duration[i];
-	}
-	m_Frames[StageName] = stageinfo;
-	*/
-
-}
 void Animator::Update(float DeltaTime)
 {
 	m_CurrentDuration -= DeltaTime;
@@ -101,15 +89,17 @@ void Animator::SetStage(const std::string& Stage)
 
 }
 
-Texture* Animator::GetFrame()
-{
-	return m_CurrentStageInfo.Texture;
-}
-uint32_t Animator::GetTextureIndex() {
-	return m_CurrentStageInfo.TextureIndex;
+
+GUUID Animator::GetCurrentTextureID() {
+	return m_CurrentStageInfo.TextureID;
 }
 
-Float2* Animator::GetTextureCoords()
+GUUID Animator::GetAnimationID()
 {
-	return m_CurrentStageInfo.Texture->GetTextureCoords(m_CurrentStageInfo.TextureIndex);
+	return m_AnimationID;
+}
+
+uint32_t Animator::GetTextureIndex()
+{
+	return m_CurrentStageInfo.TextureIndex;
 }

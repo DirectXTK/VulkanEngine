@@ -12,7 +12,7 @@
 
 
      m_Window = new Window(specs.WindowWidth, specs.WindowHeight, specs.WindowTitle);
-     m_Camera.Init({ -1.5f,-1.5f }, { 3.0f,3.0f });
+     m_Camera.Init({ -1.5f,-1.5f }, { 1.0f,1.0f });
 
      RendererDesc desc{};
      desc.VertexCountPerDrawCall = 4*100 ;
@@ -44,7 +44,7 @@
 
  Float2 Application::GetMousePos()
  {
-     return { m_InputSystem.GetMousePos().x,m_Renderer->GetViewPortExtent().height-m_InputSystem.GetMousePos().y };
+     return m_InputSystem.GetMousePos();
  }
 
  Float2 Application::GetMousePosNorm()
@@ -56,6 +56,16 @@
  Float2 Application::GetWorldMousePos()
  {
      return m_InputSystem.GetWorldMousePos(m_Camera.GetPosition(), m_Camera.GetScale(), { (float)m_Renderer->GetViewPortExtent().width,(float)m_Renderer->GetViewPortExtent().height });
+ }
+
+ GUUID Application::GetCurrentlyHoveredPixelID()
+ {
+    Buffer* buffer =  m_Renderer->GetCustomBuffer(0);
+    Float2 MousePos = GetMousePos();
+
+    Float2 RawID = buffer->ReadPixel((uint32_t)MousePos.x, (uint32_t)MousePos.y,m_Renderer->GetViewPortExtent().width, m_Renderer->GetViewPortExtent().height);
+    uint64_t* ID = (uint64_t*)&RawID;
+     return GUUID(*ID);
  }
 
  void Application::Run(){

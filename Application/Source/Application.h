@@ -25,6 +25,13 @@ public:
     Float2 GetMousePosNorm();
     Float2 GetWorldMousePos();
 
+    GUUID GetCurrentlyHoveredPixelID();
+
+    template<typename T>
+    T* GetResource(GUUID id) { return m_AssetManager.GetResource<T>(id); }
+    template<typename T>
+    T* GetResource(const std::string& Path) { return m_AssetManager.GetResource<T>(Core::GetStringHash(Path)); }
+
     AssetManager* GetAssetManager() { return &m_AssetManager; }
 
     void Run();

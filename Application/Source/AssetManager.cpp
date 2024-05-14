@@ -97,11 +97,11 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 		//FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
 		//Load texture only works if it uses atlases
 		//TODO: CHange so it support seperate textures also.
-		Texture* texture =LoadTexture(FilePath);
+		GUUID TextureID =LoadTexture(FilePath);
 
 		//Load animation
 		size_t atlasGUUID = std::hash<std::string>{}(FilePath);
-		m_Resources[atlasGUUID] = new Animator(FilePath, texture);
+		m_Resources[atlasGUUID] = new Animator(FilePath, TextureID);
 		m_ResourceCount[ResourceType::ANIMATION]++;
 
 
@@ -109,16 +109,16 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 	}
 }
 
-Texture* AssetManager::LoadTexture(const std::string& TexturePath)
+GUUID AssetManager::LoadTexture(const std::string& TexturePath)
 {
 		Texture* texture = m_APP->m_Renderer->LoadTexture(TexturePath);
 
 		std::string Temp = TexturePath.substr(0, TexturePath.find("."));
 		Temp += ".png";
 
-		size_t t = std::hash<std::string>{}(Temp);
+		GUUID ID = Core::GetStringHash(Temp);
 		m_ResourceCount[ResourceType::TEXTURE]++;
-		m_Resources[t] = texture;
-		return texture;
+		m_Resources[ID] = texture;
+		return ID;
 }
 
