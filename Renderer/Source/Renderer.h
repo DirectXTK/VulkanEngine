@@ -17,6 +17,7 @@
 #include "Buffer.h"
 #include "VulkanInstance.h"
 #include "Texture.h"
+#include "Animator.h"
 #define MAX_FRAME_DRAWS 2
 
 class InputSystem;
@@ -56,6 +57,7 @@ public:
     //
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,uint32_t TextureIndex=0);
     void DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
+    void DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID);
 
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
