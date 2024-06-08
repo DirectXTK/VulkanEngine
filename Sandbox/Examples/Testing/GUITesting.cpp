@@ -21,17 +21,12 @@ void GUITestingLayer::OnGUI()
 	static float Position{ -0.8f };
 	static float Position2{-0.1f};
 
-	if (m_App->m_GUIRenderer->Button({ 0.0f,0.0f }, { 1.0f,1.0f,0.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, 0, false)) {
-		//Core::Log(ErrorType::Info, m_App->m_InputSystem.GetMouseChange().x," ", m_App->m_InputSystem.GetMouseChange().y);
-	}
+	
 
 
-	m_App->m_GUIRenderer->Panel({ Position,0.0f }, {1.0f,1.0f,1.0f,1.0f},{0.2f,1.0f},0,true);
+	m_App->m_GUIRenderer->Panel("Panel", {Position,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.2f,1.0f}, 0, true);
 
-	if (m_App->m_GUIRenderer->Button({ 0.0f,0.0f }, { 1.0f,1.0f,0.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, 0, false)) {
-		//Core::Log(ErrorType::Info, m_App->m_InputSystem.GetMouseChange().x," ", m_App->m_InputSystem.GetMouseChange().y);
-	}
-
+	
 
 	m_App->m_GUIRenderer->EndPanel();
 

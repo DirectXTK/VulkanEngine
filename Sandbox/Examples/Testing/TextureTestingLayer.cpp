@@ -87,11 +87,11 @@ void TextureTestingLayer::OnUpdate(double DeltaTime)
 
 void TextureTestingLayer::OnGUI()
 {
-	if (m_App->m_GUIRenderer->Button({ 0.0f,-0.9f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton.png"), false)) {
+	if (m_App->m_GUIRenderer->Button("Create Blood knight", {0.0f,-0.9f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton.png"), false)) {
         m_Units.push_back({ Core::GetStringHash("Examples\\BLOOD_KNIGHT.png"),{Core::RandomFloat(-1.0f,1.0f),Core::RandomFloat(-1.0f,1.0f)}});
 
 	}
-    if (m_App->m_GUIRenderer->Button({ 0.2f,-0.9f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\ChangeTextureButton.png"), false)) {
+    if (m_App->m_GUIRenderer->Button("ChangeTextureID", {0.2f,-0.9f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\ChangeTextureButton.png"), false)) {
         m_Units[5].TextureIndex++;
 
     }

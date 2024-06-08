@@ -7,10 +7,9 @@ GUIRenderer::GUIRenderer(Application* app,bool SaveState): m_Application(app),m_
 }
 void GUIRenderer::BeginGUI()
 {
-	m_CurrentButton = 0;
 	m_CurrentPanel = 0;
 }
-void GUIRenderer::Panel(Float2 Position, Float4 Color, Float2 Size, GUUID TextureHandle, bool Dragable)
+void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Float2 Size, GUUID TextureHandle, bool Dragable)
 {
 	InputSystem* inputSystem = &m_Application->m_InputSystem;
 	Renderer* renderer = m_Application->m_Renderer;
@@ -79,26 +78,33 @@ void GUIRenderer::Panel(Float2 Position, Float4 Color, Float2 Size, GUUID Textur
 		m_CurrentPanel++;
 	
 }
-bool GUIRenderer::Button(Float2 Position,Float4 Color,Float2 Size,MouseCodes mousecode,GUUID TextureHandle,bool SavesState, bool Dragable,bool** IsPressed)
+bool GUIRenderer::Button(const std::string& ID,Float2 Position,Float4 Color,Float2 Size,MouseCodes mousecode,GUUID TextureHandle,bool SavesState, bool Dragable,bool** IsPressed)
 {
 	Renderer* renderer = m_Application->m_Renderer;
 	InputSystem* inputsystem = &m_Application->m_InputSystem;
 	Float2 LPosition{ Position };
 	uint64_t* id{};
+	ButtonData* CurrentButtonData{};
+	GUUID CurrentButtonID{};
 
-	if (m_CurrentButton == m_ButtonIDs.size())
-		m_ButtonIDs[m_CurrentButton] = { false,Core::RandomUInt64(0, std::numeric_limits<uint64_t>::max()) };
+
+	if (m_Buttons.find(ID) == m_Buttons.end())
+		m_Buttons[ID] = { false };
+
+	CurrentButtonData = &m_Buttons[ID];
+	CurrentButtonID = Core::GetStringHash(ID);
+
 	if (m_CurrenPanelParent) {
 		LPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
 
 	}
 	if(TextureHandle ==0)
-		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, m_ButtonIDs[m_CurrentButton].ID.ID);
+		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, CurrentButtonID.ID);
 	else
-		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, TextureHandle,m_ButtonIDs[m_CurrentButton].ID.ID,0 );
+		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, TextureHandle, CurrentButtonID.ID,0 );
 
-	if(IsPressed)
-		*IsPressed = &m_ButtonIDs[m_CurrentButton].IsPressed;
+	if (IsPressed)
+		Core::Log(ErrorType::Error, "Not implemented.");
 
 	if (inputsystem->IsMouseClicked(mousecode))
 	{
@@ -106,22 +112,21 @@ bool GUIRenderer::Button(Float2 Position,Float4 Color,Float2 Size,MouseCodes mou
 		Float2 data = buffer->ReadPixel((uint32_t)inputsystem->GetMousePos().x, (uint32_t)inputsystem->GetMousePos().y, renderer->GetViewPortExtent().width, renderer->GetViewPortExtent().height);
 		Float2 Pos = inputsystem->GetMousePos();
 		id = (uint64_t*)&data;
-		if (m_ButtonIDs[m_CurrentButton].ID.ID == *id) {
+		if (CurrentButtonID.ID == *id) {
 			if (SavesState == false) {
-				m_CurrentButton++;
+				
 				return true;
 			}
-			if (m_ButtonIDs[m_CurrentButton].IsPressed == true)
-				m_ButtonIDs[m_CurrentButton].IsPressed = false;
+			if (CurrentButtonData->IsPressed == true)
+				CurrentButtonData->IsPressed = false;
 			else
-				m_ButtonIDs[m_CurrentButton].IsPressed= true;
+				CurrentButtonData->IsPressed= true;
 		}
 	}
 	
-	m_CurrentButton++;
 	if (SavesState == false)
 		return false;
-	return m_ButtonIDs[m_CurrentButton-1].IsPressed;
+	return CurrentButtonData->IsPressed;
 }
 void GUIRenderer::EndPanel()
 {

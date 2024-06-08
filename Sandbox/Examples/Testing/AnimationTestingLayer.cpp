@@ -67,32 +67,41 @@ void AnimationTestingLayer::OnGUI()
 	}
 	if (m_CurrentlySelectedUnit != 0) {
 		//make a map istead of vector
-		for (uint32_t i = 0; i < m_Units.size(); i++)
-		{
-			if (m_Units[i].ID == m_CurrentlySelectedUnit) {
-				if (gui->Button({ 0.0f,0.0f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, 0, false)) {
-						m_Units[i].Animator.SetStage("IDLE");
+	
+		
+				if (gui->Button("IDLE", {0.0f,0.0f}, {1.0f,0.0f,0.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, 0, false)) {
+						m_Units[0].Animator.SetStage("IDLE");
+						m_CurrentlySelectedUnit = 0;
 
 				}
-				if (gui->Button({ 0.3f,0.0f }, { 0.0f,1.0f,0.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, 0, false)) {
-					m_Units[i].Animator.SetStage("WALK");
+				if (gui->Button("WALK", {0.3f,0.0f}, {0.0f,1.0f,0.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, 0, false)) {
+					m_Units[0].Animator.SetStage("WALK");
+					m_CurrentlySelectedUnit = 0;
 
 
 				}
-				break;
-			}
 
-		}
+		
 	}
-	gui->Panel({0.0f,-0.8f},{1.0f,1.0f,1.0f,1.0},{1.0f,0.2f},Core::GetStringHash("PANEL"));
+	gui->Panel("UI Bar", {0.0f,-0.8f}, {1.0f,1.0f,1.0f,1.0}, {1.0f,0.2f}, Core::GetStringHash("PANEL"));
 
-	if (gui->Button({ 0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"),false)) {
+	if (gui->Button("TOWN_HALL", {0.0f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
 		m_SpawnUnit = true;
 		m_SpawnedUnit = "TOWN_HALL";
 	}
-	if (gui->Button({ 0.25f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+	if (gui->Button("TREE", { 0.25f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
 		m_SpawnUnit = true;
 		m_SpawnedUnit = "TREE";
+
+	}
+	if (gui->Button("SUN", {0.50f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+		m_SpawnUnit = true;
+		m_SpawnedUnit = "SUN";
+
+	}
+	if (gui->Button("TEST", {0.75f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+		m_SpawnUnit = true;
+		m_SpawnedUnit = "TEST";
 
 	}
 
