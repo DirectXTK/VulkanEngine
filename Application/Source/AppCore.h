@@ -73,7 +73,7 @@ struct GUUID {
 
 };
 namespace Core {
-    GUUID GetStringHash(std::string Path);
+    GUUID GetStringHash(const std::string& Path);
     std::string GetFileExtension(const std::string& File);
 
 }

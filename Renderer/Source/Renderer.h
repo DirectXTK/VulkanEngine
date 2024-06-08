@@ -33,6 +33,7 @@ struct DrawCommand {
     uint64_t VertexCount{};
     uint32_t BufferIndex{};
     uint32_t DescriptorSetTextureIndex{};
+    bool IsGUI{ false };
 
 };
 struct RendererDesc{
@@ -48,15 +49,16 @@ public:
     //
 
     void BeginFrame(Camera2D* camera);
+    void BeginGUIFrame();
 
     //GUI
-    void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
-    void DrawQuadWithAtlasGUI(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
-    void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, Float2 TexCoords[4] = nullptr);
+    //void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
+    //void DrawQuadWithAtlasGUI(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
+   // void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, uint64_t TextureIndex);
 
     //
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,uint32_t TextureIndex=0);
-    void DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
+    //void DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID);
 
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
@@ -92,7 +94,7 @@ private:
     void CreateNewBufferForBatch();
 
     void FlushGUI();
-    void Flush(bool LastFrame);
+    void Flush(bool IsGUI);
 
     void CreateInstance();
     void CreateFrameBuffers();
@@ -204,10 +206,12 @@ private:
         uint32_t Index{};
     };
     std::unordered_map<GUUID, TextureRenderingData> m_Textures{};
+    std::vector<GUUID> m_TextureIDByOrder{};
     //GUI
     std::vector<DescriptorSet> m_DescriptorSetTexturesGUI{};
     std::unordered_map<GUUID, TextureRenderingData> m_TexturesGUI{};
     uint32_t m_DrawCallCountGUI{};
+    bool m_GUIFlush{false};
 
 
     AssetManager* m_AssetManager{};

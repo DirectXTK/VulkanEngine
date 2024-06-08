@@ -97,6 +97,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Examples\Testing\AnimationTestingLayer.cpp" />
+    <ClCompile Include="Examples\Testing\DefaultCameraControlls.cpp" />
     <ClCompile Include="Examples\Testing\DLLLoadingLayer.cpp" />
     <ClCompile Include="Examples\Testing\GUITesting.cpp" />
     <ClCompile Include="Examples\Testing\SerializationTesting.cpp" />
@@ -114,6 +115,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Examples\Testing\AnimationTestingLayer.h" />
+    <ClInclude Include="Examples\Testing\DefaultCameraControlls.h" />
     <ClInclude Include="Examples\Testing\DLLLoadingLayer.h" />
     <ClInclude Include="Examples\Testing\GUITesting.h" />
     <ClInclude Include="Examples\Testing\SerializationTesting.h" />

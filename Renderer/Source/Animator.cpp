@@ -1,7 +1,9 @@
 #include "Animator.h"
-Animator::Animator(const std::string& Path,GUUID TextureID)
+Animator::Animator(const std::string& Path,GUUID animationID,std::string AtlasHashPath)
 {
+	m_AnimationID = animationID;
 	//Texture data
+
 
 	uint32_t TextureIndex{};
 	uint64_t Index{};
@@ -24,9 +26,8 @@ Animator::Animator(const std::string& Path,GUUID TextureID)
 			Index += DurationOffset;
 			StageInfo stageinfo{};
 			uint64_t Duration{};
-
-			stageinfo.TextureID = TextureID;
-			stageinfo.TextureIndex = TextureIndex;
+			stageinfo.TextureID = Core::GetStringHash(AtlasHashPath+ std::to_string(TextureIndex));
+			//stageinfo.TextureIndex = TextureIndex;
 			Duration = std::stoull(Data.substr(Index, Data.find("\n",Index) -Index));
 			stageinfo.Duration = (float)Duration;
 
@@ -74,6 +75,7 @@ void Animator::Update(float DeltaTime)
 			m_StageInfoOffset = m_CurrentStage.From;
 		
 		m_CurrentStageInfo= m_StageInfos[m_StageInfoOffset];
+	
 		m_CurrentDuration = m_CurrentStageInfo.Duration;
 
 	}

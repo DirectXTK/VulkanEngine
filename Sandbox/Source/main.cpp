@@ -2,7 +2,7 @@
 //#include "..//Examples/Testing/GUITesting.h"
 //#include "..//Examples/Testing/SerializationTesting.h"
 //#include "..//Examples/Testing/TestingLayer.h"
-#//include "..//Examples/Testing/DLLLoadingLayer.h"
+//include "..//Examples/Testing/DLLLoadingLayer.h"
 //#include "../Examples/Testing/TextureTestingLayer.h"
 #include "../Examples/Testing/AnimationTestingLayer.h"
 

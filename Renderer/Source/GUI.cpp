@@ -71,7 +71,10 @@ void GUIRenderer::Panel(Float2 Position, Float4 Color, Float2 Size, GUUID Textur
 
 
 	}
-	renderer->DrawQuadGUI({ m_PanelIDs[m_CurrentPanel].Position.x,m_PanelIDs[m_CurrentPanel].Position.y,0.0f }, Color, Size,m_PanelIDs[m_CurrentPanel].ID.ID);
+	if(TextureHandle !=0)
+		renderer->DrawQuad({ m_PanelIDs[m_CurrentPanel].Position.x,m_PanelIDs[m_CurrentPanel].Position.y,0.0f }, Color, Size,TextureHandle, m_PanelIDs[m_CurrentPanel].ID.ID,0);
+	else
+		renderer->DrawQuad({ m_PanelIDs[m_CurrentPanel].Position.x,m_PanelIDs[m_CurrentPanel].Position.y,0.0f },Color, Size,m_PanelIDs[m_CurrentPanel].ID.ID);
 		m_PanelDepth++;
 		m_CurrentPanel++;
 	
@@ -90,9 +93,9 @@ bool GUIRenderer::Button(Float2 Position,Float4 Color,Float2 Size,MouseCodes mou
 
 	}
 	if(TextureHandle ==0)
-		renderer->DrawQuadGUI({ LPosition.x,LPosition.y,0.0f }, Color, Size, m_ButtonIDs[m_CurrentButton].ID.ID);
+		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, m_ButtonIDs[m_CurrentButton].ID.ID);
 	else
-		renderer->DrawQuadGUI({ LPosition.x,LPosition.y,0.0f }, Color, Size, TextureHandle,m_ButtonIDs[m_CurrentButton].ID.ID );
+		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, TextureHandle,m_ButtonIDs[m_CurrentButton].ID.ID,0 );
 
 	if(IsPressed)
 		*IsPressed = &m_ButtonIDs[m_CurrentButton].IsPressed;

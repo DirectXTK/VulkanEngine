@@ -8,18 +8,21 @@ void AnimationTestingLayer::OnCreate()
 {
 	//m_Animation = m_App->GetAssetManager()->GetResource<Animator>(Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.json"));
 	//m_Animation->SetStage("BBZ");
-	m_Units.push_back(Unit());
-	m_Units.push_back(Unit());
+	m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Animation\\", ResourceType::ANIMATION);
+	m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", ResourceType::TEXTURE);
+
+
+	m_Units.push_back(AnimationUnit());
+	m_Units.push_back(AnimationUnit());
 
 
 	m_Units[0].Position = {0.0f,0.0f};
-	m_Units[0].Animator = *m_App->GetResource<Animator>("C:\\Repos\\VulkanEngine\\Resources\\Animation\\PEASANT.json");
-	m_Units[0].Animator.SetStage("IDLE");
+	m_Units[0].Animator = *m_App->GetResource<Animator>("PEASANT");
+	m_Units[0].Animator.SetStage("WALK");
 
 	m_Units[1].Position = { -0.5f,0.0f };
-	m_Units[1].Animator = *m_App->GetResource<Animator>("C:\\Repos\\VulkanEngine\\Resources\\Animation\\SUN.json");
-	m_Units[1].Animator.SetStage("MOVE");
-
+	m_Units[1].Animator = *m_App->GetResource<Animator>("TOWN_HALL");
+	m_Units[1].Animator.SetStage("IDLE");
 
 }
 
@@ -33,10 +36,16 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 
 	for (uint32_t i = 0; i < m_Units.size(); i++) {
 
-	renderer->DrawQuad({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.2f,0.2f}, m_Units[i].Animator.GetCurrentTextureID(), m_Units[i].ID.ID, m_Units[i].Animator.GetTextureIndex());
+	renderer->DrawQuad({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.2f,0.2f}, m_Units[i].Animator, m_Units[i].ID.ID);
+
+
 	m_Units[i].Animator.Update(DeltaTime);
 	}
+	//renderer->DrawQuad({ 0.0f,-0.5f }, { 1.0f,1.0f,1.0f,1.0 }, { 0.3f,0.3f }, Core::GetStringHash("PANEL.png"),0,0);
+
 	
+
+	DefaultCameraControlls(&m_App->m_InputSystem, &m_App->m_Camera);
 }
 
 void AnimationTestingLayer::OnDestroy()
@@ -46,8 +55,16 @@ void AnimationTestingLayer::OnDestroy()
 void AnimationTestingLayer::OnGUI()
 {
 	GUIRenderer* gui = m_App->m_GUIRenderer;
-
 	
+	if (m_App->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, false) ) {
+		m_CurrentlySelectedUnit = m_App->GetCurrentlyHoveredPixelID();
+		if (m_SpawnUnit) {
+			m_Units.push_back(AnimationUnit());
+			m_Units[m_Units.size() - 1].Position = { m_App->GetWorldMousePos().x, m_App->GetWorldMousePos().y };
+			m_Units[m_Units.size() - 1].Animator = *m_App->GetResource<Animator>(m_SpawnedUnit);
+			m_SpawnUnit = false;
+		}
+	}
 	if (m_CurrentlySelectedUnit != 0) {
 		//make a map istead of vector
 		for (uint32_t i = 0; i < m_Units.size(); i++)
@@ -67,11 +84,20 @@ void AnimationTestingLayer::OnGUI()
 
 		}
 	}
-	if (m_App->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, false)) {
-		m_CurrentlySelectedUnit = m_App->GetCurrentlyHoveredPixelID();
-		Core::Log(ErrorType::Info, m_CurrentlySelectedUnit.ID);
-		Core::Log(ErrorType::Info, m_App->GetMousePos().x, m_App->GetMousePos().y);
+	gui->Panel({0.0f,-0.8f},{1.0f,1.0f,1.0f,1.0},{1.0f,0.2f},Core::GetStringHash("PANEL"));
+
+	if (gui->Button({ 0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"),false)) {
+		m_SpawnUnit = true;
+		m_SpawnedUnit = "TOWN_HALL";
 	}
+	if (gui->Button({ 0.25f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+		m_SpawnUnit = true;
+		m_SpawnedUnit = "TREE";
+
+	}
+
+	gui->EndPanel();
+	
 	
 
 }

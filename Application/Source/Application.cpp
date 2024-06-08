@@ -26,13 +26,9 @@
 
      m_GUIRenderer = new GUIRenderer(this,false);
      m_AssetManager.Init(this);
-   //  m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\",ResourceType::TEXTURE);
-     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Animation\\", ResourceType::ANIMATION);
+  
 
-     //m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", ResourceType::TEXTUREATLAS);
-
-
-     m_Renderer->InitializePipeline(m_AssetManager.GetResourceCount(ResourceType::TEXTURE));
+     m_Renderer->InitializePipeline(500);
 
  }
 
@@ -68,16 +64,27 @@
      return GUUID(*ID);
  }
 
+
+
+
+
+ void Application::LoadAssets(std::string Path, ResourceType type)
+ {
+     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", ResourceType::TEXTURE);
+     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Animation\\", ResourceType::ANIMATION);
+ }
+
  void Application::Run(){
     while(!glfwWindowShouldClose(m_Window->GetHandle())){
 
         m_DeltaTime = Time::GetTimeMs() - m_LastFrameTime;
         m_LastFrameTime = Time::GetTimeMs();
         m_Renderer->BeginFrame(&m_Camera);
-        m_GUIRenderer->BeginGUI();
 
         m_LayerController.UpdateLayers(m_DeltaTime);
 
+        m_GUIRenderer->BeginGUI();
+        m_Renderer->BeginGUIFrame();
         m_LayerController.UpdateGUILayers();
 
         m_Renderer->EndFrame();

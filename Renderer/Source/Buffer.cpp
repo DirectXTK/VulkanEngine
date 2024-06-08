@@ -51,7 +51,8 @@
              memcpy(imagedata,map,Width*Height*8);
              vkUnmapMemory(m_Device,m_Memory);
 
-             
+             if (x > Width || y > Height)
+                 return { 0.0f,0.0f };
              Ret = imagedata[x + (y * Width)];
     
 

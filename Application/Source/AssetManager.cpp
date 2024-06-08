@@ -17,10 +17,15 @@ void AssetManager::LoadAllResources(std::string FolderPath, ResourceType TypesTo
 		GetModuleFileName(nullptr, str.data(), 200);
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 			FilePath = dir_entry.path().string();
-		
+			
+			if (Core::GetFileExtension(FilePath) != "png")
+				continue;
+
 			Texture* texture = m_APP->m_Renderer->LoadTexture(FilePath);
-			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
+			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size()-4);
+
 			size_t t = std::hash<std::string>{}(FilePath);
+		
 			m_ResourceCount[TypesToLoad]++;
 			m_Resources[t] = texture;
 		}
@@ -31,39 +36,44 @@ void AssetManager::LoadAllResources(std::string FolderPath, ResourceType TypesTo
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 
 			Texture* texture{};
+			uint32_t AtlasCount{};
 
 			FilePath = dir_entry.path().string();
+			if (Core::GetFileExtension(FilePath) == ".json")
+				continue;
+
 			size_t LocOfPng = FilePath.find(".json", 0);
 			if (LocOfPng == (uint64_t)-1)
 				continue;
-			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
 
 			TexturePath = FilePath;
-			TexturePath = TexturePath.substr(0, TexturePath.find(".json"));
-			TexturePath += ".png";
+			texture = m_APP->m_Renderer->LoadTexture(TexturePath);
+			TexturePath = FilePath.substr(0, FilePath.size() - 5);
 
-			size_t texturehash = std::hash<std::string>{}(TexturePath);
-			m_ResourceCount[TypesToLoad]++;
-			if (m_Resources.find(texturehash) == m_Resources.end()) {
-				TexturePath = dir_entry.path().string();
-				TexturePath = TexturePath.substr(0, TexturePath.find(".json"));
-				TexturePath += ".png";
+			TexturePath = TexturePath.substr(FolderPath.size(), TexturePath.find(".png")- FolderPath.size());
 
-				texture = new Texture(m_APP->m_Renderer->GetContext(),TexturePath);
-				m_ResourceCount[ResourceType::TEXTURE]++;
+			m_Resources[Core::GetStringHash(TexturePath)] = texture;
+			m_ResourceCount[ResourceType::TEXTURE]++;
 
-				m_Resources[texturehash] = texture;
-
-			}
-			else {
-				TextureAtlas* atlas=new TextureAtlas(m_APP->m_Renderer->GetContext(), dir_entry.path().string(), (Texture*)m_Resources[texturehash]);
-				m_ResourceCount[TypesToLoad]++;
-
-				size_t atlasGUUID = std::hash<std::string>{}(FilePath);
-				m_Resources[atlasGUUID] = atlas;
+					
+			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
 
 
-			}
+
+			texture = GetResource<Texture>(Core::GetStringHash(TexturePath));
+			Texture** atlases = texture->CreateTextureAtlases(&AtlasCount);
+
+			//TexturePath = TexturePath.substr(0,TexturePath.size());
+			
+
+				for (uint32_t i = 0; i < AtlasCount; i++) {
+					m_ResourceCount[ResourceType::TEXTURE]++;
+					GUUID t = Core::GetStringHash((TexturePath + std::to_string(i)));
+					m_Resources[t] = atlases[i];
+
+				}
+
+		
 		}
 		break;
 
@@ -86,10 +96,14 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 {
 	std::string TexturePath{};
 	std::string FilePath{};
+	uint32_t AtlasCount{};
 	for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 
 
 		FilePath = dir_entry.path().string();
+		if (Core::GetFileExtension(FilePath).size() == 0)
+			continue;
+
 		size_t MetaDataPath = FilePath.find(".json", 0);
 		if (MetaDataPath == (uint64_t)-1)
 			continue;
@@ -97,11 +111,32 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 		//FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
 		//Load texture only works if it uses atlases
 		//TODO: CHange so it support seperate textures also.
-		GUUID TextureID =LoadTexture(FilePath);
 
+		TexturePath = FilePath;
+
+		GUUID TextureID =LoadTexture(TexturePath);
+
+		Texture* Basetexture = GetResource<Texture>(TextureID);
+		Texture** atlases = Basetexture->CreateTextureAtlases(&AtlasCount);
+
+		//TexturePath = TexturePath.substr(0, TexturePath.size() - 4);
+		TexturePath = TexturePath.substr(FolderPath.size(), TexturePath.find(".json")-FolderPath.size());
+
+
+		for (uint32_t i = 0; i < AtlasCount; i++) {
+			m_ResourceCount[ResourceType::TEXTURE]++;
+			m_Resources[Core::GetStringHash((TexturePath + std::to_string(i)))] = atlases[i];
+
+		}
+		FilePath = FilePath.substr(FolderPath.size(), FilePath.find(".json") - FolderPath.size());
 		//Load animation
 		size_t atlasGUUID = std::hash<std::string>{}(FilePath);
-		m_Resources[atlasGUUID] = new Animator(FilePath, TextureID);
+	
+		std::string str = dir_entry.path().string();
+		//Something wrong with renderer texture id or something
+		Animator* animator= new Animator(dir_entry.path().string(), atlasGUUID, FilePath);
+		animator->SetStage("IDLE");
+		m_Resources[atlasGUUID] = animator;
 		m_ResourceCount[ResourceType::ANIMATION]++;
 
 
@@ -114,7 +149,6 @@ GUUID AssetManager::LoadTexture(const std::string& TexturePath)
 		Texture* texture = m_APP->m_Renderer->LoadTexture(TexturePath);
 
 		std::string Temp = TexturePath.substr(0, TexturePath.find("."));
-		Temp += ".png";
 
 		GUUID ID = Core::GetStringHash(Temp);
 		m_ResourceCount[ResourceType::TEXTURE]++;

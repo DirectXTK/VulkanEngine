@@ -43,6 +43,10 @@ public:
 	uint64_t GetResourceCount(ResourceType type) { return m_ResourceCount[type];}
 	template<typename T>
 	T* GetResource(GUUID Handle) {
+		if (m_Resources.find(Handle) == m_Resources.end()) {
+			Core::Log(ErrorType::Error, "Resources wasn't found (ID", Handle.ID,")");
+				return nullptr;
+		}
 		return (T*)m_Resources[Handle];
 	}
 	

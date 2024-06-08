@@ -33,6 +33,7 @@ public:
     T* GetResource(const std::string& Path) { return m_AssetManager.GetResource<T>(Core::GetStringHash(Path)); }
 
     AssetManager* GetAssetManager() { return &m_AssetManager; }
+    void LoadAssets(std::string Path,ResourceType type);
 
     void Run();
 private:

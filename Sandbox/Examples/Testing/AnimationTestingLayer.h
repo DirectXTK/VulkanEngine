@@ -1,7 +1,7 @@
 #pragma once
-#include "Application.h"
+#include "DefaultCameraControlls.h"
 #include "Animator.h"
-struct Unit {
+struct AnimationUnit {
 	Float2 Position{};
 	Animator Animator{};
 	GUUID ID{};
@@ -17,7 +17,10 @@ public:
 private:
 	void MoveUnit();
 
-	std::vector<Unit> m_Units{};
+	bool m_SpawnUnit{false};
+	std::string m_SpawnedUnit{};
+
+	std::vector<AnimationUnit> m_Units{};
 	Float2 m_MoveLocation{};
 	GUUID m_CurrentlySelectedUnit{};
 };

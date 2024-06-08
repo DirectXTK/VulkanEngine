@@ -33,7 +33,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     m_SwapChain->CreateSwapChain();
 
-
+    //One is reserved for white texture
+    m_TextureIDByOrder.resize(m_TextureSlotCount-1);
     //Matrices
     m_UniformBuffers = new UniformBuffer[MAX_FRAME_DRAWS];
     for (int i = 0; i < MAX_FRAME_DRAWS; i++) {
@@ -228,12 +229,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
  }
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
  {
-     uint32_t DescriptorPoolSize = std::ceil((float)(MaxTextureCount*10) / (float)m_TextureSlotCount)*2;
+     uint32_t DescriptorPoolSize = std::ceil((float)(MaxTextureCount*10) / (float)m_TextureSlotCount);
      for (uint64_t i = 0; i < DescriptorPoolSize; i++) {
 
      m_DescriptorPoolTextures.AddDescriptorType(m_TextureSlotCount, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-     }
      m_DescriptorPoolTextures.CreatePool(m_Context);
+     }
 
      DescriptorSetDescription DescriptorDesc{};
      DescriptorDesc.context = m_Context;
@@ -252,13 +253,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
          m_DescriptorSetTextures.emplace_back();
          m_DescriptorSetTextures[i].Init(DescriptorDesc);
 
-         m_DescriptorSetTexturesGUI.emplace_back();
-         m_DescriptorSetTexturesGUI[i].Init(DescriptorDesc);
 
 
         for (uint32_t j = 0; j < m_TextureSlotCount; j++) {
          m_DescriptorSetTextures[i].WriteToTexture(j, m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
-         m_DescriptorSetTexturesGUI[i].WriteToTexture(j, m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
 
         }
      }
@@ -340,98 +338,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     }
 
-    void Renderer::DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, uint64_t ID)
+    void Renderer::BeginGUIFrame()
     {
-        if (m_VertexPointerGUI + 4 > m_VertexMaxCountGUI)
-            Flush(false);
-
-        m_VerticesGUI[m_VertexPointerGUI].Position = { Position.x - Size.x,Position.y - Size.y };
-        m_VerticesGUI[m_VertexPointerGUI + 1].Position = { Position.x - Size.x,Position.y + Size.y };
-        m_VerticesGUI[m_VertexPointerGUI + 2].Position = { Position.x + Size.x,Position.y + Size.y };
-        m_VerticesGUI[m_VertexPointerGUI + 3].Position = { Position.x + Size.x,Position.y - Size.y };
-
-        m_VerticesGUI[m_VertexPointerGUI].TextureID = 0;
-        m_VerticesGUI[m_VertexPointerGUI + 1].TextureID = 0;
-        m_VerticesGUI[m_VertexPointerGUI + 2].TextureID = 0;
-        m_VerticesGUI[m_VertexPointerGUI + 3].TextureID = 0;
-
-
-        m_VerticesGUI[m_VertexPointerGUI].Color = Color;
-        m_VerticesGUI[m_VertexPointerGUI + 1].Color = Color;
-        m_VerticesGUI[m_VertexPointerGUI + 2].Color = Color;
-        m_VerticesGUI[m_VertexPointerGUI + 3].Color = Color;
-
-
-
-        m_VerticesGUI[m_VertexPointerGUI].ID = ID;
-        m_VerticesGUI[m_VertexPointerGUI + 1].ID = ID;
-        m_VerticesGUI[m_VertexPointerGUI + 2].ID = ID;
-        m_VerticesGUI[m_VertexPointerGUI + 3].ID = ID;
-
-        m_VerticesGUI[m_VertexPointerGUI].TexCoords = { 0.0f,1.0f };
-        m_VerticesGUI[m_VertexPointerGUI + 1].TexCoords = { 0.0f,0.0f };
-        m_VerticesGUI[m_VertexPointerGUI + 2].TexCoords = { 1.0f,0.0f };
-        m_VerticesGUI[m_VertexPointerGUI + 3].TexCoords = { 1.0f,1.0f };
-
-
-
-        m_VertexPointerGUI += 4;
+        Flush(true);
+       m_CameraViewProj = glm::identity<glm::mat4>();
+       m_GUIFlush = true;
     }
 
-    void Renderer::DrawQuadWithAtlasGUI(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex)
-    {
-    }
 
-    void Renderer::DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, Float2 TexCoords[4])
-    {
-        if (m_VertexPointerGUI + 4 > m_VertexMaxCountGUI || m_TexturesGUI.size() == m_TextureSlotCount - 1)
-            Flush(false);
-        if (m_TexturesGUI.find(TextureHandle) == m_TexturesGUI.end()) {
-
-            m_TexturesGUI[TextureHandle] = { m_AssetManager->GetResource<Texture>(TextureHandle) ,(uint32_t)m_TexturesGUI.size() + 1 };
-        }
-
-        m_VerticesGUI[m_VertexPointerGUI].Position = { Position.x - Size.x,Position.y - Size.y };
-        m_VerticesGUI[m_VertexPointerGUI + 1].Position = { Position.x - Size.x,Position.y + Size.y };
-        m_VerticesGUI[m_VertexPointerGUI + 2].Position = { Position.x + Size.x,Position.y + Size.y };
-        m_VerticesGUI[m_VertexPointerGUI + 3].Position = { Position.x + Size.x,Position.y - Size.y };
-
-        m_VerticesGUI[m_VertexPointerGUI].TextureID = m_TexturesGUI[TextureHandle].Index;
-        m_VerticesGUI[m_VertexPointerGUI + 1].TextureID = m_TexturesGUI[TextureHandle].Index;
-        m_VerticesGUI[m_VertexPointerGUI + 2].TextureID = m_TexturesGUI[TextureHandle].Index;
-        m_VerticesGUI[m_VertexPointerGUI + 3].TextureID = m_TexturesGUI[TextureHandle].Index;
-
-
-        m_VerticesGUI[m_VertexPointerGUI].Color = Color;
-        m_VerticesGUI[m_VertexPointerGUI + 1].Color = Color;
-        m_VerticesGUI[m_VertexPointerGUI + 2].Color = Color;
-        m_VerticesGUI[m_VertexPointerGUI + 3].Color = Color;
-
-
-
-        m_VerticesGUI[m_VertexPointerGUI].ID = ID;
-        m_VerticesGUI[m_VertexPointerGUI + 1].ID = ID;
-        m_VerticesGUI[m_VertexPointerGUI + 2].ID = ID;
-        m_VerticesGUI[m_VertexPointerGUI + 3].ID = ID;
-
-        if (TexCoords == nullptr)
-        {
-            m_VerticesGUI[m_VertexPointerGUI].TexCoords = { 0.0f,1.0f };
-            m_VerticesGUI[m_VertexPointerGUI + 1].TexCoords = { 0.0f,0.0f };
-            m_VerticesGUI[m_VertexPointerGUI + 2].TexCoords = { 1.0f,0.0f };
-            m_VerticesGUI[m_VertexPointerGUI + 3].TexCoords = { 1.0f,1.0f };
-        }
-        else {
-            m_VerticesGUI[m_VertexPointerGUI].TexCoords = TexCoords[0];
-            m_VerticesGUI[m_VertexPointerGUI + 1].TexCoords = TexCoords[1];
-            m_VerticesGUI[m_VertexPointerGUI + 2].TexCoords = TexCoords[2];
-            m_VerticesGUI[m_VertexPointerGUI + 3].TexCoords = TexCoords[3];
-        }
-
-
-        m_VertexPointerGUI += 4;
-
-    }
+   
    
     void Renderer::CreateNewBufferForBatch()
     {
@@ -483,22 +398,29 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_VertexPointerGUI = 0;
         m_TexturesGUI.clear();
     }
-    void Renderer::Flush(bool LastFrame){
+    void Renderer::Flush(bool IsGUI){
 
-        uint32_t Index{1};
  
-        for (auto& it : m_Textures) {
-            m_DescriptorSetTextures[m_DrawCallCount].WriteToTexture(Index, it.second.texture->GetImageView(), it.second.texture->GetSampler());
-            Index++;
-        }
+            for (uint32_t i = 0; i < m_Textures.size(); i++) {
+                Texture* texture = m_AssetManager->GetResource<Texture>(m_TextureIDByOrder[i]);
+                    if (texture)
+                        m_DescriptorSetTextures[m_DrawCallCount].WriteToTexture(i+1, texture->GetImageView(),texture->GetSampler());
+                    else
+                        Core::Log(ErrorType::Error, "Texture id was invalid.");
+            }
 
-        m_DrawCommands.push_back({ m_VertexPointer,m_DrawCallCount });
+        m_DrawCommands.push_back({ m_VertexPointer,m_DrawCallCount,0,m_GUIFlush });
 
         if (m_DrawCallCount == m_VertexBuffers.size())
             CreateNewBufferForBatch();
 
- 
-           m_UniformBuffers[0].UploadToBuffer(m_Device,&m_CameraViewProj,sizeof(glm::mat4));
+        if (m_GUIFlush) {
+
+          m_UniformGUICameraBuffer->UploadToBuffer(m_Device, &m_CameraViewProj, sizeof(glm::mat4));
+
+        }
+       else
+          m_UniformBuffers[0].UploadToBuffer(m_Device,&m_CameraViewProj,sizeof(glm::mat4));
 
            m_StaggingBuffers[m_DrawCallCount]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
 
@@ -526,14 +448,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-        FlushGUI();
+        Flush(false);
 
 
     }
     void Renderer::EndFrame(){
 
 
-        Flush(true);
         EndGUIFrame();
         DrawBatch();
 
@@ -585,6 +506,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
      
        m_CurrentFrame=(m_CurrentFrame+1)%MAX_FRAME_DRAWS;
+       m_GUIFlush = false;
     }
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,uint32_t TextureIndex)
@@ -596,6 +518,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 if (m_Textures.size() == m_TextureSlotCount - 1)
                     Flush(false);
                 m_Textures[TextureHandle] = { m_AssetManager->GetResource<Texture>(TextureHandle) ,(uint32_t)m_Textures.size() + 1 };
+                m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
+
             }
             TextureRenderingData texture = m_Textures[TextureHandle];
             Texture* texturetest = m_AssetManager->GetResource<Texture>(TextureHandle);
@@ -604,10 +528,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
 
-            m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[0];
-            m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[1];
-            m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[2];
-            m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[3];
+            m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetTextureCoords()[0];
+            m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetTextureCoords()[1];
+            m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetTextureCoords()[2];
+            m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetTextureCoords()[3];
         }
         m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
         m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
@@ -638,71 +562,37 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     }
 
-    void Renderer::DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID,uint64_t TextureIndex)
-    {
-        TextureAtlas* atlas = m_AssetManager->GetResource<TextureAtlas>(textureatlas);
-        if (m_VertexPointer + 4 > m_VertexCount || m_Textures.size() == m_TextureSlotCount - 1)
-            Flush(false);
-        if (m_Textures.find(textureatlas) == m_Textures.end()) {
-
-            m_Textures[textureatlas] = { atlas->GetTexture() ,(uint32_t)m_Textures.size() + 1};
-        }
-
-        m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
-        m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
-        m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
-        m_Vertices[m_VertexPointer + 3].Position = { Position.x + Size.x,Position.y - Size.y };
-
-        m_Vertices[m_VertexPointer].TextureID = m_Textures[textureatlas].Index;
-        m_Vertices[m_VertexPointer + 1].TextureID = m_Textures[textureatlas].Index;
-        m_Vertices[m_VertexPointer + 2].TextureID = m_Textures[textureatlas].Index;
-        m_Vertices[m_VertexPointer + 3].TextureID = m_Textures[textureatlas].Index;
-
-
-        m_Vertices[m_VertexPointer].Color = Color;
-        m_Vertices[m_VertexPointer + 1].Color = Color;
-        m_Vertices[m_VertexPointer + 2].Color = Color;
-        m_Vertices[m_VertexPointer + 3].Color = Color;
-
-
-
-        m_Vertices[m_VertexPointer].ID = ID;
-        m_Vertices[m_VertexPointer + 1].ID = ID;
-        m_Vertices[m_VertexPointer + 2].ID = ID;
-        m_Vertices[m_VertexPointer + 3].ID = ID;
-
-            m_Vertices[m_VertexPointer].TexCoords = atlas->GetTexCoords(TextureIndex)[0];
-            m_Vertices[m_VertexPointer + 1].TexCoords = atlas->GetTexCoords(TextureIndex)[1];
-            m_Vertices[m_VertexPointer + 2].TexCoords = atlas->GetTexCoords(TextureIndex)[2];
-            m_Vertices[m_VertexPointer + 3].TexCoords = atlas->GetTexCoords(TextureIndex)[3];
-          
-
-
-        m_VertexPointer += 4;
-
-
-    }
+  
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID)
     {
-        uint32_t TextureIndex = Animation.GetTextureIndex();
+        GUUID id = Core::GetStringHash("SUN");
+        if (Animation.GetCurrentTextureID() == id);
 
-        if (m_VertexPointer + 4 > m_VertexCount || m_Textures.size() == m_TextureSlotCount - 1)
+        if (m_VertexPointer + 4 > m_VertexCount)
             Flush(false);
             if (m_Textures.find(Animation.GetCurrentTextureID()) == m_Textures.end()) {
-
-                m_Textures[Animation.GetCurrentTextureID()] = {m_AssetManager->GetResource<Texture>(Animation.GetCurrentTextureID()) ,(uint32_t)m_Textures.size() + 1};
+                if (m_Textures.size() == m_TextureSlotCount - 1)
+                    Flush(false);
+                m_Textures[Animation.GetCurrentTextureID()] = { m_AssetManager->GetResource<Texture>(Animation.GetCurrentTextureID()) ,(uint32_t)m_Textures.size() + 1 };
+                m_TextureIDByOrder[m_Textures.size() - 1] = Animation.GetCurrentTextureID();
             }
             TextureRenderingData texture = m_Textures[Animation.GetCurrentTextureID()];
+            if (!texture.texture)
+                return;
             m_Vertices[m_VertexPointer].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
 
-            m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[0];
-            m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[1];
-            m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[2];
-            m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetTextureCoords(TextureIndex)[3];
+            m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetTextureCoords()[0];
+            m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetTextureCoords()[1];
+            m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetTextureCoords()[2];
+            m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetTextureCoords()[3];
+
+
+      
+  
         m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
         m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
         m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
@@ -906,6 +796,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         return texture;
     }
 
+   
+
 
 
 Renderer::~Renderer(){
@@ -963,7 +855,14 @@ void Renderer::DrawBatch()
 
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
-        VkDescriptorSet DescriptorSets[] = { m_DescriptorSetCamera.GetDescriptorSet(),m_DescriptorSetTextures[i].GetDescriptorSet()};
+        VkDescriptorSet DescriptorSets[2];
+        DescriptorSets[1] = m_DescriptorSetTextures[i].GetDescriptorSet();
+
+        if (m_DrawCommands[i].IsGUI) 
+            DescriptorSets[0] = m_GUICameraDescriptor.GetDescriptorSet();
+        else
+            DescriptorSets[0] = m_DescriptorSetCamera.GetDescriptorSet();
+
 
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
@@ -971,7 +870,6 @@ void Renderer::DrawBatch()
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommands[i].VertexCount * 1.5f), 1, 0, 0, 0);
 
     }
-    DrawGUIBatch();
     vkCmdEndRenderPass(m_CurrentCommandBuffer);
 
 }
