@@ -11,17 +11,17 @@ void DefaultCameraControlls(InputSystem* inputsystem, Camera2D* camera) {
         pos.x += m_Direct;
         camera->SetPosition(pos);
     }
-    else if (inputsystem->IsKeyPressed(KeyCodes::A)) {
+     if (inputsystem->IsKeyPressed(KeyCodes::A)) {
         Float2 pos = camera->GetPosition();
         pos.x -= m_Direct;
         camera->SetPosition(pos);
     }
-    else if (inputsystem->IsKeyPressed(KeyCodes::W)) {
+     if (inputsystem->IsKeyPressed(KeyCodes::W)) {
         Float2 pos = camera->GetPosition();
         pos.y += m_Direct;
         camera->SetPosition(pos);
     }
-    else if (inputsystem->IsKeyPressed(KeyCodes::S)) {
+     if (inputsystem->IsKeyPressed(KeyCodes::S)) {
         Float2 pos = camera->GetPosition();
         pos.y -= m_Direct;
         camera->SetPosition(pos);

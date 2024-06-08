@@ -60,15 +60,14 @@ Float2 InputSystem::GetWorldMousePos(Float2 CameraPosition, Float2 CameraScale,F
 
 	//std::cout << "X:" << MousePos.x << " Y:" << MousePos.y << "\n";
 
+	MousePos.x = (MousePos.x - (ViewportExtent.x*0.5f))/ (ViewportExtent.x*0.5f);
+	MousePos.y = (1.0f-(MousePos.y - (ViewportExtent.y*0.5f)))/ (ViewportExtent.y*0.5f);
 
-	MousePos.x = ((MousePos.x / ViewportExtent.x) / (CameraScale.x));
-	MousePos.y = (1.0f - (MousePos.y / ViewportExtent.y)) / (CameraScale.y);
+	MousePos.x /= CameraScale.x;
+	MousePos.y /= CameraScale.y;
+	MousePos.x += CameraPosition.x ;
+	MousePos.y += CameraPosition.y ;
 
-	MousePos.x += CameraPosition.x / CameraScale.x * 0.5f;
-	MousePos.y += CameraPosition.y / CameraScale.y * 0.5f;
-
-	//MousePos.x /=   (camera->GetScale().x);
-	//MousePos.y /=   (camera->GetScale().y);
 
 
 

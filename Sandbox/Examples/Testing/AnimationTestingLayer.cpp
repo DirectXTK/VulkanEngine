@@ -14,7 +14,7 @@ void AnimationTestingLayer::OnCreate()
 
 	m_Units.push_back(AnimationUnit());
 	m_Units.push_back(AnimationUnit());
-
+	m_App->m_Camera.SetPosition({ 0.0f,0.0f });
 
 	m_Units[0].Position = {0.0f,0.0f};
 	m_Units[0].Animator = *m_App->GetResource<Animator>("PEASANT");
@@ -104,4 +104,8 @@ void AnimationTestingLayer::OnGUI()
 
 void AnimationTestingLayer::MoveUnit()
 {
+	if (m_CurrentlySelectedUnit.ID == m_Units[0].ID.ID) {
+
+		m_Units[0].Position = { m_App->GetWorldMousePos().x,m_App->GetWorldMousePos().y };
+	}
 }
