@@ -13,6 +13,8 @@ public:
 
 	void Update(float DeltaTime);
 	void SetStage(const std::string& Stage);
+	//Changes the stage if it's different.
+	void KeepStage(const std::string& Stage);
 
 	GUUID GetCurrentTextureID();
 	GUUID GetAnimationID();

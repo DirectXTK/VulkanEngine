@@ -82,13 +82,25 @@ void Animator::Update(float DeltaTime)
 		
 }
 
-void Animator::SetStage(const std::string& Stage)
+void Animator::SetStage(const std::string& StageTag)
 {
-	m_CurrentStage = m_Stages[Stage];
+	m_CurrentStage = m_Stages[StageTag];
 	m_CurrentStageInfo = m_StageInfos[m_CurrentStage.From];
 	m_StageInfoOffset = m_CurrentStage.From;
 	m_CurrentDuration = m_CurrentStageInfo.Duration;
 
+}
+
+void Animator::KeepStage(const std::string& StageTag)
+{
+	Stage NextStage = m_Stages[StageTag];
+	if (NextStage.From != m_CurrentStage.From)
+	{
+		m_CurrentStage = m_Stages[StageTag];
+		m_CurrentStageInfo = m_StageInfos[m_CurrentStage.From];
+		m_StageInfoOffset = m_CurrentStage.From;
+		m_CurrentDuration = m_CurrentStageInfo.Duration;
+	}
 }
 
 
