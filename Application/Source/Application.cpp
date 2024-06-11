@@ -70,8 +70,7 @@
 
  void Application::LoadAssets(std::string Path, ResourceType type)
  {
-     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", ResourceType::TEXTURE);
-     m_AssetManager.LoadAllResources("C:\\Repos\\VulkanEngine\\Resources\\Animation\\", ResourceType::ANIMATION);
+     m_AssetManager.LoadAllResources(Path, type);
  }
 
  void Application::Run(){
