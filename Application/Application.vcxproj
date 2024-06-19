@@ -98,6 +98,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Collider.h" />
     <ClInclude Include="Source\AssetManager.h" />
     <ClInclude Include="Source\AppCore.h" />
     <ClInclude Include="Source\AppTime.h" />
@@ -113,6 +114,7 @@
     <ClInclude Include="Source\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Collider.cpp" />
     <ClCompile Include="Source\AppCore.cpp" />
     <ClCompile Include="Source\AssetManager.cpp" />
     <ClCompile Include="Source\AppTime.cpp" />

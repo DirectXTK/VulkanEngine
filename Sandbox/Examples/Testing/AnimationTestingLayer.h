@@ -1,9 +1,14 @@
 #pragma once
 #include "DefaultCameraControlls.h"
 #include "Animator.h"
+#define DEMO_FEATURES
+#include "Utils.h"
 struct AnimationUnit {
 	Float2 Position{};
+	Float2 MoveLocation{};
+	float MoveSpeed{0.0003f};
 	Animator Animator{};
+	Collider* Collid{};
 	GUUID ID{};
 };
 class AnimationTestingLayer:public Layer
@@ -19,6 +24,8 @@ private:
 
 	bool m_SpawnUnit{false};
 	std::string m_SpawnedUnit{};
+
+	CollisionSystem m_System{};
 
 	std::vector<AnimationUnit> m_Units{};
 	Float2 m_MoveLocation{};
