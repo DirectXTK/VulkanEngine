@@ -8,10 +8,10 @@ struct AnimationUnit {
 	Float2 MoveLocation{};
 	float MoveSpeed{0.0003f};
 	Animator Animator{};
-	Collider* Collid{};
+	Collider Collid;
 	GUUID ID{};
 };
-class AnimationTestingLayer:public Layer
+class AnimationTestingLayer :public Layer
 {
 public:
 	AnimationTestingLayer();
@@ -22,6 +22,7 @@ public:
 private:
 	void MoveUnit();
 
+	Float2 m_Size{ 0.1f,0.1f };
 	bool m_SpawnUnit{false};
 	std::string m_SpawnedUnit{};
 

@@ -1,10 +1,28 @@
 #pragma once
 #include "AppCore.h"
-class Collider
+class Collider;
+class CollisionSystem;
+class ColliderBackEnd;
+class Collider {
+public:
+	Collider(){}
+	Collider(CollisionSystem* system,GUUID ID);
+
+	void Update(Float2* Position, Float2* Size); 
+	void UpdateMoveAmount(Float2 MoveAmount); 
+
+	
+	GUUID GetID() { return m_ID; }
+private:
+	CollisionSystem* m_System{};
+	GUUID m_ID{ 0 };
+};
+class ColliderBackEnd
 {
 public:
-	Collider(Float2* Position, Float2* Size);
-	void Update(Float2 MoveAmount);
+	ColliderBackEnd() {}
+	void Update(Float2* Position,Float2* Size);
+	void UpdateMoveAmount(Float2 MoveAmount);
 	void SetStatus(bool Colided) { m_IsColided = Colided; }
 	bool IsColided() { return m_IsColided; }
 
@@ -16,16 +34,16 @@ public:
 private:
 	Float2* m_Position{};
 	Float2* m_Size{};
-	Float2 m_MoveAmount{};
+	Float2 m_MoveAmount{1.9f};
 	bool m_IsColided{};
 };
 class CollisionSystem {
 public:
-
+	ColliderBackEnd* GetColliderBackEnd(GUUID ID) { return &m_Colliders[ID]; }
 	void CheckCollisions();
-	Collider* CreateCollider(Float2* Position,Float2* Size) { m_Colliders.push_back(Collider(Position,Size)); return &m_Colliders[m_Colliders.size()-1]; }
+	Collider CreateCollider() { GUUID id = GUUID(); m_Colliders[id] =ColliderBackEnd(); return Collider(this, id); }
 private:
-	std::vector<Collider> m_Colliders{};
+	std::unordered_map<GUUID, ColliderBackEnd> m_Colliders{};
 };
 
 
