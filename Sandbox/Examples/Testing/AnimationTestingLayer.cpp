@@ -38,16 +38,23 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 	//GUUID id = Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.png");
 	MoveUnit();
 
+	Vertex vertices[2];
+	vertices[0].Position = {0.0f,0.0f};
+	vertices[1].Position = { 0.5f,0.0f };
+	bool Outline = true;
+
 	for (uint32_t i = 0; i < m_Units.size(); i++) {
 	m_Units[i].Collid.Update(&m_Units[i].Position,&m_Size);
 
-
+	if (m_CurrentlySelectedUnit == m_Units[i].ID)
+	renderer->DrawOutline({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f }, m_Size, 0.01f);
 	renderer->DrawQuad({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f}, {1.0f,1.0f,1.0f,1.0f}, m_Size, m_Units[i].Animator, m_Units[i].ID.ID);
-
+	
 
 
 	m_Units[i].Animator.Update(DeltaTime);
 	}
+
 	//renderer->DrawQuad({ 0.0f,-0.5f }, { 1.0f,1.0f,1.0f,1.0 }, { 0.3f,0.3f }, Core::GetStringHash("PANEL.png"),0,0);
 
 	m_System.CheckCollisions();

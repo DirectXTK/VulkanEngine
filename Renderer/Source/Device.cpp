@@ -33,7 +33,7 @@ VkDevice LogicalDevice::CreateLogicalDevice(VkPhysicalDevice physicalDevice,Queu
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.independentBlend = true;
     deviceFeatures.samplerAnisotropy = true;
-
+    deviceFeatures.fillModeNonSolid = false;
     devicecreateinfo.pEnabledFeatures = &deviceFeatures;
 
 

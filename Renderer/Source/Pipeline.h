@@ -22,7 +22,7 @@ public:
 	static VkPipelineLayout CreatePipelineLayout(VkDevice device, VkDescriptorSetLayout* DescriptorSetLayout,uint32_t DescriptorSetCount);
 	static VkPipeline CreatePipeline(PipelineDesc& desc, VkDevice device);
 	static VkRenderPass CreateRenderPass(VkDevice device, VkFormat format);
-
+	static void CreateDepthStencil(VkDevice device);
 private:
 
 };

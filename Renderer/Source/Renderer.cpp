@@ -13,7 +13,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     //m_VertexBufferSize = 3*100;
    //Create vulkan instance
     InstanceDesc instancedesc{};
-    instancedesc.ApiVersion = VK_API_VERSION_1_2;
+    instancedesc.ApiVersion = VK_API_VERSION_1_3;
     instancedesc.ValidationLayersEnabled = true;
     m_Instance = VulkanInstance::CreateInstance(instancedesc, &m_Messenger);
 
@@ -95,11 +95,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
  
 
     VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_R32G32_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
+    VkFormat DepthStencilFormat = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+
 
     m_ColorAttachments.resize(MAX_FRAME_DRAWS);
+    m_DepthStencilAttachments.resize(MAX_FRAME_DRAWS);
     for (int i = 0; i < m_ColorAttachments.size(); i++) {
 
         m_ColorAttachments[i] = Image(m_PhysicalDevice, m_Device, format, VK_SHARING_MODE_EXCLUSIVE, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_TILING_OPTIMAL, m_SwapChain->GetExtent().width, m_SwapChain->GetExtent().height);
+        m_DepthStencilAttachments[i] = Image(m_PhysicalDevice, m_Device, DepthStencilFormat, VK_SHARING_MODE_EXCLUSIVE, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_TILING_OPTIMAL, m_SwapChain->GetExtent().width, m_SwapChain->GetExtent().height,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_ASPECT_STENCIL_BIT);
     }
     CreateFrameBuffers();
 
@@ -122,6 +126,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     VertexBufferDesc.SizeBytes = m_VertexMaxCountGUI * sizeof(Vertex);
     m_VertexGUIBuffers.push_back(new Buffer(VertexBufferDesc));
 
+    m_VertexBufferOutline.push_back(new Buffer(m_VertexBuffers[0]->GetBufferDesc()));
+
 
 
     // VertexBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex)*20000;
@@ -129,6 +135,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
      //Buffer* vertexdwadad = new Buffer(VertexBufferDesc);
     m_VerticesGUI = new Vertex[m_VertexMaxCountGUI];
     m_Vertices = new Vertex[m_VertexCount];
+    m_VertexOutline = new Vertex[m_VertexOutineMaxCountPerDrawCall];
 
     BufferDesc StaggingBufferDesc{};
     StaggingBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex);
@@ -141,6 +148,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     m_StaggingBuffers.push_back(new Buffer(StaggingBufferDesc));
     StaggingBufferDesc.SizeBytes = m_VertexMaxCountGUI * sizeof(Vertex);
     m_StaggingGUIBuffers.push_back(new Buffer(StaggingBufferDesc));
+
+    m_StagingBufferOutline.push_back(new Buffer(m_StaggingBuffers[0]->GetBufferDesc()));
+
 
     //temp
 
@@ -355,6 +365,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_VertexBuffers.push_back(new Buffer(m_VertexBuffers[0]->GetBufferDesc()));
         m_StaggingBuffers.push_back(new Buffer(m_StaggingBuffers[0]->GetBufferDesc()));
 
+        m_VertexBufferOutline.push_back(new Buffer(m_VertexBuffers[0]->GetBufferDesc()));
+        m_StagingBufferOutline.push_back(new Buffer(m_StaggingBuffers[0]->GetBufferDesc()));
 
        // m_IndexBuffers.push_back(new Buffer(m_IndexBuffers[0]->GetBufferDesc()));
       //  m_IndexBuffers[m_IndexBuffers.size() - 1]->UploadToBuffer(m_Device, m_Indices, uint64_t(m_VertexCount * 1.5f * sizeof(uint32_t)));
@@ -410,6 +422,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             }
 
         m_DrawCommands.push_back({ m_VertexPointer,m_DrawCallCount,0,m_GUIFlush });
+        if(!m_GUIFlush)
+        m_DrawCommandsOutline.push_back({ m_VertexCountOutlines,m_DrawCallCount,0,false });
+
 
         if (m_DrawCallCount == m_VertexBuffers.size())
             CreateNewBufferForBatch();
@@ -423,6 +438,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
           m_UniformBuffers[0].UploadToBuffer(m_Device,&m_CameraViewProj,sizeof(glm::mat4));
 
            m_StaggingBuffers[m_DrawCallCount]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
+           m_StagingBufferOutline[m_DrawCallCount]->UploadToBuffer(m_Device, m_VertexOutline, sizeof(Vertex) * m_VertexCountOutlines);
+
 
            VkBufferCopy region{};
            region.size = sizeof(Vertex) * m_VertexPointer;
@@ -430,6 +447,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
            if (m_VertexPointer != 0)
            {
                vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBuffers[m_DrawCallCount]->GetBuffer(), *m_VertexBuffers[m_DrawCallCount]->GetBuffer(), 1, &region);
+           }
+
+           if (m_VertexCountOutlines != 0)
+           {
+               region.size = sizeof(Vertex) * m_VertexCountOutlines;
+
+               vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StagingBufferOutline[m_DrawCallCount]->GetBuffer(), *m_VertexBufferOutline[m_DrawCallCount]->GetBuffer(), 1, &region);
            }
           
 
@@ -439,6 +463,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         
  
             m_VertexPointer=0;
+            m_VertexCountOutlines = 0;
             m_DrawCallCount++;
             m_Textures.clear();
 
@@ -452,9 +477,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
     }
+  
     void Renderer::EndFrame(){
-
-
         EndGUIFrame();
         DrawBatch();
 
@@ -661,6 +685,49 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_VertexPointer += 4;
     }
 
+
+    void Renderer::DrawOutline(Float3 Position, Float2 Size,float OutlineWidth)
+    {
+
+        if (m_VertexCountOutlines + 4 > m_VertexOutineMaxCountPerDrawCall)
+            Flush(false);
+        m_VertexOutline[m_VertexCountOutlines].ID = 0;
+        m_VertexOutline[m_VertexCountOutlines+1].ID = 0;
+        m_VertexOutline[m_VertexCountOutlines+2].ID = 0;
+        m_VertexOutline[m_VertexCountOutlines+3].ID = 0;
+
+       // m_VertexOutline[m_VertexCountOutlines].Position = { Position.x - Size.x,Position.y - Size.y };
+       // m_VertexOutline[m_VertexCountOutlines + 1].Position = { Position.x - Size.x,Position.y + Size.y };
+       // m_VertexOutline[m_VertexCountOutlines + 2].Position = { Position.x + Size.x,Position.y + Size.y };
+       // m_VertexOutline[m_VertexCountOutlines + 3].Position = { Position.x + Size.x,Position.y - Size.y };
+
+       m_VertexOutline[m_VertexCountOutlines].Position = {Position.x-Size.x-OutlineWidth,Position.y-Size.y-OutlineWidth };
+       m_VertexOutline[m_VertexCountOutlines + 1].Position = {Position.x-Size.x-OutlineWidth,Position.y+Size.y+OutlineWidth};
+       m_VertexOutline[m_VertexCountOutlines + 2].Position = {Position.x+Size.x+OutlineWidth,Position.y+Size.y+OutlineWidth};
+       m_VertexOutline[m_VertexCountOutlines + 3].Position = {Position.x+Size.x+OutlineWidth,Position.y-Size.y-OutlineWidth};
+
+        m_VertexOutline[m_VertexCountOutlines].TextureID = 0;
+        m_VertexOutline[m_VertexCountOutlines + 1].TextureID = 0;
+        m_VertexOutline[m_VertexCountOutlines + 2].TextureID = 0;
+        m_VertexOutline[m_VertexCountOutlines + 3].TextureID = 0;
+
+        m_VertexOutline[m_VertexCountOutlines].Color = {1.0f,0.0f,0.0f,1.0f};
+        m_VertexOutline[m_VertexCountOutlines + 1].Color = {1.0f,0.0f,0.0f,1.0f};
+        m_VertexOutline[m_VertexCountOutlines + 2].Color = {1.0f,0.0f,0.0f,1.0f};
+        m_VertexOutline[m_VertexCountOutlines + 3].Color = {1.0f,0.0f,0.0f,1.0f};
+
+
+
+        m_Vertices[m_VertexCountOutlines].TexCoords = { 0.0f,1.0f };
+        m_Vertices[m_VertexCountOutlines + 1].TexCoords = { 0.0f,0.0f };
+        m_Vertices[m_VertexCountOutlines + 2].TexCoords = { 1.0f,0.0f };
+        m_Vertices[m_VertexCountOutlines + 3].TexCoords = { 1.0f,1.0f };
+
+
+        m_VertexCountOutlines += 4;
+    }
+
+
     void Renderer::DrawParticle()
     {
     }
@@ -698,8 +765,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         m_FrameBuffers.resize(MAX_FRAME_DRAWS);
         for(int i =0;i < m_FrameBuffers.size();i++){
-        Image images[]= {*m_SwapChain->GetSwapChainImage(i),m_ColorAttachments[i]};
-                m_FrameBuffers[i].Init(m_Device,m_SwapChain,m_RenderPass,images,2);
+        Image images[]= {*m_SwapChain->GetSwapChainImage(i),m_ColorAttachments[i],m_DepthStencilAttachments[i]};
+                m_FrameBuffers[i].Init(m_Device,m_SwapChain,m_RenderPass,images,3);
         }
 
 
@@ -830,12 +897,13 @@ void Renderer::StopRecordingCommands()
 
     vkEndCommandBuffer(m_CurrentCommandBuffer);
     m_DrawCommands.resize(0);
+    m_DrawCommandsOutline.resize(0);
     m_DrawGUICommands.resize(0);
 }
 
 void Renderer::DrawBatch()
 {
-    VkClearValue ClearColor[] = { {m_ClearColor.r,m_ClearColor.g,m_ClearColor.b,m_ClearColor.a},{0.0f,0.0f} };
+    VkClearValue ClearColor[] = { {m_ClearColor.r,m_ClearColor.g,m_ClearColor.b,m_ClearColor.a},{0.0f,0.0f},{0.0f,0xFF} };
 
     VkRenderPassBeginInfo RenderPassBeginInfo{};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -843,20 +911,27 @@ void Renderer::DrawBatch()
     RenderPassBeginInfo.renderArea.offset = { 0,0 };
     RenderPassBeginInfo.renderArea.extent = m_SwapChain->GetExtent();
     RenderPassBeginInfo.pClearValues = ClearColor;          
-    RenderPassBeginInfo.clearValueCount = 2;
+    RenderPassBeginInfo.clearValueCount = 3;
     RenderPassBeginInfo.framebuffer = m_FrameBuffers[m_CurrentFrame].GetFrameBuffer(0);
 
 
     VkDeviceSize Offset{ 0 };
     vkCmdBeginRenderPass(m_CurrentCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    for (int i = 0; i < m_DrawCommands.size(); i++) {
+    vkCmdSetStencilTestEnable(m_CurrentCommandBuffer, VK_TRUE);
 
+    vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0xFF);
+    vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
+    vkCmdSetStencilReference(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
+    vkCmdSetStencilCompareMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
+    for (int i = 0; i < m_DrawCommands.size(); i++) {
+      
         vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBuffers[i]->GetBuffer(), &Offset);
 
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
         VkDescriptorSet DescriptorSets[2];
         DescriptorSets[1] = m_DescriptorSetTextures[i].GetDescriptorSet();
+ 
 
         if (m_DrawCommands[i].IsGUI) 
             DescriptorSets[0] = m_GUICameraDescriptor.GetDescriptorSet();
@@ -870,6 +945,36 @@ void Renderer::DrawBatch()
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommands[i].VertexCount * 1.5f), 1, 0, 0, 0);
 
     }
+
+    vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0x00);
+    vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_NOT_EQUAL);
+    //vkCmdSetStencilTestEnable(m_CurrentCommandBuffer, VK_FALSE);
+
+
+    for (uint32_t i = 0;i< m_DrawCommandsOutline.size() ; i++) {
+        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferOutline[i]->GetBuffer(), &Offset);
+
+        vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
+
+        VkDescriptorSet DescriptorSets[2];
+        DescriptorSets[1] = m_DescriptorSetTextures[0].GetDescriptorSet();
+
+       
+            DescriptorSets[0] = m_DescriptorSetCamera.GetDescriptorSet();
+
+
+      
+
+
+        vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
+
+
+        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsOutline[i].VertexCount * 1.5f), 1, 0, 0, 0);
+    }
+
+    vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0xFF);
+    vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
+
     vkCmdEndRenderPass(m_CurrentCommandBuffer);
 
 }

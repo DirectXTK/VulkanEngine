@@ -4,7 +4,7 @@
 #include "Buffer.h"
 class Image{
     public:
-    Image(VkPhysicalDevice pdevice,VkDevice device,VkFormat format,VkSharingMode sharemode,VkImageUsageFlags usage,VkMemoryPropertyFlags propflags,VkImageTiling tilling,uint32_t Width, uint32_t Height,VkImageLayout initformat = VK_IMAGE_LAYOUT_UNDEFINED);
+    Image(VkPhysicalDevice pdevice,VkDevice device,VkFormat format,VkSharingMode sharemode,VkImageUsageFlags usage,VkMemoryPropertyFlags propflags,VkImageTiling tilling,uint32_t Width, uint32_t Height,VkImageLayout initformat = VK_IMAGE_LAYOUT_UNDEFINED,VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT);
     Image(std::string Path);
     Image() {}
 

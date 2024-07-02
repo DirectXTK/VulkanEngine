@@ -4,6 +4,20 @@ VkRenderPass Pipeline::CreateRenderPass(VkDevice device, VkFormat format) {
 
     VkRenderPass RenderPass{};
 
+    //Depth stencil
+    VkAttachmentDescription DepthStencilAttachment{};
+    DepthStencilAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    DepthStencilAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    DepthStencilAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    DepthStencilAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+    DepthStencilAttachment.format = VK_FORMAT_D24_UNORM_S8_UINT;
+    DepthStencilAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    DepthStencilAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    DepthStencilAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+
+    VkAttachmentReference DepthStencilAttachmentRef{};
+    DepthStencilAttachmentRef.attachment = 2;
+    DepthStencilAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription ColorAttach2{};
     ColorAttach2.format = VK_FORMAT_R32G32_UINT;
@@ -27,8 +41,8 @@ VkRenderPass Pipeline::CreateRenderPass(VkDevice device, VkFormat format) {
     ColorAttach.samples = VK_SAMPLE_COUNT_1_BIT;
     ColorAttach.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     ColorAttach.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    ColorAttach.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    ColorAttach.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    ColorAttach.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    ColorAttach.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 
     ColorAttach.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     ColorAttach.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
@@ -37,12 +51,16 @@ VkRenderPass Pipeline::CreateRenderPass(VkDevice device, VkFormat format) {
     ColorAttachRef.attachment = 0;
     ColorAttachRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    VkAttachmentReference refs[2] = { ColorAttachRef,ColorAttachRef2 };
+    VkAttachmentReference refs[3] = { ColorAttachRef,ColorAttachRef2 ,DepthStencilAttachmentRef };
+
+
+
 
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = 2;
     subpass.pColorAttachments = refs;
+    subpass.pDepthStencilAttachment = &DepthStencilAttachmentRef;
 
     std::array<VkSubpassDependency, 2> subpassDependency{};
 
@@ -62,23 +80,23 @@ VkRenderPass Pipeline::CreateRenderPass(VkDevice device, VkFormat format) {
     subpassDependency[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
     subpassDependency[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-    VkAttachmentDescription attachdescs[2] = { ColorAttach,ColorAttach2 };
+    VkAttachmentDescription attachdescs[3] = { ColorAttach,ColorAttach2,DepthStencilAttachment };
 
     VkRenderPassCreateInfo RenderPassinfo{};
     RenderPassinfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    RenderPassinfo.attachmentCount = 2;
+    RenderPassinfo.attachmentCount = 3;
     RenderPassinfo.pAttachments = attachdescs;
     RenderPassinfo.subpassCount = 1;
     RenderPassinfo.pSubpasses = &subpass;
     RenderPassinfo.dependencyCount = (uint32_t)subpassDependency.size();
     RenderPassinfo.pDependencies = subpassDependency.data();
 
-
     VkResult result = vkCreateRenderPass(device, &RenderPassinfo, nullptr, &RenderPass);
     if (result != VK_SUCCESS)
         Core::Log(ErrorType::Error, "Failed to create renderpass.");
     return RenderPass;
 }
+
 
 VkPipelineLayout Pipeline::CreatePipelineLayout(VkDevice device,VkDescriptorSetLayout* DescriptorSetLayout,uint32_t DescriptorSetCount)
 {
@@ -148,9 +166,31 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
     inputassassembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     inputassassembly.primitiveRestartEnable = false;
 
+    //Depth stencil
+    VkStencilOpState FrontState{};
+    FrontState.compareOp = VK_COMPARE_OP_ALWAYS;
+    FrontState.failOp = VK_STENCIL_OP_REPLACE;
+    FrontState.passOp = VK_STENCIL_OP_REPLACE;
+    FrontState.writeMask = 0x00;
+    FrontState.compareMask = 0x00;
+
+    VkStencilOpState BackState{};
+    BackState.writeMask = 0xFF;
+    BackState.compareOp = VK_COMPARE_OP_ALWAYS;
+    BackState.failOp = VK_STENCIL_OP_REPLACE;
+    BackState.passOp = VK_STENCIL_OP_REPLACE;
+    BackState.compareMask = 0x00;
+
+    VkPipelineDepthStencilStateCreateInfo DepthStencilCreateInfo{};
+   DepthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+   DepthStencilCreateInfo.depthBoundsTestEnable = false;
+   DepthStencilCreateInfo.stencilTestEnable = true;
+   //DepthStencilCreateInfo.front = FrontState;
+  // DepthStencilCreateInfo.back = BackState;
 
 
 
+    //
     VkRect2D Scissor{};
     Scissor.offset = { 0,0 };
     Scissor.extent = {(uint32_t)desc.Viewport.width,(uint32_t)desc.Viewport.height};
@@ -209,6 +249,13 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
     blendstate.pAttachments = blendattachments;
     blendstate.attachmentCount = 2;
 
+
+    VkDynamicState DynamicState[5] = { VK_DYNAMIC_STATE_STENCIL_TEST_ENABLE,VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,VK_DYNAMIC_STATE_STENCIL_OP,VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,VK_DYNAMIC_STATE_STENCIL_REFERENCE };
+
+    VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo{VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
+    DynamicStateCreateInfo.dynamicStateCount = 5;
+    DynamicStateCreateInfo.pDynamicStates = DynamicState;
+    
  
 
 
@@ -222,6 +269,8 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
     pipeline.pRasterizationState = &rasterizationstate;
     pipeline.pMultisampleState = &multisampleinfo;
     pipeline.pColorBlendState = &blendstate;
+    pipeline.pDepthStencilState = &DepthStencilCreateInfo;
+    pipeline.pDynamicState = &DynamicStateCreateInfo;
     pipeline.layout = desc.PipelineLayout;
     pipeline.renderPass = desc.RenderPass;
     pipeline.subpass = 0;

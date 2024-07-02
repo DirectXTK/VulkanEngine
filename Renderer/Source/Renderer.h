@@ -36,6 +36,11 @@ struct DrawCommand {
     bool IsGUI{ false };
 
 };
+enum class RenderFeature {NONE,DRAWOUTLINE};
+struct RenderMode {
+    RenderFeature Feature{ RenderFeature::NONE};
+    bool Enable{ true };
+};
 struct RendererDesc{
     uint32_t VertexCountPerDrawCall{100};
     Float4 ClearColor{};
@@ -55,13 +60,14 @@ public:
     //void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
     //void DrawQuadWithAtlasGUI(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
    // void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, uint64_t TextureIndex);
-
     //
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,uint32_t TextureIndex=0);
     //void DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID);
 
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
+
+    void DrawOutline(Float3 Position, Float2 Size,float OutlineWidth);
 
     //Particles
     void DrawParticle();
@@ -122,6 +128,9 @@ private:
     VkCommandBuffer m_TransferCommandBuffer{};
     std::vector<FrameBuffer> m_FrameBuffers{};
     std::vector<Image> m_ColorAttachments{};
+    //
+    std::vector<Image> m_DepthStencilAttachments{};
+
     //Queues
     VkQueue m_GraphicsQ{};
     VkQueue m_PresentationQ{};
@@ -212,6 +221,14 @@ private:
     std::unordered_map<GUUID, TextureRenderingData> m_TexturesGUI{};
     uint32_t m_DrawCallCountGUI{};
     bool m_GUIFlush{false};
+    //Outlines
+    uint32_t m_VertexCountOutlines{};
+    uint64_t m_VertexOutineMaxCountPerDrawCall{4*100};
+    Vertex* m_VertexOutline{};
+    std::vector<DrawCommand> m_DrawCommandsOutline{};
+    std::vector<Buffer*> m_VertexBufferOutline{};
+    std::vector<Buffer*> m_StagingBufferOutline{};
+
 
 
     AssetManager* m_AssetManager{};

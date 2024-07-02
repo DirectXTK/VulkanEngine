@@ -1,7 +1,7 @@
 #include "Image.h"
 
 #include "RendCore.h"
-    Image::Image(VkPhysicalDevice pdevice,VkDevice device,VkFormat format,VkSharingMode sharemode,VkImageUsageFlags usage,VkMemoryPropertyFlags propflags,VkImageTiling tilling,uint32_t Width, uint32_t Height,VkImageLayout initformat ){
+    Image::Image(VkPhysicalDevice pdevice,VkDevice device,VkFormat format,VkSharingMode sharemode,VkImageUsageFlags usage,VkMemoryPropertyFlags propflags,VkImageTiling tilling,uint32_t Width, uint32_t Height,VkImageLayout initformat, VkImageAspectFlags ImageAspect ){
        m_Device = device;
        m_PDevice = pdevice; 
          
@@ -44,7 +44,7 @@
           Core::Log(ErrorType::Error,"Failed to bind memory to image.");
 
           m_ImageSize = memreq.size;
-          CreateView(format,VK_IMAGE_ASPECT_COLOR_BIT,device);
+          CreateView(format, ImageAspect,device);
     }
 
     
@@ -59,7 +59,6 @@
             createinfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
             createinfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
             createinfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
             createinfo.subresourceRange.aspectMask =aspectflags;
             createinfo.subresourceRange.baseMipLevel=0;
             createinfo.subresourceRange.levelCount=1;

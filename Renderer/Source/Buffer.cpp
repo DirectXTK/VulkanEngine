@@ -10,12 +10,10 @@
             createinfo.size = desc.SizeBytes;
             createinfo.sharingMode = desc.Sharingmode;
             createinfo.usage = desc.Usage;
-
             VkResult result = vkCreateBuffer(desc.Device,&createinfo,nullptr,&m_Buffer);
             if(result != VK_SUCCESS)
                 Core::Log(ErrorType::Error,"Failed to create buffer.");
             m_BufferSize= desc.SizeBytes;
-
             VkMemoryRequirements memReq{};
             vkGetBufferMemoryRequirements(desc.Device,m_Buffer,&memReq);
 
@@ -29,7 +27,6 @@
                 Core::Log(ErrorType::Error,"Failed to allocate memory for vertex buffer.");
 
             vkBindBufferMemory(desc.Device,m_Buffer,m_Memory,0);
-
         }
         void Buffer::UploadToBuffer(VkDevice device, void* data, uint64_t Size)
         {
