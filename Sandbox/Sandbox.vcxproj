@@ -96,6 +96,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Examples\Testing\ECSTestingLayer.cpp" />
     <ClCompile Include="Examples\Testing\AnimationTestingLayer.cpp" />
     <ClCompile Include="Examples\Testing\DefaultCameraControlls.cpp" />
     <ClCompile Include="Examples\Testing\DLLLoadingLayer.cpp" />
@@ -114,6 +115,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Examples\Testing\ECSTestingLayer.h" />
     <ClInclude Include="Examples\Testing\AnimationTestingLayer.h" />
     <ClInclude Include="Examples\Testing\DefaultCameraControlls.h" />
     <ClInclude Include="Examples\Testing\DLLLoadingLayer.h" />

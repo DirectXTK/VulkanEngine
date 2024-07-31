@@ -10,6 +10,7 @@ struct AnimationUnit {
 	Animator Animator{};
 	Collider Collid;
 	GUUID ID{};
+	bool Moving{false};
 };
 class AnimationTestingLayer :public Layer
 {
@@ -20,7 +21,7 @@ public:
 	void OnDestroy()override;
 	void OnGUI()override;
 private:
-	void MoveUnit();
+	void MoveUnit(AnimationUnit* unit);
 
 	Float2 m_Size{ 0.1f,0.1f };
 	bool m_SpawnUnit{false};

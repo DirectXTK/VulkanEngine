@@ -122,11 +122,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     VertexBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
 
-    m_VertexBuffers.push_back(new Buffer(VertexBufferDesc));
+    m_VertexBufferGeometry.push_back(new Buffer(VertexBufferDesc));
     VertexBufferDesc.SizeBytes = m_VertexMaxCountGUI * sizeof(Vertex);
-    m_VertexGUIBuffers.push_back(new Buffer(VertexBufferDesc));
+    m_VertexBufferGUI.push_back(new Buffer(VertexBufferDesc));
 
-    m_VertexBufferOutline.push_back(new Buffer(m_VertexBuffers[0]->GetBufferDesc()));
+    m_VertexBufferOutlines.push_back(new Buffer(VertexBufferDesc));
 
 
 
@@ -145,11 +145,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     StaggingBufferDesc.Device = m_Device;
     StaggingBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
-    m_StaggingBuffers.push_back(new Buffer(StaggingBufferDesc));
+    m_StaggingBufferGeometry.push_back(new Buffer(StaggingBufferDesc));
     StaggingBufferDesc.SizeBytes = m_VertexMaxCountGUI * sizeof(Vertex);
-    m_StaggingGUIBuffers.push_back(new Buffer(StaggingBufferDesc));
+    m_StaggingBufferGUI.push_back(new Buffer(StaggingBufferDesc));
 
-    m_StagingBufferOutline.push_back(new Buffer(m_StaggingBuffers[0]->GetBufferDesc()));
+    m_StaggingBufferOutlines.push_back(new Buffer(StaggingBufferDesc));
 
 
     //temp
@@ -301,7 +301,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                //RecordCommands(m_VertexCount,0);
        
             m_DrawCallCountGUI = 0;
-            m_DrawCallCount =0;
+            m_DrawCallCountGeometry =0;
+            m_DrawCallCountOutlines = 0;
+
             m_Camera = *camera;
             m_CameraViewProj = m_Camera.GetViewProj();
 
@@ -350,136 +352,149 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     void Renderer::BeginGUIFrame()
     {
-        Flush(true);
+        FlushGeometry();
        m_CameraViewProj = glm::identity<glm::mat4>();
-       m_GUIFlush = true;
+       m_GUIRendering = true;
     }
 
 
    
    
-    void Renderer::CreateNewBufferForBatch()
+    void Renderer::CreateNewBufferForBatch(std::vector<Buffer*>& VertexBuffers, std::vector<Buffer*>& Stagging)
     {
 
 
-        m_VertexBuffers.push_back(new Buffer(m_VertexBuffers[0]->GetBufferDesc()));
-        m_StaggingBuffers.push_back(new Buffer(m_StaggingBuffers[0]->GetBufferDesc()));
+        VertexBuffers.push_back(new Buffer(VertexBuffers[0]->GetBufferDesc()));
+        Stagging.push_back(new Buffer(Stagging[0]->GetBufferDesc()));
 
-        m_VertexBufferOutline.push_back(new Buffer(m_VertexBuffers[0]->GetBufferDesc()));
-        m_StagingBufferOutline.push_back(new Buffer(m_StaggingBuffers[0]->GetBufferDesc()));
-
-       // m_IndexBuffers.push_back(new Buffer(m_IndexBuffers[0]->GetBufferDesc()));
-      //  m_IndexBuffers[m_IndexBuffers.size() - 1]->UploadToBuffer(m_Device, m_Indices, uint64_t(m_VertexCount * 1.5f * sizeof(uint32_t)));
-
+      
         
     }
     void Renderer::FlushGUI()
     {
         uint32_t Index{ 1 };
 
-        for (auto& it : m_TexturesGUI) {
-            m_DescriptorSetTexturesGUI[m_DrawCallCountGUI].WriteToTexture(Index, it.second.texture->GetImageView(), it.second.texture->GetSampler());
+        for (auto& it : m_Textures) {
+           m_DescriptorSetTextures[m_DrawCallCountGUI+m_DrawCallCountGeometry].WriteToTexture(Index, it.second.texture->GetImageView(), it.second.texture->GetSampler());
             Index++;
         }
 
 
-        m_DrawGUICommands.push_back({ m_VertexPointerGUI,0 });
+        m_DrawCommandsGUI.push_back({ m_VertexPointer,m_DrawCallCountGUI + m_DrawCallCountGeometry });
 
-        //if (m_DrawCallCount == m_VertexBuffers.size())
-            //CreateNewBufferForBatch();
+        if (m_DrawCallCountGUI == m_VertexBufferGUI.size())
+            CreateNewBufferForBatch(m_VertexBufferGUI, m_StaggingBufferGUI);
 
         glm::mat4 Identity = glm::identity<glm::mat4>();
         m_UniformGUICameraBuffer->UploadToBuffer(m_Device, &Identity, sizeof(glm::mat4));
 
-        m_StaggingGUIBuffers[0]->UploadToBuffer(m_Device, m_VerticesGUI, sizeof(Vertex) * m_VertexPointerGUI);
+        m_StaggingBufferGUI[m_DrawCallCountGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
 
         VkBufferCopy region{};
-        region.size = sizeof(Vertex) * m_VertexPointerGUI;
+        region.size = sizeof(Vertex) * m_VertexPointer;
 
-        if (m_VertexPointerGUI != 0)
+        if (m_VertexPointer != 0)
         {
-            vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingGUIBuffers[0]->GetBuffer(), *m_VertexGUIBuffers[0]->GetBuffer(), 1, &region);
+            vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGUI[m_DrawCallCountGUI]->GetBuffer(), *m_VertexBufferGUI[m_DrawCallCountGUI]->GetBuffer(), 1, &region);
         }
 
 
 
 
 
-
-
-        m_VertexPointerGUI = 0;
-        m_TexturesGUI.clear();
+        m_DrawCallCountGUI++;
+        m_VertexPointer = 0;;
+        m_Textures.clear();
     }
-    void Renderer::Flush(bool IsGUI){
-
- 
-            for (uint32_t i = 0; i < m_Textures.size(); i++) {
-                Texture* texture = m_AssetManager->GetResource<Texture>(m_TextureIDByOrder[i]);
-                    if (texture)
-                        m_DescriptorSetTextures[m_DrawCallCount].WriteToTexture(i+1, texture->GetImageView(),texture->GetSampler());
-                    else
-                        Core::Log(ErrorType::Error, "Texture id was invalid.");
-            }
-
-        m_DrawCommands.push_back({ m_VertexPointer,m_DrawCallCount,0,m_GUIFlush });
-        if(!m_GUIFlush)
-        m_DrawCommandsOutline.push_back({ m_VertexCountOutlines,m_DrawCallCount,0,false });
+    void Renderer::FlushOutlines()
+    {
+   
 
 
-        if (m_DrawCallCount == m_VertexBuffers.size())
-            CreateNewBufferForBatch();
+        m_DrawCommandsOutlines.push_back({ m_VertexCountOutlines,0 });
 
-        if (m_GUIFlush) {
 
-          m_UniformGUICameraBuffer->UploadToBuffer(m_Device, &m_CameraViewProj, sizeof(glm::mat4));
+        if (m_DrawCallCountOutlines == m_VertexBufferOutlines.size())
+            CreateNewBufferForBatch(m_VertexBufferOutlines, m_StaggingBufferOutlines);
 
+        m_UniformBuffers[0].UploadToBuffer(m_Device, &m_CameraViewProj, sizeof(glm::mat4));
+
+        m_StaggingBufferOutlines[m_DrawCallCountOutlines]->UploadToBuffer(m_Device, m_VertexOutline, sizeof(Vertex) * m_VertexCountOutlines);
+
+
+        VkBufferCopy region{};
+        region.size = sizeof(Vertex) * m_VertexCountOutlines;
+
+        if (m_VertexCountOutlines != 0)
+        {
+            vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferOutlines[m_DrawCallCountOutlines]->GetBuffer(), *m_VertexBufferOutlines[m_DrawCallCountOutlines]->GetBuffer(), 1, &region);
         }
-       else
-          m_UniformBuffers[0].UploadToBuffer(m_Device,&m_CameraViewProj,sizeof(glm::mat4));
-
-           m_StaggingBuffers[m_DrawCallCount]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
-           m_StagingBufferOutline[m_DrawCallCount]->UploadToBuffer(m_Device, m_VertexOutline, sizeof(Vertex) * m_VertexCountOutlines);
-
-
-           VkBufferCopy region{};
-           region.size = sizeof(Vertex) * m_VertexPointer;
-
-           if (m_VertexPointer != 0)
-           {
-               vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBuffers[m_DrawCallCount]->GetBuffer(), *m_VertexBuffers[m_DrawCallCount]->GetBuffer(), 1, &region);
-           }
-
-           if (m_VertexCountOutlines != 0)
-           {
-               region.size = sizeof(Vertex) * m_VertexCountOutlines;
-
-               vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StagingBufferOutline[m_DrawCallCount]->GetBuffer(), *m_VertexBufferOutline[m_DrawCallCount]->GetBuffer(), 1, &region);
-           }
-          
 
 
 
+
+
+
+
+
+
+        m_VertexCountOutlines = 0;
+        m_DrawCallCountOutlines++;
+    }
+    
+    void Renderer::FlushGeometry()
+    {
+        if (m_GUIRendering) {
+            FlushGUI();
+            return;
+        }
+
+        for (uint32_t i = 0; i < m_Textures.size(); i++) {
+            Texture* texture = m_AssetManager->GetResource<Texture>(m_TextureIDByOrder[i]);
+            if (texture)
+                m_DescriptorSetTextures[m_DrawCallCountGeometry].WriteToTexture(i + 1, texture->GetImageView(), texture->GetSampler());
+            else
+                Core::Log(ErrorType::Error, "Texture id was invalid.");
+        }
+
+
+        m_DrawCommandsGeometry.push_back({ m_VertexPointer,m_DrawCallCountGUI + m_DrawCallCountGeometry });
+
+        if (m_DrawCallCountGeometry == m_VertexBufferGeometry.size())
+            CreateNewBufferForBatch(m_VertexBufferGeometry,m_StaggingBufferGeometry);
+
+            m_UniformBuffers[0].UploadToBuffer(m_Device, &m_CameraViewProj, sizeof(glm::mat4));
+
+            m_StaggingBufferGeometry[m_DrawCallCountGeometry]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
+
+
+        VkBufferCopy region{};
+        region.size = sizeof(Vertex) * m_VertexPointer;
+
+        if (m_VertexPointer != 0)
+        {
+            vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGeometry[m_DrawCallCountGeometry]->GetBuffer(), *m_VertexBufferGeometry[m_DrawCallCountGeometry]->GetBuffer(), 1, &region);
+        }
 
         
+
+
+
+
+
+
+
+        m_VertexPointer = 0;
+        m_DrawCallCountGeometry++;
+        m_Textures.clear();
+    }
  
-            m_VertexPointer=0;
-            m_VertexCountOutlines = 0;
-            m_DrawCallCount++;
-            m_Textures.clear();
-
-    }
-    void Renderer::EndGUIFrame()
-    {
-
-
-
-        Flush(false);
-
-
-    }
-  
+ 
+    
     void Renderer::EndFrame(){
-        EndGUIFrame();
+        FlushOutlines();
+        FlushGUI();
+
         DrawBatch();
 
 
@@ -530,17 +545,17 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
      
        m_CurrentFrame=(m_CurrentFrame+1)%MAX_FRAME_DRAWS;
-       m_GUIFlush = false;
+       m_GUIRendering = false;
     }
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,uint32_t TextureIndex)
     {
         if (m_VertexPointer + 4 > m_VertexCount )
-            Flush(false);
+            FlushGeometry();
         if (TextureHandle != 0) {
             if (m_Textures.find(TextureHandle) == m_Textures.end()) {
                 if (m_Textures.size() == m_TextureSlotCount - 1)
-                    Flush(false);
+                    FlushGeometry();
                 m_Textures[TextureHandle] = { m_AssetManager->GetResource<Texture>(TextureHandle) ,(uint32_t)m_Textures.size() + 1 };
                 m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
 
@@ -594,10 +609,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         if (Animation.GetCurrentTextureID() == id);
 
         if (m_VertexPointer + 4 > m_VertexCount)
-            Flush(false);
+            FlushGeometry();
             if (m_Textures.find(Animation.GetCurrentTextureID()) == m_Textures.end()) {
                 if (m_Textures.size() == m_TextureSlotCount - 1)
-                    Flush(false);
+                    FlushGeometry();
                 m_Textures[Animation.GetCurrentTextureID()] = { m_AssetManager->GetResource<Texture>(Animation.GetCurrentTextureID()) ,(uint32_t)m_Textures.size() + 1 };
                 m_TextureIDByOrder[m_Textures.size() - 1] = Animation.GetCurrentTextureID();
             }
@@ -650,7 +665,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID)
     {
         if (m_VertexPointer + 4 > m_VertexCount)
-            Flush(false);
+            FlushGeometry();
 
         m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
         m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
@@ -686,11 +701,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
 
 
-    void Renderer::DrawOutline(Float3 Position, Float2 Size,float OutlineWidth)
+    void Renderer::DrawOutline(Float3 Position, Float2 Size,Float4 Color,float OutlineWidth)
     {
 
         if (m_VertexCountOutlines + 4 > m_VertexOutineMaxCountPerDrawCall)
-            Flush(false);
+            FlushOutlines();
         m_VertexOutline[m_VertexCountOutlines].ID = 0;
         m_VertexOutline[m_VertexCountOutlines+1].ID = 0;
         m_VertexOutline[m_VertexCountOutlines+2].ID = 0;
@@ -711,17 +726,17 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_VertexOutline[m_VertexCountOutlines + 2].TextureID = 0;
         m_VertexOutline[m_VertexCountOutlines + 3].TextureID = 0;
 
-        m_VertexOutline[m_VertexCountOutlines].Color = {1.0f,0.0f,0.0f,1.0f};
-        m_VertexOutline[m_VertexCountOutlines + 1].Color = {1.0f,0.0f,0.0f,1.0f};
-        m_VertexOutline[m_VertexCountOutlines + 2].Color = {1.0f,0.0f,0.0f,1.0f};
-        m_VertexOutline[m_VertexCountOutlines + 3].Color = {1.0f,0.0f,0.0f,1.0f};
+        m_VertexOutline[m_VertexCountOutlines].Color = Color;
+        m_VertexOutline[m_VertexCountOutlines + 1].Color = Color;
+        m_VertexOutline[m_VertexCountOutlines + 2].Color = Color;
+        m_VertexOutline[m_VertexCountOutlines + 3].Color = Color;
 
 
 
-        m_Vertices[m_VertexCountOutlines].TexCoords = { 0.0f,1.0f };
-        m_Vertices[m_VertexCountOutlines + 1].TexCoords = { 0.0f,0.0f };
-        m_Vertices[m_VertexCountOutlines + 2].TexCoords = { 1.0f,0.0f };
-        m_Vertices[m_VertexCountOutlines + 3].TexCoords = { 1.0f,1.0f };
+        m_VertexOutline[m_VertexCountOutlines].TexCoords = { 0.0f,1.0f };
+        m_VertexOutline[m_VertexCountOutlines + 1].TexCoords = { 0.0f,0.0f };
+        m_VertexOutline[m_VertexCountOutlines + 2].TexCoords = { 1.0f,0.0f };
+        m_VertexOutline[m_VertexCountOutlines + 3].TexCoords = { 1.0f,1.0f };
 
 
         m_VertexCountOutlines += 4;
@@ -848,7 +863,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
  
     void Renderer::Statistics(){
 
-        Core::Log(ErrorType::Info,"Draw call count",m_DrawCallCount+m_DrawCallCountGUI);
+        Core::Log(ErrorType::Info,"Draw call count",m_DrawCallCountGeometry+m_DrawCallCountGUI+m_DrawCallCountOutlines);
     }
 
     Texture* Renderer::LoadTexture(std::string Path)
@@ -896,9 +911,9 @@ void Renderer::StopRecordingCommands()
 {
 
     vkEndCommandBuffer(m_CurrentCommandBuffer);
-    m_DrawCommands.resize(0);
-    m_DrawCommandsOutline.resize(0);
-    m_DrawGUICommands.resize(0);
+    m_DrawCommandsGeometry.resize(0);
+    m_DrawCommandsOutlines.resize(0);
+    m_DrawCommandsGUI.resize(0);
 }
 
 void Renderer::DrawBatch()
@@ -923,26 +938,24 @@ void Renderer::DrawBatch()
     vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
     vkCmdSetStencilReference(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
     vkCmdSetStencilCompareMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
-    for (int i = 0; i < m_DrawCommands.size(); i++) {
+    for (int i = 0; i < m_DrawCommandsGeometry.size(); i++) {
       
-        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBuffers[i]->GetBuffer(), &Offset);
+        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGeometry[i]->GetBuffer(), &Offset);
 
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
         VkDescriptorSet DescriptorSets[2];
-        DescriptorSets[1] = m_DescriptorSetTextures[i].GetDescriptorSet();
+        DescriptorSets[1] = m_DescriptorSetTextures[m_DrawCommandsGeometry[i].DescriptorSetTextureIndex].GetDescriptorSet();
  
 
-        if (m_DrawCommands[i].IsGUI) 
-            DescriptorSets[0] = m_GUICameraDescriptor.GetDescriptorSet();
-        else
+       
             DescriptorSets[0] = m_DescriptorSetCamera.GetDescriptorSet();
 
 
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
 
-        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommands[i].VertexCount * 1.5f), 1, 0, 0, 0);
+        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGeometry[i].VertexCount * 1.5f), 1, 0, 0, 0);
 
     }
 
@@ -951,8 +964,9 @@ void Renderer::DrawBatch()
     //vkCmdSetStencilTestEnable(m_CurrentCommandBuffer, VK_FALSE);
 
 
-    for (uint32_t i = 0;i< m_DrawCommandsOutline.size() ; i++) {
-        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferOutline[i]->GetBuffer(), &Offset);
+    for (uint32_t i = 0;i< m_DrawCommandsOutlines.size() ; i++) {
+       
+        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferOutlines[i]->GetBuffer(), &Offset);
 
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
@@ -969,19 +983,43 @@ void Renderer::DrawBatch()
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
 
-        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsOutline[i].VertexCount * 1.5f), 1, 0, 0, 0);
+        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsOutlines[i].VertexCount * 1.5f), 1, 0, 0, 0);
     }
+ 
 
     vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0xFF);
     vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
 
+    for (uint32_t i = 0; i < m_DrawCommandsGUI.size(); i++) {
+        
+
+        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGUI[i]->GetBuffer(), &Offset);
+
+        vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
+
+        VkDescriptorSet DescriptorSets[2];
+        DescriptorSets[1] = m_DescriptorSetTextures[m_DrawCommandsGUI[i].DescriptorSetTextureIndex].GetDescriptorSet();
+
+
+        DescriptorSets[0] = m_GUICameraDescriptor.GetDescriptorSet();
+
+
+
+
+
+        vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
+
+
+        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGUI[i].VertexCount * 1.5f), 1, 0, 0, 0);
+    }
+   
     vkCmdEndRenderPass(m_CurrentCommandBuffer);
 
 }
 
 void Renderer::DrawGUIBatch()
 {
-
+    /*
     VkDeviceSize Offset{ 0 };
     for (int i = 0; i < m_DrawGUICommands.size(); i++) {
 
@@ -997,4 +1035,5 @@ void Renderer::DrawGUIBatch()
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawGUICommands[i].VertexCount * 1.5f), 1, 0, 0, 0);
 
     }
+    */
 }

@@ -29,12 +29,10 @@ struct Vertex{
 	Float2 TexCoords{ 0.0f,0.0f };
 	uint32_t TextureID{ 0 };
 };
+enum class FlushType {GEOMETRY,OUTLINE,GUI};
 struct DrawCommand {
     uint64_t VertexCount{};
-    uint32_t BufferIndex{};
     uint32_t DescriptorSetTextureIndex{};
-    bool IsGUI{ false };
-
 };
 enum class RenderFeature {NONE,DRAWOUTLINE};
 struct RenderMode {
@@ -50,7 +48,7 @@ class Renderer {
 public:
     //Initialization functions
     Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem, AssetManager* assetManager);
-    void InitializePipeline( uint64_t MaxTextureCount);
+    void InitializePipeline(uint64_t MaxTextureCount);
     //
 
     void BeginFrame(Camera2D* camera);
@@ -61,13 +59,15 @@ public:
     //void DrawQuadWithAtlasGUI(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
    // void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, uint64_t TextureIndex);
     //
-    void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,uint32_t TextureIndex=0);
+    void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, uint32_t TextureIndex = 0);
     //void DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID);
 
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
+    //GUI 
 
-    void DrawOutline(Float3 Position, Float2 Size,float OutlineWidth);
+
+    void DrawOutline(Float3 Position, Float2 Size,Float4 Color, float OutlineWidth);
 
     //Particles
     void DrawParticle();
@@ -78,7 +78,6 @@ public:
 
     VkExtent2D GetViewPortExtent() { return m_SwapChain->GetExtent(); }
 
-    void EndGUIFrame();
     void EndFrame();
 
 
@@ -97,10 +96,11 @@ private:
     void DrawGUIBatch();
 
 
-    void CreateNewBufferForBatch();
+    void CreateNewBufferForBatch(std::vector<Buffer*>& VertexBuffers, std::vector<Buffer*>& Stagging);
 
+    void FlushGeometry();
+    void FlushOutlines();
     void FlushGUI();
-    void Flush(bool IsGUI);
 
     void CreateInstance();
     void CreateFrameBuffers();
@@ -181,32 +181,42 @@ private:
     glm::mat4 m_CameraViewProj{};
     Image* m_FrameImageIndexed{};
     //Diagnostics
-    uint32_t m_DrawCallCount{};
+    uint32_t m_DrawCallCountGeometry{};
+    uint32_t m_DrawCallCountOutlines{};
+    uint32_t m_DrawCallCountGUI{};
+
     //TEMP(Testing)
     Buffer* m_PickingImageBuffer{};
 
     //FrameBuffer stuffs
     Float4 m_ClearColor{};
     //Batch renderer
-    std::vector<Buffer*> m_StaggingBuffers{ };
-    std::vector<Buffer*> m_VertexBuffers{};
-    std::vector<DrawCommand> m_DrawCommands{};
 
-    //GUi stuff
-    std::vector<Buffer*> m_StaggingGUIBuffers{};
-    std::vector<Buffer*> m_VertexGUIBuffers{};
-    std::vector<DrawCommand> m_DrawGUICommands{};
-    Vertex* m_VerticesGUI{};
-    uint64_t m_VertexMaxCountGUI{100*4};
-    uint64_t m_VertexPointerGUI{};
-    DescriptorSet m_GUICameraDescriptor{};
-    Buffer* m_UniformGUICameraBuffer{};
+    std::vector<DrawCommand> m_DrawCommandsGeometry{};
+    std::vector<DrawCommand> m_DrawCommandsGUI{};
+    std::vector<DrawCommand> m_DrawCommandsOutlines{};
 
-    //
+    std::vector<Buffer*> m_VertexBufferGeometry{};
+    std::vector<Buffer*> m_VertexBufferGUI{};
+    std::vector<Buffer*> m_VertexBufferOutlines{};
+
+    std::vector<Buffer*> m_StaggingBufferGeometry{};
+    std::vector<Buffer*> m_StaggingBufferGUI{};
+    std::vector<Buffer*> m_StaggingBufferOutlines{};
+
+    //Outlines
+    uint32_t m_VertexCountOutlines{};
+    uint64_t m_VertexOutineMaxCountPerDrawCall{ 4 * 100 };
+    Vertex* m_VertexOutline{};
+
+
+
+
+
 
     Camera2D m_Camera{};
     //Texturing
-    uint32_t m_TextureSlotCount{4};
+    uint32_t m_TextureSlotCount{ 4 };
     Texture* m_BlankWhiteTexture{};
     DescriptorPool m_DescriptorPoolTextures{};
     std::vector<DescriptorSet> m_DescriptorSetTextures{};
@@ -216,18 +226,18 @@ private:
     };
     std::unordered_map<GUUID, TextureRenderingData> m_Textures{};
     std::vector<GUUID> m_TextureIDByOrder{};
-    //GUI
+    //GUI stuff
+    Vertex* m_VerticesGUI{};
+    uint64_t m_VertexMaxCountGUI{ 100 * 4 };
+    uint64_t m_VertexCountGUI{};
+    DescriptorSet m_GUICameraDescriptor{};
+    Buffer* m_UniformGUICameraBuffer{};
     std::vector<DescriptorSet> m_DescriptorSetTexturesGUI{};
     std::unordered_map<GUUID, TextureRenderingData> m_TexturesGUI{};
-    uint32_t m_DrawCallCountGUI{};
-    bool m_GUIFlush{false};
-    //Outlines
-    uint32_t m_VertexCountOutlines{};
-    uint64_t m_VertexOutineMaxCountPerDrawCall{4*100};
-    Vertex* m_VertexOutline{};
-    std::vector<DrawCommand> m_DrawCommandsOutline{};
-    std::vector<Buffer*> m_VertexBufferOutline{};
-    std::vector<Buffer*> m_StagingBufferOutline{};
+    bool m_GUIRendering{false};
+    //
+
+ 
 
 
 

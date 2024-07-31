@@ -121,6 +121,16 @@ struct Float2 {
         y *= rh.y;
         return *this;
     }
+    bool operator!=(const Float2& rh) {
+        if (this->x != rh.x || this->y != rh.y)
+            return true;
+        return false;
+    }
+    bool operator==(const Float2& rh) {
+        if (this->x == rh.x && this->y == rh.y)
+            return true;
+        return false;
+    }
     union{
         struct{
         float r,g;

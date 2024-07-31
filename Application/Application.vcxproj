@@ -98,12 +98,15 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Components.h" />
+    <ClInclude Include="Source\Entity.h" />
     <ClInclude Include="Source\Collider.h" />
     <ClInclude Include="Source\AssetManager.h" />
     <ClInclude Include="Source\AppCore.h" />
     <ClInclude Include="Source\AppTime.h" />
     <ClInclude Include="Source\Application.h" />
     <ClInclude Include="Source\DLLLoading.h" />
+    <ClInclude Include="Source\ECS.h" />
     <ClInclude Include="Source\Event.h" />
     <ClInclude Include="Source\InputSystem.h" />
     <ClInclude Include="Source\Layer.h" />
@@ -114,6 +117,7 @@
     <ClInclude Include="Source\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Entity.cpp" />
     <ClCompile Include="Source\Collider.cpp" />
     <ClCompile Include="Source\AppCore.cpp" />
     <ClCompile Include="Source\AssetManager.cpp" />

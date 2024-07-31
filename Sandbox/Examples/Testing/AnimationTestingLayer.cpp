@@ -10,6 +10,7 @@ void AnimationTestingLayer::OnCreate()
 	m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Animation\\", ResourceType::ANIMATION);
 	m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", ResourceType::TEXTURE);
 
+	m_Units.reserve(10);
 	m_Units.push_back(AnimationUnit());
 	m_Units.push_back(AnimationUnit());
 
@@ -36,7 +37,6 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 	Renderer* renderer = m_App->m_Renderer;
 
 	//GUUID id = Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.png");
-	MoveUnit();
 
 	Vertex vertices[2];
 	vertices[0].Position = {0.0f,0.0f};
@@ -44,10 +44,15 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 	bool Outline = true;
 
 	for (uint32_t i = 0; i < m_Units.size(); i++) {
+	if(m_Units[i].Animator.GetAnimationID() == Core::GetStringHash("PEASANT"))
+		MoveUnit(&m_Units[i]);
 	m_Units[i].Collid.Update(&m_Units[i].Position,&m_Size);
 
-	if (m_CurrentlySelectedUnit == m_Units[i].ID)
-	renderer->DrawOutline({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f }, m_Size, 0.01f);
+	if (m_Units[i].Collid.IsCollided())
+		renderer->DrawOutline({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f },  m_Size,{0.0f,1.0f,0.0f,1.0f }, 0.003f);
+	else
+		renderer->DrawOutline({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f }, m_Size, {1.0f,1.0f,0.0f,1.0f}, 0.003f);
+
 	renderer->DrawQuad({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f}, {1.0f,1.0f,1.0f,1.0f}, m_Size, m_Units[i].Animator, m_Units[i].ID.ID);
 	
 
@@ -69,6 +74,7 @@ void AnimationTestingLayer::OnDestroy()
 
 void AnimationTestingLayer::OnGUI()
 {
+
 	GUIRenderer* gui = m_App->m_GUIRenderer;
 	
 	if (m_App->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, false) ) {
@@ -78,6 +84,8 @@ void AnimationTestingLayer::OnGUI()
 			m_Units[m_Units.size() - 1].Position = { m_App->GetWorldMousePos().x, m_App->GetWorldMousePos().y };
 			m_Units[m_Units.size() - 1].Animator = *m_App->GetResource<Animator>(m_SpawnedUnit);
 			m_Units[m_Units.size() - 1].Collid = m_System.CreateCollider();
+			m_Units[m_Units.size() - 1].Collid.Update(&m_Units[m_Units.size() - 1].Position, &m_Size);
+
 
 			m_SpawnUnit = false;
 		}
@@ -118,7 +126,7 @@ void AnimationTestingLayer::OnGUI()
 	}
 	if (gui->Button("TEST", {0.75f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
 		m_SpawnUnit = true;
-		m_SpawnedUnit = "TEST";
+		m_SpawnedUnit = "PEASANT";
 
 	}
 
@@ -128,33 +136,54 @@ void AnimationTestingLayer::OnGUI()
 
 }
 
-void AnimationTestingLayer::MoveUnit()
+void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 {
-	Float2 MoveAmount{};
-	if (m_CurrentlySelectedUnit.ID == m_Units[0].ID.ID) {
+	Float2 MoveAmount{0.0f,0.0f};
+	if (m_CurrentlySelectedUnit.ID == unit->ID) {
 
-		m_Units[0].MoveLocation = { m_App->GetWorldMousePos().x,m_App->GetWorldMousePos().y };
-
-	}
-	if (m_Units[0].Position.x < m_Units[0].MoveLocation.x) {
-		m_Units[0].Position.x += m_Units[0].MoveSpeed;
-		MoveAmount.x = m_Units[0].MoveSpeed;
-	}
-	else {
-		m_Units[0].Position.x -= m_Units[0].MoveSpeed;
-		MoveAmount.x = m_Units[0].MoveSpeed*-1.0f;
+		unit->MoveLocation = { m_App->GetWorldMousePos().x,m_App->GetWorldMousePos().y };
+		unit->Moving = true;
 
 	}
-	if (m_Units[0].Position.y < m_Units[0].MoveLocation.y) {
-		m_Units[0].Position.y += m_Units[0].MoveSpeed;
-		MoveAmount.y = m_Units[0].MoveSpeed;
+	if (unit->MoveLocation == unit->Position)
+		unit->Moving = false;
+
+	if (unit->Moving) {
+		float Difference = std::abs(unit->Position.x - unit->MoveLocation.x);
+		if (unit->MoveSpeed>= Difference) {
+			unit->Position.x = unit->MoveLocation.x;
+			MoveAmount.x = Difference;
+
+		}
+		else if (unit->Position.x < unit->MoveLocation.x) {
+			unit->Position.x += unit->MoveSpeed;
+			MoveAmount.x = unit->MoveSpeed;
+		}
+		else {
+			unit->Position.x -= unit->MoveSpeed;
+			MoveAmount.x = unit->MoveSpeed * -1.0f;
+
+		}
+
+		 Difference = std::abs(unit->Position.y - unit->MoveLocation.y);
+		if (unit->MoveSpeed>= Difference) {
+			unit->Position.y = unit->MoveLocation.y;
+			MoveAmount.y = Difference;
+
+		}
+		else if (unit->Position.y < unit->MoveLocation.y) {
+			unit->Position.y += unit->MoveSpeed;
+			MoveAmount.y = unit->MoveSpeed;
 
 
+		}
+		else {
+			unit->Position.y -= unit->MoveSpeed;
+			MoveAmount.y = unit->MoveSpeed * -1.0f;
+
+		}
 	}
-	else {
-		m_Units[0].Position.y -= m_Units[0].MoveSpeed;
-		MoveAmount.y = m_Units[0].MoveSpeed*-1.0f;
+	
+	unit->Collid.UpdateMoveAmount(MoveAmount);
 
-	}
-	m_Units[0].Collid.UpdateMoveAmount(MoveAmount);
 }
