@@ -23,7 +23,7 @@ void AnimationTestingLayer::OnCreate()
 	m_Units[0].Collid.Update(&m_Units[0].Position, &m_Size);
 
 
-	m_Units[1].Position = { -0.5f,0.0f };
+	m_Units[1].Position = { -0.35f,0.0f };
 	m_Units[1].Animator = *m_App->GetResource<Animator>("TOWN_HALL");
 	m_Units[1].Animator.SetStage("IDLE");
 	m_Units[1].Collid = m_System.CreateCollider();
@@ -61,7 +61,7 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 	}
 
 	//renderer->DrawQuad({ 0.0f,-0.5f }, { 1.0f,1.0f,1.0f,1.0 }, { 0.3f,0.3f }, Core::GetStringHash("PANEL.png"),0,0);
-
+	m_Units[0].Collid.GetPathToObj(m_Units[0].Position, m_Units[1].Position);
 	m_System.CheckCollisions();
 
 
@@ -71,7 +71,12 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 void AnimationTestingLayer::OnDestroy()
 {
 }
-
+#define TILESIZE 0.04f
+int ConvertPositionToNodeIndexa(Float2 Position) {
+	uint32_t X = (1 + Position.x) / TILESIZE;
+	uint32_t Y = (1 - Position.y) / TILESIZE;
+	return (Y * 50) + X;
+}
 void AnimationTestingLayer::OnGUI()
 {
 
@@ -89,7 +94,10 @@ void AnimationTestingLayer::OnGUI()
 
 			m_SpawnUnit = false;
 		}
+	
+		Core::Log(ErrorType::Info, ConvertPositionToNodeIndexa(m_App->GetWorldMousePos()));
 	}
+
 	if (m_CurrentlySelectedUnit != 0&& false) {
 		//make a map istead of vector
 	
@@ -141,8 +149,10 @@ void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 	Float2 MoveAmount{0.0f,0.0f};
 	if (m_CurrentlySelectedUnit.ID == unit->ID) {
 
-		unit->MoveLocation = { m_App->GetWorldMousePos().x,m_App->GetWorldMousePos().y };
-		unit->Moving = true;
+		if (m_App->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, false) ){
+			unit->MoveLocation = { m_App->GetWorldMousePos().x,m_App->GetWorldMousePos().y };
+			unit->Moving = true;
+		}
 
 	}
 	if (unit->MoveLocation == unit->Position)

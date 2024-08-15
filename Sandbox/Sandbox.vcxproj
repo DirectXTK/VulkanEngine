@@ -96,6 +96,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Examples\Testing\CollisionTestingLayer.cpp" />
     <ClCompile Include="Examples\Testing\ECSTestingLayer.cpp" />
     <ClCompile Include="Examples\Testing\AnimationTestingLayer.cpp" />
     <ClCompile Include="Examples\Testing\DefaultCameraControlls.cpp" />
@@ -115,6 +116,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Examples\Testing\CollisionTestingLayer.h" />
     <ClInclude Include="Examples\Testing\ECSTestingLayer.h" />
     <ClInclude Include="Examples\Testing\AnimationTestingLayer.h" />
     <ClInclude Include="Examples\Testing\DefaultCameraControlls.h" />

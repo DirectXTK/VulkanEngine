@@ -23,7 +23,7 @@ public:
 private:
 	void MoveUnit(AnimationUnit* unit);
 
-	Float2 m_Size{ 0.1f,0.1f };
+	Float2 m_Size{ 0.04f,0.04f };
 	bool m_SpawnUnit{false};
 	std::string m_SpawnedUnit{};
 

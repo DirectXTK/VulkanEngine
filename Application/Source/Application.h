@@ -5,6 +5,7 @@
 #include "InputSystem.h"
 #include "Layer.h"
 #include "AssetManager.h"
+#include "Collider.h"
 struct ApplicationSpecs{
     uint32_t WindowHeight{500};
      uint32_t WindowWidth{500};
@@ -36,6 +37,8 @@ public:
     void LoadAssets(std::string Path,ResourceType type);
 
     void Run();
+    Collider CreateCollider(Float2* Position, Float2 *Size);
+
 private:
     Window* m_Window{};
 
@@ -43,7 +46,7 @@ private:
 
     double m_DeltaTime{};
     double m_LastFrameTime{};
-   
+    CollisionSystem m_CollisionSystem{};
 public:
     //GUI Renderer
     Renderer* m_Renderer{};

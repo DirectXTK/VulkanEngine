@@ -96,4 +96,11 @@
     }
  }
 
+ Collider Application::CreateCollider(Float2* Position,Float2* Size)
+ {
+    Collider collider = m_CollisionSystem.CreateCollider();
+    collider.Update(Position,Size);
+     return Collider();
+ }
+
  
