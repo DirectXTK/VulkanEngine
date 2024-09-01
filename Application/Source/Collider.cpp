@@ -24,8 +24,8 @@ bool Collider::IsCollided()
 	return m_System->GetColliderBackEnd(m_ID)->IsColided(); 
 }
 int ConvertPositionToNodeIndex(Float2 Position) {
-	uint32_t X = (1 + Position.x) / TILESIZE;
-	uint32_t Y = (1 - Position.y) / TILESIZE;
+	uint32_t X = std::floor((1 + Position.x) / TILESIZE);
+	uint32_t Y = std::floor((1 - Position.y) / TILESIZE);
 	return (Y * 50) + X;
 }
 
@@ -80,7 +80,31 @@ uint32_t CalculateHValue(uint32_t CurrentNode, uint32_t Destination) {
 bool Collider::IsBlocked(int NodeIndex) {
 	return m_System->IsBlocked(NodeIndex);
 }
-Float2 Collider::GetPathToObj(Float2 CurrentPos, Float2 FinalPath)
+Float2* TraceDest(Node* Details, int DestIndex,uint32_t* outDestCount) {
+	std::stack<Node> Path;
+	Float2* Output{};
+
+	while (Details[DestIndex].ParentNodeIndex != DestIndex) {
+		Node node;
+		node.NodeIndex = DestIndex;
+		Path.push(node);
+		DestIndex = Details[DestIndex].ParentNodeIndex;
+	}
+	*outDestCount += Path.size();
+	Output = new Float2[*outDestCount];
+
+	uint32_t Index{};
+	while (!Path.empty()) {
+		uint32_t CurrentNodeY = uint32_t(Path.top().NodeIndex / 50);
+		uint32_t CurrentNodeX = Path.top().NodeIndex - (50 * CurrentNodeY);
+		Output[Index] = { ((CurrentNodeX-25.f)/25.f)*TILESIZE,((CurrentNodeY  -25.f)/25.f) * TILESIZE };
+		Path.pop();
+
+			Index++;
+	}
+	return Output;
+}
+Float2* Collider::GetPathToObj(Float2 CurrentPos, Float2 FinalPath,uint32_t *outDestCount)
 {
 	int SourceIndex = ConvertPositionToNodeIndex(CurrentPos);
 	int DestIndex = ConvertPositionToNodeIndex(FinalPath);
@@ -88,8 +112,9 @@ Float2 Collider::GetPathToObj(Float2 CurrentPos, Float2 FinalPath)
 	Node Succ[8];
 	std::set<Node> OpenList{};
 	bool ClosedList[50 * 50];
+	Float2* Dest{};
 
-	memset(ClosedList, 0, sizeof(bool) * 50 * 50);
+	memset(ClosedList, false, sizeof(bool) * 50 * 50);
 
 	for (uint32_t i = 0; i < 50; i++) {
 
@@ -128,7 +153,10 @@ Float2 Collider::GetPathToObj(Float2 CurrentPos, Float2 FinalPath)
 		GenerateSuccesors(p, Succ);
 		for (uint32_t i = 0; i < 8; i++) {
 			if (Succ[i].NodeIndex == DestIndex) {
-				Core::Log(ErrorType::Info, "Found the destination.",Succ[i].NodeIndex);
+				//Core::Log(ErrorType::Info, "Found the destination.",Succ[i].NodeIndex);
+				NodeDetails[Succ[i].NodeIndex].ParentNodeIndex = p.NodeIndex;
+				return TraceDest(NodeDetails,DestIndex, outDestCount);
+
 			}
 			else if (ClosedList[Succ[i].NodeIndex] == false && IsBlocked(Succ[i].NodeIndex) == false) {
 				gNew = NodeDetails[p.NodeIndex].G + 1.0f;
@@ -136,6 +164,7 @@ Float2 Collider::GetPathToObj(Float2 CurrentPos, Float2 FinalPath)
 				fNew = gNew + hNew;
 
 				if (NodeDetails[Succ[i].NodeIndex].F == FLT_MAX || NodeDetails[Succ[i].NodeIndex].F > fNew) {
+					Succ[i].F = fNew;
 					OpenList.insert(Succ[i]);
 
 					NodeDetails[Succ[i].NodeIndex].F = fNew;
@@ -143,17 +172,19 @@ Float2 Collider::GetPathToObj(Float2 CurrentPos, Float2 FinalPath)
 					NodeDetails[Succ[i].NodeIndex].H = hNew;
 
 					NodeDetails[Succ[i].NodeIndex].ParentNodeIndex = p.NodeIndex;
+					NodeDetails->NodeIndex = Succ[i].NodeIndex;
 
 				}
+				
 			}
 		}
 
 	}
 
 
-
+	*outDestCount = 0;
 	delete[] NodeDetails;
-	return Float2();
+	return Dest;
 }
 
 
@@ -209,7 +240,7 @@ void CollisionSystem::CheckCollisions()
 	for (auto i = m_Colliders.begin(); i != m_Colliders.end(); i++) {
 		uint32_t X = (1+i->second.GetPosition().x)/TILESIZE;
 		uint32_t Y = (1-i->second.GetPosition().y)/ TILESIZE;
-		m_BlockedNodeList[(Y * 50) + X] = true;
+		m_BlockedNodeList[(Y * 50) + X] = false;
 		//m_PathGrid[(Y * 50) + X].NodeIndex;
 	}
 

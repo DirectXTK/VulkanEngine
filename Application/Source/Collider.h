@@ -45,7 +45,7 @@ public:
 	void UpdateMoveAmount(Float2 MoveAmount);
 	bool IsCollided();
 
-	Float2 GetPathToObj(Float2 CurrentPos, Float2 FinalPath);
+	Float2* GetPathToObj(Float2 CurrentPos, Float2 FinalPath,uint32_t* outDestCount);
 
 	GUUID GetID() { return m_ID; }
 private:

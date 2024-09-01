@@ -61,7 +61,8 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 	}
 
 	//renderer->DrawQuad({ 0.0f,-0.5f }, { 1.0f,1.0f,1.0f,1.0 }, { 0.3f,0.3f }, Core::GetStringHash("PANEL.png"),0,0);
-	m_Units[0].Collid.GetPathToObj(m_Units[0].Position, m_Units[1].Position);
+	//uint32_t PathCount{};
+	//Float2* loc =  m_Units[0].Collid.GetPathToObj(m_Units[0].Position, m_Units[1].Position,&PathCount);
 	m_System.CheckCollisions();
 
 
@@ -146,26 +147,39 @@ void AnimationTestingLayer::OnGUI()
 
 void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 {
+	Float2 CurrentMoveLocation{};
 	Float2 MoveAmount{0.0f,0.0f};
 	if (m_CurrentlySelectedUnit.ID == unit->ID) {
 
 		if (m_App->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, false) ){
-			unit->MoveLocation = { m_App->GetWorldMousePos().x,m_App->GetWorldMousePos().y };
+			Float2 Dest = { m_App->GetWorldMousePos().x,m_App->GetWorldMousePos().y };
+			unit->MoveLocation = unit->Collid.GetPathToObj(unit->Position, Dest, &unit->MoveCellCount);
 			unit->Moving = true;
 		}
+		for (uint32_t i = 0; i < unit->MoveCellCount; i++) {
+			std::cout << unit->MoveLocation[i].x << " " << unit->MoveLocation[i].y << "\n";
+		}
+		std::cout << std::endl;
+	}
+	if (unit->MoveCellCount == 0) {
+		unit->Moving = false;
+		return;
+	}
+	CurrentMoveLocation = unit->MoveLocation[unit->CurrentCellIndex];
+	if (CurrentMoveLocation == unit->Position) {
+		unit->CurrentCellIndex++;
+		CurrentMoveLocation = unit->MoveLocation[unit->CurrentCellIndex];
 
 	}
-	if (unit->MoveLocation == unit->Position)
-		unit->Moving = false;
 
 	if (unit->Moving) {
-		float Difference = std::abs(unit->Position.x - unit->MoveLocation.x);
+		float Difference = std::abs(unit->Position.x - CurrentMoveLocation.x);
 		if (unit->MoveSpeed>= Difference) {
-			unit->Position.x = unit->MoveLocation.x;
+			unit->Position.x = CurrentMoveLocation.x;
 			MoveAmount.x = Difference;
 
 		}
-		else if (unit->Position.x < unit->MoveLocation.x) {
+		else if (unit->Position.x < CurrentMoveLocation.x) {
 			unit->Position.x += unit->MoveSpeed;
 			MoveAmount.x = unit->MoveSpeed;
 		}
@@ -175,13 +189,13 @@ void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 
 		}
 
-		 Difference = std::abs(unit->Position.y - unit->MoveLocation.y);
+		 Difference = std::abs(unit->Position.y - CurrentMoveLocation.y);
 		if (unit->MoveSpeed>= Difference) {
-			unit->Position.y = unit->MoveLocation.y;
+			unit->Position.y = CurrentMoveLocation.y;
 			MoveAmount.y = Difference;
 
 		}
-		else if (unit->Position.y < unit->MoveLocation.y) {
+		else if (unit->Position.y < CurrentMoveLocation.y) {
 			unit->Position.y += unit->MoveSpeed;
 			MoveAmount.y = unit->MoveSpeed;
 

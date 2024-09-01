@@ -5,12 +5,14 @@
 #include "Utils.h"
 struct AnimationUnit {
 	Float2 Position{};
-	Float2 MoveLocation{};
+	Float2* MoveLocation{};
 	float MoveSpeed{0.0003f};
 	Animator Animator{};
 	Collider Collid;
 	GUUID ID{};
 	bool Moving{false};
+	uint32_t MoveCellCount{};
+	uint32_t CurrentCellIndex{};
 };
 class AnimationTestingLayer :public Layer
 {

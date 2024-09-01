@@ -16,6 +16,7 @@
 #include <limits>
 #include <chrono>
 #include <set>
+#include <stack>
 
 #include "RandomGenerator.h"
 #include "AppTime.h"
