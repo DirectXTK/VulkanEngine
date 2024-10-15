@@ -11,16 +11,18 @@ endif
 ifeq ($(config),debug)
   Application_config = debug
   Renderer_config = debug
+  Sandbox_config = debug
 
 else ifeq ($(config),release)
   Application_config = release
   Renderer_config = release
+  Sandbox_config = release
 
 else
   $(error "invalid configuration $(config)")
 endif
 
-PROJECTS := Application Renderer
+PROJECTS := Application Renderer Sandbox
 
 .PHONY: all clean help $(PROJECTS) 
 
@@ -38,9 +40,16 @@ ifneq (,$(Renderer_config))
 	@${MAKE} --no-print-directory -C Renderer -f Makefile config=$(Renderer_config)
 endif
 
+Sandbox: Renderer Application
+ifneq (,$(Sandbox_config))
+	@echo "==== Building Sandbox ($(Sandbox_config)) ===="
+	@${MAKE} --no-print-directory -C Sandbox -f Makefile config=$(Sandbox_config)
+endif
+
 clean:
 	@${MAKE} --no-print-directory -C Application -f Makefile clean
 	@${MAKE} --no-print-directory -C Renderer -f Makefile clean
+	@${MAKE} --no-print-directory -C Sandbox -f Makefile clean
 
 help:
 	@echo "Usage: make [config=name] [target]"
@@ -54,5 +63,6 @@ help:
 	@echo "   clean"
 	@echo "   Application"
 	@echo "   Renderer"
+	@echo "   Sandbox"
 	@echo ""
 	@echo "For more information, see https://github.com/premake/premake-core/wiki"

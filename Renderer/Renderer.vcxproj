@@ -60,6 +60,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalOptions>-MP %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -84,6 +85,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <AdditionalOptions>-MP %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -99,11 +101,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Source\Animator.h" />
-    <ClInclude Include="Source\Context.h" />
     <ClInclude Include="Source\Buffer.h" />
     <ClInclude Include="Source\Camera.h" />
     <ClInclude Include="Source\CommandBuffer.h" />
     <ClInclude Include="Source\CommandPool.h" />
+    <ClInclude Include="Source\Context.h" />
     <ClInclude Include="Source\Descriptor.h" />
     <ClInclude Include="Source\Device.h" />
     <ClInclude Include="Source\FrameBuffer.h" />
@@ -115,19 +117,18 @@
     <ClInclude Include="Source\Renderer.h" />
     <ClInclude Include="Source\Shader.h" />
     <ClInclude Include="Source\SwapChain.h" />
+    <ClInclude Include="Source\Texture.h" />
     <ClInclude Include="Source\UniformBuffer.h" />
     <ClInclude Include="Source\VertexBuffer.h" />
     <ClInclude Include="Source\VulkanInstance.h" />
-    <ClInclude Include="Source\Texture.h" />
-    <ClInclude Include="TextureFrontEnd.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Animator.cpp" />
-    <ClCompile Include="Source\Context.cpp" />
     <ClCompile Include="Source\Buffer.cpp" />
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\CommandBuffer.cpp" />
     <ClCompile Include="Source\CommandPool.cpp" />
+    <ClCompile Include="Source\Context.cpp" />
     <ClCompile Include="Source\Descriptor.cpp" />
     <ClCompile Include="Source\Device.cpp" />
     <ClCompile Include="Source\FrameBuffer.cpp" />
@@ -139,11 +140,10 @@
     <ClCompile Include="Source\Renderer.cpp" />
     <ClCompile Include="Source\Shader.cpp" />
     <ClCompile Include="Source\SwapChain.cpp" />
+    <ClCompile Include="Source\Texture.cpp" />
     <ClCompile Include="Source\UniformBuffer.cpp" />
     <ClCompile Include="Source\VertexBuffer.cpp" />
     <ClCompile Include="Source\VulkanInstance.cpp" />
-    <ClCompile Include="Source\Texture.cpp" />
-    <ClCompile Include="TextureFrontEnd.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

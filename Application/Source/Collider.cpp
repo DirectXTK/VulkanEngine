@@ -24,42 +24,42 @@ bool Collider::IsCollided()
 	return m_System->GetColliderBackEnd(m_ID)->IsColided(); 
 }
 int ConvertPositionToNodeIndex(Float2 Position) {
-	uint32_t X = std::floor((1 + Position.x) / TILESIZE);
-	uint32_t Y = std::floor((1 - Position.y) / TILESIZE);
+	uint32_t Y = std::abs(25 + (Position.y* 25*-1.0f));
+	uint32_t X = std::abs(25+Position.x * 25);
 	return (Y * 50) + X;
 }
 
 void GenerateSuccesors(Node Parent,Node * succ) {
-	int NodeX{ Parent.NodeIndex/50};
-	int NodeY{Parent.NodeIndex-(NodeX*50)};
+	int NodeY{ Parent.NodeIndex/50};
+	int NodeX{Parent.NodeIndex-(NodeY *50)};
 	//Left side
-	succ[0].NodeIndex = {(NodeY*(50+1))+NodeX-1 };
+	succ[0].NodeIndex = {((NodeY+1)*50)+NodeX-1 };
 	succ[0].ParentNodeIndex = { Parent.ParentNodeIndex};
 
 	
-	succ[1].NodeIndex = { (NodeY * (50 )) + NodeX - 1 };
+	succ[1].NodeIndex = { (NodeY * 50 ) + NodeX - 1 };
 	succ[1].ParentNodeIndex = { Parent.ParentNodeIndex };
 
-	succ[2].NodeIndex = { (NodeY * (50 - 1)) + NodeX - 1 };
+	succ[2].NodeIndex = { ((NodeY -1)* 50 ) + NodeX - 1 };
 	succ[2].ParentNodeIndex = { Parent.ParentNodeIndex };
 
 
 	//Middle
-	succ[3].NodeIndex = { (NodeY * (50 + 1)) + NodeX  };
+	succ[3].NodeIndex = { ((NodeY+1) * 50 ) + NodeX  };
 	succ[3].ParentNodeIndex = { Parent.ParentNodeIndex };
 
 
-	succ[4].NodeIndex = { (NodeY * (50 - 1)) + NodeX - 1 };
+	succ[4].NodeIndex = { ((NodeY -1)* 50 ) + NodeX  };
 	succ[4].ParentNodeIndex = { Parent.ParentNodeIndex };
 
 	//Right side
-	succ[5].NodeIndex = { (NodeY * (50 + 1)) + NodeX + 1 };
+	succ[5].NodeIndex = { ((NodeY+1) * 50 ) + NodeX + 1 };
 	succ[5].ParentNodeIndex = { Parent.ParentNodeIndex };
 
-	succ[6].NodeIndex = { (NodeY * (50 )) + NodeX + 1 };
+	succ[6].NodeIndex = { (NodeY * 50 ) + NodeX + 1 };
 	succ[6].ParentNodeIndex = { Parent.ParentNodeIndex };
 
-	succ[7].NodeIndex = { (NodeY * (50 - 1)) + NodeX + 1 };
+	succ[7].NodeIndex = { ((NodeY -1)* 50) + NodeX + 1 };
 	succ[7].ParentNodeIndex = { Parent.ParentNodeIndex };
 
 
@@ -90,18 +90,22 @@ Float2* TraceDest(Node* Details, int DestIndex,uint32_t* outDestCount) {
 		Path.push(node);
 		DestIndex = Details[DestIndex].ParentNodeIndex;
 	}
-	*outDestCount += Path.size();
+	*outDestCount = Path.size();
 	Output = new Float2[*outDestCount];
 
 	uint32_t Index{};
+	int32_t CurrentNodeX;
 	while (!Path.empty()) {
-		uint32_t CurrentNodeY = uint32_t(Path.top().NodeIndex / 50);
-		uint32_t CurrentNodeX = Path.top().NodeIndex - (50 * CurrentNodeY);
-		Output[Index] = { ((CurrentNodeX-25.f)/25.f)*TILESIZE,((CurrentNodeY  -25.f)/25.f) * TILESIZE };
+		int32_t CurrentNodeY = int32_t(Path.top().NodeIndex / 50);
+		CurrentNodeX = Path.top().NodeIndex - (50 * CurrentNodeY);
+		Output[Index] = { ((25.f-CurrentNodeX)*-1.0f)*TILESIZE,((  25.f- CurrentNodeY)* TILESIZE) };
 		Path.pop();
-
+		Core::Log(ErrorType::Info, Output[Index].x, " ", Output[Index].y);
 			Index++;
 	}
+	
+
+
 	return Output;
 }
 Float2* Collider::GetPathToObj(Float2 CurrentPos, Float2 FinalPath,uint32_t *outDestCount)
@@ -152,9 +156,12 @@ Float2* Collider::GetPathToObj(Float2 CurrentPos, Float2 FinalPath,uint32_t *out
 		float gNew, hNew, fNew;
 		GenerateSuccesors(p, Succ);
 		for (uint32_t i = 0; i < 8; i++) {
+			std::cout << Succ[i].NodeIndex<< "\n";
 			if (Succ[i].NodeIndex == DestIndex) {
 				//Core::Log(ErrorType::Info, "Found the destination.",Succ[i].NodeIndex);
 				NodeDetails[Succ[i].NodeIndex].ParentNodeIndex = p.NodeIndex;
+				NodeDetails[Succ[i].NodeIndex].ParentNodeIndex = p.NodeIndex;
+
 				return TraceDest(NodeDetails,DestIndex, outDestCount);
 
 			}
@@ -172,7 +179,7 @@ Float2* Collider::GetPathToObj(Float2 CurrentPos, Float2 FinalPath,uint32_t *out
 					NodeDetails[Succ[i].NodeIndex].H = hNew;
 
 					NodeDetails[Succ[i].NodeIndex].ParentNodeIndex = p.NodeIndex;
-					NodeDetails->NodeIndex = Succ[i].NodeIndex;
+					//NodeDetails[Succ[i].NodeIndex].NodeIndex = Succ[i].NodeIndex;
 
 				}
 				

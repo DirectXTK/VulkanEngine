@@ -36,11 +36,12 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 {
 	Renderer* renderer = m_App->m_Renderer;
 
+	//Core::Log(ErrorType::Info,m_App->GetWorldMousePos().x," ", m_App->GetWorldMousePos().y);
 	//GUUID id = Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.png");
 
 	Vertex vertices[2];
 	vertices[0].Position = {0.0f,0.0f};
-	vertices[1].Position = { 0.5f,0.0f };
+	vertices[1].Position = { 0.0f,0.0f };
 	bool Outline = true;
 
 	for (uint32_t i = 0; i < m_Units.size(); i++) {
@@ -155,18 +156,26 @@ void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 			Float2 Dest = { m_App->GetWorldMousePos().x,m_App->GetWorldMousePos().y };
 			unit->MoveLocation = unit->Collid.GetPathToObj(unit->Position, Dest, &unit->MoveCellCount);
 			unit->Moving = true;
+			Core::Log(ErrorType::Info, "LastLocationOfPath:", unit->MoveLocation[unit->MoveCellCount - 1].x," ", unit->MoveLocation[unit->MoveCellCount - 1].y);
+			Core::Log(ErrorType::Info, "Dest:", Dest.x," ", Dest.y);
+
 		}
 		for (uint32_t i = 0; i < unit->MoveCellCount; i++) {
 			std::cout << unit->MoveLocation[i].x << " " << unit->MoveLocation[i].y << "\n";
 		}
 		std::cout << std::endl;
 	}
+	if ( unit->MoveCellCount-1< unit->CurrentCellIndex) {
+		unit->MoveCellCount = 0;
+		unit->Moving = false;
+		return;
+	}
 	if (unit->MoveCellCount == 0) {
 		unit->Moving = false;
 		return;
 	}
 	CurrentMoveLocation = unit->MoveLocation[unit->CurrentCellIndex];
-	if (CurrentMoveLocation == unit->Position) {
+	if (CurrentMoveLocation == unit->Position ) {
 		unit->CurrentCellIndex++;
 		CurrentMoveLocation = unit->MoveLocation[unit->CurrentCellIndex];
 

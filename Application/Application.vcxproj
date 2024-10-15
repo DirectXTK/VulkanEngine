@@ -60,6 +60,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalOptions>-MP %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -84,6 +85,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalOptions>-MP %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -98,15 +100,15 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Components.h" />
-    <ClInclude Include="Source\Entity.h" />
-    <ClInclude Include="Source\Collider.h" />
-    <ClInclude Include="Source\AssetManager.h" />
     <ClInclude Include="Source\AppCore.h" />
     <ClInclude Include="Source\AppTime.h" />
     <ClInclude Include="Source\Application.h" />
+    <ClInclude Include="Source\AssetManager.h" />
+    <ClInclude Include="Source\Collider.h" />
+    <ClInclude Include="Source\Components.h" />
     <ClInclude Include="Source\DLLLoading.h" />
     <ClInclude Include="Source\ECS.h" />
+    <ClInclude Include="Source\Entity.h" />
     <ClInclude Include="Source\Event.h" />
     <ClInclude Include="Source\InputSystem.h" />
     <ClInclude Include="Source\Layer.h" />
@@ -117,13 +119,13 @@
     <ClInclude Include="Source\Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Entity.cpp" />
-    <ClCompile Include="Source\Collider.cpp" />
     <ClCompile Include="Source\AppCore.cpp" />
-    <ClCompile Include="Source\AssetManager.cpp" />
     <ClCompile Include="Source\AppTime.cpp" />
     <ClCompile Include="Source\Application.cpp" />
+    <ClCompile Include="Source\AssetManager.cpp" />
+    <ClCompile Include="Source\Collider.cpp" />
     <ClCompile Include="Source\DLLLoading.cpp" />
+    <ClCompile Include="Source\Entity.cpp" />
     <ClCompile Include="Source\Event.cpp" />
     <ClCompile Include="Source\InputSystem.cpp" />
     <ClCompile Include="Source\Layer.cpp" />

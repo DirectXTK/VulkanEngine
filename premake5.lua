@@ -1,6 +1,8 @@
 workspace "VulkanEngine"
     architecture "x64"
-
+    cppdialect "C++17"
+    characterset ("Unicode")
+    buildoptions("-MP")
     configurations{
         "Debug",
         "Release"
