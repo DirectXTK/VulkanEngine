@@ -100,6 +100,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Source\ChunkSystem.h" />
     <ClInclude Include="Source\AppCore.h" />
     <ClInclude Include="Source\AppTime.h" />
     <ClInclude Include="Source\Application.h" />
@@ -119,6 +120,7 @@
     <ClInclude Include="Source\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\ChunkSystem.cpp" />
     <ClCompile Include="Source\AppCore.cpp" />
     <ClCompile Include="Source\AppTime.cpp" />
     <ClCompile Include="Source\Application.cpp" />

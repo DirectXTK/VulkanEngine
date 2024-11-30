@@ -1,7 +1,9 @@
 #include "AnimationTestingLayer.h"
+
 AnimationTestingLayer::AnimationTestingLayer():Layer("AnimationTestingLayer")
 {
 }
+#define TILESIZE 0.04f
 
 void AnimationTestingLayer::OnCreate()
 {
@@ -23,12 +25,25 @@ void AnimationTestingLayer::OnCreate()
 	m_Units[0].Collid.Update(&m_Units[0].Position, &m_Size);
 
 
-	m_Units[1].Position = { -0.35f,0.0f };
+	m_Units[1].Position = { 0.04f*5,0.0f };
 	m_Units[1].Animator = *m_App->GetResource<Animator>("TOWN_HALL");
 	m_Units[1].Animator.SetStage("IDLE");
 	m_Units[1].Collid = m_System.CreateCollider();
 	m_Units[1].Collid.Update(&m_Units[1].Position, &m_Size);
 
+
+	//temp
+	/*m_PathGrid.resize(50 * 50);
+	for (uint32_t x = 0; x < 50; x++) {
+
+		for (uint32_t y = 0; y < 50; y++) {
+
+			m_PathGrid[y + (x * 50)].Position.x = x * (1 / 50.f);
+			m_PathGrid[y + (x * 50)].Position.y = y * (1 / 50.f);
+
+		}
+	}
+	*/
 
 }
 
@@ -57,15 +72,16 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 	renderer->DrawQuad({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f}, {1.0f,1.0f,1.0f,1.0f}, m_Size, m_Units[i].Animator, m_Units[i].ID.ID);
 	
 
-
 	m_Units[i].Animator.Update(DeltaTime);
+	}
+	for (uint32_t i = 0; i < m_PathGrid.size(); i++) {
+		renderer->DrawQuad({ m_PathGrid[i].Position.x,m_PathGrid[i].Position.y,1.0f }, { 1.0f,0.0f,0.0f,1.0f }, m_PathGrid[i].Size, 0);
 	}
 
 	//renderer->DrawQuad({ 0.0f,-0.5f }, { 1.0f,1.0f,1.0f,1.0 }, { 0.3f,0.3f }, Core::GetStringHash("PANEL.png"),0,0);
 	//uint32_t PathCount{};
 	//Float2* loc =  m_Units[0].Collid.GetPathToObj(m_Units[0].Position, m_Units[1].Position,&PathCount);
-	m_System.CheckCollisions();
-
+	//m_System.CheckCollisions();
 
 	DefaultCameraControlls(&m_App->m_InputSystem, &m_App->m_Camera);
 }
@@ -73,7 +89,6 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 void AnimationTestingLayer::OnDestroy()
 {
 }
-#define TILESIZE 0.04f
 int ConvertPositionToNodeIndexa(Float2 Position) {
 	uint32_t X = (1 + Position.x) / TILESIZE;
 	uint32_t Y = (1 - Position.y) / TILESIZE;
@@ -155,13 +170,20 @@ void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 		if (m_App->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, false) ){
 			Float2 Dest = { m_App->GetWorldMousePos().x,m_App->GetWorldMousePos().y };
 			unit->MoveLocation = unit->Collid.GetPathToObj(unit->Position, Dest, &unit->MoveCellCount);
-			unit->Moving = true;
-			Core::Log(ErrorType::Info, "LastLocationOfPath:", unit->MoveLocation[unit->MoveCellCount - 1].x," ", unit->MoveLocation[unit->MoveCellCount - 1].y);
-			Core::Log(ErrorType::Info, "Dest:", Dest.x," ", Dest.y);
+
+			if (unit->MoveCellCount != 0) {
+				unit->Moving = true;
+				//Core::Log(ErrorType::Info, "LastLocationOfPath:", unit->MoveLocation[unit->MoveCellCount - 1].x, " ", unit->MoveLocation[unit->MoveCellCount - 1].y);
+				//Core::Log(ErrorType::Info, "Dest:", Dest.x, " ", Dest.y);
+				Core::Log(ErrorType::Info, "StartLoc:",unit->Position.x," ", unit->Position.y);
+				Core::Log(ErrorType::Info, "EndLoc:", unit->MoveLocation[unit->MoveCellCount-1].x, " ", unit->MoveLocation[unit->MoveCellCount-1].y);
+				m_PathGrid.resize(unit->MoveCellCount);
+			}
 
 		}
 		for (uint32_t i = 0; i < unit->MoveCellCount; i++) {
 			std::cout << unit->MoveLocation[i].x << " " << unit->MoveLocation[i].y << "\n";
+			m_PathGrid[i] = { unit->MoveLocation[i] };
 		}
 		std::cout << std::endl;
 	}
@@ -198,23 +220,26 @@ void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 
 		}
 
-		 Difference = std::abs(unit->Position.y - CurrentMoveLocation.y);
-		if (unit->MoveSpeed>= Difference) {
-			unit->Position.y = CurrentMoveLocation.y;
-			MoveAmount.y = Difference;
+		if (MoveAmount.x == 0.0f) {
+			Difference = std::abs(unit->Position.y - CurrentMoveLocation.y);
+			if (unit->MoveSpeed >= Difference) {
+				unit->Position.y = CurrentMoveLocation.y;
+				MoveAmount.y = Difference;
 
+			}
+			else if (unit->Position.y < CurrentMoveLocation.y) {
+				unit->Position.y += unit->MoveSpeed;
+				MoveAmount.y = unit->MoveSpeed;
+
+
+			}
+			else {
+				unit->Position.y -= unit->MoveSpeed;
+				MoveAmount.y = unit->MoveSpeed * -1.0f;
+
+			}
 		}
-		else if (unit->Position.y < CurrentMoveLocation.y) {
-			unit->Position.y += unit->MoveSpeed;
-			MoveAmount.y = unit->MoveSpeed;
 
-
-		}
-		else {
-			unit->Position.y -= unit->MoveSpeed;
-			MoveAmount.y = unit->MoveSpeed * -1.0f;
-
-		}
 	}
 	
 	unit->Collid.UpdateMoveAmount(MoveAmount);

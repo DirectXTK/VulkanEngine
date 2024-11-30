@@ -12,7 +12,7 @@
 
 
      m_Window = new Window(specs.WindowWidth, specs.WindowHeight, specs.WindowTitle);
-     m_Camera.Init({ -1.5f,-1.5f }, { 1.0f,1.0f });
+     m_Camera.Init({ 1.0f,1.0f }, { 1.0f,1.0f });
 
      RendererDesc desc{};
      desc.VertexCountPerDrawCall = 4*1000;

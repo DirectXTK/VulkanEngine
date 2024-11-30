@@ -15,6 +15,7 @@
 #include <queue>
 #include <limits>
 #include <chrono>
+#include <cmath>
 #include <set>
 #include <stack>
 
@@ -144,6 +145,21 @@ struct Float2 {
         };
     };
 };
+inline bool operator==(const Float2& l, const Float2& r) {
+    if (l.x == r.x&& l.y == r.y)
+        return true;
+    return false;
+
+}
+namespace std{
+    template<>
+    struct hash<Float2>
+    {
+        size_t operator()(const Float2& key)const {
+            return hash<uint64_t>()(*(uint64_t*)&key);
+        }
+    };
+}
 struct Float3{
 
     union{

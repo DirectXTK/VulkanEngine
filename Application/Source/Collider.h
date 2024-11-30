@@ -5,16 +5,29 @@
 
 class Collider;
 class CollisionSystem;
+struct Int2
+{
+	int x{};
+	int y{};
+	bool operator==(const Int2& rhs) {
+		return rhs.x == x && rhs.y == y;
+	}
+	bool operator!=(const Int2& rhs) {
+		return !(*this == rhs);
+	}
+};
 struct Node {
-	int NodeIndex{ -1 };
+	Float2 Position{};
 	float F{ FLT_MAX };
 	float G{ FLT_MAX };
 	float H{ FLT_MAX };
-	int ParentNodeIndex{ -1 };
+	int64_t Index{};
+	int64_t ParentNodeIndex{ -1 };
 	friend bool operator<(const Node& l, const Node& r) {
 		return l.F < r.F;
 	}
 };
+
 class ColliderBackEnd
 {
 public:
@@ -50,7 +63,7 @@ public:
 	GUUID GetID() { return m_ID; }
 private:
 
-	bool IsBlocked(int NodeIndex);
+	bool IsBlocked(ColliderBackEnd* movingCollider, Float2 Position);
 
 	CollisionSystem* m_System{};
 	GUUID m_ID{ 0 };
@@ -60,11 +73,13 @@ class CollisionSystem {
 public:
 	CollisionSystem();
 	ColliderBackEnd* GetColliderBackEnd(GUUID ID) { return &m_Colliders[ID]; }
+
 	void CheckCollisions();
+	void AddObjectPathMap(Float2 Pos);
 	Collider CreateCollider() { GUUID id = GUUID(); m_Colliders[id] = ColliderBackEnd(); return Collider(this, id); }
 
 	Node* GetCellInfo() { return m_PathGrid; }
-	bool IsBlocked(int NodeIndex);
+	bool IsBlocked(ColliderBackEnd* movingCollider, Float2 Position);
 
 private:
 	std::unordered_map<GUUID, ColliderBackEnd> m_Colliders{};
@@ -72,6 +87,7 @@ private:
 
 
 	
+
 	bool* m_BlockedNodeList{};
 	Node* m_PathGrid{};
 };

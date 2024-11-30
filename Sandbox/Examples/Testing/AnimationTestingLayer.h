@@ -14,6 +14,10 @@ struct AnimationUnit {
 	uint32_t MoveCellCount{};
 	uint32_t CurrentCellIndex{};
 };
+struct PathGrid {
+	Float2 Position{};
+	Float2 Size{0.04f,0.04f };
+};
 class AnimationTestingLayer :public Layer
 {
 public:
@@ -25,13 +29,15 @@ public:
 private:
 	void MoveUnit(AnimationUnit* unit);
 
-	Float2 m_Size{ 0.04f,0.04f };
+	Float2 m_Size{ 0.04f,0.04f};
 	bool m_SpawnUnit{false};
 	std::string m_SpawnedUnit{};
 
 	CollisionSystem m_System{};
 
 	std::vector<AnimationUnit> m_Units{};
+	std::vector<PathGrid> m_PathGrid{};
+
 	Float2 m_MoveLocation{};
 	GUUID m_CurrentlySelectedUnit{};
 };

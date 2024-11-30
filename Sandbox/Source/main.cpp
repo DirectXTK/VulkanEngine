@@ -5,7 +5,7 @@
 //include "..//Examples/Testing/DLLLoadingLayer.h"
 //#include "../Examples/Testing/TextureTestingLayer.h"
 #include "../Examples/Testing/AnimationTestingLayer.h"
-
+#include "../Examples/Testing/CollisionTestingLayer.h"
 #include "Utils.h"
 
 class SandboxLayer :public Layer {

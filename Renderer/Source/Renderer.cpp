@@ -353,7 +353,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::BeginGUIFrame()
     {
         FlushGeometry();
-       m_CameraViewProj = glm::identity<glm::mat4>();
+      // m_CameraViewProj = glm::identity<glm::mat4>();
        m_GUIRendering = true;
     }
 
