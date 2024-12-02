@@ -20,7 +20,7 @@ class Application {
 public:
     Application(ApplicationSpecs specs);
     void AddLayer(Layer* layer);
-    float GetDeltaTime() { return m_DeltaTime; }
+    float GetDeltaTime() { return (float)m_DeltaTime; }
 
     Float2 GetMousePos();
     Float2 GetMousePosNorm();

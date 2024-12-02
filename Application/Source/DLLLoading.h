@@ -1,6 +1,5 @@
 #pragma once
 #include "AppCore.h"
-#include <Windows.h>
 class DLLLoading
 {
 public:

@@ -118,8 +118,8 @@
 
         VkDescriptorPoolCreateInfo createinfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
         createinfo.pPoolSizes = PoolSizes;
-        createinfo.poolSizeCount = m_DescriptorPoolSizeInfo.size();
-        createinfo.maxSets = m_DescriptorPoolSizeInfo.size();
+        createinfo.poolSizeCount = (uint32_t)m_DescriptorPoolSizeInfo.size();
+        createinfo.maxSets = (uint32_t)m_DescriptorPoolSizeInfo.size();
 
        VkResult result =  vkCreateDescriptorPool(context->Device, &createinfo, nullptr, &m_Pool);
        if (result != VK_SUCCESS)

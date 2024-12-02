@@ -10,7 +10,7 @@ void TestingLayer::OnCreate() {
     
 
 }
-void TestingLayer::OnUpdate(double deltatime)
+void TestingLayer::OnUpdate(float deltatime)
 {
  
 

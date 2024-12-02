@@ -200,7 +200,7 @@ QueueFamilies VulkanInstance::GetQueueFamilies(VkPhysicalDevice device,VkSurface
 
 
     for (uint32_t i = 0; i < QueueFamCount; i++) {
-        if (Properties[i].queueCount > 0 && Properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT);
+        if (Properties[i].queueCount > 0 && Properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
 
             Families.Graphics = i;

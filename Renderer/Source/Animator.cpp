@@ -52,10 +52,10 @@ Animator::Animator(const std::string& Path,GUUID animationID,std::string AtlasHa
 		Tag = Data.substr( Index, Data.find("\",", Index)  - Index);
 		Index = Data.find("\"from\"", Index) + OffsetFrom;
 
-		From = std::stoull(Data.substr(Index, Data.find(",", Index) - Index));
+		From = std::stoul(Data.substr(Index, Data.find(",", Index) - Index));
 		Index = Data.find("\"to\"",Index)+OffsetTo;
 
-		To = std::stoull(Data.substr(Index, Data.find(",", Index) - Index));
+		To = std::stoul(Data.substr(Index, Data.find(",", Index) - Index));
 
 		Index = Data.find("\"name\"", Index);
 

@@ -142,7 +142,7 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
 
     VkVertexInputAttributeDescription* vertexinputattr = new VkVertexInputAttributeDescription[desc.VertexStageInputCount];
     
-    for (int i = 0; i < desc.VertexStageInputCount; i++) {
+    for (uint32_t i = 0; i < desc.VertexStageInputCount; i++) {
         vertexinputattr[i].binding = desc.VertexStageInput[i].Binding;
         vertexinputattr[i].location = desc.VertexStageInput[i].Location;
         vertexinputattr[i].format = desc.VertexStageInput[i].Format;

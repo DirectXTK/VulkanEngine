@@ -1,12 +1,12 @@
 #pragma once
 #include "Application.h"
 #include "Utils.h"
-class Unit;
+struct Unit;
 class SerializationTestingLayer :public Layer {
 public:
     SerializationTestingLayer();
     void OnCreate()override;
-    void OnUpdate(double deltatime)override;
+    void OnUpdate(float deltatime)override;
     void OnGUI()override;
     void OnDestroy()override;
 

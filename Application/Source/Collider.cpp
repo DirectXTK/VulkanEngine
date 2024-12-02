@@ -74,11 +74,10 @@ Float2* TraceDest(Node* Details, uint64_t DestIndex,uint32_t* outDestCount) {
 		Path.push(node);
 		DestIndex = Details[DestIndex].ParentNodeIndex;
 	}
-	*outDestCount = Path.size();
+	*outDestCount = (uint32_t)Path.size();
 	Output = new Float2[*outDestCount];
 
 	uint32_t Index{};
-	int32_t CurrentNodeX;
 	while (!Path.empty()) {
 		Output[Index] = Path.top().Position;
 		Path.pop();
@@ -100,10 +99,12 @@ Float2* Collider::GetPathToObj(Float2 CurrentPos, Float2 FinalPath,uint32_t *out
 	uint64_t Index{};
 
 
-
+	//check if the dest is not blocked
+	if(IsBlocked(CurrentCollider,FinalPath)) 
+		return nullptr;
 
 	std::vector<Node> NodeDetails{};
-	NodeDetails.resize(8000);
+	NodeDetails.resize(500);
 
 	NodeDetails.push_back(Node());
 
@@ -126,6 +127,8 @@ Float2* Collider::GetPathToObj(Float2 CurrentPos, Float2 FinalPath,uint32_t *out
 
 		GenerateSuccesors(p.Position, succ, CurrentCollider->GetSize());
 		for (uint32_t i = 0; i < 8; i++) {
+			if (NodeDetails.size() <= Index + i)
+				NodeDetails.resize(NodeDetails.size() * 2);
 			if (IsBlocked(CurrentCollider, succ[i]))
 				continue;
 			if (IsDestination(FinalPath,succ[i], CurrentCollider))

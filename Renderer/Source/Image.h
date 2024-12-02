@@ -12,7 +12,7 @@ class Image{
     VkImageView CreateView(VkFormat format,VkImageAspectFlags aspectflags ,VkDevice device);
     VkImage GetImage(){return m_Image;}
     VkImageView GetImageView(){return m_View;}
-    int GetSize(){return m_ImageSize;}
+    uint64_t GetSize(){return m_ImageSize;}
     VkExtent2D GetExtent(){return {(uint32_t)m_Width,(uint32_t)m_Height};}
 
     void CopyDataFromBuffer(Context context, Buffer* buffer, VkCommandBuffer commandbuffer);
@@ -28,9 +28,9 @@ class Image{
             VkDeviceMemory m_Memory{};
             VkDevice m_Device{};
             VkPhysicalDevice m_PDevice{};
-            int m_Width{}, m_Height{};
+            uint32_t m_Width{}, m_Height{};
             Float4* m_ImageData{};
-            int m_ChannelCount{}; 
+            uint32_t m_ChannelCount{}; 
           uint64_t m_ImageSize{};
 
 };

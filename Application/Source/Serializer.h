@@ -6,7 +6,7 @@ struct SerializerFormat {
 	//-1 means custom count.
 	int count{};
 	std::string PaddingBetweenCount{};
-	uint32_t Offset{  };
+	uint64_t Offset{  };
 };
 struct SerializerClassDesc {
 	std::string ClassName{};
@@ -24,7 +24,7 @@ public:
 	void StopSaving();
 
 
-	void Save(void* data,uint32_t DataCount, SerializerFormat* format, uint32_t formatCount, SerializerClassDesc* classdesc);
+	void Save(void* data,uint64_t DataCount, SerializerFormat* format, uint32_t formatCount, SerializerClassDesc* classdesc);
 
 	 //Load functions
 	void StartLoading(std::string Path);
@@ -42,10 +42,10 @@ private:
 	void AllocateSpaceForDynamicArrayCustomFormat(char* Member, uint32_t NumOffAlloc, uint64_t* Offset, Format* format);
 	
 
-	void DynamicArrayType(void* data, uint32_t Offset, Format format, uint32_t Index);
-	void DynamicArrayTypePP(void* data, uint32_t Offset, Format format, uint32_t Index);
+	void DynamicArrayType(void* data, uint64_t Offset, Format format, uint32_t Index);
+	void DynamicArrayTypePP(void* data, uint64_t Offset, Format format, uint32_t Index);
 
-	void StackArrayType(void* data, uint32_t Offset, Format format, uint32_t Index);
+	void StackArrayType(void* data, uint64_t Offset, Format format, uint32_t Index);
 	SerializerFormat* m_Formats{};
 	uint32_t m_FormatCount{};
 	std::ofstream m_OutputFile{};

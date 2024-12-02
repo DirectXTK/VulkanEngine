@@ -40,7 +40,7 @@
             VkPhysicalDeviceMemoryProperties memprops{};
             vkGetPhysicalDeviceMemoryProperties(physicaldevice,&memprops);
 
-            for(int i =0;i < memprops.memoryTypeCount;i++){
+            for(uint32_t i =0;i < memprops.memoryTypeCount;i++){
 
                 if((Allowedtypes&(1<<i))){
                     if((memprops.memoryTypes[i].propertyFlags & flags)==flags){
@@ -49,6 +49,7 @@
 
                 }
             }
+            return (uint32_t)-1;
         }
 
 

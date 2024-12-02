@@ -20,7 +20,7 @@ Layer* LayerController::CreateLayer(Layer* layer)
 void LayerController::UpdateLayers(double deltatime)
 {
 	for (size_t i = 0; i < m_Layers.size(); i++) {
-		m_Layers[i]->OnUpdate(deltatime);
+		m_Layers[i]->OnUpdate((float)deltatime);
 	}
 }
 

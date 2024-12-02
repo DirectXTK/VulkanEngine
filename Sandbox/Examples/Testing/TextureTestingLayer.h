@@ -5,7 +5,7 @@ class TextureTestingLayer: public Layer
 public :
 	TextureTestingLayer();
 	void OnCreate()override;
-	void OnUpdate(double DeltaTime)override;
+	void OnUpdate(float DeltaTime)override;
 	void OnGUI()override;
 	void OnDestroy()override;
 private:

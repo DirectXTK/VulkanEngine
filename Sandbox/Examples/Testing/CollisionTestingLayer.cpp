@@ -24,7 +24,7 @@ void CollisionTestingLayer::OnCreate()
 
 }
 
-void CollisionTestingLayer::OnUpdate(double Deltatime)
+void CollisionTestingLayer::OnUpdate(float Deltatime)
 {
 	ChunkSystem system(2,2);
 

@@ -19,7 +19,7 @@ void TextureTestingLayer::OnCreate()
 
 }
 
-void TextureTestingLayer::OnUpdate(double DeltaTime)
+void TextureTestingLayer::OnUpdate(float DeltaTime)
 {
     Camera2D* camera = &m_App->m_Camera;
     InputSystem* inputsystem = &m_App->m_InputSystem;

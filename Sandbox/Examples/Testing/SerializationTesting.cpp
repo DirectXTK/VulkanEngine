@@ -36,7 +36,7 @@ void SerializationTestingLayer::OnCreate() {
 
 
 }
-void SerializationTestingLayer::OnUpdate(double deltatime)
+void SerializationTestingLayer::OnUpdate(float deltatime)
 {
     Camera2D* camera = &m_App->m_Camera;
     InputSystem* inputsystem = &m_App->m_InputSystem;
@@ -102,7 +102,7 @@ void SerializationTestingLayer::OnUpdate(double deltatime)
                 {
                     std::cout <<"TraitCount " << m_Units[i].TraitCount<<"\n";
                     std::cout << "Traits ";
-                    for (int j = 0; j < m_Units[i].TraitCount; j++) {
+                    for (uint32_t j = 0; j < m_Units[i].TraitCount; j++) {
                         if (j + 1 < m_Units[i].TraitCount)
                             std::cout << ",";
                         std::cout << m_Units[i].Traits[j];
@@ -193,7 +193,7 @@ void SerializationTestingLayer::AllocSpaceAndFillData(void** DataPtr,Format form
     }
     case Format::FLOAT: {
         DataPtr[Index] = new float();
-        *(float*)DataPtr[Index] = 64.4;
+        *(float*)DataPtr[Index] = 64.4f;
 
         break;
     }
@@ -312,7 +312,7 @@ void SerializationTestingLayer::MakeUnitRandom(Unit* unit)
     if (TraitCount == 0)
         return;
     unit->Traits = new std::string[TraitCount];
-    for (int i = 0; i < TraitCount; i++) {
+    for (uint32_t i = 0; i < TraitCount; i++) {
         unit->Traits[i] = std::string();
         unit->Traits[i] = TRAITS[Core::RandomUInt32(0, 8)];
         unit->ID = Core::RandomUInt64(0, (std::numeric_limits<uint64_t>::max)());

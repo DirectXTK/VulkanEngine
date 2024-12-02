@@ -7,7 +7,7 @@
             std::ifstream file(desc.Path, std::ios::binary);
             std::vector<char> ByteCode{};
             VkShaderModule ShaderModule{};
-            uint32_t Size{};
+            uint64_t Size{};
 
 
             file.seekg(0, file.end);

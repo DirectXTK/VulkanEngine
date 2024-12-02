@@ -16,7 +16,7 @@ public:
       
 
     }
-    void OnUpdate(double deltatime)override {
+    void OnUpdate(float deltatime)override {
     }
     void OnDestroy()override {
 

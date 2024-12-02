@@ -10,7 +10,7 @@ void Serializer::StartSaving(std::string Path)
 		std::cout << "Invalid path.\n";
 
 }
-void Serializer::Save(void* data,uint32_t DataCount, SerializerFormat* formats,uint32_t formatCount,  SerializerClassDesc* classdesc)
+void Serializer::Save(void* data,uint64_t DataCount, SerializerFormat* formats,uint32_t formatCount,  SerializerClassDesc* classdesc)
 {
 	if (!m_OutputFile.is_open()) {
 		std::cout << "You forgot to start function StartSaving().\n";
@@ -19,7 +19,7 @@ void Serializer::Save(void* data,uint32_t DataCount, SerializerFormat* formats,u
 	uint64_t Offset{};
 
 	m_OutputFile << "FormatCount=" << formatCount<<"\n";
-	for (int i = 0; i < formatCount; i++) {
+	for (uint32_t i = 0; i < formatCount; i++) {
 
 		m_OutputFile << formats[i].keyword << "\n";
 		m_OutputFile << (uint32_t)formats[i].format << "\n";
@@ -37,11 +37,11 @@ void Serializer::Save(void* data,uint32_t DataCount, SerializerFormat* formats,u
 
 	
 	m_OutputFile << "DataCount=" << DataCount << "\n";
-	for (int d = 0; d < DataCount; d++) {
+	for (uint32_t d = 0; d < DataCount; d++) {
 		m_OutputFile << classdesc->ClassName << "\n";
-		for (int j = 0; j < formatCount; j++) {
+		for (uint32_t j = 0; j < formatCount; j++) {
 			SerializerFormat* format = &formats[j];
-			int variablecount{format->count};
+			int64_t variablecount{format->count};
 			Offset = format->Offset + d * classdesc->Stride;
 
 			if (variablecount == -1) {
@@ -133,7 +133,7 @@ void* Serializer::Load(uint64_t* Out_DataCount)
 	Offset++;
 
 	std::string line{};
-	for (int i = 0; i < FormatCount; i++) {
+	for (uint32_t i = 0; i < FormatCount; i++) {
 		//Get the keyword
 		line = m_InputData.substr(Offset, m_InputData.find("\n", Offset)-Offset);
 		Offset = m_InputData.find("\n", Offset)+1;
@@ -192,7 +192,7 @@ void* Serializer::Load(uint64_t* Out_DataCount)
 			Offset += classdesc.MemberPrefix.size() + formats[j].keyword.size();
 
 			if(formats[j].count != -1)
-				for (uint32_t d = 0; d < formats[j].count; d++) {
+				for (uint32_t d = 0; d < (uint32_t)formats[j].count; d++) {
 
 					if ((d + 1) == formats[j].count) {
 						line = m_InputData.substr(Offset, m_InputData.find("\n", Offset) - Offset);
@@ -213,7 +213,7 @@ void* Serializer::Load(uint64_t* Out_DataCount)
 					std::string formatline{};
 					uint64_t OldOffset{ Offset };
 					//Padding prefixes sufixes
-					uint32_t ExtraSize = classdesc.MemberPrefix.size() + classdesc.MemberSuffix.size();
+					uint64_t ExtraSize = classdesc.MemberPrefix.size() + classdesc.MemberSuffix.size();
 
 					Offset = m_InputData.find("\n", Offset) + 1;
 					formatline = m_InputData.substr(Offset, m_InputData.find("\n", Offset) - Offset);
@@ -254,7 +254,7 @@ void* Serializer::Load(uint64_t* Out_DataCount)
 					uint32_t formatCountDynamic{};
 					uint64_t OldOffset{ Offset };
 					//Padding prefixes sufixes
-					uint32_t ExtraSize = classdesc.MemberPrefix.size() + classdesc.MemberSuffix.size();
+					uint64_t ExtraSize = classdesc.MemberPrefix.size() + classdesc.MemberSuffix.size();
 					Offset = m_InputData.find("\n", Offset) + 1;
 
 					line = m_InputData.substr(Offset, m_InputData.find("\n", Offset) - Offset);
@@ -318,7 +318,7 @@ void Serializer::FillContainerWithData(char* Data, uint64_t*DataOffset, std::str
 		break;
 	}
 	case Format::UINT16: {
-		uint16_t converteddata = std::stoul(line);
+		uint16_t converteddata = (uint16_t)std::stoul(line);
 		memcpy(Data + *DataOffset, &converteddata, sizeof(uint16_t));
 		*DataOffset += sizeof(uint16_t);
 
@@ -415,7 +415,7 @@ void Serializer::FillContainerWithDataDynamic(char* Data, uint64_t* Index,uint64
 		break;
 	}
 	case Format::UINT16: {
-		uint16_t converteddata = std::stoul(line);
+		uint16_t converteddata = (uint16_t)std::stoul(line);
 		uint16_t* dst{};
 		memcpy(&dst, Data, sizeof(void*));
 		dst[*Index] = converteddata;
@@ -519,7 +519,7 @@ void Serializer::FillContainerWithDataDynamicCustomData(char* Data, uint64_t* In
 		break;
 	}
 	case Format::UINT16: {
-		uint16_t converteddata = std::stoul(line);
+		uint16_t converteddata = (uint16_t)std::stoul(line);
 		uint16_t* Member = (uint16_t*)dst[*Index];
 		*Member = converteddata;
 
@@ -611,7 +611,7 @@ void Serializer::GetDynamicFormats(std::string* line, SerializerFormat format, F
 
 
 	std::string temp = *line;
-	uint32_t Offset{};
+	uint64_t Offset{};
 		Offset = format.keyword.size() + 1;
 	for (uint32_t d = 0; d < FormatCount; d++) {
 		if (d == FormatCount - 1) {
@@ -769,7 +769,7 @@ void Serializer::AllocateSpaceForDynamicArrayCustomFormat(char* member, uint32_t
 	}
 }
 
-void Serializer::DynamicArrayType(void* data, uint32_t Offset, Format format, uint32_t Index)
+void Serializer::DynamicArrayType(void* data, uint64_t Offset, Format format, uint32_t Index)
 {
 	switch (format) {
 	case Format::STRING: {
@@ -833,7 +833,7 @@ void Serializer::DynamicArrayType(void* data, uint32_t Offset, Format format, ui
 	}
 }
 
-void Serializer::DynamicArrayTypePP(void* data, uint32_t Offset, Format format, uint32_t Index)
+void Serializer::DynamicArrayTypePP(void* data, uint64_t Offset, Format format, uint32_t Index)
 {
 	uint64_t addressnumber = *(uint64_t*)((char*)data + Offset);
 	void* address = ((void**)addressnumber)[Index];
@@ -889,7 +889,7 @@ void Serializer::DynamicArrayTypePP(void* data, uint32_t Offset, Format format, 
 	}
 }
 
-void Serializer::StackArrayType(void* data, uint32_t Offset,Format format,uint32_t Index)
+void Serializer::StackArrayType(void* data, uint64_t Offset,Format format,uint32_t Index)
 {
 	switch (format) {
 	case Format::STRING: {

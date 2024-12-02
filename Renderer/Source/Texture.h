@@ -92,7 +92,7 @@ public:
 private:
 	struct TextureAtlasCoords {
 		Float2 Points[4];
-		uint64_t SizeX, SizeY{};
+		uint32_t SizeX, SizeY{};
 	};
 	uint32_t m_TextureCount{};
 	TextureAtlasCoords* m_TextureAtlasData{};

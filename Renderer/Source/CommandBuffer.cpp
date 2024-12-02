@@ -58,12 +58,17 @@ VkCommandBuffer CommandBuffer::StartSingleUseCommandBuffer(Context context, VkCo
 
 void CommandBuffer::EndSingleUseCommandBuffer(Context context,VkCommandPool pool, VkCommandBuffer commandBuffer)
 {
+    VkResult result;
     VkFenceCreateInfo FenceCreateInfo{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-    FenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
+    FenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
     VkFence fence{};
-    vkCreateFence(context->Device, &FenceCreateInfo, nullptr, &fence);
-    vkResetFences(context->Device, 1, &fence);
+    result =vkCreateFence(context->Device, &FenceCreateInfo, nullptr, &fence);
+    if (result != VK_SUCCESS)
+        Core::Log(ErrorType::Error, "Failed to create fence.");
+    result =vkResetFences(context->Device, 1, &fence);
+    if (result != VK_SUCCESS)
+        Core::Log(ErrorType::Error, "Failed to reset fence.");
 
 
     VkSubmitInfo SubmitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
@@ -74,6 +79,8 @@ void CommandBuffer::EndSingleUseCommandBuffer(Context context,VkCommandPool pool
     vkEndCommandBuffer(commandBuffer);
     vkQueueSubmit(context->GraphicsQueue, 1, &SubmitInfo, fence);
 
-    vkWaitForFences(context->Device, 1, &fence, true, 5*10000);
+   result =vkWaitForFences(context->Device, 1, &fence, true, 1*1000*1000*10);
+   if (result != VK_SUCCESS)
+       Core::Log(ErrorType::Error, "Failed to wait for fences.");
     vkFreeCommandBuffers(context->Device, pool, 1, &commandBuffer);
 }

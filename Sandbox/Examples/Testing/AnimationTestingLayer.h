@@ -23,7 +23,7 @@ class AnimationTestingLayer :public Layer
 public:
 	AnimationTestingLayer();
 	void OnCreate()override;
-	void OnUpdate(double DeltaTime)override;
+	void OnUpdate(float DeltaTime)override;
 	void OnDestroy()override;
 	void OnGUI()override;
 private:
@@ -37,6 +37,7 @@ private:
 
 	std::vector<AnimationUnit> m_Units{};
 	std::vector<PathGrid> m_PathGrid{};
+	float m_PathGridTime{};
 
 	Float2 m_MoveLocation{};
 	GUUID m_CurrentlySelectedUnit{};

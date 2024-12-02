@@ -11,7 +11,7 @@ class CollisionTestingLayer : public Layer
 {
 public:
 	CollisionTestingLayer();
-	void OnUpdate(double Deltatime) override;
+	void OnUpdate(float Deltatime) override;
 	void OnCreate()override;
 	void OnDestroy()override;
 	void OnGUI()override;

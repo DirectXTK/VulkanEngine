@@ -290,8 +290,8 @@ void Texture::CreateTextureAtlas(const std::string& MetaData)
 	uint64_t TileLocX{};
 	uint64_t TileLocY{};
 
-	uint64_t TileSizeX{};
-	uint64_t TileSizeY{};
+	uint32_t TileSizeX{};
+	uint32_t TileSizeY{};
 
 
 	std::string Data{};
@@ -343,7 +343,7 @@ void Texture::CreateTextureAtlas(const std::string& MetaData)
 
 
 	m_TextureData->m_TextureAtlasData = new TextureAtlasCoords[AtlasCoords.size()];
-	m_TextureData->m_TextureCount = AtlasCoords.size();
+	m_TextureData->m_TextureCount = (uint32_t)AtlasCoords.size();
 	memcpy(m_TextureData->m_TextureAtlasData, AtlasCoords.data(), sizeof(TextureAtlasCoords) * AtlasCoords.size());
 
 

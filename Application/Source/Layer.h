@@ -3,7 +3,7 @@
 class Application;
 class Layer{
 public:
-    virtual void OnUpdate(double deltatime)=0;
+    virtual void OnUpdate(float deltatime)=0;
     virtual void OnCreate()=0;
     virtual void OnDestroy()=0;
     virtual void OnGUI()=0;

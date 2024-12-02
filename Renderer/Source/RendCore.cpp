@@ -7,7 +7,7 @@ namespace Core{
            // Core::Log(ErrorType::Error,"Allowed types ",Allowedtypes);
              //Core::Log(ErrorType::Error,"Req",flags);
            // Core::Log(ErrorType::Error, "Allowed types", (Allowedtypes & (1 << 0)));
-            for(int i =0;i < memprops.memoryTypeCount;i++){
+            for(uint32_t i =0;i < memprops.memoryTypeCount;i++){
 
                 uint32_t MemoryTypeBits = (1 << i);
                 bool IsReq = Allowedtypes & MemoryTypeBits;
@@ -38,7 +38,7 @@ namespace Core{
 
                 }
             Core::Log(ErrorType::Error,"Failed to find supported format.");
-
+            return VK_FORMAT_UNDEFINED;
         }
         void CopyImageToImage(VkDevice device,VkPhysicalDevice pdevice,Image* src,Image* dst){
 

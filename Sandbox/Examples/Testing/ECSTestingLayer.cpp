@@ -8,7 +8,7 @@ void ECSTestingLayer::OnCreate()
 {
 }
 
-void ECSTestingLayer::OnUpdate(double DeltaTime)
+void ECSTestingLayer::OnUpdate(float DeltaTime)
 {
 }
 

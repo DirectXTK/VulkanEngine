@@ -239,7 +239,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
  }
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
  {
-     uint32_t DescriptorPoolSize = std::ceil((float)(MaxTextureCount*10) / (float)m_TextureSlotCount);
+     uint32_t DescriptorPoolSize = (uint32_t)std::ceil((float)(MaxTextureCount*10) / (float)m_TextureSlotCount);
      for (uint64_t i = 0; i < DescriptorPoolSize; i++) {
 
      m_DescriptorPoolTextures.AddDescriptorType(m_TextureSlotCount, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
@@ -605,9 +605,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID)
     {
-        GUUID id = Core::GetStringHash("SUN");
-        if (Animation.GetCurrentTextureID() == id);
-
         if (m_VertexPointer + 4 > m_VertexCount)
             FlushGeometry();
             if (m_Textures.find(Animation.GetCurrentTextureID()) == m_Textures.end()) {

@@ -19,7 +19,7 @@ void AnimationTestingLayer::OnCreate()
 	m_App->m_Camera.SetPosition({ 0.0f,0.0f });
 
 	m_Units[0].Position = {0.0f,0.0f};
-	m_Units[0].Animator = *m_App->GetResource<Animator>("PEASANT");
+	m_Units[0].Animator = *m_App->GetResource<Animator>("WARRIOR");
 	m_Units[0].Animator.SetStage("WALK");
 	m_Units[0].Collid = m_System.CreateCollider();
 	m_Units[0].Collid.Update(&m_Units[0].Position, &m_Size);
@@ -47,12 +47,14 @@ void AnimationTestingLayer::OnCreate()
 
 }
 
-void AnimationTestingLayer::OnUpdate(double DeltaTime)
+void AnimationTestingLayer::OnUpdate(float DeltaTime)
 {
 	Renderer* renderer = m_App->m_Renderer;
 
 	//Core::Log(ErrorType::Info,m_App->GetWorldMousePos().x," ", m_App->GetWorldMousePos().y);
 	//GUUID id = Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.png");
+	m_PathGridTime -= DeltaTime;
+
 
 	Vertex vertices[2];
 	vertices[0].Position = {0.0f,0.0f};
@@ -60,7 +62,7 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 	bool Outline = true;
 
 	for (uint32_t i = 0; i < m_Units.size(); i++) {
-	if(m_Units[i].Animator.GetAnimationID() == Core::GetStringHash("PEASANT"))
+	if(m_Units[i].Animator.GetAnimationID() == Core::GetStringHash("WARRIOR"))
 		MoveUnit(&m_Units[i]);
 	m_Units[i].Collid.Update(&m_Units[i].Position,&m_Size);
 
@@ -74,8 +76,10 @@ void AnimationTestingLayer::OnUpdate(double DeltaTime)
 
 	m_Units[i].Animator.Update(DeltaTime);
 	}
-	for (uint32_t i = 0; i < m_PathGrid.size(); i++) {
-		renderer->DrawQuad({ m_PathGrid[i].Position.x,m_PathGrid[i].Position.y,1.0f }, { 1.0f,0.0f,0.0f,1.0f }, m_PathGrid[i].Size, 0);
+	if (m_PathGridTime > 0) {
+		for (uint32_t i = 0; i < m_PathGrid.size(); i++) {
+			renderer->DrawQuad({ m_PathGrid[i].Position.x,m_PathGrid[i].Position.y,1.0f }, { 1.0f,0.0f,0.0f,1.0f }, m_PathGrid[i].Size, 0);
+		}
 	}
 
 	//renderer->DrawQuad({ 0.0f,-0.5f }, { 1.0f,1.0f,1.0f,1.0 }, { 0.3f,0.3f }, Core::GetStringHash("PANEL.png"),0,0);
@@ -90,8 +94,8 @@ void AnimationTestingLayer::OnDestroy()
 {
 }
 int ConvertPositionToNodeIndexa(Float2 Position) {
-	uint32_t X = (1 + Position.x) / TILESIZE;
-	uint32_t Y = (1 - Position.y) / TILESIZE;
+	uint32_t X = (uint32_t)((1 + Position.x) / TILESIZE);
+	uint32_t Y = (uint32_t)((1 - Position.y) / TILESIZE);
 	return (Y * 50) + X;
 }
 void AnimationTestingLayer::OnGUI()
@@ -178,6 +182,7 @@ void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 				Core::Log(ErrorType::Info, "StartLoc:",unit->Position.x," ", unit->Position.y);
 				Core::Log(ErrorType::Info, "EndLoc:", unit->MoveLocation[unit->MoveCellCount-1].x, " ", unit->MoveLocation[unit->MoveCellCount-1].y);
 				m_PathGrid.resize(unit->MoveCellCount);
+				m_PathGridTime = SEC(3);
 			}
 
 		}
@@ -190,10 +195,13 @@ void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 	if ( unit->MoveCellCount-1< unit->CurrentCellIndex) {
 		unit->MoveCellCount = 0;
 		unit->Moving = false;
+		delete[] unit->MoveLocation;
+		unit->MoveLocation = nullptr;
 		return;
 	}
 	if (unit->MoveCellCount == 0) {
 		unit->Moving = false;
+		unit->CurrentCellIndex = 0;
 		return;
 	}
 	CurrentMoveLocation = unit->MoveLocation[unit->CurrentCellIndex];

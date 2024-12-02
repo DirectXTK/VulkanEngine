@@ -1,8 +1,16 @@
 #pragma once
+//Defines
+
+#define __STDC_WANT_LIB_EXT1__
+
+//Includes
+#include <Windows.h>
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
+#include <stdlib.h>
+#include <wchar.h>
 #include "LogSystem.h"
 #include <algorithm>
 #include <filesystem>
@@ -22,9 +30,11 @@
 #include "RandomGenerator.h"
 #include "AppTime.h"
 
+#ifdef max
+#undef max
+#endif
 //Format means any format
 enum class Format{NULLFORMAT,INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE,CHAR,STRING,FORMAT};
-
 #define SEC(x) 1000*x
 #define DLLEXPORT __declspec(dllexport)
 

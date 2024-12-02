@@ -12,7 +12,7 @@ void DLLLoadingLayer::OnCreate() {
 	Lafa(69);
 
 }
-void DLLLoadingLayer::OnUpdate(double deltatime)
+void DLLLoadingLayer::OnUpdate(float deltatime)
 {
 
 
