@@ -12,7 +12,7 @@ struct ApplicationSpecs{
     std::string WindowTitle{"Untitled"};
 
     //Renderer stuff
-    Float4 ClearColor{ 1.0f,1.0f,1.0f,1.0f };
+    Float4 ClearColor{ 0.5f,0.5f,0.5f,1.0f };
 };
 
 

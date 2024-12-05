@@ -1,43 +1,15 @@
 #define DEMO_FEATURES
-//#include "..//Examples/Testing/GUITesting.h"
-//#include "..//Examples/Testing/SerializationTesting.h"
-//#include "..//Examples/Testing/TestingLayer.h"
-//include "..//Examples/Testing/DLLLoadingLayer.h"
-//#include "../Examples/Testing/TextureTestingLayer.h"
-#include "../Examples/Testing/AnimationTestingLayer.h"
-#include "../Examples/Testing/CollisionTestingLayer.h"
-#include "Utils.h"
-
-class SandboxLayer :public Layer {
-public:
-    SandboxLayer() :Layer("SandboxLayer") {}
-    void OnCreate()override {
-
-      
-
-    }
-    void OnUpdate(float deltatime)override {
-    }
-    void OnDestroy()override {
-
-    }
-    void OnGUI()override {
-    
-       
-       
-
-
-    }
-private:
-};
+#include "../Examples/Testing/GUITesting.h"
 int main() {
-    ApplicationSpecs specs{};
-    specs.ClearColor = { 0.5f,0.5,0.5f,0.0f };
-    specs.WindowTitle = "OPA";
-    Application app(specs);
-    app.AddLayer(new AnimationTestingLayer());
-    app.Run();
+	ApplicationSpecs specs{};
+	specs.WindowTitle = "Example";
+	specs.WindowHeight = 500;
+	specs.WindowWidth = 500;
+	specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
 
+	Application app(specs);
+	app.AddLayer(new GUITestingLayer());
+	app.Run();
    
     return 1;
 }

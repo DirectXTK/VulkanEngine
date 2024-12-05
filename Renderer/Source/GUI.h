@@ -22,7 +22,7 @@ private:
 		Float2 Size{};
 		GUUID ID{};
 		PanelData* pParent{};
-		Float2 ClickedPos{};
+		Float2 Offset{};
 	};
 	struct ButtonData {
 		bool IsPressed{false};
@@ -37,6 +37,8 @@ private:
 	uint32_t m_PanelDepth{};
 	PanelData* m_CurrenPanelParent{};
 	uint32_t m_CurrentPanel{};
+	int32_t m_DraggedPanel{-1};
+	Float2 m_DraggedPanelDragAmount{};
 	//uint32_t m_CurrentButton{};
 	//If true when saves position of the buttons
 	bool m_SaveState{};

@@ -14,6 +14,7 @@ public:
 	bool IsKeyReleased(KeyCodes keycode);
 
 	bool IsMouseClicked(MouseCodes codes,bool Hold = false);
+
 	float GetScroll();
 	Float2 GetMousePos();
 	Float2 GetWorldMousePos(Float2 CameraPosition, Float2 CameraScale, Float2 ViewportExtent);

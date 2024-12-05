@@ -84,7 +84,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>-MP %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
@@ -95,9 +95,11 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\Libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/VERBOSE %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Examples\Testing\ExampleMenu.cpp" />
     <ClCompile Include="Examples\Testing\AnimationTestingLayer.cpp" />
     <ClCompile Include="Examples\Testing\CollisionTestingLayer.cpp" />
     <ClCompile Include="Examples\Testing\DefaultCameraControlls.cpp" />
@@ -118,6 +120,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Examples\Testing\ExampleMenu.h" />
     <ClInclude Include="Examples\Testing\AnimationTestingLayer.h" />
     <ClInclude Include="Examples\Testing\CollisionTestingLayer.h" />
     <ClInclude Include="Examples\Testing\DefaultCameraControlls.h" />

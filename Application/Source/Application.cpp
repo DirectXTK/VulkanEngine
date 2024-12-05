@@ -46,7 +46,7 @@
  Float2 Application::GetMousePosNorm()
  {
  
-     return { m_InputSystem.GetMousePos().x/m_Renderer->GetViewPortExtent().width,1.0f-(m_InputSystem.GetMousePos().y / m_Renderer->GetViewPortExtent().height )};
+     return { (m_InputSystem.GetMousePos().x/m_Renderer->GetViewPortExtent().width*2.f)-1.0f,1.0f-(m_InputSystem.GetMousePos().y / m_Renderer->GetViewPortExtent().height*2.0f )};
  }
 
  Float2 Application::GetWorldMousePos()

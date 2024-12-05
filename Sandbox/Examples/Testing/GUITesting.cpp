@@ -26,7 +26,7 @@ void GUITestingLayer::OnGUI()
 
 	m_App->m_GUIRenderer->Panel("Panel", {Position,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.2f,1.0f}, 0, true);
 
-	
+	m_App->m_GUIRenderer->Button("Start Button", { 0.5f,0.5f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.1f,0.1f });
 
 	m_App->m_GUIRenderer->EndPanel();
 
