@@ -33,7 +33,7 @@
 #ifdef max
 #undef max
 #endif
-//Format means any format
+//FORMAT means any format
 enum class Format{NULLFORMAT,INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE,CHAR,STRING,FORMAT};
 #define SEC(x) 1000*x
 #define DLLEXPORT __declspec(dllexport)

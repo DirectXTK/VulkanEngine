@@ -6,12 +6,15 @@ project "Sandbox"
     targetdir("../bin".. outputdir.."/%{prj.name}")
     objdir("../bin-int".. outputdir.."/%{prj.name}")
 
+    TargetDirVar= "../bin".. outputdir.."/%{prj.name}"
+
     files{
         "Source/**.cpp",
         "Source/**.h"
     }
     
     links{
+      "freetype.lib",
       "vulkan-1.lib",
       "glfw3.lib",
       "Renderer",
@@ -23,7 +26,8 @@ project "Sandbox"
 
       "%{prj.location}/../Include/vulkan/",
       "%{prj.location}/../Renderer/Source/",
-      "%{prj.location}/../Application/Source/"
+      "%{prj.location}/../Application/Source/",
+      GlobalIncludes,
 
     }
 
@@ -34,6 +38,8 @@ project "Sandbox"
     defines{
         "WINDOWS"
     }
+
+    postbuildcommands {"{COPYFILE} %[../Libs/freetype.dll] %["..TargetDirVar.."]"}
 
     filter{"configurations:Debug"}
       runtime "Debug"

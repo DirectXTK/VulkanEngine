@@ -11,6 +11,13 @@ Texture::Texture(Context context,uint32_t Width, uint32_t Height,uint32_t Channe
 	m_TextureData->m_Height = Height;
 	m_TextureData->m_ChannelCount = ChannelCount;
 	CreateTexture(Pixels);
+	m_TextureData->m_TextureAtlasData = new TextureAtlasCoords();
+	m_TextureData->m_TextureCount = 1;
+
+	m_TextureData->m_TextureAtlasData->Points[0] = { 0.0f,0.25f };
+	m_TextureData->m_TextureAtlasData->Points[1] = { 0.0f,0.0f };
+	m_TextureData->m_TextureAtlasData->Points[2] = { 0.25f,0.0f };
+	m_TextureData->m_TextureAtlasData->Points[3] = { 0.25f,0.25f };
 }
 
 Texture::Texture(Context context, std::string Path)

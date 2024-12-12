@@ -13,6 +13,9 @@ workspace "VulkanEngine"
     startproject "Sandbox"
 
 outputdir = "%{cfg.build}/%{cfg.system}/%{cfg.architecture}"
+GlobalIncludes = {
+    "%{prj.location}/../Include/FreeType",
+}
 
 include "Application"
 include "Renderer"

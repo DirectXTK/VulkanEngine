@@ -5,6 +5,7 @@
 #include "Collider.h"
 #include "ECS.h"
 #include "ChunkSystem.h"
+#include "FontSystem.h"
 #endif
 
 #include "AppTime.h"

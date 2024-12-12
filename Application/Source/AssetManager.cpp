@@ -92,6 +92,15 @@ void AssetManager::LoadAllResources(std::string FolderPath, ResourceType TypesTo
 
 }
 
+GUUID AssetManager::LoadResource(void* Resource, ResourceType type,std::string Name)
+{
+	
+	GUUID ID = Core::GetStringHash(Name);
+	m_ResourceCount[type]++;
+	m_Resources[ID] = Resource;
+	return ID;
+}
+
 void AssetManager::LoadAnimation(const std::string& FolderPath)
 {
 	std::string TexturePath{};

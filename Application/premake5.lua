@@ -14,6 +14,7 @@ project "Application"
     links{
       "vulkan-1.lib",
       "glfw3.lib",
+      "freetype.lib",
       "Renderer"
     }
 
@@ -21,7 +22,8 @@ project "Application"
       "%{prj.location}/../Include",
 
       "%{prj.location}/../Include/vulkan/",
-      "%{prj.location}/../Renderer/Source/"
+      "%{prj.location}/../Renderer/Source/",
+      GlobalIncludes,
     }
 
     libdirs{

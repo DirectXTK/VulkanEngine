@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="FontSystem">
+      <UniqueIdentifier>{81599E02-6D11-E04F-D618-B9ABC2EF7A40}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\AppCore.h" />
+    <ClInclude Include="Source\AppTime.h" />
+    <ClInclude Include="Source\Application.h" />
+    <ClInclude Include="Source\AssetManager.h" />
+    <ClInclude Include="Source\ChunkSystem.h" />
+    <ClInclude Include="Source\Collider.h" />
+    <ClInclude Include="Source\Components.h" />
+    <ClInclude Include="Source\DLLLoading.h" />
+    <ClInclude Include="Source\ECS.h" />
+    <ClInclude Include="Source\Entity.h" />
+    <ClInclude Include="Source\Event.h" />
+    <ClInclude Include="Source\InputSystem.h" />
+    <ClInclude Include="Source\Layer.h" />
+    <ClInclude Include="Source\LogSystem.h" />
+    <ClInclude Include="Source\RandomGenerator.h" />
+    <ClInclude Include="Source\Serializer.h" />
+    <ClInclude Include="Source\Utils.h" />
+    <ClInclude Include="Source\Window.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\AppCore.cpp" />
+    <ClCompile Include="Source\AppTime.cpp" />
+    <ClCompile Include="Source\Application.cpp" />
+    <ClCompile Include="Source\AssetManager.cpp" />
+    <ClCompile Include="Source\ChunkSystem.cpp" />
+    <ClCompile Include="Source\Collider.cpp" />
+    <ClCompile Include="Source\DLLLoading.cpp" />
+    <ClCompile Include="Source\Entity.cpp" />
+    <ClCompile Include="Source\Event.cpp" />
+    <ClCompile Include="Source\InputSystem.cpp" />
+    <ClCompile Include="Source\Layer.cpp" />
+    <ClCompile Include="Source\LogSystem.cpp" />
+    <ClCompile Include="Source\RandomGenerator.cpp" />
+    <ClCompile Include="Source\Serializer.cpp" />
+    <ClCompile Include="Source\Window.cpp" />
+  </ItemGroup>
+</Project>

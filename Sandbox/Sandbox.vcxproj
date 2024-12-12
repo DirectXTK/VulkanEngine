@@ -58,7 +58,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\Include;..\Include\vulkan;..\Renderer\Source;..\Application\Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Include;..\Include\vulkan;..\Renderer\Source;..\Application\Source;..\Include\FreeType;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -69,22 +69,25 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\Libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /B /Y "..\Libs\freetype.dll" "..\bin\windows\x86_64\$(ProjectName)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\Include;..\Include\vulkan;..\Renderer\Source;..\Application\Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Include;..\Include\vulkan;..\Renderer\Source;..\Application\Source;..\Include\FreeType;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalOptions>-MP %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
@@ -93,18 +96,21 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\Libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>/VERBOSE %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /B /Y "..\Libs\freetype.dll" "..\bin\windows\x86_64\$(ProjectName)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Examples\Testing\ExampleMenu.cpp" />
     <ClCompile Include="Examples\Testing\AnimationTestingLayer.cpp" />
     <ClCompile Include="Examples\Testing\CollisionTestingLayer.cpp" />
     <ClCompile Include="Examples\Testing\DefaultCameraControlls.cpp" />
     <ClCompile Include="Examples\Testing\DLLLoadingLayer.cpp" />
     <ClCompile Include="Examples\Testing\ECSTestingLayer.cpp" />
+    <ClCompile Include="Examples\Testing\ExampleMenu.cpp" />
+    <ClCompile Include="Examples\Testing\FontTestingLayer.cpp" />
     <ClCompile Include="Examples\Testing\GUITesting.cpp" />
     <ClCompile Include="Examples\Testing\SerializationTesting.cpp" />
     <ClCompile Include="Examples\Testing\TestingLayer.cpp" />
@@ -120,12 +126,13 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Examples\Testing\ExampleMenu.h" />
     <ClInclude Include="Examples\Testing\AnimationTestingLayer.h" />
     <ClInclude Include="Examples\Testing\CollisionTestingLayer.h" />
     <ClInclude Include="Examples\Testing\DefaultCameraControlls.h" />
     <ClInclude Include="Examples\Testing\DLLLoadingLayer.h" />
     <ClInclude Include="Examples\Testing\ECSTestingLayer.h" />
+    <ClInclude Include="Examples\Testing\ExampleMenu.h" />
+    <ClInclude Include="Examples\Testing\FontTestingLayer.h" />
     <ClInclude Include="Examples\Testing\GUITesting.h" />
     <ClInclude Include="Examples\Testing\SerializationTesting.h" />
     <ClInclude Include="Examples\Testing\TestingLayer.h" />

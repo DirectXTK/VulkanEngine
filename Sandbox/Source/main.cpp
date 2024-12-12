@@ -1,5 +1,6 @@
 #define DEMO_FEATURES
-#include "../Examples/Testing/GUITesting.h"
+//#include "../Examples/Testing/GUITesting.h"
+#include "../Examples/Testing/FontTestingLayer.h"
 int main() {
 	ApplicationSpecs specs{};
 	specs.WindowTitle = "Example";
@@ -8,8 +9,9 @@ int main() {
 	specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
 
 	Application app(specs);
-	app.AddLayer(new GUITestingLayer());
+	app.AddLayer(new FontTestingLayer());
 	app.Run();
    
+
     return 1;
 }

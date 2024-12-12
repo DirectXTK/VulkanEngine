@@ -56,7 +56,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\Application\Source;..\Include\vulkan;..\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Application\Source;..\Include\vulkan;..\Include;..\Include\FreeType;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -78,13 +78,13 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\Application\Source;..\Include\vulkan;..\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Application\Source;..\Include\vulkan;..\Include;..\Include\FreeType;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalOptions>-MP %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
@@ -108,6 +108,7 @@
     <ClInclude Include="Source\Context.h" />
     <ClInclude Include="Source\Descriptor.h" />
     <ClInclude Include="Source\Device.h" />
+    <ClInclude Include="Source\FontSystem.h" />
     <ClInclude Include="Source\FrameBuffer.h" />
     <ClInclude Include="Source\GUI.h" />
     <ClInclude Include="Source\Image.h" />
@@ -131,6 +132,7 @@
     <ClCompile Include="Source\Context.cpp" />
     <ClCompile Include="Source\Descriptor.cpp" />
     <ClCompile Include="Source\Device.cpp" />
+    <ClCompile Include="Source\FontSystem.cpp" />
     <ClCompile Include="Source\FrameBuffer.cpp" />
     <ClCompile Include="Source\GUI.cpp" />
     <ClCompile Include="Source\Image.cpp" />

@@ -19,7 +19,8 @@ project "Renderer"
       "%{prj.location}/../Application/Source/",
       "%{prj.location}/../Include/vulkan/",
 
-      "%{prj.location}/../Include"
+      "%{prj.location}/../Include",
+      GlobalIncludes,
     }
 
      libdirs{
