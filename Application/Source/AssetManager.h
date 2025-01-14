@@ -41,6 +41,7 @@ public:
 	void Init(Application* app);
 	void LoadAllResources(std::string FolderPath,ResourceType TypesToLoad);
 	GUUID LoadResource(void* Resource, ResourceType type,std::string Name);
+	GUUID ReloadResource(void* Resource, ResourceType type, std::string Name);
 	uint64_t GetResourceCount(ResourceType type) { return m_ResourceCount[type];}
 	template<typename T>
 	T* GetResource(GUUID Handle) {

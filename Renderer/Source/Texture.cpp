@@ -3,8 +3,11 @@
 #include "CommandBuffer.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb-master/stb_image.h"
-Texture::Texture(Context context,uint32_t Width, uint32_t Height,uint32_t ChannelCount,uint32_t* Pixels)
+Texture::Texture(Context context,uint32_t Width, uint32_t Height,uint32_t ChannelCount,void* Pixels)
 {
+	m_Width = Width;
+	m_Height = Height;
+
 	m_TextureData = new TextureData();
 	m_TextureData->m_Context = context;
 	m_TextureData->m_Width = Width;
@@ -126,15 +129,6 @@ void Texture::CopyFromBuffer(VkDevice device, Buffer* srcbuffer, VkCommandBuffer
 
 }
 
-Texture** Texture::CreateTextureAtlases(uint32_t* out_AtlasCount)
-{
-	Texture** textures = new Texture*[m_TextureData->m_TextureCount];
-	*out_AtlasCount = m_TextureData->m_TextureCount;
-	for (uint32_t i = 0; i < m_TextureData->m_TextureCount; i++) {
-		textures[i] = new Texture(this, i);
-	}
-	return textures;
-}
 
 Texture::~Texture()
 {
@@ -229,8 +223,29 @@ unsigned char* Texture::LoadTextureDataFromFile(std::string Path)
 
 void Texture::CreateTexture(void* initData)
 {
-	VkDeviceSize texturesize = m_TextureData->m_Width * m_TextureData->m_Height * m_TextureData->m_ChannelCount;
-	VkFormat ImageFormat = VK_FORMAT_R8G8B8A8_UNORM;
+	VkDeviceSize texturesize = m_Width * m_Height * m_TextureData->m_ChannelCount;
+	VkFormat ImageFormat;
+	switch (m_TextureData->m_ChannelCount) {
+	case 1: {
+		ImageFormat = VK_FORMAT_R8_UNORM;
+		break;
+	}
+	case 2: {
+		ImageFormat = VK_FORMAT_R8G8_UNORM;
+		break;
+	}
+	case 3: {
+		ImageFormat = VK_FORMAT_R8G8B8_UNORM;
+		break;
+	}
+	case 4: {
+		ImageFormat = VK_FORMAT_R8G8B8A8_UNORM;
+		break;
+	}
+	default: {
+		ImageFormat = VK_FORMAT_R8G8B8A8_UNORM;
+	}
+	}
 
 	//create stagging buffer
 	BufferDesc bufferdesc{};
@@ -352,6 +367,56 @@ void Texture::CreateTextureAtlas(const std::string& MetaData)
 	m_TextureData->m_TextureAtlasData = new TextureAtlasCoords[AtlasCoords.size()];
 	m_TextureData->m_TextureCount = (uint32_t)AtlasCoords.size();
 	memcpy(m_TextureData->m_TextureAtlasData, AtlasCoords.data(), sizeof(TextureAtlasCoords) * AtlasCoords.size());
+
+
+}
+
+Texture** Texture::GetTextureAtlas()
+{
+	Texture** textures = new Texture * [m_TextureData->m_TextureCount];
+	for (uint32_t i = 0; i < m_TextureData->m_TextureCount; i++) {
+		textures[i] = new Texture(this, i);
+	}
+	return textures;
+}
+
+uint32_t Texture::GetTextureAtlasSize()
+{
+	return m_TextureData->m_TextureCount;
+}
+
+void Texture::CreateTextureAtlas(uint32_t WidthOfOneTexture, uint32_t HeightOfOneTexture, uint32_t NumOfTexture)
+{
+	Float2 OneTextureSizeNormalized{ WidthOfOneTexture / m_Width,HeightOfOneTexture / m_Height };
+	uint32_t NumOfTexturesX{std::min(m_Width/ WidthOfOneTexture,NumOfTexture )};
+	uint32_t NumOfTexturesY{ NumOfTexture / NumOfTexturesX };
+
+	m_TextureData->m_TextureAtlasData = new TextureAtlasCoords[NumOfTexture];
+	m_TextureData->m_TextureCount = NumOfTexture;
+
+	for (uint32_t y = 0; y < NumOfTexturesY;y++) {
+		for (uint32_t x = 0; x < NumOfTexturesX; x++) {
+			m_TextureData->m_TextureAtlasData[x+(y* NumOfTexturesX)].SizeX = WidthOfOneTexture;
+			m_TextureData->m_TextureAtlasData[x + (y * NumOfTexturesX)].SizeY = HeightOfOneTexture;
+
+			m_TextureData->m_TextureAtlasData[x + (y * NumOfTexturesX)].Points[0] = { x * OneTextureSizeNormalized.x,y * OneTextureSizeNormalized.y };
+			Core::Log(ErrorType::Error, "Not finished");
+
+		}
+	}
+	//memcpy(m_TextureData->m_TextureAtlasData, AtlasCoords.data(), sizeof(TextureAtlasCoords) * NumOfTexture);
+
+
+}
+
+void Texture::CreateTextureAtlas(TextureAtlasCoords* coords, uint32_t NumOfTexture)
+{
+
+	m_TextureData->m_TextureAtlasData = new TextureAtlasCoords[NumOfTexture];
+	m_TextureData->m_TextureCount = NumOfTexture;
+
+	memcpy(m_TextureData->m_TextureAtlasData, coords, sizeof(TextureAtlasCoords) * NumOfTexture);
+	//memcpy(m_TextureData->m_TextureAtlasData, AtlasCoords.data(), sizeof(TextureAtlasCoords) * NumOfTexture);
 
 
 }

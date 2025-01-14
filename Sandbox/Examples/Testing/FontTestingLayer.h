@@ -13,6 +13,6 @@ public:
 	void OnDestroy()override;
 
 private:
-	FontSystem m_FontSystem{};
+	FontSystem* m_FontSystem{};
 };
 

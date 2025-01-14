@@ -61,7 +61,9 @@ void AssetManager::LoadAllResources(std::string FolderPath, ResourceType TypesTo
 
 
 			texture = GetResource<Texture>(Core::GetStringHash(TexturePath));
-			Texture** atlases = texture->CreateTextureAtlases(&AtlasCount);
+			
+			Texture** atlases = texture->GetTextureAtlas();
+			AtlasCount = texture->GetTextureAtlasSize();
 
 			//TexturePath = TexturePath.substr(0,TexturePath.size());
 			
@@ -94,8 +96,33 @@ void AssetManager::LoadAllResources(std::string FolderPath, ResourceType TypesTo
 
 GUUID AssetManager::LoadResource(void* Resource, ResourceType type,std::string Name)
 {
-	
 	GUUID ID = Core::GetStringHash(Name);
+	auto Index = m_Resources.find(ID);
+	if (Index == m_Resources.end()) 
+		Core::Log(ErrorType::Warning, "Resource is being loaded twice.If you intended to overwrite this resources please use ReloadResource() function");
+	
+	m_ResourceCount[type]++;
+	m_Resources[ID] = Resource;
+	return ID;
+}
+
+GUUID AssetManager::ReloadResource(void* Resource, ResourceType type, std::string Name)
+{
+	GUUID ID = Core::GetStringHash(Name);
+	void* OldResource = m_Resources[ID];
+	switch (type) {
+		case ResourceType::TEXTURE:{
+			Texture* texture = (Texture*)OldResource;
+			texture->~Texture();
+			break;
+		}
+		default: {
+			Core::Log(ErrorType::Error, "Implement other resource type cases at ReloardResource() function");
+			break;
+		}
+	}
+
+
 	m_ResourceCount[type]++;
 	m_Resources[ID] = Resource;
 	return ID;
@@ -126,7 +153,8 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 		GUUID TextureID =LoadTexture(TexturePath);
 
 		Texture* Basetexture = GetResource<Texture>(TextureID);
-		Texture** atlases = Basetexture->CreateTextureAtlases(&AtlasCount);
+		Texture** atlases = Basetexture->GetTextureAtlas();
+		AtlasCount = Basetexture->GetTextureAtlasSize();
 
 		//TexturePath = TexturePath.substr(0, TexturePath.size() - 4);
 		TexturePath = TexturePath.substr(FolderPath.size(), TexturePath.find(".json")-FolderPath.size());

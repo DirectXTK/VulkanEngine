@@ -13,7 +13,7 @@ public:
     Buffer(BufferDesc desc);
 
     VkBuffer* GetBuffer() { return &m_Buffer; }
-    void UploadToBuffer(VkDevice device, void* data, uint64_t Size);
+    void UploadToBuffer(VkDevice device, void* data, uint64_t Size,uint64_t Offset=0);
     Float2 ReadPixel(uint32_t x, uint32_t y, uint32_t Width, uint32_t Height);
     BufferDesc GetBufferDesc() { return m_Desc; }
 

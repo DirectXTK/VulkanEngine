@@ -10,11 +10,17 @@ struct TextureCreateInfo {
 	VkImageUsageFlagBits ImageUsageFlags{ VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT };
 	VkMemoryPropertyFlagBits MemoryPropertyFlags{};
 };
-
+enum class TextureCreateFlagBits {
+	DEFAULT=0,CREATEATLAS=2,
+};
+struct TextureAtlasCoords {
+	Float2 Points[4];
+	uint64_t SizeX, SizeY{};
+};
 class Texture
 {
 public:
-	Texture(Context context,uint32_t Width, uint32_t Height,uint32_t ChannelCount,uint32_t* Pixels);
+	Texture(Context context,uint32_t Width, uint32_t Height,uint32_t ChannelCount,void* Pixels );
 	Texture(Context context,std::string Path);
 
 	//Used for texture atlases.
@@ -33,8 +39,14 @@ public:
 	//texture atlas
 	//returns 4 points
 	Float2* GetTextureCoords() { return m_TextureData->m_TextureAtlasData[m_TextureIndex].Points; }
+	Float2* GetSubTextureCoords(uint32_t TextureIndex) { return m_TextureData->m_TextureAtlasData[TextureIndex].Points; }
 
-	Texture** CreateTextureAtlases(uint32_t* out_AtlasCount);
+	Texture** GetTextureAtlas();
+	//Small texture inside this bigger texture.
+	uint32_t GetTextureAtlasSize();
+	void CreateTextureAtlas(uint32_t WidthOfOneTexture, uint32_t HeightOfOneTexture, uint32_t NumOfTexture);
+	void CreateTextureAtlas(TextureAtlasCoords* coords, uint32_t NumOfTexture);
+
 
 	~Texture();
 private:
@@ -45,12 +57,10 @@ private:
 	void CreateTexture(void* initData);
 	void CreateTextureAtlas(const std::string& MetaData);
 
+
 	void CopyDataFromBuffer(VkCommandBuffer CommandBuffer, VkBuffer BufferSrc, VkImage ImageDst);
 
-	struct TextureAtlasCoords {
-		Float2 Points[4];
-		uint64_t SizeX, SizeY{};
-	};
+	
 	struct TextureData {
 		VkImage m_Image{};
 		VkImageView m_ImageView{};

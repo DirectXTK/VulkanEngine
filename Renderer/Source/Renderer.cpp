@@ -697,6 +697,79 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_VertexPointer += 4;
     }
 
+    void Renderer::SetCurrentFont(Texture* TextureFontAtlas)
+    {
+        m_FontTextureAtlas = TextureFontAtlas;
+    }
+
+    void Renderer::RenderText(const std::string& str, Float2 Position, Float2 BoundingBox[4], float CharSize)
+    {
+        //temp
+        Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
+        Float2 Size{ std::abs(BoundingBox[0].x - BoundingBox[3].x),std::abs(BoundingBox[0].y - BoundingBox[1].y) };
+        float Offset{};
+        GUUID TextureHandle = Core::GetStringHash("FONTAtlas");
+        float Space{ 0.06f };
+
+        if (m_Textures.size() == m_TextureSlotCount - 1)
+            FlushGeometry();
+        m_Textures[TextureHandle] = { m_FontTextureAtlas ,(uint32_t)m_Textures.size() + 1 };
+        m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
+
+        //Do this for every letter
+        for (uint32_t i = 0; i < str.size(); i++) {
+            int32_t LetterIndex = str[i]-33;
+
+            //edge cases
+            //space letter index ==-1
+
+
+            if (m_VertexPointer + 4 > m_VertexCount)
+                FlushGeometry();
+         
+              
+            TextureRenderingData texture = m_Textures[TextureHandle];
+
+            m_Vertices[m_VertexPointer].TextureID = texture.Index;
+            m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
+            m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
+            m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
+
+            if (LetterIndex != -1) {
+                m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[0];
+                m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[1];
+                m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[2];
+                m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[3];
+            }
+            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ Offset,BoundingBox[0].y,0.0f };
+            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ Offset,BoundingBox[1].y,0.0f };
+            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ Offset+ CharSize,BoundingBox[2].y,0.0f };
+            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ Offset+ CharSize,BoundingBox[3].y,0.0f };
+
+
+
+
+            m_Vertices[m_VertexPointer].Color = Color;
+            m_Vertices[m_VertexPointer + 1].Color = Color;
+            m_Vertices[m_VertexPointer + 2].Color = Color;
+            m_Vertices[m_VertexPointer + 3].Color = Color;
+
+
+
+            m_Vertices[m_VertexPointer].ID = 0;
+            m_Vertices[m_VertexPointer + 1].ID = 0;
+            m_Vertices[m_VertexPointer + 2].ID = 0;
+            m_Vertices[m_VertexPointer + 3].ID = 0;
+
+
+
+
+
+            m_VertexPointer += 4;
+            Offset += CharSize;
+        }
+    }
+
 
     void Renderer::DrawOutline(Float3 Position, Float2 Size,Float4 Color,float OutlineWidth)
     {

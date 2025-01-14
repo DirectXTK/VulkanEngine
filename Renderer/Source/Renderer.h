@@ -64,8 +64,10 @@ public:
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID);
 
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
-    //GUI 
 
+    void SetCurrentFont(Texture* TextureFontAtlas);
+    void RenderText(const std::string& str,Float2 Position, Float2 BoundingBox[4], float CharSize);
+    //GUI 
 
     void DrawOutline(Float3 Position, Float2 Size,Float4 Color, float OutlineWidth);
 
@@ -208,7 +210,8 @@ private:
     uint32_t m_VertexCountOutlines{};
     uint64_t m_VertexOutineMaxCountPerDrawCall{ 4 * 100 };
     Vertex* m_VertexOutline{};
-
+    //Text
+    Texture* m_FontTextureAtlas{};
 
 
 

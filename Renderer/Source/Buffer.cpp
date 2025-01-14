@@ -28,10 +28,10 @@
 
             vkBindBufferMemory(desc.Device,m_Buffer,m_Memory,0);
         }
-        void Buffer::UploadToBuffer(VkDevice device, void* data, uint64_t Size)
+        void Buffer::UploadToBuffer(VkDevice device, void* data, uint64_t Size,uint64_t Offset)
         {
             void* map{};
-            vkMapMemory(device, m_Memory, 0, m_BufferSize, 0, &map);
+            vkMapMemory(device, m_Memory, Offset, m_BufferSize, 0, &map);
             memcpy(map, data, Size);
             vkUnmapMemory(device, m_Memory);
         }
