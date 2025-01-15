@@ -66,7 +66,7 @@ public:
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
     void SetCurrentFont(Texture* TextureFontAtlas);
-    void RenderText(const std::string& str,Float2 Position, Float2 BoundingBox[4], float CharSize);
+    void RenderText(const char* Message,Float2 Position, Float2 BoundingBox[4], float CharSize);
     //GUI 
 
     void DrawOutline(Float3 Position, Float2 Size,Float4 Color, float OutlineWidth);

@@ -49,7 +49,7 @@ namespace Core{
 		    case ErrorType::Error : {
 				file << "Error: ";
 				std::cout << "Error: ";
-
+				__debugbreak();
 				break;
 			}
 			default: {

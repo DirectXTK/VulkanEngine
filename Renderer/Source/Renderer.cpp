@@ -702,11 +702,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_FontTextureAtlas = TextureFontAtlas;
     }
 
-    void Renderer::RenderText(const std::string& str, Float2 Position, Float2 BoundingBox[4], float CharSize)
+    void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float CharSize)
     {
+        //
+         float FixedPadding{0.00002f*CharSize};
         //temp
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
-        Float2 Size{ std::abs(BoundingBox[0].x - BoundingBox[3].x),std::abs(BoundingBox[0].y - BoundingBox[1].y) };
         float Offset{};
         GUUID TextureHandle = Core::GetStringHash("FONTAtlas");
         float Space{ 0.06f };
@@ -717,18 +718,23 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
 
         //Do this for every letter
-        for (uint32_t i = 0; i < str.size(); i++) {
-            int32_t LetterIndex = str[i]-33;
+        for (uint32_t i = 0; i < strlen(Message); i++) {
+            Float2 SubTextureSize{};
+            Float2 Size{};
+            int32_t LetterIndex = Message[i]-33;
 
             //edge cases
             //space letter index ==-1
 
-
+            if (Message[i] == '\0')
+                break;
+            else if (Message[i] == ' ')
+                Size.x = FixedPadding*2;
             if (m_VertexPointer + 4 > m_VertexCount)
                 FlushGeometry();
          
-              
             TextureRenderingData texture = m_Textures[TextureHandle];
+
 
             m_Vertices[m_VertexPointer].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
@@ -736,15 +742,24 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
 
             if (LetterIndex != -1) {
+                Size.x = texture.texture->GetSubTextureSize(LetterIndex).x/ texture.texture->GetWidth();
+                Size.y = texture.texture->GetSubTextureSize(LetterIndex).y / texture.texture->GetHeight();
+
                 m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[0];
                 m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[1];
                 m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[2];
                 m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[3];
             }
+            else {
+                m_Vertices[m_VertexPointer].TexCoords = { 0.0f,0.0f };
+                m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
+                m_Vertices[m_VertexPointer + 2].TexCoords = { 0.0f,0.0f };
+                m_Vertices[m_VertexPointer + 3].TexCoords = { 0.0f,0.0f };
+            }
             m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ Offset,BoundingBox[0].y,0.0f };
-            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ Offset,BoundingBox[1].y,0.0f };
-            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ Offset+ CharSize,BoundingBox[2].y,0.0f };
-            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ Offset+ CharSize,BoundingBox[3].y,0.0f };
+            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ Offset,BoundingBox[0].y+Size.y,0.0f };
+            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ Offset + Size.x,BoundingBox[0].y + Size.y,0.0f };
+            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ Offset + Size.x,BoundingBox[0].y,0.0f};
 
 
 
@@ -766,7 +781,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
             m_VertexPointer += 4;
-            Offset += CharSize;
+            Offset += Size.x+ FixedPadding;
         }
     }
 
@@ -816,7 +831,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::DrawParticle()
     {
     }
-
 
     void Renderer::CreateSamaphore(){
           VkSemaphoreCreateInfo semaphoreinfo{};

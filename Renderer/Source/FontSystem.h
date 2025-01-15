@@ -16,6 +16,14 @@ public:
 
 	Texture* GetFontAtlas();
 
+	void PushFont();
+	//Renders simple text.
+	// MaxCharacters 0 means unlimited.
+	//Returns true then max characters has been reached.
+	void RenderText(const char* Message,Float2 Position,Float2 Size,uint32_t MaxCharacters=0);
+
+	void PopFont();
+
 	~FontSystem();
 private:
 	void* m_App{};

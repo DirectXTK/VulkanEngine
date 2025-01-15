@@ -18,10 +18,7 @@ FontSystem::FontSystem(void* App)
 	else if (error) {
 		Core::Log(ErrorType::Error, "Failed to open/read or the font is broken ");
 	}
-	else {
-		Core::Log(ErrorType::Error, "FaceCount:", m_Face->num_glyphs);
-		
-	}
+	
 	//ReRenderFaces();
 	
 
@@ -29,62 +26,12 @@ FontSystem::FontSystem(void* App)
 
 void FontSystem::Run(void* app,void* iRenderer)
 {
-	/*
-	Renderer* renderer = (Renderer*)iRenderer;
-	Application* ap = (Application*)app;
-	FT_GlyphSlot slot = m_Face->glyph;
-	m_Face.gl
-
-	uint32_t GlyphIndex = FT_Get_Char_Index(m_Face, 'a');
-
-	FT_Error error=FT_Load_Glyph(m_Face, GlyphIndex, FT_LOAD_DEFAULT);
-	if (error)
-		Core::Log(ErrorType::Error, "Failed to load glyph");
-
-	 error = FT_Render_Glyph(slot,FT_RENDER_MODE_NORMAL);
-	if (error)
-		Core::Log(ErrorType::Error, "Failed to render glyph");
-
-	static bool Init{false};
-	if (!Init) {
-	 m_Texture= new Texture(renderer->GetContext(),slot->bitmap.width,slot->bitmap.pitch, 4,(uint32_t*)slot->bitmap.buffer);
-	 Init = true;
-	}
 	
-
-
-	GUUID TextId = ap->GetAssetManager()->LoadResource(m_Texture, ResourceType::TEXTURE, "TestingFont");
-
-	
-
-	 GlyphIndex = FT_Get_Char_Index(m_Face, 'u');
-
-	 error = FT_Load_Glyph(m_Face, GlyphIndex, FT_LOAD_DEFAULT);
-	if (error)
-		Core::Log(ErrorType::Error, "Failed to load glyph");
-
-	error = FT_Render_Glyph(slot, FT_RENDER_MODE_NORMAL);
-	if (error)
-		Core::Log(ErrorType::Error, "Failed to render glyph");
-
-	static bool Init1{ false };
-	if (!Init1) {
-		m_Texture1 = new Texture(renderer->GetContext(), slot->bitmap.width, slot->bitmap.pitch, 4, (uint32_t*)slot->bitmap.buffer);
-		Init1 = true;
-	}
-
-	GUUID TextId1 = ap->GetAssetManager()->LoadResource(m_Texture1, ResourceType::TEXTURE, "TestingFont1");
-	renderer->DrawQuad({ 0.5f,0.5f,0.0f }, { 0.0f,0.0f,0.0f,1.0f }, { 0.1f,0.1f }, TextId, 0);
-
-
-	renderer->DrawQuad({ 0.71f,0.5f,0.0f }, { 0.0f,0.0f,0.0f,1.0f }, { 0.1f,0.1f }, TextId1, 0);
-	*/
-
 }
 
 void FontSystem::SetCharcterSize(float CharSize)
 {
-	m_CharacterSize = CharSize*16;
+	m_CharacterSize = CharSize;
 	ReRenderFaces();
 }
 
@@ -101,6 +48,27 @@ uint32_t FontSystem::GetHeightOfChar()
 Texture* FontSystem::GetFontAtlas()
 {
 	return m_FontAtlas;
+}
+
+void FontSystem::PushFont()
+{
+}
+
+void FontSystem::RenderText(const char* Message, Float2 Position, Float2 Size, uint32_t MaxCharacters)
+{
+	Float2 BoundingBox[4];
+	BoundingBox[0] = { Position.x - Size.x,Position.y - Size.y };
+	BoundingBox[1] = { Position.x - Size.x,Position.y + Size.y };
+	BoundingBox[2] = { Position.x + Size.x,Position.y + Size.y };
+	BoundingBox[3] = { Position.x + Size.x,Position.y - Size.y };
+
+
+	Renderer* renderer = ((Application*)m_App)->m_Renderer;
+	renderer->RenderText(Message, Position, BoundingBox, m_CharacterSize);
+}
+
+void FontSystem::PopFont()
+{
 }
 
 FontSystem::~FontSystem()
@@ -122,6 +90,7 @@ void FontSystem::ReRenderFaces()
 	int64_t OffsetX{0};
 	int64_t OffsetY{0};
 	TextureAtlasCoords* AtlasCoords{};
+	Float2* SubTextureSizes{};
 	uint32_t SizeX{16};
 	uint32_t SizeY{ 16 };
 	int64_t MaxY{};
@@ -130,6 +99,7 @@ void FontSystem::ReRenderFaces()
 	FontAtlasHeight = m_Face->max_advance_height;
 
 	AtlasCoords = new TextureAtlasCoords[m_Face->num_glyphs];
+	SubTextureSizes = new Float2[m_Face->num_glyphs];
 
 	error = FT_Select_Charmap(m_Face, FT_ENCODING_UNICODE);
 	if (error)
@@ -138,7 +108,7 @@ void FontSystem::ReRenderFaces()
 	uint32_t* AtlasMapBitmap = new uint32_t[FontAtlasWidth * FontAtlasHeight];
 	memset(AtlasMapBitmap,0x00000000, FontAtlasWidth * FontAtlasHeight*sizeof(uint32_t));
 
-	for (uint32_t i = 0; i < m_Face->num_glyphs; i++) {
+	for (uint32_t i = 0; i <= m_Face->num_glyphs; i++) {
 		uint32_t GlyphIndex = FT_Get_Char_Index(m_Face, i);
 		if (GlyphIndex == 0)
 			continue;
@@ -179,6 +149,7 @@ void FontSystem::ReRenderFaces()
 		AtlasCoords[SubTextureIndex].Points[2] = { float((SizeX+OffsetX) / (float)FontAtlasWidth),float(OffsetY / (float)FontAtlasHeight) };
 		AtlasCoords[SubTextureIndex].Points[3] = { float((SizeX+OffsetX) / (float)FontAtlasWidth) ,float((SizeY+OffsetY) / (float)FontAtlasHeight)  };
 
+		SubTextureSizes[SubTextureIndex] = { (float)SizeX,(float)SizeY };
 
 		for (uint32_t x = 0; x < slot->bitmap.width; x++) {
 			for (uint32_t y = 0; y < slot->bitmap.rows; y++) {
@@ -187,16 +158,13 @@ void FontSystem::ReRenderFaces()
 		}
 		OffsetX += AtlasCoords[SubTextureIndex].SizeX;
 		SubTextureIndex++;
-		Core::Log(ErrorType::Info, "PixelMode ", slot->format);
-		if (FT_GLYPH_FORMAT_BITMAP == slot->format) {
-			Core::Log(ErrorType::Info, "IsBitmap");
-		}
+		
 		
 
 
 	}
 	m_FontAtlas = new Texture(app->m_Renderer->GetContext(), FontAtlasWidth, FontAtlasHeight, 4, AtlasMapBitmap);
-	m_FontAtlas->CreateTextureAtlas(AtlasCoords, SubTextureIndex);
+	m_FontAtlas->CreateTextureAtlas(AtlasCoords, SubTextureIndex,SubTextureSizes);
 
 	delete[] AtlasCoords;
 }

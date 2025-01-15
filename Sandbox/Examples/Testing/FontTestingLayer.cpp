@@ -7,7 +7,7 @@ FontTestingLayer::FontTestingLayer(): Layer("FontTestingLayer")
 void FontTestingLayer::OnCreate()
 {
 	m_FontSystem = new FontSystem(m_App);
-	m_FontSystem->SetCharcterSize( 96.f);
+	m_FontSystem->SetCharcterSize( 96.f*16);
 	Texture* fontatlas = m_FontSystem->GetFontAtlas();
 
 	m_App->m_AssetManager.LoadResource(fontatlas, ResourceType::TEXTURE, "FONTAtlas");
@@ -17,14 +17,8 @@ void FontTestingLayer::OnCreate()
 
 void FontTestingLayer::OnUpdate(float DeltaTime)
 {
-	Float2 BoundingBox[4] = {
-		{0.5f,0.5f},
-		{0.5f,0.54f},
-		{0.9f,0.54f},
-		{0.9f,0.5f}
-	};
-
-	m_App->m_Renderer->RenderText("OPA!! LAFA", { 0.5f,0.5f }, BoundingBox,0.1f);
+	
+	m_FontSystem->RenderText("ZYNO", { 0.5f,0.5f }, { 0.2f,0.1f });
 }
 
 void FontTestingLayer::OnGUI()

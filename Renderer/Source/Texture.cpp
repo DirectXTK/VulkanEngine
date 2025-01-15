@@ -409,13 +409,18 @@ void Texture::CreateTextureAtlas(uint32_t WidthOfOneTexture, uint32_t HeightOfOn
 
 }
 
-void Texture::CreateTextureAtlas(TextureAtlasCoords* coords, uint32_t NumOfTexture)
+void Texture::CreateTextureAtlas(TextureAtlasCoords* coords, uint32_t NumOfTexture,Float2* SubTextureSizes)
 {
 
 	m_TextureData->m_TextureAtlasData = new TextureAtlasCoords[NumOfTexture];
 	m_TextureData->m_TextureCount = NumOfTexture;
 
 	memcpy(m_TextureData->m_TextureAtlasData, coords, sizeof(TextureAtlasCoords) * NumOfTexture);
+	for (uint32_t i = 0; i < NumOfTexture; i++) {
+		m_TextureData->m_TextureAtlasData[i].SizeX = SubTextureSizes[i].x;
+		m_TextureData->m_TextureAtlasData[i].SizeY = SubTextureSizes[i].y;
+
+	}
 	//memcpy(m_TextureData->m_TextureAtlasData, AtlasCoords.data(), sizeof(TextureAtlasCoords) * NumOfTexture);
 
 

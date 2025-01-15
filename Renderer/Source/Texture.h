@@ -40,12 +40,14 @@ public:
 	//returns 4 points
 	Float2* GetTextureCoords() { return m_TextureData->m_TextureAtlasData[m_TextureIndex].Points; }
 	Float2* GetSubTextureCoords(uint32_t TextureIndex) { return m_TextureData->m_TextureAtlasData[TextureIndex].Points; }
+	Float2 GetSubTextureSize(uint32_t TextureIndex) { return { (float)m_TextureData->m_TextureAtlasData[TextureIndex].SizeX, (float)m_TextureData->m_TextureAtlasData[TextureIndex].SizeY };}
 
 	Texture** GetTextureAtlas();
 	//Small texture inside this bigger texture.
 	uint32_t GetTextureAtlasSize();
 	void CreateTextureAtlas(uint32_t WidthOfOneTexture, uint32_t HeightOfOneTexture, uint32_t NumOfTexture);
-	void CreateTextureAtlas(TextureAtlasCoords* coords, uint32_t NumOfTexture);
+	//used for differentSizedTextures
+	void CreateTextureAtlas(TextureAtlasCoords* coords, uint32_t NumOfTexture,Float2* SubTextureSizes);
 
 
 	~Texture();

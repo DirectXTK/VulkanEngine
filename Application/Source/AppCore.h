@@ -30,6 +30,9 @@
 #include "RandomGenerator.h"
 #include "AppTime.h"
 
+//Debug stuff
+#include <intrin.h>
+
 #ifdef max
 #undef max
 #endif
