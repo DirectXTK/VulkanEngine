@@ -54,17 +54,55 @@ void FontSystem::PushFont()
 {
 }
 
-void FontSystem::RenderText(const char* Message, Float2 Position, Float2 Size, uint32_t MaxCharacters)
+void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Float2 Position, Float2 Size, uint32_t MaxCharacters)
 {
-	Float2 BoundingBox[4];
-	BoundingBox[0] = { Position.x - Size.x,Position.y - Size.y };
-	BoundingBox[1] = { Position.x - Size.x,Position.y + Size.y };
-	BoundingBox[2] = { Position.x + Size.x,Position.y + Size.y };
-	BoundingBox[3] = { Position.x + Size.x,Position.y - Size.y };
-
-
+	Application* app = (Application*)m_App;
 	Renderer* renderer = ((Application*)m_App)->m_Renderer;
-	renderer->RenderText(Message, Position, BoundingBox, m_CharacterSize);
+	bool ScrollableBoundBox{};
+
+
+	m_WriteCooldown -= app->GetDeltaTime();
+	
+
+	Float2 BoundingBox[4];
+	BoundingBox[0] = { Position.x ,Position.y  };
+	BoundingBox[1] = { Position.x ,Position.y + Size.y };
+	BoundingBox[2] = { Position.x + Size.x,Position.y + Size.y };
+	BoundingBox[3] = { Position.x + Size.x,Position.y };
+	
+
+	//Editing of the buffer
+	if (m_CharEditedIndex != -1) {
+		if (m_WriteCooldown <= 0) {
+			char PressedChar = app->m_InputSystem.GetWriteableKeyPressed();
+
+			if (PressedChar != 0) {
+				memcpy(Buffer+ m_CharEditedIndex+1, Buffer + m_CharEditedIndex , BufferSize - m_CharEditedIndex);
+
+				Buffer[m_CharEditedIndex] = app->m_InputSystem.GetWriteableKeyPressed();
+				m_CharEditedIndex++;
+				Buffer[BufferSize - 1] = '\0';
+				m_WriteCooldown = SEC(0.2f);
+			}
+		}
+	}
+
+	if (app->m_InputSystem.IsMouseClicked(MouseCodes::LEFT)&& app->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID).ID) {
+		m_PointerLocation = app->GetWorldMousePos();
+		m_IsPointerActive = true;
+		m_CharEditedIndex = renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding * m_CharacterSize, true, m_PointerLocation);
+
+	}
+	
+	renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding * m_CharacterSize, m_IsPointerActive, m_PointerLocation);
+
+	//if (m_CharEditedIndex == -1)
+		//Core::Log(ErrorType::Error, "Failed to find the char index.");
+	//DrawPointer()
+	// 
+	//Draw the invisible barrier that  provides the selecting 
+	renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,0.0f }, { Size.x * 0.5f,Size.y * 0.5f },Core::GetStringHash(ID).ID);
+
 }
 
 void FontSystem::PopFont()
@@ -73,6 +111,13 @@ void FontSystem::PopFont()
 
 FontSystem::~FontSystem()
 {
+}
+void FontSystem::DrawPointer(Float2 Position, float CharacterSize,float SizeY)
+{
+	Application* app = (Application*)m_App;
+	Renderer* renderer = app->m_Renderer;
+
+	renderer->DrawQuad({ Position.x,Position.y }, { 1.0f,1.0f,1.0f,1.0f }, { m_FixedPadding * CharacterSize ,SizeY},0);
 }
 void FontSystem::ReRenderFaces()
 {

@@ -17,8 +17,20 @@ void FontTestingLayer::OnCreate()
 
 void FontTestingLayer::OnUpdate(float DeltaTime)
 {
-	
-	m_FontSystem->RenderText("ZYNO", { 0.5f,0.5f }, { 0.2f,0.1f });
+	static char Buffer[255];
+	static bool Init{ true };
+	if (Init) {
+	Init = false;
+	Buffer[0] = 'Z';
+	Buffer[1] = 'I';
+	Buffer[2] = 'N';
+	Buffer[3] = 'O';
+
+
+	}
+
+	m_FontSystem->InputText("", Buffer, 255, {0.2f,0.5f}, {1.5f,0.1f}, 0);
+	//m_App->m_Renderer->DrawOutline({ 0.45f,0.525f }, { 0.5f,0.05f }, { 1.0f,1.0f,1.0f,1.0f }, 0.001f);
 }
 
 void FontTestingLayer::OnGUI()

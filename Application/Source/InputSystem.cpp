@@ -44,7 +44,17 @@ bool InputSystem::IsKeyReleased(KeyCodes keycode)
 	auto state =  glfwGetKey(m_CurrentWindow,(int)keycode);
 	return state == GLFW_RELEASE;
 }
+char InputSystem::GetWriteableKeyPressed() {
 
+	//33 is the first character by unicode and 126 is the last	
+		for (uint32_t i = 33; i < 126; i++) {
+			if (glfwGetKey(m_CurrentWindow, i) == GLFW_PRESS)
+				return i;
+
+		}
+
+		return 0;
+}
 	bool IsMouseClicked(int Button);
 
 Float2 InputSystem::GetMousePos()

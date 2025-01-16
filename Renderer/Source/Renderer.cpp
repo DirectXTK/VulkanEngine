@@ -702,11 +702,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_FontTextureAtlas = TextureFontAtlas;
     }
 
-    void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float CharSize)
+    int64_t Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,bool DrawPointer ,Float2 PointerPos)
     {
+        //Remember to check if all the font widths are the same !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //
-         float FixedPadding{0.00002f*CharSize};
         //temp
+        //Char being edited index
+        int64_t CharIndex{-1};
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
         float Offset{};
         GUUID TextureHandle = Core::GetStringHash("FONTAtlas");
@@ -730,9 +732,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 break;
             else if (Message[i] == ' ')
                 Size.x = FixedPadding*2;
-            if (m_VertexPointer + 4 > m_VertexCount)
+            if (m_VertexPointer + 8 > m_VertexCount)
                 FlushGeometry();
-         
+           
             TextureRenderingData texture = m_Textures[TextureHandle];
 
 
@@ -740,7 +742,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
-
             if (LetterIndex != -1) {
                 Size.x = texture.texture->GetSubTextureSize(LetterIndex).x/ texture.texture->GetWidth();
                 Size.y = texture.texture->GetSubTextureSize(LetterIndex).y / texture.texture->GetHeight();
@@ -756,6 +757,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 m_Vertices[m_VertexPointer + 2].TexCoords = { 0.0f,0.0f };
                 m_Vertices[m_VertexPointer + 3].TexCoords = { 0.0f,0.0f };
             }
+            //Stop drawing if text is going out of bounds.
+            if (BoundingBox[0].x + Size.x + FixedPadding+Offset > BoundingBox[3].x)
+                break;
+         
             m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ Offset,BoundingBox[0].y,0.0f };
             m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ Offset,BoundingBox[0].y+Size.y,0.0f };
             m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ Offset + Size.x,BoundingBox[0].y + Size.y,0.0f };
@@ -781,8 +786,20 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
             m_VertexPointer += 4;
+            //Draw the pointer
+            if (DrawPointer) {
+                uint32_t OldVertexPointer = m_VertexPointer - 4;
+                if (m_Vertices[OldVertexPointer].Position.x > PointerPos.x) {
+                    float PointerYPos = std::abs(BoundingBox[0].y - BoundingBox[1].y);
+                    DrawQuad({ m_Vertices[OldVertexPointer].Position.x - FixedPadding,m_Vertices[OldVertexPointer].Position.y + PointerYPos,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding,PointerYPos * 0.5f }, 0);
+                    DrawPointer = false;
+                    CharIndex = i;
+                }
+            }
+
             Offset += Size.x+ FixedPadding;
         }
+        return CharIndex;
     }
 
 

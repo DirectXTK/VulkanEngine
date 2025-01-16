@@ -12,6 +12,8 @@ public:
 
 	bool IsKeyPressed(KeyCodes keycode);
 	bool IsKeyReleased(KeyCodes keycode);
+	//if this returns 0 means no keys are pressed.
+	char GetWriteableKeyPressed();
 
 	bool IsMouseClicked(MouseCodes codes,bool Hold = false);
 
