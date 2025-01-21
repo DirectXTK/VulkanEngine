@@ -787,12 +787,16 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             m_VertexPointer += 4;
             //Draw the pointer
+               uint32_t OldVertexPointer = m_VertexPointer - 4;
             if (DrawPointer) {
-                uint32_t OldVertexPointer = m_VertexPointer - 4;
-                if (m_Vertices[OldVertexPointer].Position.x > PointerPos.x) {
-                    float PointerYPos = std::abs(BoundingBox[0].y - BoundingBox[1].y);
-                    DrawQuad({ m_Vertices[OldVertexPointer].Position.x - FixedPadding,m_Vertices[OldVertexPointer].Position.y + PointerYPos,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding,PointerYPos * 0.5f }, 0);
+                if (m_Vertices[OldVertexPointer+3].Position.x >= PointerPos.x) {
+                    DrawQuad({ m_Vertices[OldVertexPointer].Position.x - FixedPadding,m_Vertices[OldVertexPointer].Position.y + (Size.y*0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding*0.5f,Size.y*0.5f  }, 0);
                     DrawPointer = false;
+                    CharIndex = i;
+                }
+            }
+            else if (CharIndex == -1) {
+                if (m_Vertices[OldVertexPointer + 3].Position.x >= PointerPos.x) {
                     CharIndex = i;
                 }
             }

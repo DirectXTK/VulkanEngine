@@ -47,7 +47,10 @@ private:
 	Float2 m_PointerLocation{};
 	bool m_IsPointerActive{false};
 	int64_t m_CharEditedIndex{-1};
+	float m_PointerBlinking{0.0f};
 	float m_WriteCooldown{0.0f};
+	bool m_Show{ false };
+
 
 	struct TextData {
 		const char* Message{};

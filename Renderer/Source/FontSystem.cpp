@@ -62,7 +62,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 
 
 	m_WriteCooldown -= app->GetDeltaTime();
-	
+	m_PointerBlinking -= app->GetDeltaTime();
 
 	Float2 BoundingBox[4];
 	BoundingBox[0] = { Position.x ,Position.y  };
@@ -83,18 +83,38 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 				m_CharEditedIndex++;
 				Buffer[BufferSize - 1] = '\0';
 				m_WriteCooldown = SEC(0.2f);
+				m_PointerBlinking = SEC(0.6f);
+				m_Show = true;
 			}
 		}
 	}
 
 	if (app->m_InputSystem.IsMouseClicked(MouseCodes::LEFT)&& app->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID).ID) {
-		m_PointerLocation = app->GetWorldMousePos();
+		m_PointerLocation = app->GetMousePosNorm();
 		m_IsPointerActive = true;
 		m_CharEditedIndex = renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding * m_CharacterSize, true, m_PointerLocation);
 
 	}
+	//Pointer blinking
+	if (m_IsPointerActive) {
+		if (m_PointerBlinking <= 0.0f) {
+			if (m_Show) {
+				m_Show = false;
+				m_PointerBlinking = SEC(0.6f);
+
+			}
+			else {
+				m_Show = true;
+				m_PointerBlinking = SEC(0.6f);
+
+			}
+		}
+		
+	}
+
+		renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding * m_CharacterSize, m_Show, m_PointerLocation);
+
 	
-	renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding * m_CharacterSize, m_IsPointerActive, m_PointerLocation);
 
 	//if (m_CharEditedIndex == -1)
 		//Core::Log(ErrorType::Error, "Failed to find the char index.");
