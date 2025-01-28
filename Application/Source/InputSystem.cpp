@@ -1,34 +1,64 @@
 #include "InputSystem.h"
 #include "Application.h"
 double scrollx,scrolly;
+InputSystem* g_InputSystem{};
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	scrollx=xoffset;
 	scrolly=yoffset;
 	
 }
-	void InputSystem::Init(GLFWwindow* window){
+void WindowCloseCallback(GLFWwindow* Window) {
+	WindowEvent event{};
+	event.Type = WindowEventType::ShutDown;
+
+	assert(g_InputSystem);
+	g_InputSystem->DispatchEventW(event);
+}
+void KeyCallBack(GLFWwindow* window,int Key,int ScanCode,int action,int mods){
+
+	assert(g_InputSystem);
+	g_InputSystem->DispatchEventK(window, Key, ScanCode, action, mods);
+}
+
+void MouseButtonCallBack(GLFWwindow* window, int Key, int Action, int Mod) {
+	assert(g_InputSystem);
+	g_InputSystem->DispatchEventM(window, Key, Action, Mod);
+}
+void InputSystem::Init(GLFWwindow* window){
 			m_CurrentWindow = window;
 			//glfwSetInputMode(m_CurrentWindow,GLFW_STICKY_MOUSE_BUTTONS,1);
 	glfwSetScrollCallback(m_CurrentWindow,scroll_callback);
+	glfwSetMouseButtonCallback(m_CurrentWindow, MouseButtonCallBack);
+	glfwSetKeyCallback(m_CurrentWindow, KeyCallBack);
+	glfwSetWindowCloseCallback(m_CurrentWindow, WindowCloseCallback);
+}
 
-	}
-
-void InputSystem::DispatchEventM(MouseEvent& event)
+void InputSystem::DispatchEventM(GLFWwindow* window, int Key, int Action, int Mods)
 {
-	
+	MouseEvent Event{};
+	Event.Code = (MouseCodes)Key;
+	Event.State = Action;
+	if (m_Callbacks.MouseButtonCallback)
+		m_Callbacks.MouseButtonCallback(&Event);
+
+}
+void InputSystem::DispatchEventK(GLFWwindow* window, int Key, int ScanCode, int Action, int Mods)
+{
+	KeyBoardEvent Event{};
+	Event.Key = (KeyCodes)Key;
+	Event.State = (KeyState)Action;
+	if(m_Callbacks.KeyBoardCallback)
+		m_Callbacks.KeyBoardCallback(&Event);
 }
 float InputSystem::GetScroll(){
 	return (float)scrolly;
 }
 
-void InputSystem::DispatchEventK(KeyBoardEvent& event)
-{
-	
-}
-
 void InputSystem::DispatchEventW(WindowEvent& event)
 {
+	if (m_Callbacks.WindowCallback)
+		m_Callbacks.WindowCallback(&event);
 }
 
 bool InputSystem::IsKeyPressed(KeyCodes keycode)
@@ -144,3 +174,9 @@ void InputSystem::ResetInput()
 	
 
 }
+
+void InputSystem::AddCallbacks(InputCallbacks* callbacks)
+{
+	m_Callbacks = *callbacks;
+}
+

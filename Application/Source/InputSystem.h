@@ -1,13 +1,21 @@
 #pragma once
 #include "Event.h"
 #include "Window.h"
+
+
+struct InputCallbacks {
+	void(*MouseButtonCallback)(MouseEvent*);
+	void(*KeyBoardCallback)(KeyBoardEvent*);
+	void(*WindowCallback)(WindowEvent*);
+
+};
 class InputSystem
 {
 public:
 	void Init(GLFWwindow* window);
 
-	void DispatchEventM(MouseEvent& event);
-	void DispatchEventK(KeyBoardEvent& event);
+	void DispatchEventM(GLFWwindow* window,int Key,int Action,int Mods);
+	void DispatchEventK(GLFWwindow* window,int Key,int ScanCode,int Action,int Mods);
 	void DispatchEventW(WindowEvent& event);
 
 	bool IsKeyPressed(KeyCodes keycode);
@@ -24,8 +32,12 @@ public:
 	//Every frame
 	void ResetMouseChange();
 	void ResetInput();
+	//Call back adding
+	void AddCallbacks(InputCallbacks* callbacks);
 private:
 	bool m_KeyCodes[256];
+
+	InputCallbacks m_Callbacks{};
 
 	MouseEvent m_MouseEvents[7];
 

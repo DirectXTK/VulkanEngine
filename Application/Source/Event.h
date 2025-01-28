@@ -4,15 +4,16 @@ class InputSystem;
 enum class WindowEventType{ShutDown,Resize};
 enum class KeyCodes{A=0x41,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,PLUS= 0xBB,MINUS= 0xBD};
 enum class MouseCodes {LEFT, RIGHT,SCROLL};
+enum class KeyState {RELEASED,PRESSED,HOLD};
+
 class KeyBoardEvent {
 public:
 	KeyCodes Key{};
-	bool Pressed{  };
+	KeyState State{  };
 };
 class MouseEvent {
 public:
 	MouseCodes Code{};
-	Float2 Data{};
 	bool State{};
 };
 class WindowEvent {

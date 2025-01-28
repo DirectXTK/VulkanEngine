@@ -91,6 +91,8 @@
         m_InputSystem.ResetInput();
         glfwSwapBuffers(m_Window->GetHandle());
         glfwPollEvents();
+  
+
         m_InputSystem.ResetMouseChange();
 
     }
@@ -101,6 +103,11 @@
     Collider collider = m_CollisionSystem.CreateCollider();
     collider.Update(Position,Size);
      return Collider();
+ }
+
+ void Application::AddCallback( InputCallbacks* callbacks)
+ {
+     m_InputSystem.AddCallbacks(callbacks);
  }
 
  

@@ -15,7 +15,6 @@ struct ApplicationSpecs{
     Float4 ClearColor{ 0.5f,0.5f,0.5f,1.0f };
 };
 
-
 class Application {
 public:
     Application(ApplicationSpecs specs);
@@ -38,8 +37,12 @@ public:
 
     void Run();
     Collider CreateCollider(Float2* Position, Float2 *Size);
-
+    void AddCallback( InputCallbacks* callbacks);
+    
 private:
+
+
+
     Window* m_Window{};
 
     LayerController m_LayerController{ };

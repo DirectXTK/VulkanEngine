@@ -702,13 +702,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_FontTextureAtlas = TextureFontAtlas;
     }
 
-    int64_t Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,bool DrawPointer ,Float2 PointerPos)
+    int64_t Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,bool DrawPointer ,Float2 PointerPos,int64_t CharBeingEdited)
     {
         //Remember to check if all the font widths are the same !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //
         //temp
         //Char being edited index
-        int64_t CharIndex{-1};
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
         float Offset{};
         GUUID TextureHandle = Core::GetStringHash("FONTAtlas");
@@ -792,18 +791,22 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 if (m_Vertices[OldVertexPointer+3].Position.x >= PointerPos.x) {
                     DrawQuad({ m_Vertices[OldVertexPointer].Position.x - FixedPadding,m_Vertices[OldVertexPointer].Position.y + (Size.y*0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding*0.5f,Size.y*0.5f  }, 0);
                     DrawPointer = false;
-                    CharIndex = i;
+                    if (CharBeingEdited != -1)
+                        CharBeingEdited++;
+                    else
+                        CharBeingEdited = i;
                 }
+                
             }
-            else if (CharIndex == -1) {
+            else if (CharBeingEdited == -1) {
                 if (m_Vertices[OldVertexPointer + 3].Position.x >= PointerPos.x) {
-                    CharIndex = i;
+                    CharBeingEdited = i;
                 }
             }
 
             Offset += Size.x+ FixedPadding;
         }
-        return CharIndex;
+        return CharBeingEdited;
     }
 
 

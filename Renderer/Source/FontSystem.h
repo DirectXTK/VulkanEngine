@@ -25,9 +25,12 @@ public:
 
 	void PopFont();
 
+	void MouseCallBack(MouseEvent* event);
+
 	~FontSystem();
 private:
 	//Character size is used for the pointer size
+	int64_t CalculateCharBeingEditedIndex();
 	void DrawPointer(Float2 Position,float CharacterSize,float SizeY);
 
 	void* m_App{};

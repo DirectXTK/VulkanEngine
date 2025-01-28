@@ -1,10 +1,18 @@
 #include "FontSystem.h"
 #include "Renderer.h"
 #include "Application.h"
+
+FontSystem* g_FontSystem{};
+void MouseCallBackFn(MouseEvent* event) {
+	g_FontSystem->MouseCallBack(event);
+}
 FontSystem::FontSystem(void* App)
 {
 	m_App = App;
+	g_FontSystem = this;
+
 	const char* FontPath = "C:\\Repos\\VulkanEngine\\Resources\\Fonts\\Daydream.ttf";
+	Application* CurrentApp = (Application*)App;
 
 	FT_Error error = FT_Init_FreeType(&m_Library);
 	if (error) {
@@ -18,9 +26,12 @@ FontSystem::FontSystem(void* App)
 	else if (error) {
 		Core::Log(ErrorType::Error, "Failed to open/read or the font is broken ");
 	}
-	
+
 	//ReRenderFaces();
-	
+	//InputCallbacks callbacks{};
+	//callbacks.MouseButtonCallback = MouseCallBackFn;
+
+	//CurrentApp->AddCallback(&callbacks);
 
 }
 
@@ -112,7 +123,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		
 	}
 
-		renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding * m_CharacterSize, m_Show, m_PointerLocation);
+	 renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding * m_CharacterSize, m_Show, m_PointerLocation,m_CharEditedIndex);
 
 	
 
@@ -127,6 +138,11 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 
 void FontSystem::PopFont()
 {
+}
+
+void FontSystem::MouseCallBack(MouseEvent* event)
+{
+	Core::Log(ErrorType::Info, "Mouse button ", event->Code, " Mouse state ", event->State);
 }
 
 FontSystem::~FontSystem()
