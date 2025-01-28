@@ -12,21 +12,22 @@ void WindowCloseCallback(GLFWwindow* Window) {
 	WindowEvent event{};
 	event.Type = WindowEventType::ShutDown;
 
-	assert(g_InputSystem);
+	assert(g_InputSystem!=nullptr);
 	g_InputSystem->DispatchEventW(event);
 }
 void KeyCallBack(GLFWwindow* window,int Key,int ScanCode,int action,int mods){
 
-	assert(g_InputSystem);
+	assert(g_InputSystem != nullptr);
 	g_InputSystem->DispatchEventK(window, Key, ScanCode, action, mods);
 }
 
 void MouseButtonCallBack(GLFWwindow* window, int Key, int Action, int Mod) {
-	assert(g_InputSystem);
+	assert(g_InputSystem != nullptr);
 	g_InputSystem->DispatchEventM(window, Key, Action, Mod);
 }
 void InputSystem::Init(GLFWwindow* window){
 			m_CurrentWindow = window;
+			g_InputSystem = this;
 			//glfwSetInputMode(m_CurrentWindow,GLFW_STICKY_MOUSE_BUTTONS,1);
 	glfwSetScrollCallback(m_CurrentWindow,scroll_callback);
 	glfwSetMouseButtonCallback(m_CurrentWindow, MouseButtonCallBack);

@@ -28,10 +28,10 @@ FontSystem::FontSystem(void* App)
 	}
 
 	//ReRenderFaces();
-	//InputCallbacks callbacks{};
-	//callbacks.MouseButtonCallback = MouseCallBackFn;
+	InputCallbacks callbacks{};
+	callbacks.MouseButtonCallback = MouseCallBackFn;
 
-	//CurrentApp->AddCallback(&callbacks);
+	CurrentApp->AddCallback(&callbacks);
 
 }
 
@@ -142,7 +142,7 @@ void FontSystem::PopFont()
 
 void FontSystem::MouseCallBack(MouseEvent* event)
 {
-	Core::Log(ErrorType::Info, "Mouse button ", event->Code, " Mouse state ", event->State);
+	Core::Log(ErrorType::Info, "Mouse button ", (uint32_t)event->Code, " Mouse state ", event->State);
 }
 
 FontSystem::~FontSystem()
