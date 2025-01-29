@@ -3,8 +3,8 @@
 #include "Application.h"
 
 FontSystem* g_FontSystem{};
-void MouseCallBackFn(MouseEvent* event) {
-	g_FontSystem->MouseCallBack(event);
+void KeyBoardCallbackFn(KeyBoardEvent* event) {
+	g_FontSystem->KeyBoardCallback(event);
 }
 FontSystem::FontSystem(void* App)
 {
@@ -29,7 +29,7 @@ FontSystem::FontSystem(void* App)
 
 	//ReRenderFaces();
 	InputCallbacks callbacks{};
-	callbacks.MouseButtonCallback = MouseCallBackFn;
+	callbacks.KeyBoardCallback = KeyBoardCallbackFn;
 
 	CurrentApp->AddCallback(&callbacks);
 
@@ -69,8 +69,10 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 {
 	Application* app = (Application*)m_App;
 	Renderer* renderer = ((Application*)m_App)->m_Renderer;
+	float CharacterSizeNorm = m_CharacterSize * 0.00005f;
 	bool ScrollableBoundBox{};
 
+	m_TypingCooldown -= app->GetDeltaTime();
 
 	m_WriteCooldown -= app->GetDeltaTime();
 	m_PointerBlinking -= app->GetDeltaTime();
@@ -82,48 +84,39 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	BoundingBox[3] = { Position.x + Size.x,Position.y };
 	
 
-	//Editing of the buffer
+	if (app->m_InputSystem.IsMouseClicked(MouseCodes::LEFT)) {
+		if (app->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID)){
+			Float2 MousePos = app->GetMousePosNorm();
+			float PosXInBox = std::fabs(BoundingBox[0].x - MousePos.x);
+			m_CharEditedIndex = PosXInBox / CharacterSizeNorm;
+		}
+		else {
+			m_CharEditedIndex = -1;
+		}
+	}
+	
+
+	renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding, CharacterSizeNorm);
+
 	if (m_CharEditedIndex != -1) {
-		if (m_WriteCooldown <= 0) {
-			char PressedChar = app->m_InputSystem.GetWriteableKeyPressed();
+		if (m_State != KeyState::RELEASED) {
+			
+			if (m_TypingCooldown <= 0||m_State == KeyState::HOLD) {
 
-			if (PressedChar != 0) {
-				memcpy(Buffer+ m_CharEditedIndex+1, Buffer + m_CharEditedIndex , BufferSize - m_CharEditedIndex);
+				memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, sizeof(m_CharEditedIndex + 1));
+				Buffer[m_CharEditedIndex] = (char)m_Key;
 
-				Buffer[m_CharEditedIndex] = app->m_InputSystem.GetWriteableKeyPressed();
 				m_CharEditedIndex++;
-				Buffer[BufferSize - 1] = '\0';
-				m_WriteCooldown = SEC(0.2f);
-				m_PointerBlinking = SEC(0.6f);
-				m_Show = true;
+				m_TypingCooldown = SEC(0.3f);
 			}
+
 		}
+		renderer->DrawQuad({ BoundingBox[0].x + ((m_CharEditedIndex+m_FixedPadding) * CharacterSizeNorm),BoundingBox[0].y+ (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { m_FixedPadding*0.5f ,Size.y * 0.5f }, 0);
 	}
+	//Draw the invisible barrier that  provides the selecting 
+	renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,0.0f }, { Size.x * 0.5f,Size.y * 0.5f }, Core::GetStringHash(ID).ID);
 
-	if (app->m_InputSystem.IsMouseClicked(MouseCodes::LEFT)&& app->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID).ID) {
-		m_PointerLocation = app->GetMousePosNorm();
-		m_IsPointerActive = true;
-		m_CharEditedIndex = renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding * m_CharacterSize, true, m_PointerLocation);
 
-	}
-	//Pointer blinking
-	if (m_IsPointerActive) {
-		if (m_PointerBlinking <= 0.0f) {
-			if (m_Show) {
-				m_Show = false;
-				m_PointerBlinking = SEC(0.6f);
-
-			}
-			else {
-				m_Show = true;
-				m_PointerBlinking = SEC(0.6f);
-
-			}
-		}
-		
-	}
-
-	 renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding * m_CharacterSize, m_Show, m_PointerLocation,m_CharEditedIndex);
 
 	
 
@@ -131,18 +124,17 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		//Core::Log(ErrorType::Error, "Failed to find the char index.");
 	//DrawPointer()
 	// 
-	//Draw the invisible barrier that  provides the selecting 
-	renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,0.0f }, { Size.x * 0.5f,Size.y * 0.5f },Core::GetStringHash(ID).ID);
-
+	
 }
 
 void FontSystem::PopFont()
 {
 }
 
-void FontSystem::MouseCallBack(MouseEvent* event)
+void FontSystem::KeyBoardCallback(KeyBoardEvent* event)
 {
-	Core::Log(ErrorType::Info, "Mouse button ", (uint32_t)event->Code, " Mouse state ", event->State);
+	m_State = event->State;
+	m_Key = event->Key;
 }
 
 FontSystem::~FontSystem()

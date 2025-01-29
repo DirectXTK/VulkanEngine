@@ -25,7 +25,7 @@ public:
 
 	void PopFont();
 
-	void MouseCallBack(MouseEvent* event);
+	void KeyBoardCallback(KeyBoardEvent* event);
 
 	~FontSystem();
 private:
@@ -47,6 +47,11 @@ private:
 	uint32_t m_FontAtlasSize{};
 	Texture* m_FontTexture{};
 	//Pointer
+	//Typing
+	float m_TypingCooldown{};
+	KeyState m_State{};
+	KeyCodes m_Key{};
+
 	Float2 m_PointerLocation{};
 	bool m_IsPointerActive{false};
 	int64_t m_CharEditedIndex{-1};
@@ -60,7 +65,7 @@ private:
 	};
 	//Stored data
 	std::unordered_map<GUUID, TextData> m_StoredData{};
-	float m_FixedPadding{ 0.00002f  };
+	float m_FixedPadding{ 0.03f  };
 
 };
 

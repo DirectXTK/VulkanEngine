@@ -41,7 +41,6 @@ enum class Format{NULLFORMAT,INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE
 #define SEC(x) 1000*x
 #define DLLEXPORT __declspec(dllexport)
 
-
 struct GUUID {
     uint64_t ID{};
     GUUID() {
@@ -199,3 +198,12 @@ struct Float4 {
         };
     };
 };
+namespace Core {
+    //works if this is ractangle
+    bool IsWithinRectRegion(const Float2& PointPos, const Float2& ObjPos, const Float2& ObjSize);
+    //Index 0 - left bot 
+    //1- left top
+    //2- right top
+    //3- right bot
+    bool IsWithinRegionOrg(const Float2& PointPos, Float2 Region[4]);
+}
