@@ -65,7 +65,7 @@ void FontSystem::PushFont()
 {
 }
 
-void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Float2 Position, Float2 Size, uint32_t MaxCharacters)
+void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Float2 Position, Float2 Size)
 {
 	Application* app = (Application*)m_App;
 	Renderer* renderer = ((Application*)m_App)->m_Renderer;
@@ -73,9 +73,8 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	bool ScrollableBoundBox{};
 
 	m_TypingCooldown -= app->GetDeltaTime();
+	m_DeleteCharCooldown -= app->GetDeltaTime();
 
-	m_WriteCooldown -= app->GetDeltaTime();
-	m_PointerBlinking -= app->GetDeltaTime();
 
 	Float2 BoundingBox[4];
 	BoundingBox[0] = { Position.x ,Position.y  };
@@ -88,7 +87,21 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		if (app->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID)){
 			Float2 MousePos = app->GetMousePosNorm();
 			float PosXInBox = std::fabs(BoundingBox[0].x - MousePos.x);
-			m_CharEditedIndex = PosXInBox / CharacterSizeNorm;
+			m_CharEditedIndex = PosXInBox / (CharacterSizeNorm+m_FixedPadding);
+
+			//if its one of the special symbols make it not editable and if its the first char make it editable
+			if (Buffer[m_CharEditedIndex] <= 32) {
+
+				if (m_CharEditedIndex == 0) {
+					//do nothing
+				}
+				else if (Buffer[m_CharEditedIndex-1] <= 32)
+				{
+					m_CharEditedIndex = -1;
+				}
+				
+				
+			}
 		}
 		else {
 			m_CharEditedIndex = -1;
@@ -99,19 +112,27 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding, CharacterSizeNorm);
 
 	if (m_CharEditedIndex != -1) {
-		if (m_State != KeyState::RELEASED) {
 			
-			if (m_TypingCooldown <= 0||m_State == KeyState::HOLD) {
+			if (m_KeyAlreadyPressed[(uint32_t)m_Key] == false || m_State == KeyState::HOLD) {
 
-				memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, sizeof(m_CharEditedIndex + 1));
-				Buffer[m_CharEditedIndex] = (char)m_Key;
+				if ((int)m_Key >= 32 && (int)m_Key <= 127) {
+					if (strlen(Buffer)+1 < BufferSize) {
+						memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+						Buffer[m_CharEditedIndex] = (char)m_Key;
 
-				m_CharEditedIndex++;
-				m_TypingCooldown = SEC(0.3f);
+						m_CharEditedIndex++;
+						m_TypingCooldown = m_CharEditCooldownConst;
+					}
+				}
+				else {
+					SpecialCases(m_Key,m_State,Buffer,BufferSize);
+				}		
+				m_KeyAlreadyPressed[(uint32_t)m_Key] = true;
+
 			}
 
-		}
-		renderer->DrawQuad({ BoundingBox[0].x + ((m_CharEditedIndex+m_FixedPadding) * CharacterSizeNorm),BoundingBox[0].y+ (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { m_FixedPadding*0.5f ,Size.y * 0.5f }, 0);
+		//pointer
+		renderer->DrawQuad({ BoundingBox[0].x +(m_CharEditedIndex * (CharacterSizeNorm+ m_FixedPadding)),BoundingBox[0].y+ (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { m_FixedPadding*0.5f ,Size.y * 0.5f }, 0);
 	}
 	//Draw the invisible barrier that  provides the selecting 
 	renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,0.0f }, { Size.x * 0.5f,Size.y * 0.5f }, Core::GetStringHash(ID).ID);
@@ -135,10 +156,38 @@ void FontSystem::KeyBoardCallback(KeyBoardEvent* event)
 {
 	m_State = event->State;
 	m_Key = event->Key;
+	if(m_State == KeyState::RELEASED)
+		m_KeyAlreadyPressed[(uint32_t)m_Key] = false;
+
 }
 
 FontSystem::~FontSystem()
 {
+}
+void FontSystem::SpecialCases(KeyCodes& Code, KeyState& State, char* Buffer, uint64_t Size)
+{
+	switch (Code) {
+	case KeyCodes::BACKSPACE: {
+		if (m_CharEditedIndex != 0) {
+			if (State == KeyState::HOLD) {
+				memcpy(Buffer + m_CharEditedIndex - 1, Buffer + m_CharEditedIndex, Size - m_CharEditedIndex);
+				m_CharEditedIndex--;
+			}
+			else if(State == KeyState::PRESSED) {
+				if (m_DeleteCharCooldown <= 0.0f) {
+					memcpy(Buffer + m_CharEditedIndex - 1, Buffer + m_CharEditedIndex, Size - m_CharEditedIndex);
+					m_CharEditedIndex--;
+					m_DeleteCharCooldown = m_DeleteCharCooldownConst;
+				}
+			}
+		}
+		break;
+	}
+	default: {
+		Core::Log(ErrorType::Error, "Not implemented yet");
+		break;
+	}
+	}
 }
 void FontSystem::DrawPointer(Float2 Position, float CharacterSize,float SizeY)
 {

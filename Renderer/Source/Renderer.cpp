@@ -709,7 +709,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //temp
         //Char being edited index
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
-        float Offset{};
+        float Offset{ FixedPadding };
         GUUID TextureHandle = Core::GetStringHash("FONTAtlas");
         float Space{ 0.06f };
 
@@ -739,7 +739,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
             if (LetterIndex != -1) {
-                Size.y = texture.texture->GetSubTextureSize(LetterIndex).y / texture.texture->GetHeight();
 
                 m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[0];
                 m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[1];
@@ -757,9 +756,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
               break;
          
             m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ Offset,BoundingBox[0].y,0.0f };
-            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ Offset,BoundingBox[0].y+Size.y,0.0f };
-            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ Offset + Size.x,BoundingBox[0].y + Size.y,0.0f };
-            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ Offset + Size.x,BoundingBox[0].y,0.0f};
+            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ Offset,BoundingBox[1].y,0.0f };
+            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ Offset + Size.x,BoundingBox[2].y ,0.0f };
+            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ Offset + Size.x,BoundingBox[3].y,0.0f};
 
 
 

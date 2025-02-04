@@ -20,7 +20,7 @@ public:
 	//Renders simple text.
 	// MaxCharacters 0 means unlimited.
 	//Returns true then max characters has been reached.
-	void InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size,uint32_t MaxCharacters=0);
+	void InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size);
 	void Text(const char* Message, Float2 Position);
 
 	void PopFont();
@@ -30,6 +30,7 @@ public:
 	~FontSystem();
 private:
 	//Character size is used for the pointer size
+	void SpecialCases(KeyCodes& Code, KeyState& State,char* Buffer,uint64_t Size);
 	int64_t CalculateCharBeingEditedIndex();
 	void DrawPointer(Float2 Position,float CharacterSize,float SizeY);
 
@@ -51,6 +52,11 @@ private:
 	float m_TypingCooldown{};
 	KeyState m_State{};
 	KeyCodes m_Key{};
+	bool m_KeyAlreadyPressed[300];
+
+	const float m_CharEditCooldownConst{SEC(0.15f)};
+	const float m_DeleteCharCooldownConst{ m_CharEditCooldownConst };
+	float m_DeleteCharCooldown{};
 
 	Float2 m_PointerLocation{};
 	bool m_IsPointerActive{false};
@@ -65,7 +71,7 @@ private:
 	};
 	//Stored data
 	std::unordered_map<GUUID, TextData> m_StoredData{};
-	float m_FixedPadding{ 0.03f  };
+	float m_FixedPadding{ 0.018f  };
 
 };
 

@@ -34,7 +34,7 @@ void FontTestingLayer::OnGUI()
 		
 	}
 
-	m_FontSystem->InputText("", Buffer, 255, { 0.0f,0.0f }, { 1.0f,0.1f }, 0);
+	m_FontSystem->InputText("", Buffer, 10, { 0.0f,0.0f }, { 1.0f,0.1f });
 	//m_App->m_Renderer->DrawOutline({ 0.45f,0.525f }, { 0.5f,0.05f }, { 1.0f,1.0f,1.0f,1.0f }, 0.001f);
 }
 
