@@ -72,9 +72,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	float CharacterSizeNorm = m_CharacterSize * 0.00005f;
 	bool ScrollableBoundBox{};
 
-	m_TypingCooldown -= app->GetDeltaTime();
-	m_DeleteCharCooldown -= app->GetDeltaTime();
-
+	m_PointerCooldown -= app->GetDeltaTime();
 
 	Float2 BoundingBox[4];
 	BoundingBox[0] = { Position.x ,Position.y  };
@@ -82,6 +80,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	BoundingBox[2] = { Position.x + Size.x,Position.y + Size.y };
 	BoundingBox[3] = { Position.x + Size.x,Position.y };
 	
+
 
 	if (app->m_InputSystem.IsMouseClicked(MouseCodes::LEFT)) {
 		if (app->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID)){
@@ -97,10 +96,13 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 				}
 				else if (Buffer[m_CharEditedIndex-1] <= 32)
 				{
-					m_CharEditedIndex = -1;
+					m_CharEditedIndex = strlen(Buffer);
 				}
 				
 				
+			}
+			else if (strlen(Buffer) == 0) {
+				m_CharEditedIndex = 0;
 			}
 		}
 		else {
@@ -130,9 +132,14 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 				m_KeyAlreadyPressed[(uint32_t)m_Key] = true;
 
 			}
-
+			
 		//pointer
-		renderer->DrawQuad({ BoundingBox[0].x +(m_CharEditedIndex * (CharacterSizeNorm+ m_FixedPadding)),BoundingBox[0].y+ (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { m_FixedPadding*0.5f ,Size.y * 0.5f }, 0);
+			if (m_PointerCooldown <= 0.0f) {
+				if (m_PointerCooldown <= -m_PointerBlinkCooldownConst)
+					m_PointerCooldown = m_PointerBlinkCooldownConst;
+			renderer->DrawQuad({ BoundingBox[0].x +(m_CharEditedIndex * (CharacterSizeNorm+ m_FixedPadding)),BoundingBox[0].y+ (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { m_FixedPadding*0.25f ,Size.y * 0.5f }, 0);
+			}
+		
 	}
 	//Draw the invisible barrier that  provides the selecting 
 	renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,0.0f }, { Size.x * 0.5f,Size.y * 0.5f }, Core::GetStringHash(ID).ID);
@@ -168,19 +175,11 @@ void FontSystem::SpecialCases(KeyCodes& Code, KeyState& State, char* Buffer, uin
 {
 	switch (Code) {
 	case KeyCodes::BACKSPACE: {
-		if (m_CharEditedIndex != 0) {
-			if (State == KeyState::HOLD) {
-				memcpy(Buffer + m_CharEditedIndex - 1, Buffer + m_CharEditedIndex, Size - m_CharEditedIndex);
-				m_CharEditedIndex--;
-			}
-			else if(State == KeyState::PRESSED) {
-				if (m_DeleteCharCooldown <= 0.0f) {
-					memcpy(Buffer + m_CharEditedIndex - 1, Buffer + m_CharEditedIndex, Size - m_CharEditedIndex);
-					m_CharEditedIndex--;
-					m_DeleteCharCooldown = m_DeleteCharCooldownConst;
-				}
-			}
+		if (m_CharEditedIndex > 0) {
+			memcpy(Buffer + m_CharEditedIndex - 1, Buffer + m_CharEditedIndex, Size - m_CharEditedIndex);
+			m_CharEditedIndex--;
 		}
+			
 		break;
 	}
 	default: {
@@ -230,8 +229,10 @@ void FontSystem::ReRenderFaces()
 	uint32_t* AtlasMapBitmap = new uint32_t[FontAtlasWidth * FontAtlasHeight];
 	memset(AtlasMapBitmap,0x00000000, FontAtlasWidth * FontAtlasHeight*sizeof(uint32_t));
 
+
 	for (uint32_t i = 0; i <= m_Face->num_glyphs; i++) {
 		uint32_t GlyphIndex = FT_Get_Char_Index(m_Face, i);
+
 		if (GlyphIndex == 0)
 			continue;
 		FT_Error error = FT_Load_Glyph(m_Face, GlyphIndex, FT_LOAD_DEFAULT);
@@ -252,10 +253,14 @@ void FontSystem::ReRenderFaces()
 		if (slot->bitmap.rows == 0 || slot->bitmap.width == 0)
 			continue;
 		
+		if (GlyphIndex == 'I')
+			Core::Log(ErrorType::Info, "w");
+
 		AtlasCoords[SubTextureIndex].SizeX = slot->bitmap.width;
 		AtlasCoords[SubTextureIndex].SizeY = slot->bitmap.rows;
 		SizeX = slot->bitmap.width;
 		SizeY = slot->bitmap.rows;
+		
 
 		if (OffsetX + AtlasCoords[SubTextureIndex].SizeX > FontAtlasWidth) {
 			OffsetY += MaxY;
@@ -264,7 +269,7 @@ void FontSystem::ReRenderFaces()
 		}
 		MaxY = std::max(MaxY, (int64_t)slot->bitmap.rows);
 
-		
+		//add offest but reduce the size if the size is lower add padding to seem
 
 		AtlasCoords[SubTextureIndex].Points[0] = { float(OffsetX / (float)FontAtlasWidth),float((SizeY+OffsetY) / (float)FontAtlasHeight) };
 		AtlasCoords[SubTextureIndex].Points[1] = { float(OffsetX / (float)FontAtlasWidth),float(OffsetY / (float)FontAtlasHeight) };
@@ -278,9 +283,10 @@ void FontSystem::ReRenderFaces()
 				AtlasMapBitmap[OffsetX+x + ((y + OffsetY)* FontAtlasWidth )] |= uint32_t(slot->bitmap.buffer[(y * slot->bitmap.width+x)]<<24);
 			}
 		}
+		//if (SubTextureIndex  == '.'-33)
+		//	Core::Log(ErrorType::Error, "Maktyra");
 		OffsetX += AtlasCoords[SubTextureIndex].SizeX;
 		SubTextureIndex++;
-		
 		
 
 

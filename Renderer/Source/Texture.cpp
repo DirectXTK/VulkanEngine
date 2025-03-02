@@ -223,6 +223,9 @@ unsigned char* Texture::LoadTextureDataFromFile(std::string Path)
 
 void Texture::CreateTexture(void* initData)
 {
+	static float Anisotropy{ 16 };
+
+
 	VkDeviceSize texturesize = m_Width * m_Height * m_TextureData->m_ChannelCount;
 	VkFormat ImageFormat;
 	switch (m_TextureData->m_ChannelCount) {
@@ -274,18 +277,18 @@ void Texture::CreateTexture(void* initData)
 	TrasitionFormat(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, TempCommandBuffer);
 
 	CommandBuffer::EndSingleUseCommandBuffer(m_TextureData->m_Context, m_TextureData->m_Context->CommandPool, TempCommandBuffer);
-
+	//Maybe something with the spacing or placing of the quad that houses the texture.
 	//Create Sampler //TEMP
 	VkSamplerCreateInfo samplercreateinfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
 	samplercreateinfo.minFilter = VK_FILTER_NEAREST;
 	samplercreateinfo.magFilter = VK_FILTER_NEAREST;
-	samplercreateinfo.anisotropyEnable = false;
-	samplercreateinfo.maxAnisotropy = 0;
-	samplercreateinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplercreateinfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplercreateinfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplercreateinfo.anisotropyEnable = true;
+	samplercreateinfo.maxAnisotropy = Anisotropy;
+	samplercreateinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplercreateinfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplercreateinfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplercreateinfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-	samplercreateinfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplercreateinfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	samplercreateinfo.unnormalizedCoordinates = false;
 	samplercreateinfo.compareOp = VK_COMPARE_OP_ALWAYS;
 	samplercreateinfo.compareEnable = false;

@@ -56,14 +56,13 @@ private:
 
 	const float m_CharEditCooldownConst{SEC(0.15f)};
 	const float m_DeleteCharCooldownConst{ m_CharEditCooldownConst };
+	const float m_PointerBlinkCooldownConst{ SEC(0.5f) };
 	float m_DeleteCharCooldown{};
 
 	Float2 m_PointerLocation{};
 	bool m_IsPointerActive{false};
 	int64_t m_CharEditedIndex{-1};
-	float m_PointerBlinking{0.0f};
-	float m_WriteCooldown{0.0f};
-	bool m_Show{ false };
+	float m_PointerCooldown{0.0f};
 
 
 	struct TextData {

@@ -28,13 +28,13 @@ void FontTestingLayer::OnGUI()
 		Init = false;
 		Buffer[0] = 'Z';
 		Buffer[1] = 'I';
-		Buffer[2] = 'N';
-		Buffer[3] = 'O';
+		Buffer[2] = ',';
+		Buffer[3] = '.';
 
 		
 	}
 
-	m_FontSystem->InputText("", Buffer, 10, { 0.0f,0.0f }, { 1.0f,0.1f });
+	m_FontSystem->InputText("", Buffer, 10, { -0.5f,0.0f }, { 1.0f,0.1f });
 	//m_App->m_Renderer->DrawOutline({ 0.45f,0.525f }, { 0.5f,0.05f }, { 1.0f,1.0f,1.0f,1.0f }, 0.001f);
 }
 

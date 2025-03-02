@@ -709,6 +709,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //temp
         //Char being edited index
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
+
         float Offset{ FixedPadding };
         GUUID TextureHandle = Core::GetStringHash("FONTAtlas");
         float Space{ 0.06f };
@@ -727,11 +728,14 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             //edge cases
             //space letter index ==-1
 
-                Size.x = CharSizeNorm;
             if (m_VertexPointer + 8 > m_VertexCount)
                 FlushGeometry();
-           
+          
             TextureRenderingData texture = m_Textures[TextureHandle];
+                Size.x = texture.texture->GetSubTextureSize(LetterIndex).x/ texture.texture->GetWidth();
+                Size.y = texture.texture->GetSubTextureSize(LetterIndex).y / texture.texture->GetHeight();
+                //its the size of the bitmap not the character itself.
+                Core::Log(ErrorType::Info, Message[i], " ", texture.texture->GetSubTextureSize(LetterIndex).x," ", texture.texture->GetSubTextureSize(LetterIndex).y," ",LetterIndex);
 
 
             m_Vertices[m_VertexPointer].TextureID = texture.Index;
@@ -754,13 +758,23 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             //Stop drawing if text is going out of bounds.
             if (BoundingBox[0].x + Size.x +Offset > BoundingBox[3].x)
               break;
-         
+            
+            //add half of the missing size to the offest
+            float RemainingOffset{};
+
+            RemainingOffset = CharSizeNorm - Size.x;
+            if (RemainingOffset < 0)
+                Size.x = CharSizeNorm;
+            else
+                Offset += RemainingOffset;
+
             m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ Offset,BoundingBox[0].y,0.0f };
-            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ Offset,BoundingBox[1].y,0.0f };
-            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ Offset + Size.x,BoundingBox[2].y ,0.0f };
-            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ Offset + Size.x,BoundingBox[3].y,0.0f};
+            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ Offset,Size.y,0.0f };
+            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ Offset + Size.x,Size.y ,0.0f };
+            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ Offset + Size.x,BoundingBox[0].y,0.0f};
 
 
+            //add half of the missing size to the offest
 
 
             m_Vertices[m_VertexPointer].Color = Color;

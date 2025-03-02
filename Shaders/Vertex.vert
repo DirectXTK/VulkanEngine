@@ -12,7 +12,7 @@ layout(binding=0) uniform MVP{
 
 layout(location =0) out vec4 OutFragColor;
 layout(location =1) out uvec2 OutPickID;
-layout(location =2) out vec2 OutTexCoords;
+layout(location =2) out highp vec2 OutTexCoords;
 layout(location =3) out uint OutTexID;
 
 
