@@ -1,8 +1,9 @@
 #pragma once
-#include "AppCore.h"
 #include "Renderer.h"
+#include "FontStyles.h"
 #include "ft2build.h"
 #include FT_FREETYPE_H
+
 class FontSystem
 {
 public:
@@ -15,6 +16,10 @@ public:
 	uint32_t GetHeightOfChar();
 
 	Texture* GetFontAtlas();
+
+	void PushStyle(const Style& style,void* StyleData=nullptr);
+	void PopStyle();
+
 
 	void PushFont();
 	//Renders simple text.
@@ -30,9 +35,14 @@ public:
 	~FontSystem();
 private:
 	//Character size is used for the pointer size
+
 	void SpecialCases(KeyCodes& Code, KeyState& State,char* Buffer,uint64_t Size);
 	int64_t CalculateCharBeingEditedIndex();
 	void DrawPointer(Float2 Position,float CharacterSize,float SizeY);
+	void DrawBorder(Float2& Position, Float2& Size, GUUID ID);
+
+	//coeficient used for normalizing char size.
+	const float m_CharSizeNormCoe{ 0.000045f };
 
 	void* m_App{};
 	void ReRenderFaces();
@@ -53,6 +63,10 @@ private:
 	KeyState m_State{};
 	KeyCodes m_Key{};
 	bool m_KeyAlreadyPressed[300];
+	
+	std::stack<Style> m_Style{};
+	std::stack<void*> m_StyleData{};
+
 
 	const float m_CharEditCooldownConst{SEC(0.15f)};
 	const float m_DeleteCharCooldownConst{ m_CharEditCooldownConst };
@@ -70,7 +84,8 @@ private:
 	};
 	//Stored data
 	std::unordered_map<GUUID, TextData> m_StoredData{};
-	float m_FixedPadding{ 0.018f  };
+	float m_FixedPadding{ 0.0050f  };
+	//float m_FixedPadding{ 0.1018f  };
 
 };
 

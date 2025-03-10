@@ -26,15 +26,23 @@ void FontTestingLayer::OnGUI()
 	static bool Init{ true };
 	if (Init) {
 		Init = false;
-		Buffer[0] = 'Z';
-		Buffer[1] = 'I';
-		Buffer[2] = ',';
-		Buffer[3] = '.';
+		Buffer[0] = 'A';
+		Buffer[1] = 'A';
+		Buffer[2] = 'A';
+		Buffer[3] = 'A';
 
 		
 	}
 
-	m_FontSystem->InputText("", Buffer, 10, { -0.5f,0.0f }, { 1.0f,0.1f });
+	BorderProperties props{};
+	props.BorderWidth=0.01f;
+	props.BackGroundColor = { 0.2f,0.2f,0.2f,1.0f };
+	props.BackGroundTexture = nullptr;
+	props.BorderTexture = nullptr;
+
+	m_FontSystem->PushStyle(Style::DrawBorder, &props);
+	m_FontSystem->InputText("", Buffer, 255, { -0.5f,0.0f }, { 1.1f,0.8f });
+	m_FontSystem->PopStyle();
 	//m_App->m_Renderer->DrawOutline({ 0.45f,0.525f }, { 0.5f,0.05f }, { 1.0f,1.0f,1.0f,1.0f }, 0.001f);
 }
 

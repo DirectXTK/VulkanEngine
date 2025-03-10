@@ -223,7 +223,7 @@ unsigned char* Texture::LoadTextureDataFromFile(std::string Path)
 
 void Texture::CreateTexture(void* initData)
 {
-	static float Anisotropy{ 16 };
+	static float Anisotropy{ 0 };
 
 
 	VkDeviceSize texturesize = m_Width * m_Height * m_TextureData->m_ChannelCount;
@@ -282,7 +282,7 @@ void Texture::CreateTexture(void* initData)
 	VkSamplerCreateInfo samplercreateinfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
 	samplercreateinfo.minFilter = VK_FILTER_NEAREST;
 	samplercreateinfo.magFilter = VK_FILTER_NEAREST;
-	samplercreateinfo.anisotropyEnable = true;
+	samplercreateinfo.anisotropyEnable = false;
 	samplercreateinfo.maxAnisotropy = Anisotropy;
 	samplercreateinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplercreateinfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

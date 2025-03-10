@@ -702,7 +702,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_FontTextureAtlas = TextureFontAtlas;
     }
 
-    void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm)
+    void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id)
     {
         //Remember to check if all the font widths are the same !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //
@@ -710,7 +710,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //Char being edited index
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
 
-        float Offset{ FixedPadding };
+        float SpaceBetweenLines{0.01f};
+
+        float OffsetX{ FixedPadding };
+        float OffsetY{};
         GUUID TextureHandle = Core::GetStringHash("FONTAtlas");
         float Space{ 0.06f };
 
@@ -735,7 +738,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 Size.x = texture.texture->GetSubTextureSize(LetterIndex).x/ texture.texture->GetWidth();
                 Size.y = texture.texture->GetSubTextureSize(LetterIndex).y / texture.texture->GetHeight();
                 //its the size of the bitmap not the character itself.
-                Core::Log(ErrorType::Info, Message[i], " ", texture.texture->GetSubTextureSize(LetterIndex).x," ", texture.texture->GetSubTextureSize(LetterIndex).y," ",LetterIndex);
 
 
             m_Vertices[m_VertexPointer].TextureID = texture.Index;
@@ -756,7 +758,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 m_Vertices[m_VertexPointer + 3].TexCoords = { 0.0f,0.0f };
             }
             //Stop drawing if text is going out of bounds.
-            if (BoundingBox[0].x + Size.x +Offset > BoundingBox[3].x)
+            if (BoundingBox[0].x + Size.x + OffsetX > BoundingBox[3].x) {
+
+                OffsetY += SpaceBetweenLines + CharSizeNorm;
+                OffsetX = FixedPadding;
+                
+            }
+            if (BoundingBox[1].y - Size.y - OffsetY < BoundingBox[0].y)
               break;
             
             //add half of the missing size to the offest
@@ -766,15 +774,20 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (RemainingOffset < 0)
                 Size.x = CharSizeNorm;
             else
-                Offset += RemainingOffset;
+                OffsetX += RemainingOffset*0.5f;
 
-            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ Offset,BoundingBox[0].y,0.0f };
-            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ Offset,Size.y,0.0f };
-            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ Offset + Size.x,Size.y ,0.0f };
-            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ Offset + Size.x,BoundingBox[0].y,0.0f};
+            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ OffsetX,BoundingBox[1].y - Size.y-OffsetY,0.0f };
+            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ OffsetX,BoundingBox[1].y - OffsetY,0.0f };
+            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ OffsetX + Size.x,BoundingBox[1].y - OffsetY ,0.0f };
+            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ OffsetX + Size.x,BoundingBox[1].y - Size.y - OffsetY,0.0f};
+
 
 
             //add half of the missing size to the offest
+            if (RemainingOffset < 0)
+                Size.x = CharSizeNorm;
+            else
+                OffsetX += RemainingOffset * 0.5f;
 
 
             m_Vertices[m_VertexPointer].Color = Color;
@@ -784,10 +797,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-            m_Vertices[m_VertexPointer].ID = 0;
-            m_Vertices[m_VertexPointer + 1].ID = 0;
-            m_Vertices[m_VertexPointer + 2].ID = 0;
-            m_Vertices[m_VertexPointer + 3].ID = 0;
+            m_Vertices[m_VertexPointer].ID = id.ID;
+            m_Vertices[m_VertexPointer + 1].ID = id.ID;
+            m_Vertices[m_VertexPointer + 2].ID = id.ID;
+            m_Vertices[m_VertexPointer + 3].ID = id.ID;
 
 
 
@@ -797,7 +810,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             //Draw the pointer
           
 
-            Offset += Size.x+FixedPadding;
+            OffsetX += Size.x + FixedPadding;
         }
     }
 

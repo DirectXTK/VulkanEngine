@@ -69,7 +69,8 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 {
 	Application* app = (Application*)m_App;
 	Renderer* renderer = ((Application*)m_App)->m_Renderer;
-	float CharacterSizeNorm = m_CharacterSize * 0.00005f;
+	GUUID SelectID = Core::GetStringHash(ID);
+	float CharacterSizeNorm = m_CharacterSize * m_CharSizeNormCoe;
 	bool ScrollableBoundBox{};
 
 	m_PointerCooldown -= app->GetDeltaTime();
@@ -110,8 +111,11 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		}
 	}
 	
+	//Draw the invisible barrier that  provides the selecting 
+	DrawBorder(Position, Size, SelectID);
 
-	renderer->RenderText(Buffer, Position, BoundingBox, m_FixedPadding, CharacterSizeNorm);
+
+	renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - CharacterSizeNorm } , BoundingBox, m_FixedPadding, CharacterSizeNorm, SelectID);
 
 	if (m_CharEditedIndex != -1) {
 			
@@ -137,12 +141,12 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 			if (m_PointerCooldown <= 0.0f) {
 				if (m_PointerCooldown <= -m_PointerBlinkCooldownConst)
 					m_PointerCooldown = m_PointerBlinkCooldownConst;
-			renderer->DrawQuad({ BoundingBox[0].x +(m_CharEditedIndex * (CharacterSizeNorm+ m_FixedPadding)),BoundingBox[0].y+ (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { m_FixedPadding*0.25f ,Size.y * 0.5f }, 0);
+				//the spaces beetween letters are uneaven and the pointers sometimes isn't drawn.
+				//draws in the center
+			renderer->DrawQuad({ BoundingBox[0].x +(m_CharEditedIndex * (CharacterSizeNorm+m_FixedPadding))+(m_FixedPadding*0.5f),BoundingBox[1].y - (CharacterSizeNorm * 1.0f),0.0f}, {1.0f,1.0f,1.0f,1.0f}, {m_FixedPadding * 0.5f ,CharacterSizeNorm}, 0);
 			}
 		
 	}
-	//Draw the invisible barrier that  provides the selecting 
-	renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,0.0f }, { Size.x * 0.5f,Size.y * 0.5f }, Core::GetStringHash(ID).ID);
 
 
 
@@ -153,6 +157,34 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	//DrawPointer()
 	// 
 	
+}
+void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
+{
+	Application* app =(Application*)m_App;
+	Renderer* renderer = (Renderer*)app->m_Renderer;
+
+	Float4 BorderColor{ 1.0f,0.0f,0.0f,1.0f };
+	float BorderWidth{0.009f};
+	
+	Float4 BackGroundColor{ 0.2f,0.2f,0.2f,1.0f };
+
+	if (m_Style.empty()) {
+		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,0.0f }, { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
+		return;
+	}
+
+	switch (m_Style.top()) {
+	case Style::DrawBorder: {
+		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f },  BorderColor , { (Size.x * 0.5f) + BorderWidth,(Size.y * 0.5f)+ BorderWidth }, ID.ID);
+		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f },  BackGroundColor , { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
+		break;
+	}
+	default: {
+		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, BackGroundColor , { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
+		break;
+	}
+	}
+
 }
 
 void FontSystem::PopFont()
@@ -253,8 +285,7 @@ void FontSystem::ReRenderFaces()
 		if (slot->bitmap.rows == 0 || slot->bitmap.width == 0)
 			continue;
 		
-		if (GlyphIndex == 'I')
-			Core::Log(ErrorType::Info, "w");
+		
 
 		AtlasCoords[SubTextureIndex].SizeX = slot->bitmap.width;
 		AtlasCoords[SubTextureIndex].SizeY = slot->bitmap.rows;
@@ -295,6 +326,25 @@ void FontSystem::ReRenderFaces()
 	m_FontAtlas->CreateTextureAtlas(AtlasCoords, SubTextureIndex,SubTextureSizes);
 
 	delete[] AtlasCoords;
+}
+void FontSystem::PushStyle(const Style& style,void* StyleData) {
+	m_Style.push(style);
+	switch (style) {
+	case Style::DrawBorder: {
+		
+		//Store style data somehow and transfer it.
+		m_StyleData
+		break;
+
+	}
+	default: {
+		Core::Log(ErrorType::Error, "This style doesn't exist");
+		break;
+	}
+	}
+}
+void FontSystem::PopStyle() {
+	m_Style.pop();
 }
 
 
