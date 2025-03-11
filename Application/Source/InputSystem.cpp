@@ -47,7 +47,7 @@ void InputSystem::DispatchEventM(GLFWwindow* window, int Key, int Action, int Mo
 void InputSystem::DispatchEventK(GLFWwindow* window, int Key, int ScanCode, int Action, int Mods)
 {
 	KeyBoardEvent Event{};
-	Event.Key = (KeyCodes)Key;
+	Event.Key = Core::ConvertFromGlfwInt(Key,Mods);
 	Event.State = (KeyState)Action;
 	if(m_Callbacks.KeyBoardCallback)
 		m_Callbacks.KeyBoardCallback(&Event);

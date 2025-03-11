@@ -90,7 +90,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 			m_CharEditedIndex = PosXInBox / (CharacterSizeNorm+m_FixedPadding);
 
 			//if its one of the special symbols make it not editable and if its the first char make it editable
-			if (Buffer[m_CharEditedIndex] <= 32) {
+ 			if (Buffer[m_CharEditedIndex] <= 32) {
 
 				if (m_CharEditedIndex == 0) {
 					//do nothing
@@ -115,8 +115,18 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	DrawBorder(Position, Size, SelectID);
 
 
-	renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - CharacterSizeNorm } , BoundingBox, m_FixedPadding, CharacterSizeNorm, SelectID);
-
+	if (m_PointerCooldown <= 0.0f) {
+		if (m_PointerCooldown <= -m_PointerBlinkCooldownConst)
+			m_PointerCooldown = m_PointerBlinkCooldownConst;
+		renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - CharacterSizeNorm }, BoundingBox, m_FixedPadding, CharacterSizeNorm, SelectID, m_CharEditedIndex);
+	}
+	else {
+		renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - CharacterSizeNorm }, BoundingBox, m_FixedPadding, CharacterSizeNorm, SelectID);
+	}
+		//the spaces beetween letters are uneaven and the pointers sometimes isn't drawn.
+		//draws in the center
+		//renderer->DrawQuad({ BoundingBox[0].x + (m_CharEditedIndex * (CharacterSizeNorm + m_FixedPadding)) + (m_FixedPadding * 0.5f),BoundingBox[1].y - (CharacterSizeNorm * 1.0f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { m_FixedPadding * 0.5f ,CharacterSizeNorm }, 0);
+	
 	if (m_CharEditedIndex != -1) {
 			
 			if (m_KeyAlreadyPressed[(uint32_t)m_Key] == false || m_State == KeyState::HOLD) {
@@ -138,13 +148,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 			}
 			
 		//pointer
-			if (m_PointerCooldown <= 0.0f) {
-				if (m_PointerCooldown <= -m_PointerBlinkCooldownConst)
-					m_PointerCooldown = m_PointerBlinkCooldownConst;
-				//the spaces beetween letters are uneaven and the pointers sometimes isn't drawn.
-				//draws in the center
-			renderer->DrawQuad({ BoundingBox[0].x +(m_CharEditedIndex * (CharacterSizeNorm+m_FixedPadding))+(m_FixedPadding*0.5f),BoundingBox[1].y - (CharacterSizeNorm * 1.0f),0.0f}, {1.0f,1.0f,1.0f,1.0f}, {m_FixedPadding * 0.5f ,CharacterSizeNorm}, 0);
-			}
+		
 		
 	}
 
@@ -163,24 +167,26 @@ void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 	Application* app =(Application*)m_App;
 	Renderer* renderer = (Renderer*)app->m_Renderer;
 
-	Float4 BorderColor{ 1.0f,0.0f,0.0f,1.0f };
-	float BorderWidth{0.009f};
 	
-	Float4 BackGroundColor{ 0.2f,0.2f,0.2f,1.0f };
+	Float4 DefBackGroundColor{ 0.2f,0.2f,0.2f,1.0f };
 
 	if (m_Style.empty()) {
 		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,0.0f }, { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
 		return;
 	}
 
+	//style switcthes
 	switch (m_Style.top()) {
 	case Style::DrawBorder: {
-		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f },  BorderColor , { (Size.x * 0.5f) + BorderWidth,(Size.y * 0.5f)+ BorderWidth }, ID.ID);
-		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f },  BackGroundColor , { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
+
+		StyleBorderData* BorderData = (StyleBorderData*)m_StyleData.top();
+
+		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, BorderData->BorderColor, { (Size.x * 0.5f) + BorderData->BorderWidth,(Size.y * 0.5f)+ BorderData->BorderWidth }, ID.ID);
+		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, BorderData->BackGroundColor, { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
 		break;
 	}
 	default: {
-		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, BackGroundColor , { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
+		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, DefBackGroundColor, { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
 		break;
 	}
 	}
@@ -212,6 +218,13 @@ void FontSystem::SpecialCases(KeyCodes& Code, KeyState& State, char* Buffer, uin
 			m_CharEditedIndex--;
 		}
 			
+		break;
+	}
+	case KeyCodes::ENTER: {
+		memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+		Buffer[m_CharEditedIndex] = '\n';
+
+		m_CharEditedIndex++;
 		break;
 	}
 	default: {
@@ -333,7 +346,11 @@ void FontSystem::PushStyle(const Style& style,void* StyleData) {
 	case Style::DrawBorder: {
 		
 		//Store style data somehow and transfer it.
-		m_StyleData
+			m_StyleData.push(new StyleBorderData());
+			if (StyleData) {
+				memcpy(m_StyleData.top(), StyleData, sizeof(StyleBorderData));
+			}
+
 		break;
 
 	}
@@ -344,6 +361,8 @@ void FontSystem::PushStyle(const Style& style,void* StyleData) {
 	}
 }
 void FontSystem::PopStyle() {
+	delete m_StyleData.top();
+	m_StyleData.pop();
 	m_Style.pop();
 }
 

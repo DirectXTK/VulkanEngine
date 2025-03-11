@@ -702,7 +702,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_FontTextureAtlas = TextureFontAtlas;
     }
 
-    void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id)
+    void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex)
     {
         //Remember to check if all the font widths are the same !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //
@@ -728,7 +728,26 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             Float2 Size{};
             int32_t LetterIndex = Message[i]-33;
 
+            //make the pointer rendered same size for some reason it's different size.
+
+            //draw pointer
+            if(PointerIndex ==i)
+                DrawQuad({ BoundingBox[0].x + OffsetX -(FixedPadding*0.5f) ,BoundingBox[1].y- OffsetY - (CharSizeNorm * 1.0f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding * 0.5f ,CharSizeNorm }, 0);
+
             //edge cases
+            //Special cases
+            switch (Message[i]) {
+            case ' ': {
+                //skip this letter
+                OffsetX += FixedPadding + CharSizeNorm;
+                continue;
+            }
+            case '\n': {
+                OffsetY += SpaceBetweenLines + CharSizeNorm;
+                OffsetX = FixedPadding;
+                continue;
+            }
+            }
             //space letter index ==-1
 
             if (m_VertexPointer + 8 > m_VertexCount)

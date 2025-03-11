@@ -64,6 +64,7 @@ private:
 	KeyCodes m_Key{};
 	bool m_KeyAlreadyPressed[300];
 	
+	//styles
 	std::stack<Style> m_Style{};
 	std::stack<void*> m_StyleData{};
 

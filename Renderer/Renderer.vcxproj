@@ -108,6 +108,7 @@
     <ClInclude Include="Source\Context.h" />
     <ClInclude Include="Source\Descriptor.h" />
     <ClInclude Include="Source\Device.h" />
+    <ClInclude Include="Source\FontStyles.h" />
     <ClInclude Include="Source\FontSystem.h" />
     <ClInclude Include="Source\FrameBuffer.h" />
     <ClInclude Include="Source\GUI.h" />

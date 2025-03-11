@@ -66,7 +66,8 @@ public:
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
     void SetCurrentFont(Texture* TextureFontAtlas);
-    void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id);
+    //PointerIndex = -1 means don't draw it.
+    void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
     //GUI 
 
     void DrawOutline(Float3 Position, Float2 Size,Float4 Color, float OutlineWidth);
