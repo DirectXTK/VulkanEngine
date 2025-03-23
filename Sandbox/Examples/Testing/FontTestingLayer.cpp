@@ -10,7 +10,7 @@ void FontTestingLayer::OnCreate()
 	m_FontSystem->SetCharcterSize( 96.f*5);
 	Texture* fontatlas = m_FontSystem->GetFontAtlas();
 
-	m_App->m_AssetManager.LoadResource(fontatlas, ResourceType::TEXTURE, "FONTAtlas");
+	m_App->m_AssetManager.LoadAsset(fontatlas, AssetType::TEXTURE, "FONTAtlas");
 
 	m_App->m_Renderer->SetCurrentFont(fontatlas);
 }

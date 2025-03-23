@@ -6,21 +6,31 @@ TextureTestingLayer::TextureTestingLayer(): Layer("TextureTestingLayer")
 
 void TextureTestingLayer::OnCreate()
 {
-	m_Units.push_back({ Core::GetStringHash("Examples\\BLOOD_KNIGHT.png"),{0.0f,0.0f} });
-    m_Units.push_back({ Core::GetStringHash("Texture1.png"),{0.1f,0.0f} });
-    m_Units.push_back({ Core::GetStringHash("Texture2.png"),{0.2f,0.0f} });
-    m_Units.push_back({ Core::GetStringHash("Texture3.png"),{0.3f,0.0f} });
-    m_Units.push_back({ Core::GetStringHash("Texture4.png"),{0.4f,0.0f} });
+    m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", AssetType::TEXTUREATLAS);
+    m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", AssetType::TEXTURE);
+
+	//m_Units.push_back({ Core::GetStringHash("Examples\\BLOOD_KNIGHT.png"),{0.0f,0.0f} });
+    m_Units.push_back({ Core::GetStringHash("Texture1"),{0.1f,0.0f} });
+    m_Units.push_back({ Core::GetStringHash("Texture2"),{0.2f,0.0f} });
+    m_Units.push_back({ Core::GetStringHash("Texture3"),{0.3f,0.0f} });
+   // m_Units.push_back({ Core::GetStringHash("Texture4"),{0.4f,0.0f} });
 
 
-    m_Units.push_back({ Core::GetStringHash("Examples\\Test2.json"),  { 0.4f,0.0f },0 });
+    m_Units.push_back({ Core::GetStringHash("Examples\\Test2"),  { 0.4f,0.0f },0 });
     Camera2D* camera = &m_App->m_Camera;
     camera->SetScale({m_Zoom,m_Zoom});
+
+    Core::Log(ErrorType::Info, "TextureAtlasCount: ", m_App->m_AssetManager.GetAssetCount(AssetType::TEXTUREATLAS));
+    Core::Log(ErrorType::Info, "TextureCount: ", m_App->m_AssetManager.GetAssetCount(AssetType::TEXTURE));
 
 }
 
 void TextureTestingLayer::OnUpdate(float DeltaTime)
 {
+
+  
+
+    /*
     Camera2D* camera = &m_App->m_Camera;
     InputSystem* inputsystem = &m_App->m_InputSystem;
     Renderer* renderer = m_App->m_Renderer;
@@ -83,18 +93,21 @@ void TextureTestingLayer::OnUpdate(float DeltaTime)
         
 
 	}
+    */
 }
 
 void TextureTestingLayer::OnGUI()
 {
-	if (m_App->m_GUIRenderer->Button("Create Blood knight", {0.0f,-0.9f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton.png"), false)) {
-        m_Units.push_back({ Core::GetStringHash("Examples\\BLOOD_KNIGHT.png"),{Core::RandomFloat(-1.0f,1.0f),Core::RandomFloat(-1.0f,1.0f)}});
+    /*
+	if (m_App->m_GUIRenderer->Button("Create Blood knight", {0.0f,-0.9f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+        m_Units.push_back({ Core::GetStringHash("Examples\\BLOOD_KNIGHT"),{Core::RandomFloat(-1.0f,1.0f),Core::RandomFloat(-1.0f,1.0f)}});
 
 	}
-    if (m_App->m_GUIRenderer->Button("ChangeTextureID", {0.2f,-0.9f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\ChangeTextureButton.png"), false)) {
-        m_Units[5].TextureIndex++;
+    if (m_App->m_GUIRenderer->Button("ChangeTextureID", {0.2f,-0.9f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\ChangeTextureButton"), false)) {
+        m_Units[3].TextureIndex++;
 
     }
+    */
 }
 
 void TextureTestingLayer::OnDestroy()

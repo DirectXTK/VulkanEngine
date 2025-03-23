@@ -450,7 +450,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         }
 
         for (uint32_t i = 0; i < m_Textures.size(); i++) {
-            Texture* texture = m_AssetManager->GetResource<Texture>(m_TextureIDByOrder[i]);
+            Texture* texture = (Texture*)m_AssetManager->GetAsset(m_TextureIDByOrder[i]).GetData();
             if (texture)
                 m_DescriptorSetTextures[m_DrawCallCountGeometry].WriteToTexture(i + 1, texture->GetImageView(), texture->GetSampler());
             else
@@ -548,7 +548,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
        m_GUIRendering = false;
     }
 
-    void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,uint32_t TextureIndex)
+    void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,int TextureIndex)
     {
         if (m_VertexPointer + 4 > m_VertexCount )
             FlushGeometry();
@@ -556,21 +556,32 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (m_Textures.find(TextureHandle) == m_Textures.end()) {
                 if (m_Textures.size() == m_TextureSlotCount - 1)
                     FlushGeometry();
-                m_Textures[TextureHandle] = { m_AssetManager->GetResource<Texture>(TextureHandle) ,(uint32_t)m_Textures.size() + 1 };
+                m_Textures[TextureHandle] = { (Texture*)m_AssetManager->GetAsset(TextureHandle).GetData() ,(uint32_t)m_Textures.size() + 1};
                 m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
 
             }
             TextureRenderingData texture = m_Textures[TextureHandle];
-            Texture* texturetest = m_AssetManager->GetResource<Texture>(TextureHandle);
+            Texture* texturetest = (Texture*)m_AssetManager->GetAsset(TextureHandle).GetData();
             m_Vertices[m_VertexPointer].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
 
-            m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetTextureCoords()[0];
-            m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetTextureCoords()[1];
-            m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetTextureCoords()[2];
-            m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetTextureCoords()[3];
+            if (TextureIndex != -1) {
+               // m_AssetManager->GetResource<TextureAtlasData>()
+
+                //m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetSubTextureData(TextureIndex)->Points[0];
+                //m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetSubTextureData(TextureIndex)->Points[1];
+               // m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetSubTextureData(TextureIndex)->Points[2];
+               // m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetSubTextureData(TextureIndex)->Points[3];
+            }
+            else {
+                m_Vertices[m_VertexPointer].TexCoords = {0.0f,1.0f};
+                m_Vertices[m_VertexPointer + 1].TexCoords = {0.0f,0.0f};
+                m_Vertices[m_VertexPointer + 2].TexCoords = {1.0f,0.0f};
+                m_Vertices[m_VertexPointer + 3].TexCoords = {1.0f,1.0f};
+            }
+         
         }
         m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
         m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
@@ -610,7 +621,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (m_Textures.find(Animation.GetCurrentTextureID()) == m_Textures.end()) {
                 if (m_Textures.size() == m_TextureSlotCount - 1)
                     FlushGeometry();
-                m_Textures[Animation.GetCurrentTextureID()] = { m_AssetManager->GetResource<Texture>(Animation.GetCurrentTextureID()) ,(uint32_t)m_Textures.size() + 1 };
+                m_Textures[Animation.GetCurrentTextureID()] = { (Texture*)m_AssetManager->GetAsset(Animation.GetCurrentTextureID()).GetData() ,(uint32_t)m_Textures.size() + 1};
                 m_TextureIDByOrder[m_Textures.size() - 1] = Animation.GetCurrentTextureID();
             }
             TextureRenderingData texture = m_Textures[Animation.GetCurrentTextureID()];
@@ -621,10 +632,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
 
-            m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetTextureCoords()[0];
-            m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetTextureCoords()[1];
-            m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetTextureCoords()[2];
-            m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetTextureCoords()[3];
+            m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
+            m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
+            m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,0.0f };
+            m_Vertices[m_VertexPointer + 3].TexCoords = { 1.0f,1.0f };
 
 
       
@@ -710,7 +721,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //Char being edited index
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
 
-        float SpaceBetweenLines{0.01f};
+        float SpaceBetweenLines{ CharSizeNorm *1.01f};
 
         float OffsetX{ FixedPadding };
         float OffsetY{};
@@ -753,9 +764,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (m_VertexPointer + 8 > m_VertexCount)
                 FlushGeometry();
           
+            Core::Log(ErrorType::Error, "weadad");
             TextureRenderingData texture = m_Textures[TextureHandle];
-                Size.x = texture.texture->GetSubTextureSize(LetterIndex).x/ texture.texture->GetWidth();
-                Size.y = texture.texture->GetSubTextureSize(LetterIndex).y / texture.texture->GetHeight();
+              //  Size.x = texture.texture->GetSubTextureData(LetterIndex)->Width/ texture.texture->GetWidth();
+              //  Size.y = texture.texture->GetSubTextureData(LetterIndex)->Height / texture.texture->GetHeight();
                 //its the size of the bitmap not the character itself.
 
 
@@ -765,10 +777,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
             if (LetterIndex != -1) {
 
-                m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[0];
-                m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[1];
-                m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[2];
-                m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetSubTextureCoords(LetterIndex)[3];
+               // m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetSubTextureData(LetterIndex)->Points[0];
+              //  m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetSubTextureData(LetterIndex)->Points[1];
+               // m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetSubTextureData(LetterIndex)->Points[2];
+               // m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetSubTextureData(LetterIndex)->Points[3];
             }
             else {
                 m_Vertices[m_VertexPointer].TexCoords = { 0.0f,0.0f };
@@ -998,7 +1010,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         Core::Log(ErrorType::Info,"Draw call count",m_DrawCallCountGeometry+m_DrawCallCountGUI+m_DrawCallCountOutlines);
     }
 
-    Texture* Renderer::LoadTexture(std::string Path)
+    Texture* Renderer::LoadTexture(std::string Path,TextureType type)
     {
         Context context = new ContextData();
         context->Device = m_Device;

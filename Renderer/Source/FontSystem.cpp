@@ -255,7 +255,7 @@ void FontSystem::ReRenderFaces()
 	uint32_t ChannelCount{};
 	int64_t OffsetX{0};
 	int64_t OffsetY{0};
-	TextureAtlasCoords* AtlasCoords{};
+	TextureCoords* AtlasCoords{};
 	Float2* SubTextureSizes{};
 	uint32_t SizeX{16};
 	uint32_t SizeY{ 16 };
@@ -264,7 +264,7 @@ void FontSystem::ReRenderFaces()
 	FontAtlasWidth = m_Face->max_advance_width;
 	FontAtlasHeight = m_Face->max_advance_height;
 
-	AtlasCoords = new TextureAtlasCoords[m_Face->num_glyphs];
+	AtlasCoords = new TextureCoords[m_Face->num_glyphs];
 	SubTextureSizes = new Float2[m_Face->num_glyphs];
 
 	error = FT_Select_Charmap(m_Face, FT_ENCODING_UNICODE);
@@ -300,13 +300,13 @@ void FontSystem::ReRenderFaces()
 		
 		
 
-		AtlasCoords[SubTextureIndex].SizeX = slot->bitmap.width;
-		AtlasCoords[SubTextureIndex].SizeY = slot->bitmap.rows;
+		AtlasCoords[SubTextureIndex].Width = slot->bitmap.width;
+		AtlasCoords[SubTextureIndex].Height = slot->bitmap.rows;
 		SizeX = slot->bitmap.width;
 		SizeY = slot->bitmap.rows;
 		
 
-		if (OffsetX + AtlasCoords[SubTextureIndex].SizeX > FontAtlasWidth) {
+		if (OffsetX + AtlasCoords[SubTextureIndex].Width > FontAtlasWidth) {
 			OffsetY += MaxY;
 			MaxY = 0;
 			OffsetX = 0;
@@ -315,10 +315,10 @@ void FontSystem::ReRenderFaces()
 
 		//add offest but reduce the size if the size is lower add padding to seem
 
-		AtlasCoords[SubTextureIndex].Points[0] = { float(OffsetX / (float)FontAtlasWidth),float((SizeY+OffsetY) / (float)FontAtlasHeight) };
-		AtlasCoords[SubTextureIndex].Points[1] = { float(OffsetX / (float)FontAtlasWidth),float(OffsetY / (float)FontAtlasHeight) };
-		AtlasCoords[SubTextureIndex].Points[2] = { float((SizeX+OffsetX) / (float)FontAtlasWidth),float(OffsetY / (float)FontAtlasHeight) };
-		AtlasCoords[SubTextureIndex].Points[3] = { float((SizeX+OffsetX) / (float)FontAtlasWidth) ,float((SizeY+OffsetY) / (float)FontAtlasHeight)  };
+		AtlasCoords[SubTextureIndex].Coords[0] = { float(OffsetX / (float)FontAtlasWidth),float((SizeY+OffsetY) / (float)FontAtlasHeight) };
+		AtlasCoords[SubTextureIndex].Coords[1] = { float(OffsetX / (float)FontAtlasWidth),float(OffsetY / (float)FontAtlasHeight) };
+		AtlasCoords[SubTextureIndex].Coords[2] = { float((SizeX+OffsetX) / (float)FontAtlasWidth),float(OffsetY / (float)FontAtlasHeight) };
+		AtlasCoords[SubTextureIndex].Coords[3] = { float((SizeX+OffsetX) / (float)FontAtlasWidth) ,float((SizeY+OffsetY) / (float)FontAtlasHeight)  };
 
 		SubTextureSizes[SubTextureIndex] = { (float)SizeX,(float)SizeY };
 
@@ -329,14 +329,15 @@ void FontSystem::ReRenderFaces()
 		}
 		//if (SubTextureIndex  == '.'-33)
 		//	Core::Log(ErrorType::Error, "Maktyra");
-		OffsetX += AtlasCoords[SubTextureIndex].SizeX;
+		OffsetX += AtlasCoords[SubTextureIndex].Width;
 		SubTextureIndex++;
 		
 
 
 	}
-	m_FontAtlas = new Texture(app->m_Renderer->GetContext(), FontAtlasWidth, FontAtlasHeight, 4, AtlasMapBitmap);
-	m_FontAtlas->CreateTextureAtlas(AtlasCoords, SubTextureIndex,SubTextureSizes);
+	Core::Log(ErrorType::Error, "dwadad");
+	//m_FontAtlas = new Texture(app->m_Renderer->GetContext(), FontAtlasWidth, FontAtlasHeight, 4, AtlasMapBitmap);
+	//m_FontAtlas->CreateTextureAtlas(AtlasCoords, SubTextureIndex,SubTextureSizes);
 
 	delete[] AtlasCoords;
 }

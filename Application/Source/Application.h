@@ -27,13 +27,11 @@ public:
 
     GUUID GetCurrentlyHoveredPixelID();
 
-    template<typename T>
-    T* GetResource(GUUID id) { return m_AssetManager.GetResource<T>(id); }
-    template<typename T>
-    T* GetResource(const std::string& Path) { return m_AssetManager.GetResource<T>(Core::GetStringHash(Path)); }
+    Asset GetAsset(GUUID id) { return m_AssetManager.GetAsset(id); }
+    Asset GetAsset(const std::string& Path) { return m_AssetManager.GetAsset(Core::GetStringHash(Path)); }
 
     AssetManager* GetAssetManager() { return &m_AssetManager; }
-    void LoadAssets(std::string Path,ResourceType type);
+    void LoadAssets(std::string Path,AssetType type);
 
     void Run();
     Collider CreateCollider(Float2* Position, Float2 *Size);

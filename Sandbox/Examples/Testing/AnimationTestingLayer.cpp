@@ -9,8 +9,8 @@ void AnimationTestingLayer::OnCreate()
 {
 	//m_Animation = m_App->GetAssetManager()->GetResource<Animator>(Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.json"));
 	//m_Animation->SetStage("BBZ");
-	m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Animation\\", ResourceType::ANIMATION);
-	m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", ResourceType::TEXTURE);
+	m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Animation\\", AssetType::ANIMATION);
+	m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", AssetType::TEXTURE);
 
 	m_Units.reserve(10);
 	m_Units.push_back(AnimationUnit());
@@ -19,14 +19,14 @@ void AnimationTestingLayer::OnCreate()
 	m_App->m_Camera.SetPosition({ 0.0f,0.0f });
 
 	m_Units[0].Position = {0.0f,0.0f};
-	m_Units[0].Animator = *m_App->GetResource<Animator>("WARRIOR");
+	m_Units[0].Animator = *(Animator*)m_App->GetAsset("WARRIOR").GetData();
 	m_Units[0].Animator.SetStage("WALK");
 	m_Units[0].Collid = m_System.CreateCollider();
 	m_Units[0].Collid.Update(&m_Units[0].Position, &m_Size);
 
 
 	m_Units[1].Position = { 0.04f*5,0.0f };
-	m_Units[1].Animator = *m_App->GetResource<Animator>("TOWN_HALL");
+	m_Units[1].Animator = *(Animator*)m_App->GetAsset("TOWN_HALL").GetData();
 	m_Units[1].Animator.SetStage("IDLE");
 	m_Units[1].Collid = m_System.CreateCollider();
 	m_Units[1].Collid.Update(&m_Units[1].Position, &m_Size);
@@ -108,7 +108,7 @@ void AnimationTestingLayer::OnGUI()
 		if (m_SpawnUnit) {
 			m_Units.push_back(AnimationUnit());
 			m_Units[m_Units.size() - 1].Position = { m_App->GetWorldMousePos().x, m_App->GetWorldMousePos().y };
-			m_Units[m_Units.size() - 1].Animator = *m_App->GetResource<Animator>(m_SpawnedUnit);
+			m_Units[m_Units.size() - 1].Animator = *(Animator*)m_App->GetAsset(m_SpawnedUnit).GetData();
 			m_Units[m_Units.size() - 1].Collid = m_System.CreateCollider();
 			m_Units[m_Units.size() - 1].Collid.Update(&m_Units[m_Units.size() - 1].Position, &m_Size);
 

@@ -59,7 +59,7 @@ public:
     //void DrawQuadWithAtlasGUI(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
    // void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, uint64_t TextureIndex);
     //
-    void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, uint32_t TextureIndex = 0);
+    void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, int TextureIndex = -1);
     //void DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID);
 
@@ -86,7 +86,7 @@ public:
 
     void Statistics();
 
-    Texture* LoadTexture(std::string Path);
+    Texture* LoadTexture(std::string Path,TextureType = TextureType::Texture);
 
     Context GetContext() { return m_Context; }
 

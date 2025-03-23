@@ -68,9 +68,9 @@
 
 
 
- void Application::LoadAssets(std::string Path, ResourceType type)
+ void Application::LoadAssets(std::string Path, AssetType type)
  {
-     m_AssetManager.LoadAllResources(Path, type);
+     m_AssetManager.LoadAllAssets(Path, type);
  }
 
  void Application::Run(){

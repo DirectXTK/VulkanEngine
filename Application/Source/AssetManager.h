@@ -1,7 +1,7 @@
 #pragma once
 #include "AppCore.h"
 
-enum class ResourceType{UNDIFINED,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER,AI,ANIMATION};
+enum class AssetType{UNDIFINED,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER,AI,ANIMATION};
 class Texture;
 class Application;
 
@@ -25,31 +25,43 @@ private:
 	uint64_t m_RefCount{};
 	T m_Asset{};
 };
-
-template<typename T>
+//template<typename T>
 class Asset {
 public:
+	Asset(const AssetType& Type, void* Data) {
+		m_Data = Data;
+		m_Type = Type;
+	}
+	Asset(){}
+
+	AssetType GetType() { return m_Type; }
+	void* GetData() { return m_Data; }
+
 	~Asset() {
-		m_AssetController.DecreaseRefCount();
+		delete m_Data;
 	}
 private:
-	AssetController<T> m_AssetController{};
+	//AssetController<T> m_AssetController{};
+
+	AssetType m_Type{AssetType::UNDIFINED};
+	void* m_Data{};
+
 };
 class AssetManager
 {
 public:
 	void Init(Application* app);
-	void LoadAllResources(std::string FolderPath,ResourceType TypesToLoad);
-	GUUID LoadResource(void* Resource, ResourceType type,std::string Name);
-	GUUID ReloadResource(void* Resource, ResourceType type, std::string Name);
-	uint64_t GetResourceCount(ResourceType type) { return m_ResourceCount[type];}
-	template<typename T>
-	T* GetResource(GUUID Handle) {
+	void LoadAllAssets(std::string FolderPath, AssetType TypesToLoad);
+	GUUID LoadAsset(void* Resource, AssetType type,std::string Name);
+	GUUID ReloadAsset(void* Resource, AssetType type, std::string Name);
+	uint64_t GetAssetCount(AssetType type) { return m_ResourceCount[type];}
+
+	Asset GetAsset(GUUID Handle) {
 		if (m_Resources.find(Handle) == m_Resources.end()) {
-			Core::Log(ErrorType::Error, "Resources wasn't found (ID", Handle.ID,")");
-				return nullptr;
+			Core::Log(ErrorType::Warning, "Resources wasn't found (ID", Handle.ID,")");
+				return Asset(AssetType::UNDIFINED,nullptr);
 		}
-		return (T*)m_Resources[Handle];
+		return m_Resources[Handle];
 	}
 	
 	//void Save();
@@ -58,8 +70,8 @@ private:
 	void LoadAnimation(const std::string& FolderPath);
 	GUUID LoadTexture(const std::string& TexturePath);
 
-	std::unordered_map<GUUID, void*> m_Resources{};
-	std::unordered_map<ResourceType, uint64_t> m_ResourceCount;
+	std::unordered_map<GUUID, Asset> m_Resources{};
+	std::unordered_map<AssetType, uint64_t> m_ResourceCount;
 	Application* m_APP{};
 };
 
