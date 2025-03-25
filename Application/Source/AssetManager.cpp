@@ -22,7 +22,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 				continue;
 
 			Texture* texture = m_APP->m_Renderer->LoadTexture(FilePath);
-			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size()-4);
+			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
 
 			size_t t = std::hash<std::string>{}(FilePath);
 		
@@ -52,7 +52,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 			TexturePath = FilePath.substr(0, FilePath.size() - 5);
 
 			TexturePath = TexturePath.substr(FolderPath.size(), TexturePath.find(".png")- FolderPath.size());
-
+			TexturePath += ".png";
 
 					
 
@@ -106,10 +106,11 @@ GUUID AssetManager::LoadAsset(void* Resource, AssetType type,std::string Name)
 {
 	GUUID ID = Core::GetStringHash(Name);
 	auto Index = m_Resources.find(ID);
-	if (Index == m_Resources.end()) 
+	if (Index == m_Resources.end()) {
 		Core::Log(ErrorType::Warning, "Resource is being loaded twice.If you intended to overwrite this resources please use ReloadResource() function");
-	
-	m_ResourceCount[type]++;
+		m_ResourceCount[type]++;
+
+	}
 	m_Resources[ID] = Asset(type,Resource);
 	return ID;
 }

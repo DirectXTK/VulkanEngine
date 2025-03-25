@@ -27,7 +27,7 @@ FontSystem::FontSystem(void* App)
 		Core::Log(ErrorType::Error, "Failed to open/read or the font is broken ");
 	}
 
-	//ReRenderFaces();
+	ReRenderFaces();
 	InputCallbacks callbacks{};
 	callbacks.KeyBoardCallback = KeyBoardCallbackFn;
 
@@ -335,11 +335,20 @@ void FontSystem::ReRenderFaces()
 
 
 	}
-	Core::Log(ErrorType::Error, "dwadad");
-	//m_FontAtlas = new Texture(app->m_Renderer->GetContext(), FontAtlasWidth, FontAtlasHeight, 4, AtlasMapBitmap);
+	//Core::Log(ErrorType::Error, "dwadad");
+	Font* font = new Font();
+	font->FontSize = m_CharacterSize;
+	font->Coords = AtlasCoords;
+	font->GlyphCount = m_Face->num_glyphs;
+	font->TextureID = Core::GetStringHash("FontTexture");
+
+	Texture* texture = new Texture(app->m_Renderer->GetContext(), FontAtlasWidth, FontAtlasHeight, 4, AtlasMapBitmap);
+
+	app->m_AssetManager.LoadAsset(font, AssetType::FONT, "Font");
+	app->m_AssetManager.LoadAsset(texture, AssetType::TEXTURE, "FontTexture");
+
 	//m_FontAtlas->CreateTextureAtlas(AtlasCoords, SubTextureIndex,SubTextureSizes);
 
-	delete[] AtlasCoords;
 }
 void FontSystem::PushStyle(const Style& style,void* StyleData) {
 	m_Style.push(style);

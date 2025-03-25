@@ -11,7 +11,7 @@ int main() {
 	specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
 
 	Application app(specs);
-	app.AddLayer(new TextureTestingLayer());
+	app.AddLayer(new FontTestingLayer());
 	app.Run();
    
 

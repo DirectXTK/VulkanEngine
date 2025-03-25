@@ -4,6 +4,12 @@
 #include "ft2build.h"
 #include FT_FREETYPE_H
 
+struct Font {
+	GUUID TextureID{};
+	float FontSize{};
+	TextureCoords* Coords{};
+	uint32_t GlyphCount{};
+};
 class FontSystem
 {
 public:
@@ -42,7 +48,7 @@ private:
 	void DrawBorder(Float2& Position, Float2& Size, GUUID ID);
 
 	//coeficient used for normalizing char size.
-	const float m_CharSizeNormCoe{ 0.000045f };
+	const float m_CharSizeNormCoe{ 0.000043f };
 
 	void* m_App{};
 	void ReRenderFaces();

@@ -10,13 +10,13 @@ void TextureTestingLayer::OnCreate()
     m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", AssetType::TEXTURE);
 
 	//m_Units.push_back({ Core::GetStringHash("Examples\\BLOOD_KNIGHT.png"),{0.0f,0.0f} });
-    m_Units.push_back({ Core::GetStringHash("Texture1"),{0.1f,0.0f} });
-    m_Units.push_back({ Core::GetStringHash("Texture2"),{0.2f,0.0f} });
-    m_Units.push_back({ Core::GetStringHash("Texture3"),{0.3f,0.0f} });
-   // m_Units.push_back({ Core::GetStringHash("Texture4"),{0.4f,0.0f} });
+    m_Units.push_back({ Core::GetStringHash("Texture1.png"),{0.1f,0.0f} });
+    m_Units.push_back({ Core::GetStringHash("Texture2.png"),{0.2f,0.0f} });
+    m_Units.push_back({ Core::GetStringHash("Texture3.png"),{0.3f,0.0f} });
+    m_Units.push_back({ Core::GetStringHash("Texture4.png"),{0.4f,0.0f} });
 
 
-    m_Units.push_back({ Core::GetStringHash("Examples\\Test2"),  { 0.4f,0.0f },0 });
+    m_Units.push_back({ Core::GetStringHash("Examples\\Test2.json"),  { 0.5f,0.0f },0 });
     Camera2D* camera = &m_App->m_Camera;
     camera->SetScale({m_Zoom,m_Zoom});
 
@@ -30,7 +30,7 @@ void TextureTestingLayer::OnUpdate(float DeltaTime)
 
   
 
-    /*
+    
     Camera2D* camera = &m_App->m_Camera;
     InputSystem* inputsystem = &m_App->m_InputSystem;
     Renderer* renderer = m_App->m_Renderer;
@@ -93,7 +93,7 @@ void TextureTestingLayer::OnUpdate(float DeltaTime)
         
 
 	}
-    */
+    
 }
 
 void TextureTestingLayer::OnGUI()

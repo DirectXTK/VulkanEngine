@@ -6,6 +6,7 @@
 #include "Texture.h"
 #include "Context.h"
 #include "AssetManager.h"
+#include "FontSystem.h"
 Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem,AssetManager* assetManager) {
     m_Window = window;
     m_ClearColor = desc.ClearColor;
@@ -550,37 +551,66 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,int TextureIndex)
     {
+        GUUID CurrentTextureHandle{};
+        Texture* CurrentTexture{};
+
         if (m_VertexPointer + 4 > m_VertexCount )
             FlushGeometry();
         if (TextureHandle != 0) {
-            if (m_Textures.find(TextureHandle) == m_Textures.end()) {
-                if (m_Textures.size() == m_TextureSlotCount - 1)
-                    FlushGeometry();
-                m_Textures[TextureHandle] = { (Texture*)m_AssetManager->GetAsset(TextureHandle).GetData() ,(uint32_t)m_Textures.size() + 1};
-                m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
+            Asset asset = m_AssetManager->GetAsset(TextureHandle);
 
-            }
-            TextureRenderingData texture = m_Textures[TextureHandle];
-            Texture* texturetest = (Texture*)m_AssetManager->GetAsset(TextureHandle).GetData();
-            m_Vertices[m_VertexPointer].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
 
-            if (TextureIndex != -1) {
-               // m_AssetManager->GetResource<TextureAtlasData>()
 
-                //m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetSubTextureData(TextureIndex)->Points[0];
-                //m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetSubTextureData(TextureIndex)->Points[1];
-               // m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetSubTextureData(TextureIndex)->Points[2];
-               // m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetSubTextureData(TextureIndex)->Points[3];
-            }
-            else {
-                m_Vertices[m_VertexPointer].TexCoords = {0.0f,1.0f};
-                m_Vertices[m_VertexPointer + 1].TexCoords = {0.0f,0.0f};
-                m_Vertices[m_VertexPointer + 2].TexCoords = {1.0f,0.0f};
-                m_Vertices[m_VertexPointer + 3].TexCoords = {1.0f,1.0f};
-            }
+
+                switch (asset.GetType()) {
+                case AssetType::TEXTURE: {
+                    CurrentTextureHandle = TextureHandle;
+                    CurrentTexture = (Texture*)asset.GetData();
+
+                    m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
+                    m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
+                    m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,0.0f };
+                    m_Vertices[m_VertexPointer + 3].TexCoords = { 1.0f,1.0f };
+                    break;
+                }
+                case AssetType::TEXTUREATLAS:{
+                    TextureAtlasData* textureAtlasData = (TextureAtlasData*)asset.GetData();
+
+                    CurrentTextureHandle = ((TextureAtlasData*)asset.GetData())->TextureID;
+                    CurrentTexture = (Texture*)m_AssetManager->GetAsset(textureAtlasData->TextureID).GetData();
+
+                    m_Vertices[m_VertexPointer].TexCoords = textureAtlasData->Data[TextureIndex].Coords[0];
+                    m_Vertices[m_VertexPointer + 1].TexCoords = textureAtlasData->Data[TextureIndex].Coords[1];
+                    m_Vertices[m_VertexPointer + 2].TexCoords = textureAtlasData->Data[TextureIndex].Coords[2];
+                    m_Vertices[m_VertexPointer + 3].TexCoords = textureAtlasData->Data[TextureIndex].Coords[3];
+                     break;
+                }
+                case AssetType::ANIMATION: {
+                    Core::Log(ErrorType::Error, "Not implemented yet");
+                }
+                default: {
+                    Core::Log(ErrorType::Error, "Invalid asset type");
+                }
+                }
+
+
+                if (m_Textures.find(CurrentTextureHandle) == m_Textures.end()) {
+                    if (m_Textures.size() == m_TextureSlotCount - 1)
+                        FlushGeometry();
+                    m_Textures[CurrentTextureHandle] = { CurrentTexture ,(uint32_t)m_Textures.size() + 1 };
+                    m_TextureIDByOrder[m_Textures.size() - 1] = CurrentTextureHandle;
+
+                }
+                uint32_t RendererTextureIndex = m_Textures[CurrentTextureHandle].Index;
+
+                m_Vertices[m_VertexPointer].TextureID = RendererTextureIndex;
+                m_Vertices[m_VertexPointer + 1].TextureID = RendererTextureIndex;
+                m_Vertices[m_VertexPointer + 2].TextureID = RendererTextureIndex;
+                m_Vertices[m_VertexPointer + 3].TextureID = RendererTextureIndex;
+         
+       
+
+          
          
         }
         m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
@@ -604,8 +634,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_Vertices[m_VertexPointer + 3].ID = ID;
 
            
-       
-
+   
 
         m_VertexPointer += 4;
 
@@ -719,18 +748,30 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //
         //temp
         //Char being edited index
+        Asset asset = m_AssetManager->GetAsset(Core::GetStringHash("Font"));
+        Font* font = (Font*)asset.GetData();
+        Texture* FontAtlasTexture{};
+
+        if (asset.GetType() != AssetType::FONT)
+        {
+            Core::Log(ErrorType::Error, "Invalid type");
+            return;
+        }
+
+        FontAtlasTexture = (Texture*)m_AssetManager->GetAsset(font->TextureID).GetData();
+
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
 
         float SpaceBetweenLines{ CharSizeNorm *1.01f};
 
         float OffsetX{ FixedPadding };
         float OffsetY{};
-        GUUID TextureHandle = Core::GetStringHash("FONTAtlas");
+        GUUID TextureHandle = font->TextureID;
         float Space{ 0.06f };
 
         if (m_Textures.size() == m_TextureSlotCount - 1)
             FlushGeometry();
-        m_Textures[TextureHandle] = { m_FontTextureAtlas ,(uint32_t)m_Textures.size() + 1 };
+        m_Textures[TextureHandle] = { FontAtlasTexture ,(uint32_t)m_Textures.size() + 1 };
         m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
 
         //Do this for every letter
@@ -764,10 +805,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (m_VertexPointer + 8 > m_VertexCount)
                 FlushGeometry();
           
-            Core::Log(ErrorType::Error, "weadad");
             TextureRenderingData texture = m_Textures[TextureHandle];
-              //  Size.x = texture.texture->GetSubTextureData(LetterIndex)->Width/ texture.texture->GetWidth();
-              //  Size.y = texture.texture->GetSubTextureData(LetterIndex)->Height / texture.texture->GetHeight();
+                Size.x = (float)font->Coords->Width/ (float)FontAtlasTexture->GetWidth();
+                Size.y = (float)font->Coords->Height / (float)FontAtlasTexture->GetHeight();
                 //its the size of the bitmap not the character itself.
 
 
@@ -777,10 +817,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
             if (LetterIndex != -1) {
 
-               // m_Vertices[m_VertexPointer].TexCoords = texture.texture->GetSubTextureData(LetterIndex)->Points[0];
-              //  m_Vertices[m_VertexPointer + 1].TexCoords = texture.texture->GetSubTextureData(LetterIndex)->Points[1];
-               // m_Vertices[m_VertexPointer + 2].TexCoords = texture.texture->GetSubTextureData(LetterIndex)->Points[2];
-               // m_Vertices[m_VertexPointer + 3].TexCoords = texture.texture->GetSubTextureData(LetterIndex)->Points[3];
+                m_Vertices[m_VertexPointer].TexCoords = font->Coords[LetterIndex].Coords[0];
+                m_Vertices[m_VertexPointer + 1].TexCoords = font->Coords[LetterIndex].Coords[1];
+                m_Vertices[m_VertexPointer + 2].TexCoords = font->Coords[LetterIndex].Coords[2];
+                m_Vertices[m_VertexPointer + 3].TexCoords = font->Coords[LetterIndex].Coords[3];
+
             }
             else {
                 m_Vertices[m_VertexPointer].TexCoords = { 0.0f,0.0f };
@@ -1082,6 +1123,7 @@ void Renderer::DrawBatch()
     vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
     vkCmdSetStencilReference(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
     vkCmdSetStencilCompareMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
+
     for (int i = 0; i < m_DrawCommandsGeometry.size(); i++) {
       
         vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGeometry[i]->GetBuffer(), &Offset);

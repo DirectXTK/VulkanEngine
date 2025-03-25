@@ -1,7 +1,7 @@
 #pragma once
 #include "AppCore.h"
 
-enum class AssetType{UNDIFINED,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER,AI,ANIMATION};
+enum class AssetType{UNDIFINED,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER,AI,ANIMATION,FONT};
 class Texture;
 class Application;
 
@@ -38,7 +38,7 @@ public:
 	void* GetData() { return m_Data; }
 
 	~Asset() {
-		delete m_Data;
+		
 	}
 private:
 	//AssetController<T> m_AssetController{};

@@ -382,16 +382,15 @@ void Texture::CopyDataFromBuffer(VkCommandBuffer CommandBuffer,VkBuffer BufferSr
 
 
 	Offset=Data.find("\"size\"",Offset);
-	Offset += ARRAYSIZE("\"size\"") + 9;
-
-	Width = std::stoi(Data.substr(Offset, Data.find(",") - Offset-1));
+	Offset += ARRAYSIZE("\"size\"") + 8;
+	Width = std::stoi(Data.substr(Offset, Data.find(",",Offset) - Offset));
 	Offset += Data.find(':', Offset)- Offset+1;
 
-	Height = std::stoi(Data.substr(Offset, Data.find("}") - Offset - 1));
+	Height = std::stoi(Data.substr(Offset, Data.find("}", Offset) - Offset));
 
 	Offset = 0;
 
-	Offset += Data.find("\"frame\"", Offset);
+		Offset += Data.find("\"frame\"", Offset);
 
 
 
