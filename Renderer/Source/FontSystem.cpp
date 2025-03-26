@@ -70,7 +70,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	Application* app = (Application*)m_App;
 	Renderer* renderer = ((Application*)m_App)->m_Renderer;
 	GUUID SelectID = Core::GetStringHash(ID);
-	float CharacterSizeNorm = m_CharacterSize * m_CharSizeNormCoe;
+	float CharacterSize = m_CharacterSize/64 ;
 	bool ScrollableBoundBox{};
 
 	m_PointerCooldown -= app->GetDeltaTime();
@@ -87,7 +87,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		if (app->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID)){
 			Float2 MousePos = app->GetMousePosNorm();
 			float PosXInBox = std::fabs(BoundingBox[0].x - MousePos.x);
-			m_CharEditedIndex = PosXInBox / (CharacterSizeNorm+m_FixedPadding);
+			m_CharEditedIndex = PosXInBox / (CharacterSize +m_FixedPadding);
 
 			//if its one of the special symbols make it not editable and if its the first char make it editable
  			if (Buffer[m_CharEditedIndex] <= 32) {
@@ -118,10 +118,10 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	if (m_PointerCooldown <= 0.0f) {
 		if (m_PointerCooldown <= -m_PointerBlinkCooldownConst)
 			m_PointerCooldown = m_PointerBlinkCooldownConst;
-		renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - CharacterSizeNorm }, BoundingBox, m_FixedPadding, CharacterSizeNorm, SelectID, m_CharEditedIndex);
+		renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - CharacterSize }, BoundingBox, m_FixedPadding, CharacterSize, SelectID, m_CharEditedIndex);
 	}
 	else {
-		renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - CharacterSizeNorm }, BoundingBox, m_FixedPadding, CharacterSizeNorm, SelectID);
+		renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - CharacterSize }, BoundingBox, m_FixedPadding, CharacterSize, SelectID);
 	}
 		//the spaces beetween letters are uneaven and the pointers sometimes isn't drawn.
 		//draws in the center
@@ -244,7 +244,7 @@ void FontSystem::ReRenderFaces()
 {
 	
 	Application* app = (Application*)m_App;
-	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize, 500, 500);
+	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize, 300, 300);
 	if (error) {
 		Core::Log(ErrorType::Error, "Failed to set the font char size");
 	}
@@ -331,7 +331,7 @@ void FontSystem::ReRenderFaces()
 		//	Core::Log(ErrorType::Error, "Maktyra");
 		OffsetX += AtlasCoords[SubTextureIndex].Width;
 		SubTextureIndex++;
-		
+		Core::Log(ErrorType::Info, "Left:", slot->bitmap_left, " Top:", slot->bitmap_top," AdvanceX:",slot->advance.x,  " AdvanceY:", slot->advance.y);
 
 
 	}
