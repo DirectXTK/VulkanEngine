@@ -41,9 +41,11 @@ void FontTestingLayer::OnGUI()
 	props.BackGroundTexture = nullptr;
 	props.BorderTexture = nullptr;
 
-	m_FontSystem->PushStyle(Style::DrawBorder);
-	m_FontSystem->InputText("", Buffer, 255, { -0.5f,0.0f }, { 1.1f,0.4f });
-	m_FontSystem->PopStyle();
+	//m_FontSystem->PushStyle(Style::DrawBorder);
+	//m_FontSystem->InputText("", Buffer, 255, { -0.5f,0.0f }, { 1.1f,0.4f });
+	m_FontSystem->Text("Play","PLAY",{0.0f,0.0f});
+
+	//m_FontSystem->PopStyle();
 	//m_App->m_Renderer->DrawOutline({ 0.45f,0.525f }, { 0.5f,0.05f }, { 1.0f,1.0f,1.0f,1.0f }, 0.001f);
 }
 

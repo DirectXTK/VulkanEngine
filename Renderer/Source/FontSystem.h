@@ -32,7 +32,9 @@ public:
 	// MaxCharacters 0 means unlimited.
 	//Returns true then max characters has been reached.
 	void InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size);
-	void Text(const char* Message, Float2 Position);
+
+
+	void Text(const char* StrID,const char* Message, Float2 Position, Float2 MaxSize = {0.f,0.f});
 
 	void PopFont();
 
@@ -91,7 +93,7 @@ private:
 	};
 	//Stored data
 	std::unordered_map<GUUID, TextData> m_StoredData{};
-	float m_FixedPadding{ 0.0050f  };
+	float m_FixedPadding{ 0.1f  };
 	//float m_FixedPadding{ 0.1018f  };
 
 };

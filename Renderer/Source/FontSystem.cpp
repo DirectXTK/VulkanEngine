@@ -87,7 +87,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		if (app->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID)){
 			Float2 MousePos = app->GetMousePosNorm();
 			float PosXInBox = std::fabs(BoundingBox[0].x - MousePos.x);
-			m_CharEditedIndex = PosXInBox / (CharacterSize +m_FixedPadding);
+			m_CharEditedIndex = PosXInBox / ((CharacterSize+(CharacterSize *m_FixedPadding)+ m_FixedPadding)/renderer->GetViewPortExtent().width);
 
 			//if its one of the special symbols make it not editable and if its the first char make it editable
  			if (Buffer[m_CharEditedIndex] <= 32) {
@@ -161,6 +161,50 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	//DrawPointer()
 	// 
 	
+}
+void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Float2 MaxSize)
+{
+	//convert ti upper case message
+	Application* app = (Application*)m_App;
+	Renderer* renderer = ((Application*)m_App)->m_Renderer;
+
+	GUUID SelectID = Core::GetStringHash(StrId);
+	Float2 CharacterSizeNorm = { (m_CharacterSize / 64) / renderer->GetViewPortExtent().width,(m_CharacterSize / 64) / renderer->GetViewPortExtent().height };
+
+	Float2 Size{};
+	if (MaxSize.x != 0) {
+		Size.x = MaxSize.x;
+	}
+	else {
+		Size.x = (((m_FixedPadding * CharacterSizeNorm.x)+ (m_FixedPadding * CharacterSizeNorm.x) + CharacterSizeNorm.x) * strlen(Message)) + (m_FixedPadding* CharacterSizeNorm.x);
+
+	}
+
+	if (MaxSize.y!= 0) {
+		Size.y = MaxSize.y;
+
+	}
+	else if(MaxSize.x !=0){
+		Size.y = strlen(Message)/((m_FixedPadding * CharacterSizeNorm.x)+ (m_FixedPadding* CharacterSizeNorm.x));
+	}
+	else {
+		Size.y = (m_FixedPadding * CharacterSizeNorm.y) + CharacterSizeNorm.y;
+		Size.y *= 2.f;
+	}
+	//Size.y *= 4.2f;
+	//Size.x *= 4.2f;
+
+	Float2 BoundingBox[4];
+	BoundingBox[0] = { Position.x ,Position.y };
+	BoundingBox[1] = { Position.x ,Position.y + Size.y };
+	BoundingBox[2] = { Position.x + Size.x,Position.y + Size.y };
+	BoundingBox[3] = { Position.x + Size.x,Position.y };
+
+	DrawBorder(Position, Size, SelectID);
+
+
+	renderer->RenderText(Message, { BoundingBox[0].x,BoundingBox[1].y - CharacterSizeNorm.y }, BoundingBox, m_FixedPadding, m_CharacterSize/64, SelectID);
+
 }
 void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 {
@@ -244,7 +288,7 @@ void FontSystem::ReRenderFaces()
 {
 	
 	Application* app = (Application*)m_App;
-	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize, 300, 300);
+	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize, 96, 96);
 	if (error) {
 		Core::Log(ErrorType::Error, "Failed to set the font char size");
 	}

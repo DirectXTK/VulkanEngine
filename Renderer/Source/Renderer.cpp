@@ -749,10 +749,20 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //temp
         //Char being edited index
 
-        FixedPadding = 0.1f;
         Asset asset = m_AssetManager->GetAsset(Core::GetStringHash("Font"));
         Font* font = (Font*)asset.GetData();
         Texture* FontAtlasTexture{};
+
+        Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
+        float CharSizeNorm = CharSizePixels / GetViewPortExtent().width;
+
+        float SpaceBetweenLines{ CharSizeNorm * .25f };
+
+        float OffsetX{ FixedPadding * CharSizeNorm };
+        float OffsetY{ SpaceBetweenLines };
+        GUUID TextureHandle = font->TextureID;
+        float Space{ 0.06f };
+
 
         if (asset.GetType() != AssetType::FONT)
         {
@@ -762,16 +772,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         FontAtlasTexture = (Texture*)m_AssetManager->GetAsset(font->TextureID).GetData();
 
-        Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
-        float CharSizeNorm = CharSizePixels / GetViewPortExtent().width;
-
-        float SpaceBetweenLines{ CharSizePixels *1.01f};
-
-        float OffsetX{ FixedPadding };
-        float OffsetY{};
-        GUUID TextureHandle = font->TextureID;
-        float Space{ 0.06f };
-
+     
         if (m_Textures.size() == m_TextureSlotCount - 1)
             FlushGeometry();
         m_Textures[TextureHandle] = { FontAtlasTexture ,(uint32_t)m_Textures.size() + 1 };
@@ -787,19 +788,19 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             //draw pointer
             if(PointerIndex ==i)
-                DrawQuad({ BoundingBox[0].x + OffsetX -(FixedPadding*0.5f* CharSizeNorm) ,BoundingBox[1].y- OffsetY - (CharSizeNorm * 1.0f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding * 0.5f* CharSizeNorm ,CharSizeNorm }, 0);
+                DrawQuad({ BoundingBox[0].x + OffsetX -(FixedPadding*0.5f* CharSizeNorm) ,BoundingBox[1].y- OffsetY - (CharSizeNorm * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding * 0.5f* CharSizeNorm ,CharSizeNorm*0.5f }, 0);
 
             //edge cases
             //Special cases
             switch (Message[i]) {
             case ' ': {
                 //skip this letter
-                OffsetX += FixedPadding * CharSizeNorm;
+                OffsetX += (FixedPadding*CharSizeNorm)+ CharSizeNorm;
                 continue;
             }
             case '\n': {
-                OffsetY += SpaceBetweenLines ;
-                OffsetX = FixedPadding;
+                OffsetY += SpaceBetweenLines+CharSizeNorm ;
+                OffsetX = FixedPadding* CharSizeNorm;
                 continue;
             }
             }
@@ -809,8 +810,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 FlushGeometry();
           
             TextureRenderingData texture = m_Textures[TextureHandle];
-                Size.x = (float)font->Coords->Width;
-                Size.y = (float)font->Coords->Height ;
+                Size.x = (float)font->Coords[LetterIndex].Width;
+                Size.y = (float)font->Coords[LetterIndex].Height;
                 //its the size of the bitmap not the character itself.
 
 
@@ -832,33 +833,35 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 m_Vertices[m_VertexPointer + 2].TexCoords = { 0.0f,0.0f };
                 m_Vertices[m_VertexPointer + 3].TexCoords = { 0.0f,0.0f };
             }
-          
+
+            //Stop drawing if text is going out of bounds.
+            if (BoundingBox[0].x + (Size.x / GetViewPortExtent().width) + OffsetX > BoundingBox[3].x) {
+
+                OffsetY += SpaceBetweenLines + CharSizeNorm;
+                OffsetX = FixedPadding*CharSizeNorm;
+
+            }
+            if (BoundingBox[1].y - (Size.y/ GetViewPortExtent().height) - OffsetY < BoundingBox[0].y)
+                break;
             
             //add half of the missing size to the offest
             float RemainingOffset{};
 
-           RemainingOffset = CharSizePixels - Size.x;
+           RemainingOffset = CharSizePixels-Size.x  ;
            Size.x = Size.x / GetViewPortExtent().width;
             if (RemainingOffset < 0)
                 Size.x = CharSizeNorm;
             else
-                OffsetX += (RemainingOffset*0.5f)*GetViewPortExtent().width;
-            Size.y = CharSizeNorm;
+                OffsetX += (RemainingOffset*0.5f)/GetViewPortExtent().width;
 
-            //Stop drawing if text is going out of bounds.
-            if (BoundingBox[0].x + Size.x + OffsetX > BoundingBox[3].x) {
+            Size.y = std::min(CharSizeNorm,Size.y/ GetViewPortExtent().height);
 
-                OffsetY += SpaceBetweenLines + CharSizeNorm;
-                OffsetX = FixedPadding;
+           
 
-            }
-            if (BoundingBox[1].y - Size.y - OffsetY < BoundingBox[0].y)
-                break;
-
-            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ OffsetX,BoundingBox[1].y - Size.y -OffsetY,0.0f };
-            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ OffsetX,BoundingBox[1].y   - OffsetY,0.0f };
-            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ OffsetX + Size.x,BoundingBox[1].y - OffsetY ,0.0f };
-            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ OffsetX + Size.x,BoundingBox[1].y - Size.y - OffsetY,0.0f};
+            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ OffsetX,BoundingBox[1].y- CharSizeNorm -OffsetY,0.0f };
+            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ OffsetX,BoundingBox[1].y - CharSizeNorm + Size.y - OffsetY,0.0f };
+            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ OffsetX + Size.x,BoundingBox[1].y - CharSizeNorm + Size.y -OffsetY ,0.0f };
+            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ OffsetX + Size.x,BoundingBox[1].y - CharSizeNorm - OffsetY,0.0f};
 
 
 
@@ -866,7 +869,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (RemainingOffset < 0)
                 Size.x = CharSizeNorm;
             else
-                OffsetX += (RemainingOffset * 0.5f) * GetViewPortExtent().width;
+                OffsetX += (RemainingOffset * 0.5f) / GetViewPortExtent().width;
 
 
 
