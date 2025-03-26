@@ -756,9 +756,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
         float CharSizeNorm = CharSizePixels / GetViewPortExtent().width;
 
-        float SpaceBetweenLines{ CharSizeNorm * .25f };
+        float SpaceBetweenLines{ (CharSizePixels/ GetViewPortExtent().height) * .25f };
 
-        float OffsetX{ FixedPadding * CharSizeNorm };
+        float OffsetX{ FixedPadding  };
         float OffsetY{ SpaceBetweenLines };
         GUUID TextureHandle = font->TextureID;
         float Space{ 0.06f };
@@ -788,19 +788,19 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             //draw pointer
             if(PointerIndex ==i)
-                DrawQuad({ BoundingBox[0].x + OffsetX -(FixedPadding*0.5f* CharSizeNorm) ,BoundingBox[1].y- OffsetY - (CharSizeNorm * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding * 0.5f* CharSizeNorm ,CharSizeNorm*0.5f }, 0);
+                DrawQuad({ BoundingBox[0].x + OffsetX -(FixedPadding*0.5f) ,BoundingBox[1].y- OffsetY - (CharSizeNorm * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding * 0.5f ,CharSizeNorm*0.5f }, 0);
 
             //edge cases
             //Special cases
             switch (Message[i]) {
             case ' ': {
                 //skip this letter
-                OffsetX += (FixedPadding*CharSizeNorm)+ CharSizeNorm;
+                OffsetX += FixedPadding+ CharSizeNorm;
                 continue;
             }
             case '\n': {
                 OffsetY += SpaceBetweenLines+CharSizeNorm ;
-                OffsetX = FixedPadding* CharSizeNorm;
+                OffsetX = FixedPadding;
                 continue;
             }
             }
@@ -834,27 +834,31 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 m_Vertices[m_VertexPointer + 3].TexCoords = { 0.0f,0.0f };
             }
 
-            //Stop drawing if text is going out of bounds.
-            if (BoundingBox[0].x + (Size.x / GetViewPortExtent().width) + OffsetX > BoundingBox[3].x) {
-
-                OffsetY += SpaceBetweenLines + CharSizeNorm;
-                OffsetX = FixedPadding*CharSizeNorm;
-
-            }
-            if (BoundingBox[1].y - (Size.y/ GetViewPortExtent().height) - OffsetY < BoundingBox[0].y)
-                break;
-            
-            //add half of the missing size to the offest
             float RemainingOffset{};
 
-           RemainingOffset = CharSizePixels-Size.x  ;
-           Size.x = Size.x / GetViewPortExtent().width;
+            RemainingOffset = CharSizePixels - Size.x;
+            Size.x = Size.x / GetViewPortExtent().width;
             if (RemainingOffset < 0)
                 Size.x = CharSizeNorm;
             else
-                OffsetX += (RemainingOffset*0.5f)/GetViewPortExtent().width;
+                OffsetX += (RemainingOffset * 0.5f) / GetViewPortExtent().width;
 
-            Size.y = std::min(CharSizeNorm,Size.y/ GetViewPortExtent().height);
+            Size.y = std::min(CharSizeNorm, Size.y / GetViewPortExtent().height);
+
+
+            //Stop drawing if text is going out of bounds.
+            if (BoundingBox[0].x + Size.x + OffsetX > BoundingBox[3].x) {
+
+                OffsetY += SpaceBetweenLines + CharSizeNorm;
+                OffsetX = FixedPadding;
+
+            }
+            if (BoundingBox[1].y - Size.y - OffsetY < BoundingBox[0].y)
+                break;
+            
+            //add half of the missing size to the offest
+           
+
 
            
 
@@ -893,7 +897,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             //Draw the pointer
           
 
-            OffsetX += Size.x + (FixedPadding* CharSizeNorm);
+            OffsetX += Size.x + FixedPadding;
         }
     }
 

@@ -52,6 +52,9 @@ struct GUUID {
     GUUID(uint64_t a) {
         ID = a;
     }
+    GUUID(const std::string& str) {
+        ID = (uint64_t)std::hash<std::string>{}(str);
+    }
  
     bool operator!=(const GUUID& other) {
         if (other.ID != ID)

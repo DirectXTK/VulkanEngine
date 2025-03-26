@@ -10,10 +10,11 @@ struct Font {
 	TextureCoords* Coords{};
 	uint32_t GlyphCount{};
 };
+class Application;
 class FontSystem
 {
 public:
-	FontSystem(void* app);
+	FontSystem(Application* app);
 	void Run(void* app,void* Renderer);
 
 	void SetCharcterSize(float CharSize);
@@ -52,7 +53,8 @@ private:
 	//coeficient used for normalizing char size.
 	const float m_CharSizeNormCoe{ 0.000043f };
 
-	void* m_App{};
+	Renderer* m_Renderer{};
+	Application* m_App{};
 	void ReRenderFaces();
 	FT_Library m_Library{};
 
@@ -61,7 +63,9 @@ private:
 
 	Texture* m_FontAtlas{};
 	Texture* m_Texture1{};
-	float m_CharacterSize{16*64};
+	float m_Padding{ 0.1f };
+	float m_PaddingY{0.1f};
+	float m_CharacterSize{16};
 
 	uint32_t m_FontAtlasSize{};
 	Texture* m_FontTexture{};
@@ -72,6 +76,7 @@ private:
 	KeyCodes m_Key{};
 	bool m_KeyAlreadyPressed[300];
 	
+
 	//styles
 	std::stack<Style> m_Style{};
 	std::stack<void*> m_StyleData{};
@@ -93,7 +98,6 @@ private:
 	};
 	//Stored data
 	std::unordered_map<GUUID, TextData> m_StoredData{};
-	float m_FixedPadding{ 0.1f  };
 	//float m_FixedPadding{ 0.1018f  };
 
 };

@@ -7,7 +7,7 @@ FontTestingLayer::FontTestingLayer(): Layer("FontTestingLayer")
 void FontTestingLayer::OnCreate()
 {
 	m_FontSystem = new FontSystem(m_App);
-	m_FontSystem->SetCharcterSize( 96.f*16);
+	m_FontSystem->SetCharcterSize( 36.f);
 	Texture* fontatlas = m_FontSystem->GetFontAtlas();
 
 	//m_App->m_AssetManager.LoadAsset(fontatlas, AssetType::TEXTURE, "FONTAtlas");
@@ -41,11 +41,11 @@ void FontTestingLayer::OnGUI()
 	props.BackGroundTexture = nullptr;
 	props.BorderTexture = nullptr;
 
-	//m_FontSystem->PushStyle(Style::DrawBorder);
+	m_FontSystem->PushStyle(Style::DrawBorder);
 	//m_FontSystem->InputText("", Buffer, 255, { -0.5f,0.0f }, { 1.1f,0.4f });
 	m_FontSystem->Text("Play","PLAY",{0.0f,0.0f});
 
-	//m_FontSystem->PopStyle();
+	m_FontSystem->PopStyle();
 	//m_App->m_Renderer->DrawOutline({ 0.45f,0.525f }, { 0.5f,0.05f }, { 1.0f,1.0f,1.0f,1.0f }, 0.001f);
 }
 

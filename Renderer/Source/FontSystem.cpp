@@ -6,9 +6,10 @@ FontSystem* g_FontSystem{};
 void KeyBoardCallbackFn(KeyBoardEvent* event) {
 	g_FontSystem->KeyBoardCallback(event);
 }
-FontSystem::FontSystem(void* App)
+FontSystem::FontSystem(Application* App)
 {
 	m_App = App;
+	m_Renderer = App->m_Renderer;
 	g_FontSystem = this;
 
 	const char* FontPath = "C:\\Repos\\VulkanEngine\\Resources\\Fonts\\Daydream.ttf";
@@ -43,6 +44,9 @@ void FontSystem::Run(void* app,void* iRenderer)
 void FontSystem::SetCharcterSize(float CharSize)
 {
 	m_CharacterSize = CharSize;
+	m_Padding =( m_CharacterSize * 0.1f)/m_Renderer->GetViewPortExtent().width;
+	m_PaddingY = (m_CharacterSize * 0.25f) / m_Renderer->GetViewPortExtent().height;
+
 	ReRenderFaces();
 }
 
@@ -67,13 +71,10 @@ void FontSystem::PushFont()
 
 void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Float2 Position, Float2 Size)
 {
-	Application* app = (Application*)m_App;
-	Renderer* renderer = ((Application*)m_App)->m_Renderer;
 	GUUID SelectID = Core::GetStringHash(ID);
-	float CharacterSize = m_CharacterSize/64 ;
 	bool ScrollableBoundBox{};
 
-	m_PointerCooldown -= app->GetDeltaTime();
+	m_PointerCooldown -= m_App->GetDeltaTime();
 
 	Float2 BoundingBox[4];
 	BoundingBox[0] = { Position.x ,Position.y  };
@@ -83,11 +84,11 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	
 
 
-	if (app->m_InputSystem.IsMouseClicked(MouseCodes::LEFT)) {
-		if (app->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID)){
-			Float2 MousePos = app->GetMousePosNorm();
+	if (m_App->m_InputSystem.IsMouseClicked(MouseCodes::LEFT)) {
+		if (m_App->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID)){
+			Float2 MousePos = m_App->GetMousePosNorm();
 			float PosXInBox = std::fabs(BoundingBox[0].x - MousePos.x);
-			m_CharEditedIndex = PosXInBox / ((CharacterSize+(CharacterSize *m_FixedPadding)+ m_FixedPadding)/renderer->GetViewPortExtent().width);
+			m_CharEditedIndex = PosXInBox / ((m_CharacterSize+m_Padding+ m_Padding)/m_Renderer->GetViewPortExtent().width);
 
 			//if its one of the special symbols make it not editable and if its the first char make it editable
  			if (Buffer[m_CharEditedIndex] <= 32) {
@@ -118,10 +119,10 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	if (m_PointerCooldown <= 0.0f) {
 		if (m_PointerCooldown <= -m_PointerBlinkCooldownConst)
 			m_PointerCooldown = m_PointerBlinkCooldownConst;
-		renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - CharacterSize }, BoundingBox, m_FixedPadding, CharacterSize, SelectID, m_CharEditedIndex);
+		m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - m_CharacterSize }, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_CharEditedIndex);
 	}
 	else {
-		renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - CharacterSize }, BoundingBox, m_FixedPadding, CharacterSize, SelectID);
+		m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - m_CharacterSize }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
 	}
 		//the spaces beetween letters are uneaven and the pointers sometimes isn't drawn.
 		//draws in the center
@@ -164,19 +165,22 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 }
 void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Float2 MaxSize)
 {
-	//convert ti upper case message
+
 	Application* app = (Application*)m_App;
 	Renderer* renderer = ((Application*)m_App)->m_Renderer;
 
 	GUUID SelectID = Core::GetStringHash(StrId);
-	Float2 CharacterSizeNorm = { (m_CharacterSize / 64) / renderer->GetViewPortExtent().width,(m_CharacterSize / 64) / renderer->GetViewPortExtent().height };
+	Float2 CharacterSizeNorm = { m_CharacterSize   / renderer->GetViewPortExtent().width,m_CharacterSize/ renderer->GetViewPortExtent().height };
 
 	Float2 Size{};
+
+	
+
 	if (MaxSize.x != 0) {
 		Size.x = MaxSize.x;
 	}
 	else {
-		Size.x = (((m_FixedPadding * CharacterSizeNorm.x)+ (m_FixedPadding * CharacterSizeNorm.x) + CharacterSizeNorm.x) * strlen(Message)) + (m_FixedPadding* CharacterSizeNorm.x);
+		Size.x = ((m_Padding + m_Padding  + CharacterSizeNorm.x) * strlen(Message)) + m_Padding;
 
 	}
 
@@ -185,14 +189,12 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 
 	}
 	else if(MaxSize.x !=0){
-		Size.y = strlen(Message)/((m_FixedPadding * CharacterSizeNorm.x)+ (m_FixedPadding* CharacterSizeNorm.x));
+		Size.y = strlen(Message)/(m_PaddingY + m_PaddingY + CharacterSizeNorm.x);
 	}
 	else {
-		Size.y = (m_FixedPadding * CharacterSizeNorm.y) + CharacterSizeNorm.y;
-		Size.y *= 2.f;
+		Size.y = m_PaddingY+ m_PaddingY + CharacterSizeNorm.y;
 	}
-	//Size.y *= 4.2f;
-	//Size.x *= 4.2f;
+	
 
 	Float2 BoundingBox[4];
 	BoundingBox[0] = { Position.x ,Position.y };
@@ -203,7 +205,7 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 	DrawBorder(Position, Size, SelectID);
 
 
-	renderer->RenderText(Message, { BoundingBox[0].x,BoundingBox[1].y - CharacterSizeNorm.y }, BoundingBox, m_FixedPadding, m_CharacterSize/64, SelectID);
+	renderer->RenderText(Message, { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
 
 }
 void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
@@ -282,13 +284,13 @@ void FontSystem::DrawPointer(Float2 Position, float CharacterSize,float SizeY)
 	Application* app = (Application*)m_App;
 	Renderer* renderer = app->m_Renderer;
 
-	renderer->DrawQuad({ Position.x,Position.y }, { 1.0f,1.0f,1.0f,1.0f }, { m_FixedPadding * CharacterSize ,SizeY},0);
+	//renderer->DrawQuad({ Position.x,Position.y }, { 1.0f,1.0f,1.0f,1.0f }, { m_Padding * CharacterSize ,SizeY},0);
 }
 void FontSystem::ReRenderFaces()
 {
 	
 	Application* app = (Application*)m_App;
-	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize, 96, 96);
+	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize*64, 96, 96);
 	if (error) {
 		Core::Log(ErrorType::Error, "Failed to set the font char size");
 	}

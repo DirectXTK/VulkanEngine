@@ -67,6 +67,7 @@ public:
 	//void Save();
 private:
 
+	void LoadFont(const std::string& FilePath);
 	void LoadAnimation(const std::string& FolderPath);
 	GUUID LoadTexture(const std::string& TexturePath);
 
