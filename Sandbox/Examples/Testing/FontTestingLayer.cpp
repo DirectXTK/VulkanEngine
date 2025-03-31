@@ -17,7 +17,8 @@ void FontTestingLayer::OnCreate()
 
 void FontTestingLayer::OnUpdate(float DeltaTime)
 {
-
+	for(uint32_t i =0;i < 30;i++)
+	m_App->m_Renderer->DrawQuad({ 0.1f+(i*0.0240f),0.9f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.01f,0.01f}, 0);
 }
 
 void FontTestingLayer::OnGUI()
@@ -42,8 +43,8 @@ void FontTestingLayer::OnGUI()
 	props.BorderTexture = nullptr;
 
 	m_FontSystem->PushStyle(Style::DrawBorder);
-	//m_FontSystem->InputText("", Buffer, 255, { -0.5f,0.0f }, { 1.1f,0.4f });
-	m_FontSystem->Text("Play","PLAY",{0.0f,0.0f});
+	m_FontSystem->Text("Play", "PLAY", { 0.0f,-0.8f });
+	m_FontSystem->InputText("", Buffer, 255, { -0.5f,0.0f }, { 1.1f,0.4f });
 
 	m_FontSystem->PopStyle();
 	//m_App->m_Renderer->DrawOutline({ 0.45f,0.525f }, { 0.5f,0.05f }, { 1.0f,1.0f,1.0f,1.0f }, 0.001f);

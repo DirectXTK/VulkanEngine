@@ -779,6 +779,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
 
         //Do this for every letter
+        float Max{};
+        float Min{};
         for (uint32_t i = 0; i < strlen(Message); i++) {
             Float2 SubTextureSize{};
             Float2 Size{};
@@ -842,7 +844,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 Size.x = CharSizeNorm;
             else
                 OffsetX += (RemainingOffset * 0.5f) / GetViewPortExtent().width;
-
+           // Size.x = CharSizeNorm;
             Size.y = std::min(CharSizeNorm, Size.y / GetViewPortExtent().height);
 
 
@@ -855,11 +857,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             }
             if (BoundingBox[1].y - Size.y - OffsetY < BoundingBox[0].y)
                 break;
-            
-            //add half of the missing size to the offest
-           
+
+   
 
 
+            OffsetX = std::round(OffsetX * GetViewPortExtent().width * 0.5f) / (GetViewPortExtent().width*0.5f);
            
 
             m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ OffsetX,BoundingBox[1].y- CharSizeNorm -OffsetY,0.0f };
@@ -899,6 +901,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             OffsetX += Size.x + FixedPadding;
         }
+       // OffsetX = -FixedPadding;
+       // Core::Log(ErrorType::Info, OffsetX / 4);
     }
 
 
