@@ -775,8 +775,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
      
         if (m_Textures.size() == m_TextureSlotCount - 1)
             FlushGeometry();
-        m_Textures[TextureHandle] = { FontAtlasTexture ,(uint32_t)m_Textures.size() + 1 };
-        m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
+        if (m_Textures.find(TextureHandle) == m_Textures.end()) {
+         m_Textures[TextureHandle] = { FontAtlasTexture ,(uint32_t)m_Textures.size() + 1 };
+         m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
+
+        }
 
         //Do this for every letter
         float Max{};
