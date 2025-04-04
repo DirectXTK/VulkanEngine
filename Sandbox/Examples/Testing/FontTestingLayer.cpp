@@ -17,8 +17,7 @@ void FontTestingLayer::OnCreate()
 
 void FontTestingLayer::OnUpdate(float DeltaTime)
 {
-	for(uint32_t i =0;i < 30;i++)
-	m_App->m_Renderer->DrawQuad({ 0.1f+(i*0.0240f),0.9f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.01f,0.01f}, 0);
+	
 }
 
 void FontTestingLayer::OnGUI()
@@ -34,6 +33,7 @@ void FontTestingLayer::OnGUI()
 
 		
 	}
+	static Float2 Pos{  -0.99f,-0.99f  };
 
 	StyleBorderData props{};
 	props.BorderWidth=0.01f;
@@ -42,11 +42,32 @@ void FontTestingLayer::OnGUI()
 	props.BackGroundTexture = nullptr;
 	props.BorderTexture = nullptr;
 
-	m_FontSystem->PushStyle(Style::DrawBorder);
-	m_FontSystem->Text("Play", "PLAY", { 0.0f,-0.8f });
-	m_FontSystem->InputText("", Buffer, 255, { -0.5f,0.0f }, { 1.1f,0.4f });
+	m_FontSystem->Text("Play", "PLAY", { 0.0f,0.5f });
+	m_FontSystem->Text("Options", "OPTIONS", { -0.1f,0.4f });
+	m_FontSystem->Text("Exit", "EXIT", { 0.0f,0.3f });
 
+	m_FontSystem->PushStyle(Style::DrawBorder);
+
+	if (m_App->m_InputSystem.IsKeyPressed(KeyCodes::W)) {
+		Pos.y += 0.0001f;
+	}
+	if (m_App->m_InputSystem.IsKeyPressed(KeyCodes::S)) {
+		Pos.y -= 0.0001f;
+
+	}
+	if (m_App->m_InputSystem.IsKeyPressed(KeyCodes::A)) {
+		Pos.x -= 0.0001f;
+
+	}
+	if (m_App->m_InputSystem.IsKeyPressed(KeyCodes::D)) {
+		Pos.x += 0.0001f;
+
+	}
+
+
+	m_FontSystem->InputText("", Buffer, 255, Pos, { 1.0f,0.1f });
 	m_FontSystem->PopStyle();
+
 	//m_App->m_Renderer->DrawOutline({ 0.45f,0.525f }, { 0.5f,0.05f }, { 1.0f,1.0f,1.0f,1.0f }, 0.001f);
 }
 

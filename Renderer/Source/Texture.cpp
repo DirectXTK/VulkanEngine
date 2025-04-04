@@ -237,7 +237,6 @@ void Texture::CreateTexture(void* initData)
 		ImageFormat = VK_FORMAT_R8G8B8A8_UNORM;
 	}
 	}
-
 	//create stagging buffer
 	BufferDesc bufferdesc{};
 	bufferdesc.Device = m_Context->Device;
@@ -272,10 +271,10 @@ void Texture::CreateTexture(void* initData)
 	samplercreateinfo.magFilter = VK_FILTER_NEAREST;
 	samplercreateinfo.anisotropyEnable = false;
 	samplercreateinfo.maxAnisotropy = Anisotropy;
-	samplercreateinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplercreateinfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplercreateinfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplercreateinfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplercreateinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplercreateinfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplercreateinfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplercreateinfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
 	samplercreateinfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	samplercreateinfo.unnormalizedCoordinates = false;
 	samplercreateinfo.compareOp = VK_COMPARE_OP_ALWAYS;

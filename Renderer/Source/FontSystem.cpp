@@ -90,6 +90,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 			float PosXInBox = std::fabs(BoundingBox[0].x - MousePos.x);
 			m_CharEditedIndex = PosXInBox / ((m_CharacterSize+m_Padding+ m_Padding)/m_Renderer->GetViewPortExtent().width);
 
+
 			//if its one of the special symbols make it not editable and if its the first char make it editable
  			if (Buffer[m_CharEditedIndex] <= 32) {
 
@@ -365,6 +366,21 @@ void FontSystem::ReRenderFaces()
 		AtlasCoords[SubTextureIndex].Coords[1] = { float(OffsetX / (float)FontAtlasWidth),float(OffsetY / (float)FontAtlasHeight) };
 		AtlasCoords[SubTextureIndex].Coords[2] = { float((SizeX+OffsetX) / (float)FontAtlasWidth),float(OffsetY / (float)FontAtlasHeight) };
 		AtlasCoords[SubTextureIndex].Coords[3] = { float((SizeX+OffsetX) / (float)FontAtlasWidth) ,float((SizeY+OffsetY) / (float)FontAtlasHeight)  };
+
+		//round coords for no artifacts
+		AtlasCoords[SubTextureIndex].Coords[0].x = std::roundf(AtlasCoords[SubTextureIndex].Coords[0].x * 1000.f) / 1000.f;
+		AtlasCoords[SubTextureIndex].Coords[1].x = std::roundf(AtlasCoords[SubTextureIndex].Coords[1].x * 1000.f) / 1000.f;
+		AtlasCoords[SubTextureIndex].Coords[2].x = std::roundf(AtlasCoords[SubTextureIndex].Coords[2].x * 1000.f) / 1000.f;
+		AtlasCoords[SubTextureIndex].Coords[3].x = std::roundf(AtlasCoords[SubTextureIndex].Coords[3].x * 1000.f) / 1000.f;
+
+		AtlasCoords[SubTextureIndex].Coords[0].y = std::roundf(AtlasCoords[SubTextureIndex].Coords[0].y * 1000.f) / 1000.f;
+		AtlasCoords[SubTextureIndex].Coords[1].y = std::roundf(AtlasCoords[SubTextureIndex].Coords[1].y * 1000.f) / 1000.f;
+		AtlasCoords[SubTextureIndex].Coords[2].y = std::roundf(AtlasCoords[SubTextureIndex].Coords[2].y * 1000.f) / 1000.f;
+		AtlasCoords[SubTextureIndex].Coords[3].y = std::roundf(AtlasCoords[SubTextureIndex].Coords[3].y * 1000.f) / 1000.f;
+
+
+
+
 
 		SubTextureSizes[SubTextureIndex] = { (float)SizeX,(float)SizeY };
 

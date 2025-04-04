@@ -304,6 +304,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_DrawCallCountGUI = 0;
             m_DrawCallCountGeometry =0;
             m_DrawCallCountOutlines = 0;
+            m_VertexCountRemaining = m_VertexCount;
+            m_CurrentVertexBufferIndex = 0;
+            m_VertexBufferOffset = 0;
+            m_VertexCountPerDrawCall = 0;
 
             m_Camera = *camera;
             m_CameraViewProj = m_Camera.GetViewProj();
@@ -367,7 +371,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         VertexBuffers.push_back(new Buffer(VertexBuffers[0]->GetBufferDesc()));
         Stagging.push_back(new Buffer(Stagging[0]->GetBufferDesc()));
-
       
         
     }
@@ -381,7 +384,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         }
 
 
-        m_DrawCommandsGUI.push_back({ m_VertexPointer,m_DrawCallCountGUI + m_DrawCallCountGeometry });
+        m_DrawCommandsGUI.push_back({ m_VertexPointer,0,0,m_DrawCallCountGUI + m_DrawCallCountGeometry });
 
         if (m_DrawCallCountGUI == m_VertexBufferGUI.size())
             CreateNewBufferForBatch(m_VertexBufferGUI, m_StaggingBufferGUI);
@@ -459,54 +462,75 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         }
 
 
-        m_DrawCommandsGeometry.push_back({ m_VertexPointer,m_DrawCallCountGUI + m_DrawCallCountGeometry });
+        if (m_VertexPointer == m_VertexCountRemaining) {
+            m_DrawCommandsGeometry.push_back({ m_VertexPointer,m_CurrentVertexBufferIndex,0,m_DrawCallCountGUI + m_DrawCallCountGeometry });
+            m_VertexBufferOffset = 0;
+        }
 
-        if (m_DrawCallCountGeometry == m_VertexBufferGeometry.size())
-            CreateNewBufferForBatch(m_VertexBufferGeometry,m_StaggingBufferGeometry);
+        m_VertexCountPerDrawCall += m_VertexPointer;
+        if (m_VertexPointer > m_VertexCountRemaining) {
+            if(m_VertexCountPerDrawCall >m_VertexBufferGeometry.size()*m_VertexCount )
+                 CreateNewBufferForBatch(m_VertexBufferGeometry, m_StaggingBufferGeometry);
+            m_CurrentVertexBufferIndex++;
+            m_VertexCountRemaining = m_VertexCount;
+            m_VertexBufferOffset = 0;
+        }
+        else {
+            m_VertexCountRemaining -= m_VertexPointer;
+        }
+
+        m_DrawCommandsGeometry.push_back({ m_VertexPointer,m_CurrentVertexBufferIndex,m_VertexBufferOffset,m_DrawCallCountGUI + m_DrawCallCountGeometry });
+
+
 
             m_UniformBuffers[0].UploadToBuffer(m_Device, &m_CameraViewProj, sizeof(glm::mat4));
 
-            m_StaggingBufferGeometry[m_DrawCallCountGeometry]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
+            m_StaggingBufferGeometry[m_CurrentVertexBufferIndex]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
 
 
-        VkBufferCopy region{};
-        region.size = sizeof(Vertex) * m_VertexPointer;
+            VkBufferCopy region{};
+            region.size = sizeof(Vertex) * m_VertexPointer;
+            region.dstOffset = m_VertexBufferOffset;
+            region.srcOffset = m_VertexBufferOffset;
 
-        if (m_VertexPointer != 0)
-        {
-            vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGeometry[m_DrawCallCountGeometry]->GetBuffer(), *m_VertexBufferGeometry[m_DrawCallCountGeometry]->GetBuffer(), 1, &region);
+            if (m_VertexPointer != 0)
+            {
+                vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGeometry[m_CurrentVertexBufferIndex]->GetBuffer(), *m_VertexBufferGeometry[m_CurrentVertexBufferIndex]->GetBuffer(), 1, &region);
+            }
+
+
+
+
+
+            m_VertexBufferOffset = m_VertexPointer;
+
+
+
+
+            m_VertexPointer = 0;
+            m_DrawCallCountGeometry++;
+            m_Textures.clear();
         }
-
-        
-
-
-
-
-
-
-
-        m_VertexPointer = 0;
-        m_DrawCallCountGeometry++;
-        m_Textures.clear();
-    }
- 
- 
     
-    void Renderer::EndFrame(){
-        FlushOutlines();
-        FlushGUI();
-
-        DrawBatch();
 
 
-        StopRecordingCommands();
 
-        vkWaitForFences(m_Device, 1, &m_DrawFences[m_CurrentFrame], true, std::numeric_limits<uint64_t>::max());
-        vkResetFences(m_Device, 1, &m_DrawFences[m_CurrentFrame]);
+        void Renderer::EndFrame()
+        {
+            FlushOutlines();
+            FlushGUI();
 
-       
+            DrawBatch();
+
+
+            StopRecordingCommands();
+
+            vkWaitForFences(m_Device, 1, &m_DrawFences[m_CurrentFrame], true, std::numeric_limits<uint64_t>::max());
+            vkResetFences(m_Device, 1, &m_DrawFences[m_CurrentFrame]);
+
+
             VkSwapchainKHR swapchain = m_SwapChain->GetSwapChain();
-     
+
             VkPipelineStageFlags waitstages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
             VkCommandBuffer commandsbuffers[] = { m_CommandBuffers[m_CurrentFrame],m_TransferCommandBuffer };
@@ -527,27 +551,28 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 Core::Log(ErrorType::Error, "Failed to submit queue.");
 
 
-        
-        
-       
-                    VkPresentInfoKHR presentinfo{};
-        presentinfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        presentinfo.waitSemaphoreCount=1;
-        presentinfo.pWaitSemaphores = &m_RenderFinishedS[m_CurrentFrame ];
-        presentinfo.swapchainCount =1;
-        presentinfo.pSwapchains = &swapchain;
-        presentinfo.pImageIndices = &m_ImageIndex;
+
+
+
+            VkPresentInfoKHR presentinfo{};
+            presentinfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+            presentinfo.waitSemaphoreCount = 1;
+            presentinfo.pWaitSemaphores = &m_RenderFinishedS[m_CurrentFrame];
+            presentinfo.swapchainCount = 1;
+            presentinfo.pSwapchains = &swapchain;
+            presentinfo.pImageIndices = &m_ImageIndex;
+
+
+            result = vkQueuePresentKHR(m_PresentationQ, &presentinfo);
+
+            if (result != VK_SUCCESS)
+                Core::Log(ErrorType::Error, "Failed to queue present.");
+
+
+            m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAME_DRAWS;
+            m_GUIRendering = false;
+        }
     
-
-            result = vkQueuePresentKHR(m_PresentationQ,&presentinfo);
-      
-        if(result != VK_SUCCESS)
-            Core::Log(ErrorType::Error,"Failed to queue present.");
-
-     
-       m_CurrentFrame=(m_CurrentFrame+1)%MAX_FRAME_DRAWS;
-       m_GUIRendering = false;
-    }
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,int TextureIndex)
     {
@@ -1147,13 +1172,16 @@ void Renderer::DrawBatch()
     vkCmdSetStencilCompareMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
 
     for (int i = 0; i < m_DrawCommandsGeometry.size(); i++) {
-      
-        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGeometry[i]->GetBuffer(), &Offset);
+        DrawCommand DrawCall = m_DrawCommandsGeometry[i];
+        VkDeviceSize VertexBufferOffset{ DrawCall.VertexBufferOffset };
+
+
+        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGeometry[DrawCall.VertexBufferIndex]->GetBuffer(), &VertexBufferOffset);
 
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
         VkDescriptorSet DescriptorSets[2];
-        DescriptorSets[1] = m_DescriptorSetTextures[m_DrawCommandsGeometry[i].DescriptorSetTextureIndex].GetDescriptorSet();
+        DescriptorSets[1] = m_DescriptorSetTextures[DrawCall.DescriptorSetTextureIndex].GetDescriptorSet();
  
 
        
@@ -1163,8 +1191,7 @@ void Renderer::DrawBatch()
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
 
-        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGeometry[i].VertexCount * 1.5f), 1, 0, 0, 0);
-
+        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(DrawCall.VertexCount * 1.5f), 1, 0, 0, 0);
     }
 
     vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0x00);
@@ -1223,6 +1250,7 @@ void Renderer::DrawBatch()
    
     vkCmdEndRenderPass(m_CurrentCommandBuffer);
 
+    m_VertexCountPerDrawCall = 0;
 }
 
 void Renderer::DrawGUIBatch()

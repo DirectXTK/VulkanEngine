@@ -32,6 +32,8 @@ struct Vertex{
 enum class FlushType {GEOMETRY,OUTLINE,GUI};
 struct DrawCommand {
     uint64_t VertexCount{};
+    uint32_t VertexBufferIndex{};
+    uint64_t VertexBufferOffset{};
     uint32_t DescriptorSetTextureIndex{};
 };
 enum class RenderFeature {NONE,DRAWOUTLINE};
@@ -50,7 +52,6 @@ public:
     Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem, AssetManager* assetManager);
     void InitializePipeline(uint64_t MaxTextureCount);
     //
-
     void BeginFrame(Camera2D* camera);
     void BeginGUIFrame();
 
@@ -181,6 +182,11 @@ private:
     Vertex* m_Vertices{};
     uint32_t m_VertexCount{};
     uint32_t m_VertexPointer{};
+    uint32_t m_VertexCountRemaining{};
+    uint64_t m_VertexBufferOffset{};
+    uint32_t m_CurrentVertexBufferIndex{};
+    uint64_t m_VertexCountPerDrawCall{};
+
     glm::mat4 m_CameraViewProj{};
     Image* m_FrameImageIndexed{};
     //Diagnostics
