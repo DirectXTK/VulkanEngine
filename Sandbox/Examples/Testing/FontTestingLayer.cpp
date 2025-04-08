@@ -1,5 +1,5 @@
 #include "FontTestingLayer.h"
-
+#include "DefaultCameraControlls.h"
 FontTestingLayer::FontTestingLayer(): Layer("FontTestingLayer")
 {
 }
@@ -17,7 +17,15 @@ void FontTestingLayer::OnCreate()
 
 void FontTestingLayer::OnUpdate(float DeltaTime)
 {
-	
+	DefaultCameraControlls(&m_App->m_InputSystem, &m_App->m_Camera);
+
+	m_App->m_Renderer->DrawQuad({ 0.0f,0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, 0);
+
+	StyleBorderData data{};
+
+	m_FontSystem->PushStyle(Style::DrawBorder, &data);
+	m_FontSystem->Text("cub", "KUBAS", { 0.0f,-0.2 });
+	m_FontSystem->PopStyle();
 }
 
 void FontTestingLayer::OnGUI()
@@ -48,21 +56,6 @@ void FontTestingLayer::OnGUI()
 
 	m_FontSystem->PushStyle(Style::DrawBorder);
 
-	if (m_App->m_InputSystem.IsKeyPressed(KeyCodes::W)) {
-		Pos.y += 0.0001f;
-	}
-	if (m_App->m_InputSystem.IsKeyPressed(KeyCodes::S)) {
-		Pos.y -= 0.0001f;
-
-	}
-	if (m_App->m_InputSystem.IsKeyPressed(KeyCodes::A)) {
-		Pos.x -= 0.0001f;
-
-	}
-	if (m_App->m_InputSystem.IsKeyPressed(KeyCodes::D)) {
-		Pos.x += 0.0001f;
-
-	}
 
 
 	m_FontSystem->InputText("", Buffer, 255, Pos, { 1.0f,0.1f });
