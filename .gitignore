@@ -11,6 +11,7 @@
 *.sln.docstates
 *.vcxproj
 *.sln
+/Libs
 Makefile
 
 
@@ -365,4 +366,3 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/Libs
