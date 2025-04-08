@@ -130,24 +130,30 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		//renderer->DrawQuad({ BoundingBox[0].x + (m_CharEditedIndex * (CharacterSizeNorm + m_FixedPadding)) + (m_FixedPadding * 0.5f),BoundingBox[1].y - (CharacterSizeNorm * 1.0f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { m_FixedPadding * 0.5f ,CharacterSizeNorm }, 0);
 	
 	if (m_CharEditedIndex != -1) {
-			
-			if (m_KeyAlreadyPressed[(uint32_t)m_Key] == false || m_State == KeyState::HOLD) {
+		for(uint32_t i=0;i < m_KeyStates.size();i++){
+			KeyState State = m_KeyStates.back();
+			KeyCodes Key = m_KeyCodes.back();
+			if (State==KeyState::PRESSED || State == KeyState::HOLD) {
 
-				if ((int)m_Key >= 32 && (int)m_Key <= 127) {
-					if (strlen(Buffer)+1 < BufferSize) {
+				if ((int)Key >= 32 && (int)Key <= 127) {
+					if (strlen(Buffer) + 1 < BufferSize) {
 						memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
-						Buffer[m_CharEditedIndex] = (char)m_Key;
+						Buffer[m_CharEditedIndex] = (char)Key;
 
 						m_CharEditedIndex++;
 						m_TypingCooldown = m_CharEditCooldownConst;
 					}
 				}
 				else {
-					SpecialCases(m_Key,m_State,Buffer,BufferSize);
-				}		
-				m_KeyAlreadyPressed[(uint32_t)m_Key] = true;
+					SpecialCases(Key, State, Buffer, BufferSize);
+				}
+				m_KeyAlreadyPressed[(uint32_t)Key] = true;
 
+			
 			}
+			m_KeyCodes.pop();
+			m_KeyStates.pop();
+		}
 			
 		//pointer
 		
@@ -246,10 +252,10 @@ void FontSystem::PopFont()
 
 void FontSystem::KeyBoardCallback(KeyBoardEvent* event)
 {
-	m_State = event->State;
-	m_Key = event->Key;
-	if(m_State == KeyState::RELEASED)
-		m_KeyAlreadyPressed[(uint32_t)m_Key] = false;
+	m_KeyStates.push(event->State);
+	m_KeyCodes.push(event->Key);
+	if(event->State == KeyState::RELEASED)
+		m_KeyAlreadyPressed[(uint32_t)event->Key] = false;
 
 }
 
@@ -258,6 +264,10 @@ FontSystem::~FontSystem()
 }
 void FontSystem::SpecialCases(KeyCodes& Code, KeyState& State, char* Buffer, uint64_t Size)
 {
+	//is num lock is off
+	if ((int)Code >= 320 && (int)Code <= 329)
+		(int&)Code -= 272;
+
 	switch (Code) {
 	case KeyCodes::BACKSPACE: {
 		if (m_CharEditedIndex > 0) {
@@ -274,8 +284,90 @@ void FontSystem::SpecialCases(KeyCodes& Code, KeyState& State, char* Buffer, uin
 		m_CharEditedIndex++;
 		break;
 	}
+	case KeyCodes::NUM0: {
+		memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+		Buffer[m_CharEditedIndex] = '0';
+
+		m_CharEditedIndex++;
+		break;
+	}
+	case KeyCodes::NUM1: {
+		memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+		Buffer[m_CharEditedIndex] = '1';
+
+		m_CharEditedIndex++;
+		break;
+	}
+	case KeyCodes::NUM2: {
+		memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+		Buffer[m_CharEditedIndex] = '2';
+
+		m_CharEditedIndex++;
+		break;
+	}
+	case KeyCodes::NUM3: {
+		memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+		Buffer[m_CharEditedIndex] = '3';
+
+		m_CharEditedIndex++;
+		break;
+	}
+	case KeyCodes::NUM4: {
+		memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+		Buffer[m_CharEditedIndex] = '4';
+
+		m_CharEditedIndex++;
+		break;
+	}
+	case KeyCodes::NUM5: {
+		memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+		Buffer[m_CharEditedIndex] = '5';
+
+		m_CharEditedIndex++;
+		break;
+	}
+	case KeyCodes::NUM6: {
+		memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+		Buffer[m_CharEditedIndex] = '6';
+
+		m_CharEditedIndex++;
+		break;
+	}
+	case KeyCodes::NUM7: {
+		memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+		Buffer[m_CharEditedIndex] = '7';
+
+		m_CharEditedIndex++;
+		break;
+	}
+	case KeyCodes::NUM8: {
+		memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+		Buffer[m_CharEditedIndex] = '8';
+
+		m_CharEditedIndex++;
+		break;
+	}
+	case KeyCodes::NUM9: {
+		memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+		Buffer[m_CharEditedIndex] = '9';
+
+		m_CharEditedIndex++;
+		break;
+	}
+	case KeyCodes::ARROWRIGHT: {
+		m_CharEditedIndex++;
+		break;
+	}
+	case KeyCodes::ARROWLEFT: {
+		if(m_CharEditedIndex!=0)
+			m_CharEditedIndex--;
+		break;
+
+	}
+
+
 	default: {
-		Core::Log(ErrorType::Error, "Not implemented yet");
+		Core::Log(ErrorType::Warning, "Not implemented yet");
 		break;
 	}
 	}
@@ -297,15 +389,15 @@ void FontSystem::ReRenderFaces()
 	}
 
 	FT_GlyphSlot slot = m_Face->glyph;
-	uint64_t FontAtlasWidth, FontAtlasHeight{};
+	float FontAtlasWidth, FontAtlasHeight{};
 	uint32_t SubTextureIndex{};
 	uint32_t ChannelCount{};
-	int64_t OffsetX{0};
-	int64_t OffsetY{0};
+	float OffsetX{0};
+	float OffsetY{0};
 	TextureCoords* AtlasCoords{};
 	Float2* SubTextureSizes{};
-	uint32_t SizeX{16};
-	uint32_t SizeY{ 16 };
+	float SizeX{16};
+	float SizeY{ 16 };
 	int64_t MaxY{};
 
 	FontAtlasWidth = m_Face->max_advance_width;
@@ -386,15 +478,14 @@ void FontSystem::ReRenderFaces()
 
 		for (uint32_t x = 0; x < slot->bitmap.width; x++) {
 			for (uint32_t y = 0; y < slot->bitmap.rows; y++) {
-				AtlasMapBitmap[OffsetX+x + ((y + OffsetY)* FontAtlasWidth )] |= uint32_t(slot->bitmap.buffer[(y * slot->bitmap.width+x)]<<24);
+				AtlasMapBitmap[(uint32_t)OffsetX+x + ((y + (uint32_t)OffsetY)* (uint32_t)FontAtlasWidth )] |= uint32_t(slot->bitmap.buffer[(y * slot->bitmap.width+x)]<<24);
 			}
 		}
 		//if (SubTextureIndex  == '.'-33)
 		//	Core::Log(ErrorType::Error, "Maktyra");
-		OffsetX += AtlasCoords[SubTextureIndex].Width;
+		OffsetX += AtlasCoords[SubTextureIndex].Width+1;
 		SubTextureIndex++;
 		Core::Log(ErrorType::Info, "Left:", slot->bitmap_left, " Top:", slot->bitmap_top," AdvanceX:",slot->advance.x,  " AdvanceY:", slot->advance.y);
-
 
 	}
 	//Core::Log(ErrorType::Error, "dwadad");

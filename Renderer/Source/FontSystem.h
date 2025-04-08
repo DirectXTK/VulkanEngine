@@ -72,8 +72,9 @@ private:
 	//Pointer
 	//Typing
 	float m_TypingCooldown{};
-	KeyState m_State{};
-	KeyCodes m_Key{};
+
+	std::queue<KeyState> m_KeyStates{};
+	std::queue<KeyCodes> m_KeyCodes{};
 	bool m_KeyAlreadyPressed[300];
 	
 

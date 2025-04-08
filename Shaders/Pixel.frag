@@ -1,5 +1,7 @@
 #version 460
 
+precision highp float;
+
 layout(location =0) in vec4 InColor;
 layout(location =1) flat in uvec2 InPickID;
 layout(location =2) in vec2 TexCoords;
