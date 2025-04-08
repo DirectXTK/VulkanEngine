@@ -12,7 +12,6 @@ project "Application"
     }
     
     links{
-      "vulkan-1.lib",
       "glfw3.lib",
       "freetype.lib",
       "Renderer"

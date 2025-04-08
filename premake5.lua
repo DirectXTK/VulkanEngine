@@ -13,6 +13,7 @@ workspace "VulkanEngine"
     startproject "Sandbox"
 
 outputdir = "%{cfg.build}/%{cfg.system}/%{cfg.architecture}"
+vulkanSDK = os.getenv("VULKAN_SDK")
 GlobalIncludes = {
     "%{prj.location}/../Include/FreeType",
 }

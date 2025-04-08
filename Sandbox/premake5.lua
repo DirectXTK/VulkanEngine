@@ -10,15 +10,15 @@ project "Sandbox"
 
     files{
         "Source/**.cpp",
-        "Source/**.h"
+        "Source/**.h",
+        "Examples/**.cpp",
+        "Examples/**.h",
     }
     
     links{
       "freetype.lib",
-      "vulkan-1.lib",
       "glfw3.lib",
-      "Renderer",
-      "Application"
+      "Application",
     }
 
     includedirs{

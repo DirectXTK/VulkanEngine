@@ -17,14 +17,16 @@ project "Renderer"
 
     includedirs{
       "%{prj.location}/../Application/Source/",
-      "%{prj.location}/../Include/vulkan/",
+      vulkanSDK.."/Include/",
+
 
       "%{prj.location}/../Include",
       GlobalIncludes,
     }
 
      libdirs{
-        "%{prj.location}/../Libs"
+        "%{prj.location}/../Libs",
+        vulkanSDK.."/Lib/",
     }
 
     links{
