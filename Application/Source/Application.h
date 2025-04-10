@@ -6,6 +6,7 @@
 #include "Layer.h"
 #include "AssetManager.h"
 #include "Collider.h"
+#include "FontSystem.h"
 struct ApplicationSpecs{
     uint32_t WindowHeight{500};
      uint32_t WindowWidth{500};
@@ -57,6 +58,7 @@ public:
 
 
 #ifdef GUI_HEADER
+    FontSystem* m_FontSystem{};
     GUIRenderer* m_GUIRenderer{};
 #endif
 

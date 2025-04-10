@@ -2,8 +2,11 @@
 #include "Renderer.h"
 #include "Application.h"
 #include "RandomGenerator.h"
+#include "FontSystem.h"
+
 GUIRenderer::GUIRenderer(Application* app,bool SaveState): m_Application(app),m_SaveState(SaveState)
 {
+	m_FontSystem = app->m_FontSystem;
 }
 void GUIRenderer::BeginGUI()
 {
@@ -98,7 +101,7 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 		m_CurrentPanel++;
 	
 }
-bool GUIRenderer::Button(const std::string& ID,Float2 Position,Float4 Color,Float2 Size,MouseCodes mousecode,GUUID TextureHandle,bool SavesState, bool Dragable,bool** IsPressed)
+bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Position,Float4 Color,Float2 Size,MouseCodes mousecode,GUUID TextureHandle,bool SavesState, bool Dragable,bool** IsPressed)
 {
 	Renderer* renderer = m_Application->m_Renderer;
 	InputSystem* inputsystem = &m_Application->m_InputSystem;
@@ -122,6 +125,12 @@ bool GUIRenderer::Button(const std::string& ID,Float2 Position,Float4 Color,Floa
 		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, CurrentButtonID.ID);
 	else
 		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, TextureHandle, CurrentButtonID.ID,0 );
+
+	//draw text
+	if (Text.size() != 0) {
+		m_FontSystem->Text(CurrentButtonID, Text.c_str(), { LPosition.x - Size.x ,LPosition.y - Size.y }, { Size.x*2,Size.y*2 });
+	}
+
 
 	if (IsPressed)
 		Core::Log(ErrorType::Error, "Not implemented.");
@@ -148,6 +157,11 @@ bool GUIRenderer::Button(const std::string& ID,Float2 Position,Float4 Color,Floa
 		return false;
 	return CurrentButtonData->IsPressed;
 }
+void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size) {
+	if (Text.size() != 0) {
+		m_FontSystem->Text(Core::GetStringHash(strID), Text.c_str(), Position, { Size.x * 2,Size.y * 2 });
+	}
+}
 void GUIRenderer::EndPanel()
 {
 	
@@ -158,6 +172,14 @@ void GUIRenderer::EndPanel()
 		m_CurrenPanelParent = nullptr;
 	m_PanelDepth--;
 }
+void GUIRenderer::SetFontSize(float Size)
+{
+	m_FontSystem->SetCharcterSize(Size);
+}
+float GUIRenderer::GetFontSize() {
+	return m_FontSystem->GetFontSize().x;
+}
+
 void GUIRenderer::EndGUI()
 {
 	//Update the dragged panel/button

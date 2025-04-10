@@ -27,7 +27,6 @@ FontSystem::FontSystem(Application* App)
 	else if (error) {
 		Core::Log(ErrorType::Error, "Failed to open/read or the font is broken ");
 	}
-
 	ReRenderFaces();
 	InputCallbacks callbacks{};
 	callbacks.KeyBoardCallback = KeyBoardCallbackFn;
@@ -202,6 +201,51 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 		Size.y = m_PaddingY+ m_PaddingY + CharacterSizeNorm.y;
 	}
 	
+
+	Float2 BoundingBox[4];
+	BoundingBox[0] = { Position.x ,Position.y };
+	BoundingBox[1] = { Position.x ,Position.y + Size.y };
+	BoundingBox[2] = { Position.x + Size.x,Position.y + Size.y };
+	BoundingBox[3] = { Position.x + Size.x,Position.y };
+
+	DrawBorder(Position, Size, SelectID);
+
+
+	renderer->RenderText(Message, { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+
+}
+void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
+{
+
+	Application* app = (Application*)m_App;
+	Renderer* renderer = ((Application*)m_App)->m_Renderer;
+
+	GUUID SelectID =id;
+	Float2 CharacterSizeNorm = { m_CharacterSize / renderer->GetViewPortExtent().width,m_CharacterSize / renderer->GetViewPortExtent().height };
+
+	Float2 Size{};
+
+
+
+	if (MaxSize.x != 0) {
+		Size.x = MaxSize.x;
+	}
+	else {
+		Size.x = ((m_Padding + m_Padding + CharacterSizeNorm.x) * strlen(Message)) + m_Padding;
+
+	}
+
+	if (MaxSize.y != 0) {
+		Size.y = MaxSize.y;
+
+	}
+	else if (MaxSize.x != 0) {
+		Size.y = strlen(Message) / (m_PaddingY + m_PaddingY + CharacterSizeNorm.x);
+	}
+	else {
+		Size.y = m_PaddingY + m_PaddingY + CharacterSizeNorm.y;
+	}
+
 
 	Float2 BoundingBox[4];
 	BoundingBox[0] = { Position.x ,Position.y };
@@ -501,7 +545,6 @@ void FontSystem::ReRenderFaces()
 	app->m_AssetManager.LoadAsset(texture, AssetType::TEXTURE, "FontTexture");
 
 	//m_FontAtlas->CreateTextureAtlas(AtlasCoords, SubTextureIndex,SubTextureSizes);
-
 }
 void FontSystem::PushStyle(const Style& style,void* StyleData) {
 	m_Style.push(style);

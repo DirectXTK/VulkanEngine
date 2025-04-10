@@ -24,12 +24,13 @@
      m_Renderer = new Renderer(desc, m_Window->GetHandle(), &m_InputSystem,&m_AssetManager);
 
 
-     m_GUIRenderer = new GUIRenderer(this,false);
      m_AssetManager.Init(this);
   
 
      m_Renderer->InitializePipeline(500);
 
+     m_FontSystem = new FontSystem(this);
+     m_GUIRenderer = new GUIRenderer(this, false);
  }
 
  void Application::AddLayer(Layer* layer)

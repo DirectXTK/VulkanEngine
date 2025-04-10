@@ -36,6 +36,9 @@ public:
 
 
 	void Text(const char* StrID,const char* Message, Float2 Position, Float2 MaxSize = {0.f,0.f});
+	void Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize = { 0.f,0.f });
+
+	Float2 GetFontSize() { return { m_CharacterSize,m_CharacterSize }; }
 
 	void PopFont();
 
