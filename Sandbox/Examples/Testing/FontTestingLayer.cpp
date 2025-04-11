@@ -32,26 +32,29 @@ void FontTestingLayer::OnGUI()
 		Buffer[2] = 'A';
 		Buffer[3] = 'A';
 
-		
+
 	}
-	static Float2 Pos{  -0.99f,-0.99f  };
+	static Float2 Pos{ -0.99f,-0.99f };
 
 	StyleBorderData props{};
-	props.BorderWidth=0.01f;
+	props.BorderWidth = 0.01f;
 	props.BackGroundColor = { 0.2f,0.2f,0.2f,1.0f };
 	props.BorderColor = { 0.0f,0.0f,.9f,1.0f };
 	props.BackGroundTexture = nullptr;
 	props.BorderTexture = nullptr;
 
-//	m_FontSystem->Text("Play", "PLAY", { 0.0f,0.5f });
-	//m_FontSystem->Text("Options", "OPTIONS", { -0.1f,0.4f });
-	//m_FontSystem->Text("Exit", "EXIT", { 0.0f,0.3f });
+	//	m_FontSystem->Text("Play", "PLAY", { 0.0f,0.5f });
+		//m_FontSystem->Text("Options", "OPTIONS", { -0.1f,0.4f });
+		//m_FontSystem->Text("Exit", "EXIT", { 0.0f,0.3f });
 
-	//m_FontSystem->PushStyle(Style::DrawBorder);
-	m_App->m_GUIRenderer->Text("FontSize", std::to_string(m_App->m_GUIRenderer->GetFontSize()), {-0.5f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.05f});
-	m_App->m_GUIRenderer->Button("makt", "GALVA MAKT YRA", { 0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f });
-
-	//m_FontSystem->InputText("", Buffer, 255, Pos, { 1.0f,0.1f });
+		//m_FontSystem->PushStyle(Style::DrawBorder);
+	m_App->m_GUIRenderer->Text("FontSize", std::to_string(m_App->m_GUIRenderer->GetFontSize()), { -0.5f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.05f });
+	//m_App->m_GUIRenderer->Button("makt", "GALVA MAKT YRA", { 0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f });
+	static float number{ 0.1f };
+	static float FontSize{ 16.f };
+	m_App->m_GUIRenderer->Slider("Slider", &FontSize, { 0.0f,0.0f }, { 0.1f,0.1f }, 1.0f, 1);
+	m_App->m_GUIRenderer->SetFontSize(FontSize);
+	m_App->m_GUIRenderer->InputText("Mkat", Buffer, ARRAYSIZE(Buffer), { 0.0f, -0.5f },{0.1f,0.1f});
 	//m_FontSystem->PopStyle();
 
 	//m_App->m_Renderer->DrawOutline({ 0.45f,0.525f }, { 0.5f,0.05f }, { 1.0f,1.0f,1.0f,1.0f }, 0.001f);

@@ -145,6 +145,7 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 			if (SavesState == false) {
 				
 				return true;
+
 			}
 			if (CurrentButtonData->IsPressed == true)
 				CurrentButtonData->IsPressed = false;
@@ -161,6 +162,32 @@ void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2
 	if (Text.size() != 0) {
 		m_FontSystem->Text(Core::GetStringHash(strID), Text.c_str(), Position, { Size.x * 2,Size.y * 2 });
 	}
+}
+void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Position, Float2 Size, float SlideAmount, uint32_t DecimalPlaces)
+{
+	std::string StringNumber = std::to_string(*number);
+	SliderData* CurrentSlider = &m_Sliders[strID];
+
+
+	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - DecimalPlaces)), Position, { 1.0f,1.0f,1.0f,1.0f }, Size, MouseCodes::LEFT, 0, false)) {
+		if (!CurrentSlider->IsClicked) {
+			CurrentSlider->IsClicked = true;
+		}
+	}
+
+
+	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
+		*number += m_Application->m_InputSystem.GetMousePosChange().x * SlideAmount;
+
+	}
+	else {
+		CurrentSlider->IsClicked = false;
+
+	}
+
+}
+void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size) {
+	m_FontSystem->InputText(ID, Buffer, BufferSize, Position, Size);
 }
 void GUIRenderer::EndPanel()
 {

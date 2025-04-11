@@ -42,6 +42,9 @@ void FontSystem::Run(void* app,void* iRenderer)
 
 void FontSystem::SetCharcterSize(float CharSize)
 {
+	if (CharSize == m_CharacterSize)
+		return;
+
 	m_CharacterSize = CharSize;
 	m_Padding =( m_CharacterSize * 0.1f)/m_Renderer->GetViewPortExtent().width;
 	m_PaddingY = (m_CharacterSize * 0.25f) / m_Renderer->GetViewPortExtent().height;
