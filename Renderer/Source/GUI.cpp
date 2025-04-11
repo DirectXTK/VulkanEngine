@@ -7,6 +7,16 @@
 GUIRenderer::GUIRenderer(Application* app,bool SaveState): m_Application(app),m_SaveState(SaveState)
 {
 	m_FontSystem = app->m_FontSystem;
+	//Push all the default styles
+	GUI::ColorStyle ColorData{sizeof(GUI::ColorStyle)};
+	ColorData.Color = { 1.0f,1.0f,1.0f,1.0f };
+
+	GUI::BorderStyle BorderData{ sizeof(GUI::BorderStyle) };
+	BorderData.DrawBorder = false;
+
+	PushStyle(GUI::Style::COLOR, &ColorData);
+	PushStyle(GUI::Style::BORDER,&BorderData);
+
 }
 void GUIRenderer::BeginGUI()
 {
@@ -163,20 +173,36 @@ void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2
 		m_FontSystem->Text(Core::GetStringHash(strID), Text.c_str(), Position, { Size.x * 2,Size.y * 2 });
 	}
 }
+void GUIRenderer::DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor, float BorderWidth) {
+	Renderer* renderer = m_Application->m_Renderer;
+	Float2 BorderSize{ Size.x+ BorderWidth,Size.y+ BorderWidth };
+	
+	
+	renderer->DrawQuad({ Position.x,Position.y,0.0f }, BorderColor, BorderSize, 0);
+}
 void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Position, Float2 Size, float SlideAmount, uint32_t DecimalPlaces)
 {
+	Float4 Color{m_CurrentColor};
 	std::string StringNumber = std::to_string(*number);
 	SliderData* CurrentSlider = &m_Sliders[strID];
 
+	if (m_CurrentBorderData->DrawBorder)
+		DrawBorder(Position, Size, m_CurrentBorderData->BorderColor, m_CurrentBorderData->BorderWidth);
 
-	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - DecimalPlaces)), Position, { 1.0f,1.0f,1.0f,1.0f }, Size, MouseCodes::LEFT, 0, false)) {
+	if (CurrentSlider->IsClicked == true)
+		Color = { Color.r - 0.15f,Color.g - 0.15f,Color.b - 0.15f,1.0f };
+
+	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - DecimalPlaces)), Position, { Color }, Size, MouseCodes::LEFT, 0, false)) {
+			Core::Log(ErrorType::Info, "strdwad");
 		if (!CurrentSlider->IsClicked) {
 			CurrentSlider->IsClicked = true;
+
 		}
 	}
 
 
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
+		Core::Log(ErrorType::Info,strID);
 		*number += m_Application->m_InputSystem.GetMousePosChange().x * SlideAmount;
 
 	}
@@ -198,6 +224,85 @@ void GUIRenderer::EndPanel()
 	else
 		m_CurrenPanelParent = nullptr;
 	m_PanelDepth--;
+}
+void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
+{
+	switch (style) {
+	case GUI::Style::COLOR: {
+		GUI::ColorStyle* Color{};
+		GUI::ColorStyle* TransformedData = (GUI::ColorStyle*)Data;
+
+		if (TransformedData->StructSize != sizeof(GUI::ColorStyle))
+		{
+			Core::Log(ErrorType::Error, "Invalid Style or size is specified incorectly.");
+			return;
+		}
+		Color = new GUI::ColorStyle();
+		*Color = *TransformedData;
+
+
+		m_Styles.push({ style,Color });
+		break;
+	}
+	case GUI::Style::BORDER: {
+		GUI::BorderStyle* TransformedData = (GUI::BorderStyle*)Data;
+		GUI::BorderStyle* OutputBorder{};
+
+		if (TransformedData->StructSize != sizeof(GUI::BorderStyle))
+		{
+			Core::Log(ErrorType::Error, "Invalid Style or size is specified incorectly.");
+			return;
+		}
+		OutputBorder = new GUI::BorderStyle();
+		*OutputBorder = *TransformedData;
+
+		m_Styles.push({ GUI::Style::BORDER,OutputBorder });
+
+		break;
+	}
+	case GUI::Style::NONE: {
+		Core::Log(ErrorType::Error, "GUI style is not specified.");
+		break;
+	}
+	default: {
+		Core::Log(ErrorType::Error, "Invalid GUI style");
+		break;
+	}
+	}
+	ReapplyStyles();
+}
+void GUIRenderer::PopStyle() {
+	StyleContainer container = m_Styles.top();
+	delete container.StyleData;
+
+	m_Styles.pop();
+	ReapplyStyles();
+
+}
+void GUIRenderer::ReapplyStyles() {
+	StyleContainer Container = m_Styles.top();
+
+	switch (Container.StyleType) {
+	case GUI::Style::COLOR: {
+		GUI::ColorStyle* ColorData = (GUI::ColorStyle*)Container.StyleData;
+
+		m_CurrentColor = ColorData->Color;
+
+		break;
+	}
+	case GUI::Style::BORDER: {
+		GUI::BorderStyle* Border = (GUI::BorderStyle*)Container.StyleData;
+
+		m_CurrentBorderData = Border;
+		break;
+	}
+	case GUI::Style::NONE: {
+
+	}
+	default: {
+
+	}
+	}
 }
 void GUIRenderer::SetFontSize(float Size)
 {

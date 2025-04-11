@@ -1,6 +1,7 @@
 #pragma once
 #include "AppCore.h"
 #include "Event.h"
+#include "GUIStyles.h"
 #define GUI_HEADER
 class Application;
 class FontSystem;
@@ -18,11 +19,15 @@ public:
 	void Slider(const std::string& strID, float* number, Float2 Position,  Float2 Size, float SlideAmount=0.01f,uint32_t DecimalPlaces=3);
 	void Slider(const std::string& strID, int* number, Float2 Position, Float2 Size, float SlideAmount = 0.01f);
 
+
+
 	void InputText(const char* ID, char* Buffer, uint64_t BufferSize, Float2 Position, Float2 Size);
 
 	void EndPanel();
 
+	void PushStyle(const GUI::Style& style,void* Data);
 
+	void PopStyle();
 
 	void SetFontSize(float Size);
 	float GetFontSize();
@@ -30,6 +35,9 @@ public:
 	void EndGUI();
 
 private:
+	void DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor, float BorderWidth);
+	void ReapplyStyles();
+
 	Application* m_Application{};
 	struct PanelData {
 		Float2 Position{};
@@ -52,6 +60,18 @@ private:
 
 	//std::unordered_map<uint32_t, ButtonData> m_ButtonIDs{};
 	std::unordered_map<uint32_t, PanelData> m_PanelIDs{};
+
+	//styles 
+	struct StyleContainer {
+		//heap allocated
+		GUI::Style StyleType{};
+		void* StyleData{};
+	};
+	std::stack<StyleContainer> m_Styles{};
+	Float4 m_CurrentColor{};
+	GUI::BorderStyle* m_CurrentBorderData{};
+
+
 
 	uint32_t m_PanelDepth{};
 	PanelData* m_CurrenPanelParent{};
