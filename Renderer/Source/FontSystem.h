@@ -60,6 +60,7 @@ private:
 
 	Renderer* m_Renderer{};
 	Application* m_App{};
+	Float2 m_TextureSize{};
 	void ReRenderFaces();
 	FT_Library m_Library{};
 
@@ -70,7 +71,7 @@ private:
 	Texture* m_Texture1{};
 	float m_Padding{ 0.1f };
 	float m_PaddingY{0.1f};
-	float m_CharacterSize{16};
+	float m_CharacterSize{46.f};
 
 	uint32_t m_FontAtlasSize{};
 	Texture* m_FontTexture{};

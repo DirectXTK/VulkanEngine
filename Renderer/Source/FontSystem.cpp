@@ -28,6 +28,7 @@ FontSystem::FontSystem(Application* App)
 		Core::Log(ErrorType::Error, "Failed to open/read or the font is broken ");
 	}
 	ReRenderFaces();
+
 	InputCallbacks callbacks{};
 	callbacks.KeyBoardCallback = KeyBoardCallbackFn;
 
@@ -46,8 +47,7 @@ void FontSystem::SetCharcterSize(float CharSize)
 		return;
 
 	m_CharacterSize = CharSize;
-	m_Padding =( m_CharacterSize * 0.1f)/m_Renderer->GetViewPortExtent().width;
-	m_PaddingY = (m_CharacterSize * 0.25f) / m_Renderer->GetViewPortExtent().height;
+
 
 	ReRenderFaces();
 }
@@ -85,13 +85,12 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	BoundingBox[3] = { Position.x + Size.x,Position.y };
 	
 
-
+	//letter selecting
 	if (m_App->m_InputSystem.IsMouseClicked(MouseCodes::LEFT)) {
 		if (m_App->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID)){
 			Float2 MousePos = m_App->GetMousePosNorm();
-			float PosXInBox = std::fabs(BoundingBox[0].x - MousePos.x);
-			m_CharEditedIndex = PosXInBox / ((m_CharacterSize+m_Padding+ m_Padding)/m_Renderer->GetViewPortExtent().width);
-
+			float PosXInBox = std::fabs(MousePos.x- BoundingBox[0].x);
+			m_CharEditedIndex = PosXInBox / ((m_CharacterSize/m_TextureSize.x)+m_Padding);
 
 			//if its one of the special symbols make it not editable and if its the first char make it editable
  			if (Buffer[m_CharEditedIndex] <= 32) {
@@ -118,7 +117,6 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	//Draw the invisible barrier that  provides the selecting 
 	DrawBorder(Position, Size, SelectID);
 
-
 	if (m_PointerCooldown <= 0.0f) {
 		if (m_PointerCooldown <= -m_PointerBlinkCooldownConst)
 			m_PointerCooldown = m_PointerBlinkCooldownConst;
@@ -139,7 +137,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 
 				if ((int)Key >= 32 && (int)Key <= 127) {
 					if (strlen(Buffer) + 1 < BufferSize) {
-						memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, m_CharEditedIndex + 1);
+						memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, strlen(Buffer)- m_CharEditedIndex);
 						Buffer[m_CharEditedIndex] = (char)Key;
 
 						m_CharEditedIndex++;
@@ -430,7 +428,11 @@ void FontSystem::ReRenderFaces()
 {
 	
 	Application* app = (Application*)m_App;
-	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize*64, 96, 96);
+	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize, 96, 96);
+	error = FT_Set_Pixel_Sizes(m_Face, 0, m_CharacterSize);
+
+
+	
 	if (error) {
 		Core::Log(ErrorType::Error, "Failed to set the font char size");
 	}
@@ -534,8 +536,8 @@ void FontSystem::ReRenderFaces()
 		FT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &box);
 
 
-		MinCord[SubTextureIndex] = {box.xMin/FontAtlasWidth,box.yMin/FontAtlasHeight};
-		MaxCord[SubTextureIndex] = {box.xMax/FontAtlasWidth,box.yMax / FontAtlasHeight };
+		MinCord[SubTextureIndex] = {box.xMin/FontAtlasWidth,(float)box.yMin/FontAtlasHeight};
+		MaxCord[SubTextureIndex] = {box.xMax/FontAtlasWidth,(float)box.yMax/ FontAtlasHeight };
 
 
 
@@ -566,10 +568,15 @@ void FontSystem::ReRenderFaces()
 	font->GlyphCount = m_Face->num_glyphs;
 	font->TextureID = Core::GetStringHash("FontTexture");
 
+	m_TextureSize = { FontAtlasWidth,FontAtlasHeight };
+
 	Texture* texture = new Texture(app->m_Renderer->GetContext(), FontAtlasWidth, FontAtlasHeight, 4, AtlasMapBitmap);
 
 	app->m_AssetManager.LoadAsset(font, AssetType::FONT, "Font");
 	app->m_AssetManager.LoadAsset(texture, AssetType::TEXTURE, "FontTexture");
+
+	m_Padding = (m_CharacterSize * 0.1f) / FontAtlasWidth;
+	m_PaddingY = (m_CharacterSize * 0.25f) / FontAtlasHeight;
 
 	//m_FontAtlas->CreateTextureAtlas(AtlasCoords, SubTextureIndex,SubTextureSizes);
 }

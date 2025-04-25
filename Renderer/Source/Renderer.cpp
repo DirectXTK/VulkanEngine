@@ -779,12 +779,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         Texture* FontAtlasTexture{};
 
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
-        float CharSizeNorm = CharSizePixels / GetViewPortExtent().width;
+        float CharSizeNorm{};
 
-        float SpaceBetweenLines{ (CharSizePixels/ GetViewPortExtent().height) * .25f };
+        float SpaceBetweenLines{ };
 
         float OffsetX{ FixedPadding  };
-        float OffsetY{ SpaceBetweenLines };
+        float OffsetY{ };
         Float2 MinCord{}, MaxCord{};
         GUUID TextureHandle = font->TextureID;
         float Space{ 0.06f };
@@ -797,6 +797,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         }
 
         FontAtlasTexture = (Texture*)m_AssetManager->GetAsset(font->TextureID).GetData();
+
+         CharSizeNorm = CharSizePixels / FontAtlasTexture->GetWidth();
+         SpaceBetweenLines={ (CharSizePixels / FontAtlasTexture->GetHeight()) * .25f };
+         OffsetY={ SpaceBetweenLines+ CharSizeNorm };
+
 
      
         if (m_Textures.size() == m_TextureSlotCount - 1)
@@ -819,7 +824,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             //draw pointer
             if(PointerIndex ==i)
-                DrawQuad({ BoundingBox[0].x + OffsetX -(FixedPadding*0.5f) ,BoundingBox[1].y- OffsetY - (CharSizeNorm * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding * 0.5f ,CharSizeNorm*0.5f }, 0);
+                DrawQuad({ BoundingBox[0].x + OffsetX -(FixedPadding*0.5f) ,BoundingBox[1].y- OffsetY + (CharSizeNorm * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding * 0.5f ,CharSizeNorm * 0.75f }, 0);
 
             //edge cases
             //Special cases
@@ -867,50 +872,44 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             float RemainingOffset{};
 
-            RemainingOffset = CharSizePixels - Size.x;
-            Size.x = Size.x / GetViewPortExtent().width;
-            if (RemainingOffset < 0)
-                Size.x = CharSizeNorm;
-            else
-                OffsetX += (RemainingOffset * 0.5f) / GetViewPortExtent().width;
-           // Size.x = CharSizeNorm;
-            //Size.y = CharSizeNorm;
+            RemainingOffset = CharSizePixels - font->Coords[LetterIndex].Width;
+            if (RemainingOffset > 0)
+                OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
+       
 
+            MaxCord = font->MaxCord[LetterIndex];
+            MinCord = font->MinCord[LetterIndex];
 
             //Stop drawing if text is going out of bounds.
-            if (BoundingBox[0].x + Size.x + OffsetX > BoundingBox[3].x) {
+            if (BoundingBox[0].x + CharSizeNorm + OffsetX > BoundingBox[3].x) {
 
                 OffsetY += SpaceBetweenLines + CharSizeNorm;
                 OffsetX = FixedPadding;
 
             }
-            if (BoundingBox[1].y - Size.y - OffsetY < BoundingBox[0].y)
+            if (BoundingBox[1].y - CharSizeNorm - OffsetY < BoundingBox[0].y)
                 break;
 
-   
 
 
-            OffsetX = std::round(OffsetX * GetViewPortExtent().width * 0.5f) / (GetViewPortExtent().width*0.5f);
+            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x + OffsetX + MinCord.x,BoundingBox[1].y - OffsetY + MinCord.y,0.0f };
+            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x + OffsetX + MinCord.x,BoundingBox[1].y - OffsetY + MaxCord.y,0.0f };
+            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x + OffsetX + MaxCord.x,BoundingBox[1].y - OffsetY + MaxCord.y,0.0f };
+            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x + OffsetX + MaxCord.x,BoundingBox[1].y - OffsetY + MinCord.y,0.0f };
+
+
+
+
+            //OffsetX = std::round(OffsetX * GetViewPortExtent().width * 0.5f) / (GetViewPortExtent().width*0.5f);
            
-            
-            MaxCord = font->MaxCord[LetterIndex];
-            MinCord = font->MinCord[LetterIndex] ;
+            if (RemainingOffset > 0)
+                OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
+    
 
 
-            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ OffsetX+MinCord.x,BoundingBox[1].y -OffsetY+ MinCord.y,0.0f };
-            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ OffsetX+MinCord.x,BoundingBox[1].y  - OffsetY+ MaxCord.y,0.0f };
-            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ OffsetX + MaxCord.x,BoundingBox[1].y   -OffsetY + MaxCord.y,0.0f };
-            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ OffsetX + MaxCord.x,BoundingBox[1].y  - OffsetY + MinCord.y,0.0f};
+     
 
-            
-
-            //add half of the missing size to the offest
-            if (RemainingOffset < 0)
-                Size.x = CharSizeNorm;
-            else
-                OffsetX += (RemainingOffset * 0.5f) / GetViewPortExtent().width;
-
-
+          
 
             m_Vertices[m_VertexPointer].Color = Color;
             m_Vertices[m_VertexPointer + 1].Color = Color;
@@ -932,7 +931,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             //Draw the pointer
           
 
-            OffsetX += std::abs(MinCord.x)+MaxCord.x + FixedPadding;
+            OffsetX += std::abs(MinCord.x)+MaxCord.x+ FixedPadding;
         }
        // OffsetX = -FixedPadding;
        // Core::Log(ErrorType::Info, OffsetX / 4);

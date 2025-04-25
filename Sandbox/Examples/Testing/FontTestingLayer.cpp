@@ -6,7 +6,7 @@ FontTestingLayer::FontTestingLayer(): Layer("FontTestingLayer")
 
 void FontTestingLayer::OnCreate()
 {
-	m_App->m_GUIRenderer->SetFontSize(20.0f);
+	m_App->m_GUIRenderer->SetFontSize(46.0f);
 	//m_App->m_AssetManager.LoadAsset(fontatlas, AssetType::TEXTURE, "FONTAtlas");
 
 	//m_App->m_Renderer->SetCurrentFont(fontatlas);
@@ -51,7 +51,7 @@ void FontTestingLayer::OnGUI()
 	m_App->m_GUIRenderer->Text("FontSize", std::to_string(m_App->m_GUIRenderer->GetFontSize()), { -0.5f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.05f });
 	//m_App->m_GUIRenderer->Button("makt", "GALVA MAKT YRA", { 0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f });
 	static float number{ 0.1f };
-	static float FontSize{ 16.f };
+	static float FontSize{ 46.f };
 
 	GUI::ColorStyle ColorStyle{ sizeof(GUI::ColorStyle),{1.0f,0.0f,0.0f,1.0f} };
 	GUI::BorderStyle BorderStyle{sizeof(GUI::BorderStyle)};
@@ -66,6 +66,11 @@ void FontTestingLayer::OnGUI()
 	m_App->m_GUIRenderer->PopStyle();
 	m_App->m_GUIRenderer->Slider("Slider1", &FontSize, { 0.5f,0.0f }, { 0.1f,0.1f }, 1.0f, 1);
 	m_App->m_GUIRenderer->Slider("ldwad", &FontSize, { 0.5f,0.5f }, { 0.1f,0.1f }, 1.0f, 1);
+
+	static float TestNumber{ -1.0f };
+	m_App->m_GUIRenderer->Slider("Test123", &TestNumber, { 0.0f,0.5f }, { 0.1f,0.1f }, 1.0f, 1);
+
+
 	m_App->m_GUIRenderer->PopStyle();
 
 	//m_FontSystem->PopStyle();
