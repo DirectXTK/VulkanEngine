@@ -8,6 +8,8 @@ struct Font {
 	GUUID TextureID{};
 	float FontSize{};
 	TextureCoords* Coords{};
+	Float2* MinCord{};
+	Float2* MaxCord{};
 	uint32_t GlyphCount{};
 };
 class Application;

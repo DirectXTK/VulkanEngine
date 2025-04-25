@@ -1,7 +1,7 @@
 #include "FontSystem.h"
 #include "Renderer.h"
 #include "Application.h"
-
+#include "freetype/ftglyph.h"
 FontSystem* g_FontSystem{};
 void KeyBoardCallbackFn(KeyBoardEvent* event) {
 	g_FontSystem->KeyBoardCallback(event);
@@ -442,6 +442,7 @@ void FontSystem::ReRenderFaces()
 	float OffsetX{0};
 	float OffsetY{0};
 	TextureCoords* AtlasCoords{};
+	Float2* MinCord{}, *MaxCord{};
 	Float2* SubTextureSizes{};
 	float SizeX{16};
 	float SizeY{ 16 };
@@ -451,6 +452,9 @@ void FontSystem::ReRenderFaces()
 	FontAtlasHeight = m_Face->max_advance_height;
 
 	AtlasCoords = new TextureCoords[m_Face->num_glyphs];
+	MinCord = new Float2[m_Face->num_glyphs];
+	MaxCord = new Float2[m_Face->num_glyphs];
+
 	SubTextureSizes = new Float2[m_Face->num_glyphs];
 
 	error = FT_Select_Charmap(m_Face, FT_ENCODING_UNICODE);
@@ -518,12 +522,28 @@ void FontSystem::ReRenderFaces()
 		AtlasCoords[SubTextureIndex].Coords[3].y = std::roundf(AtlasCoords[SubTextureIndex].Coords[3].y * 1000.f) / 1000.f;
 
 
+		
+		FT_Glyph glyph{};
+		FT_BBox box{};
+
+		error = FT_Get_Glyph(slot, &glyph);
+		if (error) {
+			Core::Log(ErrorType::Error, "Failed to get glyph from slot.");
+		}
+
+		FT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &box);
+
+
+		MinCord[SubTextureIndex] = {box.xMin/FontAtlasWidth,box.yMin/FontAtlasHeight};
+		MaxCord[SubTextureIndex] = {box.xMax/FontAtlasWidth,box.yMax / FontAtlasHeight };
 
 
 
+
+		
 		SubTextureSizes[SubTextureIndex] = { (float)SizeX,(float)SizeY };
 
-		for (uint32_t x = 0; x < slot->bitmap.width; x++) {
+		for (uint32_t x = 0; x < slot->bitmap.width; x++) {	
 			for (uint32_t y = 0; y < slot->bitmap.rows; y++) {
 				AtlasMapBitmap[(uint32_t)OffsetX+x + ((y + (uint32_t)OffsetY)* (uint32_t)FontAtlasWidth )] |= uint32_t(slot->bitmap.buffer[(y * slot->bitmap.width+x)]<<24);
 			}
@@ -532,13 +552,17 @@ void FontSystem::ReRenderFaces()
 		//	Core::Log(ErrorType::Error, "Maktyra");
 		OffsetX += AtlasCoords[SubTextureIndex].Width+1;
 		SubTextureIndex++;
-		Core::Log(ErrorType::Info, "Left:", slot->bitmap_left, " Top:", slot->bitmap_top," AdvanceX:",slot->advance.x,  " AdvanceY:", slot->advance.y);
+
+		//Core::Log(ErrorType::Info,(char)i, "Left:", slot->bitmap_left, " Top:", slot->bitmap_top, " Diff:", -1*int((slot->metrics.height -slot->metrics.horiBearingY)/26));
+
 
 	}
 	//Core::Log(ErrorType::Error, "dwadad");
 	Font* font = new Font();
-	font->FontSize = m_CharacterSize;
 	font->Coords = AtlasCoords;
+	font->MinCord = MinCord;
+	font->MaxCord = MaxCord;
+	font->FontSize = m_CharacterSize;
 	font->GlyphCount = m_Face->num_glyphs;
 	font->TextureID = Core::GetStringHash("FontTexture");
 

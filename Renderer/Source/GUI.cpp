@@ -193,7 +193,6 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 		Color = { Color.r - 0.15f,Color.g - 0.15f,Color.b - 0.15f,1.0f };
 
 	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - DecimalPlaces)), Position, { Color }, Size, MouseCodes::LEFT, 0, false)) {
-			Core::Log(ErrorType::Info, "strdwad");
 		if (!CurrentSlider->IsClicked) {
 			CurrentSlider->IsClicked = true;
 
@@ -202,7 +201,6 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 
 
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
-		Core::Log(ErrorType::Info,strID);
 		*number += m_Application->m_InputSystem.GetMousePosChange().x * SlideAmount;
 
 	}

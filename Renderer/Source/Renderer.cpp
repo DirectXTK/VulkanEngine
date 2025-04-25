@@ -785,6 +785,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         float OffsetX{ FixedPadding  };
         float OffsetY{ SpaceBetweenLines };
+        Float2 MinCord{}, MaxCord{};
         GUUID TextureHandle = font->TextureID;
         float Space{ 0.06f };
 
@@ -841,7 +842,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
           
             TextureRenderingData texture = m_Textures[TextureHandle];
                 Size.x = (float)font->Coords[LetterIndex].Width;
-                Size.y = (float)font->Coords[LetterIndex].Height;
+                Size.y = (float)font->Coords[LetterIndex].Height/1440;
                 //its the size of the bitmap not the character itself.
 
 
@@ -873,7 +874,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             else
                 OffsetX += (RemainingOffset * 0.5f) / GetViewPortExtent().width;
            // Size.x = CharSizeNorm;
-            Size.y = std::min(CharSizeNorm, Size.y / GetViewPortExtent().height);
+            //Size.y = CharSizeNorm;
 
 
             //Stop drawing if text is going out of bounds.
@@ -891,13 +892,17 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             OffsetX = std::round(OffsetX * GetViewPortExtent().width * 0.5f) / (GetViewPortExtent().width*0.5f);
            
-
-            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ OffsetX,BoundingBox[1].y- CharSizeNorm -OffsetY,0.0f };
-            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ OffsetX,BoundingBox[1].y - CharSizeNorm + Size.y - OffsetY,0.0f };
-            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ OffsetX + Size.x,BoundingBox[1].y - CharSizeNorm + Size.y -OffsetY ,0.0f };
-            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ OffsetX + Size.x,BoundingBox[1].y - CharSizeNorm - OffsetY,0.0f};
+            
+            MaxCord = font->MaxCord[LetterIndex];
+            MinCord = font->MinCord[LetterIndex] ;
 
 
+            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ OffsetX+MinCord.x,BoundingBox[1].y -OffsetY+ MinCord.y,0.0f };
+            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ OffsetX+MinCord.x,BoundingBox[1].y  - OffsetY+ MaxCord.y,0.0f };
+            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ OffsetX + MaxCord.x,BoundingBox[1].y   -OffsetY + MaxCord.y,0.0f };
+            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ OffsetX + MaxCord.x,BoundingBox[1].y  - OffsetY + MinCord.y,0.0f};
+
+            
 
             //add half of the missing size to the offest
             if (RemainingOffset < 0)
@@ -927,7 +932,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             //Draw the pointer
           
 
-            OffsetX += Size.x + FixedPadding;
+            OffsetX += std::abs(MinCord.x)+MaxCord.x + FixedPadding;
         }
        // OffsetX = -FixedPadding;
        // Core::Log(ErrorType::Info, OffsetX / 4);
