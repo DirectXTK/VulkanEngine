@@ -6,32 +6,45 @@ project "Application"
     targetdir("../bin".. outputdir.."/%{prj.name}")
     objdir("../bin-int".. outputdir.."/%{prj.name}")
 
+  
     files{
         "Source/**.cpp",
         "Source/**.h"
     }
     
-    links{
-      "glfw3.lib",
-      "freetype.lib",
-      "Renderer"
-    }
+
 
     includedirs{
       "%{prj.location}/../Include",
 
       "%{prj.location}/../Include/vulkan/",
       "%{prj.location}/../Renderer/Source/",
+      "%{prj.location}/Source/",
+
       GlobalIncludes,
     }
 
     libdirs{
-        "%{prj.location}/../Libs"
+        "%{prj.location}/../Libs/",
+        vulkanSDK.."/Lib/",
+    }
+
+    links{
+      "vulkan",
+      "glfw3",
+      "freetype" ,"z","png16",
+      "Renderer",
     }
 
     defines{
-        "WINDOWS"
+        "linux"
     }
+
+
+    postbuildcommands { 
+      "{COPY} %{cfg.targetdir}/libApplication.a "..LibLocation..""
+    }
+
 
     filter{"configurations:Debug"}
       runtime "Debug"

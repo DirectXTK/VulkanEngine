@@ -29,6 +29,7 @@
 
      m_Renderer->InitializePipeline(500);
 
+
      m_FontSystem = new FontSystem(this);
      m_GUIRenderer = new GUIRenderer(this, false);
  }
@@ -76,6 +77,7 @@
 
  void Application::Run(){
     while(!glfwWindowShouldClose(m_Window->GetHandle())){
+        m_InputSystem.ResetMouseChange();
 
         m_DeltaTime = Time::GetTimeMs() - m_LastFrameTime;
         m_LastFrameTime = Time::GetTimeMs();
@@ -88,13 +90,14 @@
         m_LayerController.UpdateGUILayers();
 
         m_Renderer->EndFrame();
-
         m_InputSystem.ResetInput();
+
         glfwSwapBuffers(m_Window->GetHandle());
         glfwPollEvents();
+
+  
   
 
-        m_InputSystem.ResetMouseChange();
 
     }
  }

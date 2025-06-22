@@ -195,14 +195,14 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - DecimalPlaces)), Position, { Color }, Size, MouseCodes::LEFT, 0, false)) {
 		if (!CurrentSlider->IsClicked) {
 			CurrentSlider->IsClicked = true;
+		Core::Log(ErrorType::Error,"Lafa");
 
 		}
 	}
 
-
+	
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
 		*number += m_Application->m_InputSystem.GetMousePosChange().x * SlideAmount;
-
 	}
 	else {
 		CurrentSlider->IsClicked = false;

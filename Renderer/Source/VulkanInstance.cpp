@@ -19,7 +19,6 @@
     appinfo.pEngineName = "No engine";
     appinfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appinfo.apiVersion = desc.ApiVersion;
-
  
 
 
@@ -38,9 +37,8 @@
 
     if (desc.ValidationLayersEnabled) {
     instanceExtensiosn.push_back("VK_EXT_debug_utils");
-        
-    }
     LayerNames.push_back("VK_LAYER_KHRONOS_validation");
+    }
 
     if (!IsExtensionsSupported(instanceExtensiosn))
         Core::Log(ErrorType::Error, "Wanted extensions not supported by your machine!");
@@ -54,11 +52,15 @@
     createinfo.ppEnabledExtensionNames = instanceExtensiosn.data();
     //Add check if layers is supported.
     createinfo.ppEnabledLayerNames = LayerNames.data();
-    createinfo.enabledLayerCount = 1;
+    createinfo.enabledLayerCount = LayerNames.size();
 
+    for(int i =0;i < instanceExtensiosn.size();i++){
+        printf("Extension %s\n",instanceExtensiosn[i]);
+    }
+    
 
     VkResult result = vkCreateInstance(&createinfo, nullptr, &Instance);
-
+    printf("lafa %i\n",(int)result);
     if (result != VK_SUCCESS)
         Core::Log(ErrorType::Error, "Failed to create instance");
     if (desc.ValidationLayersEnabled)

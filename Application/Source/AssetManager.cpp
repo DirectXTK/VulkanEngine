@@ -1,7 +1,6 @@
 #include "AssetManager.h"
 #include "Renderer.h"
 #include "Application.h"
-#include <Windows.h>
 #include "Animator.h"
 void AssetManager::Init(Application* app)
 {
@@ -12,9 +11,9 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	std::string FilePath{};
 	switch (TypesToLoad) {
 	case AssetType::TEXTURE: {
-		std::wstring str{};
+		std::string str{};
 		str.resize(200);
-		GetModuleFileName(nullptr, str.data(), 200);
+		str = Core::GetModuleFileName();
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 			FilePath = dir_entry.path().string();
 			

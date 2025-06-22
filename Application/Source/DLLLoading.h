@@ -1,5 +1,7 @@
 #pragma once
 #include "AppCore.h"
+#include <dlfcn.h>
+#include <stdio.h>
 class DLLLoading
 {
 public:
@@ -8,13 +10,13 @@ public:
 	T LoadFunction(std::string FunctionName);
 	~DLLLoading();
 private:
-	HMODULE m_DLL{};
+	void*  m_DLL{};
 };
 
 template<typename T>
 inline T DLLLoading::LoadFunction(std::string FunctionName)
 {
-	T proc = (T)GetProcAddress(m_DLL, FunctionName.c_str());
+	T proc = (T)dlsym(m_DLL, FunctionName.c_str());
 	if (!proc)
 		Core::Log(ErrorType::Error, "Failed to load function named:", FunctionName);
 

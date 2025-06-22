@@ -67,8 +67,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     context->GraphicsQueue = m_GraphicsQ;
     context->QueueFamil = m_QueueFamilies;
 
-    m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT);
-    m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT);
+    m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
 
     m_DescriptorPool.CreatePool(context);
@@ -81,6 +81,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     m_DescriptorSetCamera.Init(CameraDescriptordesc);
     m_GUICameraDescriptor.Init(CameraDescriptordesc);
+
 
     DescriptorSetDescription TextureDescriptordesc{ context };
     TextureDescriptordesc.DescriptorCount = 4;
@@ -220,8 +221,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     m_DescriptorSetCamera.WriteTo(0, *m_UniformBuffers[0].GetBuffer(), sizeof(glm::mat4));
     m_GUICameraDescriptor.WriteTo(0, *m_UniformGUICameraBuffer->GetBuffer(), sizeof(glm::mat4));
 
-    if (desc.InitialCamera) 
-     m_UniformBuffers->UploadToBuffer(m_Device, &desc.InitialCamera->GetViewProj(), sizeof(glm::mat4));
+    glm::mat4 ViewProj = desc.InitialCamera->GetViewProj();
+    if (&ViewProj) 
+     m_UniformBuffers->UploadToBuffer(m_Device, &ViewProj, sizeof(glm::mat4));
 
     
    // m_DescriptorSetTextures.WriteToTexture(0, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
@@ -561,7 +563,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             presentinfo.swapchainCount = 1;
             presentinfo.pSwapchains = &swapchain;
             presentinfo.pImageIndices = &m_ImageIndex;
-
+            
 
             result = vkQueuePresentKHR(m_PresentationQ, &presentinfo);
 
@@ -1145,7 +1147,7 @@ void Renderer::StartRecordingCommands()
 
 void Renderer::StopRecordingCommands()
 {
-
+    
     vkEndCommandBuffer(m_CurrentCommandBuffer);
     m_DrawCommandsGeometry.resize(0);
     m_DrawCommandsOutlines.resize(0);

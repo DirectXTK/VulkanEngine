@@ -116,8 +116,8 @@ VkPipelineLayout Pipeline::CreatePipelineLayout(VkDevice device,VkDescriptorSetL
 VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
 {
     VkPipeline outputPipeline{};
-    VkShaderModule Vertex= ShaderDesc::CreateShader({ ShaderType::VertexShader,"C:/Repos/VulkanEngine/Shaders/Vertex.spv" },device);
-    VkShaderModule Pixel= ShaderDesc::CreateShader({ ShaderType::PixelShader,"C:/Repos/VulkanEngine/Shaders/Fragment.spv" },device);
+    VkShaderModule Vertex= ShaderDesc::CreateShader({ ShaderType::VertexShader,"Shaders/Vertex.spv" },device);
+    VkShaderModule Pixel= ShaderDesc::CreateShader({ ShaderType::PixelShader,"Shaders/Fragment.spv" },device);
 
 
     VkPipelineShaderStageCreateInfo vertexstage{};

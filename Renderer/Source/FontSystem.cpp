@@ -1,5 +1,5 @@
 #include "FontSystem.h"
-#include "Renderer.h"
+#include <Renderer.h>
 #include "Application.h"
 #include "freetype/ftglyph.h"
 FontSystem* g_FontSystem{};
@@ -12,7 +12,7 @@ FontSystem::FontSystem(Application* App)
 	m_Renderer = App->m_Renderer;
 	g_FontSystem = this;
 
-	const char* FontPath = "C:\\Repos\\VulkanEngine\\Resources\\Fonts\\Daydream.ttf";
+	const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Daydream.ttf";
 	Application* CurrentApp = (Application*)App;
 
 	FT_Error error = FT_Init_FreeType(&m_Library);
@@ -438,7 +438,7 @@ void FontSystem::ReRenderFaces()
 	}
 
 	FT_GlyphSlot slot = m_Face->glyph;
-	float FontAtlasWidth, FontAtlasHeight{};
+	float FontAtlasWidth{}, FontAtlasHeight{};
 	uint32_t SubTextureIndex{};
 	uint32_t ChannelCount{};
 	float OffsetX{0};
@@ -463,7 +463,7 @@ void FontSystem::ReRenderFaces()
 	if (error)
 		Core::Log(ErrorType::Error, "Failed to select charmap.");
 
-	uint32_t* AtlasMapBitmap = new uint32_t[FontAtlasWidth * FontAtlasHeight];
+	uint32_t* AtlasMapBitmap = new uint32_t[(uint32_t)FontAtlasWidth * (uint32_t)FontAtlasHeight];
 	memset(AtlasMapBitmap,0x00000000, FontAtlasWidth * FontAtlasHeight*sizeof(uint32_t));
 
 

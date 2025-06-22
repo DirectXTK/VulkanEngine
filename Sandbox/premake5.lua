@@ -14,12 +14,7 @@ project "Sandbox"
         "Examples/**.cpp",
         "Examples/**.h",
     }
-    
-    links{
-      "freetype.lib",
-      "glfw3.lib",
-      "Application",
-    }
+   
 
     includedirs{
       "%{prj.location}/..//Include",
@@ -32,14 +27,23 @@ project "Sandbox"
     }
 
     libdirs{
-        "%{prj.location}/../Libs"
+        "%{prj.location}/../Libs/",
+        vulkanSDK.."/Lib/",
+    }
+
+     
+    links{
+      "freetype","z","png16","bz2","brotlidec",
+      "glfw3",
+      "vulkan",
+      "Renderer",
+      "Application",
     }
 
     defines{
-        "WINDOWS"
+        "linux"
     }
 
-    postbuildcommands {"{COPYFILE} %[../Libs/freetype.dll] %["..TargetDirVar.."]"}
 
     filter{"configurations:Debug"}
       runtime "Debug"

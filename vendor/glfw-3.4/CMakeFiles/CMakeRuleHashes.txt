@@ -1,0 +1,21 @@
+# Hashes of file build rules.
+63607d0873174277c807483780dd1337 CMakeFiles/uninstall
+5735611a30e85b907bdca61ff8c289c3 src/CMakeFiles/update_mappings
+d657cd25916485da85b62df8ced7a015 src/fractional-scale-v1-client-protocol-code.h
+f1425b48545e55881f5d832676b78f83 src/fractional-scale-v1-client-protocol.h
+5abf9d08822980361051b6fae9568950 src/idle-inhibit-unstable-v1-client-protocol-code.h
+9d5e5c5822cd0c62c2d55dd6393bf5cb src/idle-inhibit-unstable-v1-client-protocol.h
+d727aef4f9ad1d5801ca89dc1483d36b src/pointer-constraints-unstable-v1-client-protocol-code.h
+9a40ed6746b401b6686e440e6e83a475 src/pointer-constraints-unstable-v1-client-protocol.h
+79b349f8340c90b6c9c55ee01668c3a4 src/relative-pointer-unstable-v1-client-protocol-code.h
+14f4c073a8726d3b3a9061d21f4a960a src/relative-pointer-unstable-v1-client-protocol.h
+cc233c4cf4a1c982a60fc73337d689c0 src/viewporter-client-protocol-code.h
+25e9ba30b26b2abe50a6c8465afc0502 src/viewporter-client-protocol.h
+5ab4266c63659c648ba9a7d9b9af7ca6 src/wayland-client-protocol-code.h
+ca7f36d754956b8891a2ad9d78731475 src/wayland-client-protocol.h
+1d527225a0b348fcbdf65add2289dbe0 src/xdg-activation-v1-client-protocol-code.h
+2c600119a49e2706b863df8d087beaa3 src/xdg-activation-v1-client-protocol.h
+abffbd23499c4b79ece9218294d79203 src/xdg-decoration-unstable-v1-client-protocol-code.h
+8025182bbb17933831874b7cb732e0f8 src/xdg-decoration-unstable-v1-client-protocol.h
+8a6c163815b0ae7faf737112712d7894 src/xdg-shell-client-protocol-code.h
+d7b518541056a3510c4524f4ff6c5b0f src/xdg-shell-client-protocol.h

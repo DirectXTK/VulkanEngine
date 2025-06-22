@@ -132,7 +132,6 @@
      }
      VkPresentModeKHR SwapChain::GetBestPresentationMode(){
 
-
         for(int i=0;i <m_Details.PresentModes.size();i++){
 
             if(m_Details.PresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
