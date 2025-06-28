@@ -180,7 +180,7 @@ void GUIRenderer::DrawBorder(const Float2& Position, const Float2& Size, const F
 	
 	renderer->DrawQuad({ Position.x,Position.y,0.0f }, BorderColor, BorderSize, 0);
 }
-void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Position, Float2 Size, float SlideAmount, uint32_t DecimalPlaces)
+void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Position, Float2 Size, float SlideAmount,Float2 MinMax, uint32_t DecimalPlaces)
 {
 	Float4 Color{m_CurrentColor};
 	std::string StringNumber = std::to_string(*number);
@@ -193,6 +193,37 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 		Color = { Color.r - 0.15f,Color.g - 0.15f,Color.b - 0.15f,1.0f };
 
 	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - DecimalPlaces)), Position, { Color }, Size, MouseCodes::LEFT, 0, false)) {
+		if (!CurrentSlider->IsClicked) {
+			CurrentSlider->IsClicked = true;
+		Core::Log(ErrorType::Error,"Lafa");
+
+		}
+	}
+
+	
+	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
+		*number += m_Application->m_InputSystem.GetMousePosChange().x * SlideAmount;
+		*number=std::clamp(*number,MinMax.x,MinMax.y);
+	}
+	else {
+		CurrentSlider->IsClicked = false;
+
+	}
+
+}
+void GUIRenderer::Slider(const std::string& strID, int* number, Float2 Position, Float2 Size, float SlideAmount )
+{
+	Float4 Color{m_CurrentColor};
+	std::string StringNumber = std::to_string(*number);
+	SliderData* CurrentSlider = &m_Sliders[strID];
+
+	if (m_CurrentBorderData->DrawBorder)
+		DrawBorder(Position, Size, m_CurrentBorderData->BorderColor, m_CurrentBorderData->BorderWidth);
+
+	if (CurrentSlider->IsClicked == true)
+		Color = { Color.r - 0.15f,Color.g - 0.15f,Color.b - 0.15f,1.0f };
+
+	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - 2)), Position, { Color }, Size, MouseCodes::LEFT, 0, false)) {
 		if (!CurrentSlider->IsClicked) {
 			CurrentSlider->IsClicked = true;
 		Core::Log(ErrorType::Error,"Lafa");
@@ -303,8 +334,9 @@ void GUIRenderer::ReapplyStyles() {
 	}
 }
 void GUIRenderer::SetFontSize(float Size)
-{
-	m_FontSystem->SetCharcterSize(Size);
+{	
+	if(Size >0)
+		m_FontSystem->SetCharcterSize(Size);
 }
 float GUIRenderer::GetFontSize() {
 	return m_FontSystem->GetFontSize().x;

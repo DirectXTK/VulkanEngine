@@ -142,7 +142,6 @@ void InputSystem::ResetMouseChange()
 	m_LastFrameMousePos.x = x;
 	m_LastFrameMousePos.y = y;
 
-	printf("Mouse change %d\n",m_MouseChange.x);
 }
 
 void InputSystem::ResetInput()

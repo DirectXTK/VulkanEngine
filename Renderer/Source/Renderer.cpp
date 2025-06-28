@@ -764,9 +764,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_VertexPointer += 4;
     }
 
-    void Renderer::SetCurrentFont(Texture* TextureFontAtlas)
+    void Renderer::SetCurrentFont(Asset FontAsset)
     {
-        m_FontTextureAtlas = TextureFontAtlas;
+        m_CurrentFont = FontAsset;
+        
     }
 
     void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
@@ -775,9 +776,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //
         //temp
         //Char being edited index
+        if (m_CurrentFont.GetType() != AssetType::FONT)
+        {
+            Core::Log(ErrorType::Error, "Invalid type");
+            return;
+        }
 
-        Asset asset = m_AssetManager->GetAsset(Core::GetStringHash("Font"));
-        Font* font = (Font*)asset.GetData();
+        Font* font = (Font*)m_CurrentFont.GetData();
         Texture* FontAtlasTexture{};
 
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
@@ -792,13 +797,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         float Space{ 0.06f };
 
 
-        if (asset.GetType() != AssetType::FONT)
-        {
+       
+
+        if(font->TextureAsset.GetType() != AssetType::TEXTURE){
             Core::Log(ErrorType::Error, "Invalid type");
             return;
         }
-
-        FontAtlasTexture = (Texture*)m_AssetManager->GetAsset(font->TextureID).GetData();
+        FontAtlasTexture = (Texture*)font->TextureAsset.GetData();
 
          CharSizeNorm = CharSizePixels / FontAtlasTexture->GetWidth();
          SpaceBetweenLines={ (CharSizePixels / FontAtlasTexture->GetHeight()) * .25f };

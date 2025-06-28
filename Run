@@ -1,2 +1,5 @@
 make -j12
-./bin/linux/x86_64/Sandbox/Sandbox
+status=$?
+if [ $status = 0 ]; then
+ ./bin/linux/x86_64/Sandbox/Sandbox
+fi

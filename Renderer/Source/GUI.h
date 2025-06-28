@@ -16,7 +16,7 @@ public:
 
 	void Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size);
 
-	void Slider(const std::string& strID, float* number, Float2 Position,  Float2 Size, float SlideAmount=0.01f,uint32_t DecimalPlaces=3);
+	void Slider(const std::string& strID, float* number, Float2 Position,  Float2 Size, float SlideAmount,Float2 MinMax,uint32_t DecimalPlaces=3);
 	void Slider(const std::string& strID, int* number, Float2 Position, Float2 Size, float SlideAmount = 0.01f);
 
 

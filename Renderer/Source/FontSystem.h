@@ -5,6 +5,7 @@
 #include FT_FREETYPE_H
 
 struct Font {
+	Asset TextureAsset{};
 	GUUID TextureID{};
 	float FontSize{};
 	TextureCoords* Coords{};

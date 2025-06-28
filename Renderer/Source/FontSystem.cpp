@@ -426,8 +426,31 @@ void FontSystem::DrawPointer(Float2 Position, float CharacterSize,float SizeY)
 }
 void FontSystem::ReRenderFaces()
 {
-	
+
+	//Artifcats when resizing same over and over
+
+	//!!! here
+	// when resizing the font becomes small after some number is goes to normal size.
+
+
 	Application* app = (Application*)m_App;
+	FT_GlyphSlot slot = m_Face->glyph;
+
+	//check if font is already loaded and renderer
+	Asset asset=m_App->m_AssetManager.GetAsset(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
+	if(asset){
+			m_Padding = (m_CharacterSize * 0.1f) / m_Face->max_advance_width;
+	m_PaddingY = (m_CharacterSize * 0.25f) / m_Face->max_advance_width;
+	Core::Log(ErrorType::Info,"Asset already loaded");
+	system("clear");
+	
+	Core::Log(ErrorType::Info,"PaddingX ",m_Padding);
+	Core::Log(ErrorType::Info,"PaddingY ",m_PaddingY);
+		return;
+	}
+		
+
+
 	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize, 96, 96);
 	error = FT_Set_Pixel_Sizes(m_Face, 0, m_CharacterSize);
 
@@ -437,7 +460,6 @@ void FontSystem::ReRenderFaces()
 		Core::Log(ErrorType::Error, "Failed to set the font char size");
 	}
 
-	FT_GlyphSlot slot = m_Face->glyph;
 	float FontAtlasWidth{}, FontAtlasHeight{};
 	uint32_t SubTextureIndex{};
 	uint32_t ChannelCount{};
@@ -445,7 +467,6 @@ void FontSystem::ReRenderFaces()
 	float OffsetY{0};
 	TextureCoords* AtlasCoords{};
 	Float2* MinCord{}, *MaxCord{};
-	Float2* SubTextureSizes{};
 	float SizeX{16};
 	float SizeY{ 16 };
 	int64_t MaxY{};
@@ -457,7 +478,6 @@ void FontSystem::ReRenderFaces()
 	MinCord = new Float2[m_Face->num_glyphs];
 	MaxCord = new Float2[m_Face->num_glyphs];
 
-	SubTextureSizes = new Float2[m_Face->num_glyphs];
 
 	error = FT_Select_Charmap(m_Face, FT_ENCODING_UNICODE);
 	if (error)
@@ -543,7 +563,6 @@ void FontSystem::ReRenderFaces()
 
 
 		
-		SubTextureSizes[SubTextureIndex] = { (float)SizeX,(float)SizeY };
 
 		for (uint32_t x = 0; x < slot->bitmap.width; x++) {	
 			for (uint32_t y = 0; y < slot->bitmap.rows; y++) {
@@ -566,19 +585,21 @@ void FontSystem::ReRenderFaces()
 	font->MaxCord = MaxCord;
 	font->FontSize = m_CharacterSize;
 	font->GlyphCount = m_Face->num_glyphs;
-	font->TextureID = Core::GetStringHash("FontTexture");
+	font->TextureID = Core::GetStringHash("FontTexture"+std::to_string(m_CharacterSize));
 
 	m_TextureSize = { FontAtlasWidth,FontAtlasHeight };
 
 	Texture* texture = new Texture(app->m_Renderer->GetContext(), FontAtlasWidth, FontAtlasHeight, 4, AtlasMapBitmap);
+	m_Renderer->SetCurrentFont(m_App->m_AssetManager.LoadAsset(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
+	
+	font->TextureAsset = app->m_AssetManager.LoadAsset(texture, AssetType::TEXTURE, "FontTexture"+std::to_string(m_CharacterSize));
 
-	app->m_AssetManager.LoadAsset(font, AssetType::FONT, "Font");
-	app->m_AssetManager.LoadAsset(texture, AssetType::TEXTURE, "FontTexture");
+	
 
 	m_Padding = (m_CharacterSize * 0.1f) / FontAtlasWidth;
 	m_PaddingY = (m_CharacterSize * 0.25f) / FontAtlasHeight;
 
-	//m_FontAtlas->CreateTextureAtlas(AtlasCoords, SubTextureIndex,SubTextureSizes);
+
 }
 void FontSystem::PushStyle(const Style& style,void* StyleData) {
 	m_Style.push(style);

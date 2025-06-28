@@ -18,6 +18,7 @@
 #include "VulkanInstance.h"
 #include "Texture.h"
 #include "Animator.h"
+#include "AssetManager.h"
 #define MAX_FRAME_DRAWS 3
 
 class InputSystem;
@@ -66,7 +67,7 @@ public:
 
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
-    void SetCurrentFont(Texture* TextureFontAtlas);
+    void SetCurrentFont(Asset CurrentAsset);
     //PointerIndex = -1 means don't draw it.
     void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
     //GUI 
@@ -219,7 +220,7 @@ private:
     Vertex* m_VertexOutline{};
     //Text
     Texture* m_FontTextureAtlas{};
-
+    Asset m_CurrentFont{};
 
 
 

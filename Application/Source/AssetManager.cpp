@@ -101,17 +101,18 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 
 }
 
-GUUID AssetManager::LoadAsset(void* Resource, AssetType type,std::string Name)
+Asset AssetManager::LoadAsset(void* Resource, AssetType type,std::string Name)
 {
 	GUUID ID = Core::GetStringHash(Name);
 	auto Index = m_Resources.find(ID);
-	if (Index == m_Resources.end()) {
+	if (Index != m_Resources.end()) {
 		Core::Log(ErrorType::Warning, "Resource is being loaded twice.If you intended to overwrite this resources please use ReloadResource() function");
 		m_ResourceCount[type]++;
-
+		return m_Resources[ID];
 	}
-	m_Resources[ID] = Asset(type,Resource);
-	return ID;
+	m_Resources[ID].CreateAsset(type,Resource);
+	Core::Log(ErrorType::Info,"Load asset type",(uint32_t)m_Resources[ID].GetType());
+	return m_Resources[ID];
 }
 
 GUUID AssetManager::ReloadAsset(void* Resource, AssetType type, std::string Name)
@@ -128,10 +129,13 @@ GUUID AssetManager::ReloadAsset(void* Resource, AssetType type, std::string Name
 			Core::Log(ErrorType::Error, "Implement other resource type cases at ReloardResource() function");
 			break;
 		}
-	}
+	}//here working on assets
 
 	Core::Log(ErrorType::Error, "This Function isn't implemented yet.");
 	return ID;
+}
+Asset AssetManager::CreateAsset(const AssetType& Type,void* Data){
+	return Asset(Type,Data);
 }
 
 void AssetManager::LoadAnimation(const std::string& FolderPath)
@@ -181,7 +185,7 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 		Animator* animator= new Animator(dir_entry.path().string(), atlasGUUID, FilePath);
 		animator->SetStage("IDLE");
 		m_Resources[atlasGUUID] = animator;
-		m_ResourceCount[AssetType::ANIMATION]++;
+		m_ResourceCount[AssetType::ANIMATION]++;::
 
 
 	

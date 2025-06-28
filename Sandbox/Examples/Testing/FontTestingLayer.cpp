@@ -60,15 +60,15 @@ void FontTestingLayer::OnGUI()
 
 	m_App->m_GUIRenderer->PushStyle(GUI::Style::BORDER, &BorderStyle);
 	m_App->m_GUIRenderer->PushStyle(GUI::Style::COLOR, &ColorStyle);
-	m_App->m_GUIRenderer->Slider("Slider", &FontSize, { 0.0f,0.0f }, { 0.1f,0.1f }, 1.0f, 1);
+	m_App->m_GUIRenderer->Slider("Slider", &FontSize, { 0.0f,0.0f }, { 0.1f,0.1f }, 1.0f,{0.0f,100.f},1);
 	m_App->m_GUIRenderer->SetFontSize(FontSize);
 	m_App->m_GUIRenderer->InputText("Mkat", Buffer, ARRAYSIZE(Buffer), { 0.0f, -0.5f },{0.5f,0.1f});
 	m_App->m_GUIRenderer->PopStyle();
-	m_App->m_GUIRenderer->Slider("Slider1", &FontSize, { 0.5f,0.0f }, { 0.1f,0.1f }, 0.01f, 1);
-	m_App->m_GUIRenderer->Slider("ldwad", &FontSize, { 0.5f,0.5f }, { 0.1f,0.1f }, 1.0f, 1);
+	m_App->m_GUIRenderer->Slider("Slider1", &FontSize, { 0.5f,0.0f }, { 0.1f,0.1f }, 0.01f, {0.0f,100.f});
+	m_App->m_GUIRenderer->Slider("ldwad", &FontSize, { 0.5f,0.5f }, { 0.1f,0.1f }, 1.0f, {0.0f,100.f});
 
 	static float TestNumber{ -1.0f };
-	m_App->m_GUIRenderer->Slider("Test123", &TestNumber, { 0.0f,0.5f }, { 0.1f,0.1f }, 1.0f, 1);
+	m_App->m_GUIRenderer->Slider("Test123", &TestNumber, { 0.0f,0.5f }, { 0.1f,0.1f }, 1.0f, {0.0f,100.f});
 
 
 	m_App->m_GUIRenderer->PopStyle();
