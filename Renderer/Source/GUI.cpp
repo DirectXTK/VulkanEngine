@@ -333,13 +333,13 @@ void GUIRenderer::ReapplyStyles() {
 	}
 	}
 }
-void GUIRenderer::SetFontSize(float Size)
+void GUIRenderer::SetFontSize(uint32_t Size)
 {	
 	if(Size >0)
 		m_FontSystem->SetCharcterSize(Size);
 }
-float GUIRenderer::GetFontSize() {
-	return m_FontSystem->GetFontSize().x;
+uint32_t GUIRenderer::GetFontSize() {
+	return m_FontSystem->GetFontSize();
 }
 
 void GUIRenderer::EndGUI()

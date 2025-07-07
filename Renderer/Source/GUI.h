@@ -29,8 +29,8 @@ public:
 
 	void PopStyle();
 
-	void SetFontSize(float Size);
-	float GetFontSize();
+	void SetFontSize(uint32_t Size);
+	uint32_t GetFontSize();
 
 	void EndGUI();
 

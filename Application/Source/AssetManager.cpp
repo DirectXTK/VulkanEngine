@@ -2,12 +2,19 @@
 #include "Renderer.h"
 #include "Application.h"
 #include "Animator.h"
+
+  
+
+
+
+
 void AssetManager::Init(Application* app)
 {
 	m_APP = app;
 }
 void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 {
+	/*
 	std::string FilePath{};
 	switch (TypesToLoad) {
 	case AssetType::TEXTURE: {
@@ -27,7 +34,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		
 			m_ResourceCount[TypesToLoad]++;
 
-			m_Resources[t] = Asset(TypesToLoad,texture);
+			m_Resources[t].CreateAsset((GUUID)t,texture,TypesToLoad,this);
 		}
 		break;
 	}
@@ -64,9 +71,9 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 
 			
 			m_ResourceCount[TypesToLoad]++;
-			m_Resources[Core::GetStringHash(FilePath)]= Asset(TypesToLoad,AtlasData);
+			//m_Resources[Core::GetStringHash(FilePath)].CreateAsset(Core::GetStringHash(FilePath), AtlasData,TypesToLoad,this);
 
-			/*
+			
 			
 			Texture** atlases = texture->GetTextureAtlas();
 			AtlasCount = texture->GetTextureAtlasSize();
@@ -80,7 +87,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 					m_Resources[t] = atlases[i];
 
 				}
-				*/
+				
 
 		
 		}
@@ -97,46 +104,22 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		break;
 	}
 	}
+	*/
+	
 
 
 }
+	
+void AssetManager::DebugStatistics(bool GUI){
+	if(GUI){
 
-Asset AssetManager::LoadAsset(void* Resource, AssetType type,std::string Name)
-{
-	GUUID ID = Core::GetStringHash(Name);
-	auto Index = m_Resources.find(ID);
-	if (Index != m_Resources.end()) {
-		Core::Log(ErrorType::Warning, "Resource is being loaded twice.If you intended to overwrite this resources please use ReloadResource() function");
-		m_ResourceCount[type]++;
-		return m_Resources[ID];
+	}else{
+		//Core::Log(ErrorType::Info,"Font Count ",m_ResourceCount[AssetType::FONT]);
+		//Core::Log(ErrorType::Info,"Texture Count ",m_ResourceCount[AssetType::TEXTUREATLAS]);
+
 	}
-	m_Resources[ID].CreateAsset(type,Resource);
-	Core::Log(ErrorType::Info,"Load asset type",(uint32_t)m_Resources[ID].GetType());
-	return m_Resources[ID];
 }
 
-GUUID AssetManager::ReloadAsset(void* Resource, AssetType type, std::string Name)
-{
-	GUUID ID = Core::GetStringHash(Name);
-	Asset oldAsset = m_Resources[ID];
-	switch (oldAsset.GetType()) {
-		case AssetType::TEXTURE:{
-			Texture* texture = (Texture*)oldAsset.GetData();
-			texture->~Texture();
-			break;
-		}
-		default: {
-			Core::Log(ErrorType::Error, "Implement other resource type cases at ReloardResource() function");
-			break;
-		}
-	}//here working on assets
-
-	Core::Log(ErrorType::Error, "This Function isn't implemented yet.");
-	return ID;
-}
-Asset AssetManager::CreateAsset(const AssetType& Type,void* Data){
-	return Asset(Type,Data);
-}
 
 void AssetManager::LoadAnimation(const std::string& FolderPath)
 {
@@ -191,17 +174,5 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 	
 	}*/
 	Core::Log(ErrorType::Error, "This function isn't implemented yet");
-}
-
-GUUID AssetManager::LoadTexture(const std::string& TexturePath)
-{
-		Texture* texture = m_APP->m_Renderer->LoadTexture(TexturePath);
-
-		std::string Temp = TexturePath.substr(0, TexturePath.find("."));
-
-		GUUID ID = Core::GetStringHash(Temp);
-		m_ResourceCount[AssetType::TEXTURE]++;
-		m_Resources[ID] = Asset(AssetType::TEXTURE,texture);
-		return ID;
 }
 

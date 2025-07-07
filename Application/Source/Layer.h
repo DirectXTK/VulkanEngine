@@ -1,6 +1,8 @@
 #pragma once
 #include "AppCore.h"
 class Application;
+class Renderer;
+class AssetManager;
 class Layer{
 public:
     virtual void OnUpdate(float deltatime)=0;
@@ -8,13 +10,15 @@ public:
     virtual void OnDestroy()=0;
     virtual void OnGUI()=0;
 
-    void SetSystem(Application* app);
+    void Init(Application* app,AssetManager* manager,Renderer* renderer);
 protected:
     Layer(std::string name);
 
     std::string m_LayerName{};
 public:
     Application* m_App{};
+    AssetManager* m_Assets{};
+    Renderer* m_Renderer{};
 };
 class LayerController{
     public:

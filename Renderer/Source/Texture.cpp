@@ -121,6 +121,7 @@ void Texture::CopyFromBuffer(VkDevice device, Buffer* srcbuffer, VkCommandBuffer
 Texture::~Texture()
 {
 	vkFreeMemory(m_Context->Device, m_DeviceMemory, nullptr);
+	printf("~Texture");
 }
 
 void Texture::CreateImageAndView(VkFormat Format,VkSharingMode ShareMode,VkImageTiling ImageTilling,VkImageUsageFlags UsageFlags,VkMemoryPropertyFlags MemoryPropertyFlags,VkImageLayout InitialImageLayout)

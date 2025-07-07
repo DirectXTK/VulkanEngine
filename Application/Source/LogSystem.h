@@ -60,6 +60,11 @@ namespace Core{
 		LogRec(file, args...);
 		file.close();
 	}
+	template<typename... ARGS>
+	 void Log(ARGS ...args) {
+		Log(ErrorType::Info,args...);
+	 }
+	
 
 
 }

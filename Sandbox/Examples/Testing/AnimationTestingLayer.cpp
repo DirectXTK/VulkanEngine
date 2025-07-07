@@ -19,14 +19,14 @@ void AnimationTestingLayer::OnCreate()
 	m_App->m_Camera.SetPosition({ 0.0f,0.0f });
 
 	m_Units[0].Position = {0.0f,0.0f};
-	m_Units[0].animator = *(Animator*)m_App->GetAsset("WARRIOR").GetData();
+	//m_Units[0].animator = *(Animator*)(m_Assets->LoadAsset<Animator>(Core::GetStringHash("WARRIOR"),AssetType::ANIMATION,"Warrior")).GetData();
 	m_Units[0].animator.SetStage("WALK");
 	m_Units[0].Collid = m_System.CreateCollider();
 	m_Units[0].Collid.Update(&m_Units[0].Position, &m_Size);
 
 
 	m_Units[1].Position = { 0.04f*5,0.0f };
-	m_Units[1].animator = *(Animator*)m_App->GetAsset("TOWN_HALL").GetData();
+	//m_Units[1].animator = *(Animator*)m_Assets->LoadAsset<Animator>(Core::GetStringHash("TOWN_HALL"),AssetType::ANIMATION,"TOWN_HALL").GetData();
 	m_Units[1].animator.SetStage("IDLE");
 	m_Units[1].Collid = m_System.CreateCollider();
 	m_Units[1].Collid.Update(&m_Units[1].Position, &m_Size);
@@ -107,7 +107,7 @@ void AnimationTestingLayer::OnGUI()
 		if (m_SpawnUnit) {
 			m_Units.push_back(AnimationUnit());
 			m_Units[m_Units.size() - 1].Position = { m_App->GetWorldMousePos().x, m_App->GetWorldMousePos().y };
-			m_Units[m_Units.size() - 1].animator = *(Animator*)m_App->GetAsset(m_SpawnedUnit).GetData();
+			//m_Units[m_Units.size() - 1].animator = *(Animator*)m_App->GetAsset(m_SpawnedUnit).GetData();
 			m_Units[m_Units.size() - 1].Collid = m_System.CreateCollider();
 			m_Units[m_Units.size() - 1].Collid.Update(&m_Units[m_Units.size() - 1].Position, &m_Size);
 

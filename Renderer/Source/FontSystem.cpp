@@ -41,7 +41,7 @@ void FontSystem::Run(void* app,void* iRenderer)
 	
 }
 
-void FontSystem::SetCharcterSize(float CharSize)
+void FontSystem::SetCharcterSize(uint32_t CharSize)
 {
 	if (CharSize == m_CharacterSize)
 		return;
@@ -177,7 +177,7 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 	Renderer* renderer = ((Application*)m_App)->m_Renderer;
 
 	GUUID SelectID = Core::GetStringHash(StrId);
-	Float2 CharacterSizeNorm = { m_CharacterSize   / renderer->GetViewPortExtent().width,m_CharacterSize/ renderer->GetViewPortExtent().height };
+	Float2 CharacterSizeNorm = { float(m_CharacterSize   / renderer->GetViewPortExtent().width),float(m_CharacterSize/ renderer->GetViewPortExtent().height) };
 
 	Float2 Size{};
 
@@ -222,7 +222,7 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 	Renderer* renderer = ((Application*)m_App)->m_Renderer;
 
 	GUUID SelectID =id;
-	Float2 CharacterSizeNorm = { m_CharacterSize / renderer->GetViewPortExtent().width,m_CharacterSize / renderer->GetViewPortExtent().height };
+	Float2 CharacterSizeNorm = { float(m_CharacterSize / renderer->GetViewPortExtent().width),float(m_CharacterSize / renderer->GetViewPortExtent().height) };
 
 	Float2 Size{};
 
@@ -429,26 +429,24 @@ void FontSystem::ReRenderFaces()
 
 	//Artifcats when resizing same over and over
 
-	//!!! here
-	// when resizing the font becomes small after some number is goes to normal size.
 
 
 	Application* app = (Application*)m_App;
 	FT_GlyphSlot slot = m_Face->glyph;
 
 	//check if font is already loaded and renderer
-	Asset asset=m_App->m_AssetManager.GetAsset(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
+	Asset<Font> asset=m_App->m_AssetManager.GetAsset<Font>(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
 	if(asset){
-			m_Padding = (m_CharacterSize * 0.1f) / m_Face->max_advance_width;
+		Font* currentFont = (Font*)asset.GetData();
+
+	m_Padding = (m_CharacterSize * 0.1f) / m_Face->max_advance_width;
 	m_PaddingY = (m_CharacterSize * 0.25f) / m_Face->max_advance_width;
-	Core::Log(ErrorType::Info,"Asset already loaded");
-	system("clear");
+
+	m_Renderer->SetCurrentFont(m_App->m_AssetManager.LoadAsset<Font>(currentFont, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
+
 	
-	Core::Log(ErrorType::Info,"PaddingX ",m_Padding);
-	Core::Log(ErrorType::Info,"PaddingY ",m_PaddingY);
 		return;
 	}
-		
 
 
 	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize, 96, 96);
@@ -588,12 +586,14 @@ void FontSystem::ReRenderFaces()
 	font->TextureID = Core::GetStringHash("FontTexture"+std::to_string(m_CharacterSize));
 
 	m_TextureSize = { FontAtlasWidth,FontAtlasHeight };
-
 	Texture* texture = new Texture(app->m_Renderer->GetContext(), FontAtlasWidth, FontAtlasHeight, 4, AtlasMapBitmap);
-	m_Renderer->SetCurrentFont(m_App->m_AssetManager.LoadAsset(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
+	delete[] AtlasMapBitmap;
 	
-	font->TextureAsset = app->m_AssetManager.LoadAsset(texture, AssetType::TEXTURE, "FontTexture"+std::to_string(m_CharacterSize));
+	font->TextureAsset = app->m_AssetManager.LoadAsset<Texture>(texture, AssetType::TEXTURE, "FontTexture"+std::to_string(m_CharacterSize));
 
+		m_Renderer->SetCurrentFont(m_App->m_AssetManager.LoadAsset<Font>(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
+		
+		
 	
 
 	m_Padding = (m_CharacterSize * 0.1f) / FontAtlasWidth;

@@ -190,7 +190,7 @@ struct Float3{
         float r,g,b;
 
         };
-    struct{
+    struct{ 
         float x,y,z;
 
         };

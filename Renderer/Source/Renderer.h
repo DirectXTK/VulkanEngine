@@ -19,6 +19,7 @@
 #include "Texture.h"
 #include "Animator.h"
 #include "AssetManager.h"
+#include "FontSystem.h"
 #define MAX_FRAME_DRAWS 3
 
 class InputSystem;
@@ -67,7 +68,7 @@ public:
 
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
-    void SetCurrentFont(Asset CurrentAsset);
+    void SetCurrentFont(Asset<Font> CurrentAsset);
     //PointerIndex = -1 means don't draw it.
     void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
     //GUI 
@@ -157,7 +158,6 @@ private:
 
 
 
-
     UniformBuffer* m_UniformBuffers{};
     //Descriptors 
     DescriptorPool m_DescriptorPool{};
@@ -219,8 +219,7 @@ private:
     uint64_t m_VertexOutineMaxCountPerDrawCall{ 4 * 100 };
     Vertex* m_VertexOutline{};
     //Text
-    Texture* m_FontTextureAtlas{};
-    Asset m_CurrentFont{};
+    Asset<Font> m_CurrentFont{};
 
 
 
@@ -232,7 +231,7 @@ private:
     DescriptorPool m_DescriptorPoolTextures{};
     std::vector<DescriptorSet> m_DescriptorSetTextures{};
     struct TextureRenderingData {
-        Texture* texture{};
+        Asset<Texture> texture{};
         uint32_t Index{};
     };
     std::unordered_map<GUUID, TextureRenderingData> m_Textures{};

@@ -36,7 +36,7 @@
 
  void Application::AddLayer(Layer* layer)
  {
-     layer->SetSystem(this);
+     layer->Init(this,&m_AssetManager,m_Renderer);
     m_LayerController.CreateLayer(layer);
  }
 
@@ -96,8 +96,7 @@
         glfwPollEvents();
 
   
-  
-
+        m_AssetManager.DebugStatistics(false);
 
     }
  }

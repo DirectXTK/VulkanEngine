@@ -28,8 +28,6 @@ public:
 
     GUUID GetCurrentlyHoveredPixelID();
 
-    Asset GetAsset(GUUID id) { return m_AssetManager.GetAsset(id); }
-    Asset GetAsset(const std::string& Path) { return m_AssetManager.GetAsset(Core::GetStringHash(Path)); }
 
     AssetManager* GetAssetManager() { return &m_AssetManager; }
     void LoadAssets(std::string Path,AssetType type);

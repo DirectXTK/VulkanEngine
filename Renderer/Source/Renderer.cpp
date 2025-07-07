@@ -380,8 +380,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     {
         uint32_t Index{ 1 };
 
+        int lafa{};
         for (auto& it : m_Textures) {
-           m_DescriptorSetTextures[m_DrawCallCountGUI+m_DrawCallCountGeometry].WriteToTexture(Index, it.second.texture->GetImageView(), it.second.texture->GetSampler());
+            Texture* texture = (Texture*)it.second.texture.GetData();
+
+            m_DescriptorSetTextures[m_DrawCallCountGUI+m_DrawCallCountGeometry].WriteToTexture(Index,texture->GetImageView(), texture->GetSampler());
+            
             Index++;
         }
 
@@ -456,7 +460,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         }
 
         for (uint32_t i = 0; i < m_Textures.size(); i++) {
-            Texture* texture = (Texture*)m_AssetManager->GetAsset(m_TextureIDByOrder[i]).GetData();
+            Texture* texture = (Texture*)m_AssetManager->GetAsset<Texture>(m_TextureIDByOrder[i]).GetData();
             if (texture)
                 m_DescriptorSetTextures[m_DrawCallCountGeometry].WriteToTexture(i + 1, texture->GetImageView(), texture->GetSampler());
             else
@@ -579,20 +583,19 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,int TextureIndex)
     {
         GUUID CurrentTextureHandle{};
-        Texture* CurrentTexture{};
+        Asset<Texture> TexutreAsset{};
 
         if (m_VertexPointer + 4 > m_VertexCount )
             FlushGeometry();
         if (TextureHandle != 0) {
-            Asset asset = m_AssetManager->GetAsset(TextureHandle);
+            AssetType type = m_AssetManager->GetAssetType(TextureHandle);
 
 
 
 
-                switch (asset.GetType()) {
+                switch (type) {
                 case AssetType::TEXTURE: {
                     CurrentTextureHandle = TextureHandle;
-                    CurrentTexture = (Texture*)asset.GetData();
 
                     m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
                     m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
@@ -601,10 +604,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     break;
                 }
                 case AssetType::TEXTUREATLAS:{
-                    TextureAtlasData* textureAtlasData = (TextureAtlasData*)asset.GetData();
+                    TextureAtlasData* textureAtlasData = (TextureAtlasData*)m_AssetManager->GetAsset<TextureAtlasData>(TextureHandle).GetData();
 
-                    CurrentTextureHandle = ((TextureAtlasData*)asset.GetData())->TextureID;
-                    CurrentTexture = (Texture*)m_AssetManager->GetAsset(textureAtlasData->TextureID).GetData();
+                    CurrentTextureHandle = textureAtlasData->TextureID;
 
                     m_Vertices[m_VertexPointer].TexCoords = textureAtlasData->Data[TextureIndex].Coords[0];
                     m_Vertices[m_VertexPointer + 1].TexCoords = textureAtlasData->Data[TextureIndex].Coords[1];
@@ -624,7 +626,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 if (m_Textures.find(CurrentTextureHandle) == m_Textures.end()) {
                     if (m_Textures.size() == m_TextureSlotCount - 1)
                         FlushGeometry();
-                    m_Textures[CurrentTextureHandle] = { CurrentTexture ,(uint32_t)m_Textures.size() + 1 };
+                        TexutreAsset= m_AssetManager->GetAsset<Texture>(CurrentTextureHandle);
+                    m_Textures[CurrentTextureHandle] = { TexutreAsset ,(uint32_t)m_Textures.size() + 1 };
                     m_TextureIDByOrder[m_Textures.size() - 1] = CurrentTextureHandle;
 
                 }
@@ -677,7 +680,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (m_Textures.find(Animation.GetCurrentTextureID()) == m_Textures.end()) {
                 if (m_Textures.size() == m_TextureSlotCount - 1)
                     FlushGeometry();
-                m_Textures[Animation.GetCurrentTextureID()] = { (Texture*)m_AssetManager->GetAsset(Animation.GetCurrentTextureID()).GetData() ,(uint32_t)m_Textures.size() + 1};
+                //m_Textures[Animation.GetCurrentTextureID()] = { m_AssetManager->GetAsset(Animation.GetCurrentTextureID()) ,(uint32_t)m_Textures.size() + 1};
                 m_TextureIDByOrder[m_Textures.size() - 1] = Animation.GetCurrentTextureID();
             }
             TextureRenderingData texture = m_Textures[Animation.GetCurrentTextureID()];
@@ -764,10 +767,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_VertexPointer += 4;
     }
 
-    void Renderer::SetCurrentFont(Asset FontAsset)
+    void Renderer::SetCurrentFont(Asset<Font> FontAsset)
     {
-        m_CurrentFont = FontAsset;
+	 printf("SetCurrentFont123\n");
         
+        m_CurrentFont = FontAsset;
+	 printf("SetCurrentFont123\n");
+       
+
+   
     }
 
     void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
@@ -814,7 +822,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         if (m_Textures.size() == m_TextureSlotCount - 1)
             FlushGeometry();
         if (m_Textures.find(TextureHandle) == m_Textures.end()) {
-         m_Textures[TextureHandle] = { FontAtlasTexture ,(uint32_t)m_Textures.size() + 1 };
+         m_Textures[TextureHandle] = { font->TextureAsset ,(uint32_t)m_Textures.size() + 1 };
          m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
 
         }

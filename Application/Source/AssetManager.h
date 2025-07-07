@@ -1,115 +1,161 @@
 #pragma once
 #include "AppCore.h"
 
-enum class AssetType{UNDIFINED,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER,AI,ANIMATION,FONT};
+enum class AssetType{NONE,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER,AI,ANIMATION,FONT,NUMOFASSETTYPES};
 class Texture;
 class Application;
 class AssetManager;
-//template<typename T>
+
+struct AssetHandle{
+
+	AssetHandle(GUUID id,AssetManager* manager,const AssetType& type,void* Data): ID(id),Manager(manager),Type(type),Data(Data){
+	}
+	AssetHandle(){}
+
+	GUUID ID{};
+	uint32_t RefCount{};
+	AssetManager* Manager{};
+	AssetType Type{};
+	void* Data{};
+};
+template<typename T>
 class Asset {
 public:
 	friend AssetManager;
-	
-	Asset(){CreateAsset(AssetType::UNDIFINED,nullptr);}
+	Asset(){}
+    Asset(const Asset& other){
+		  m_Data = other.m_Data;
+
+        m_Data->RefCount+=1;
+	}
+    Asset( Asset&& other){
+        m_Data = std::move(other.m_Data);
+
+		memset(&other,0,sizeof(Asset));
+		 m_Data->RefCount++;
+	}
+    Asset& operator=(const Asset& other){
+		if(&other == this)
+			return *this;
+		Release();
+
+		m_Data = other.m_Data;
+
+        m_Data->RefCount+=1;
+        return *this;
 
 
-	Asset(const Asset&& other){
+	}
+    Asset& operator=( Asset&& other){
+		
 		m_Data = std::move(other.m_Data);
-		m_RefCount = std::move(other.m_RefCount);
-		m_Type = std::move(other.m_Type);
-			if(m_RefCount){
-			Core::Log(ErrorType::Error,"Ref count is null");
-		}
-	}
-	Asset(const Asset& other){
-		m_Data = other.m_Data;
-		m_RefCount = other.m_RefCount;
-		if(m_RefCount)
-			*m_RefCount+=1;
-
-		m_Type = other.m_Type;
 		
-	}
-	Asset& operator=(const Asset& other){
-	
-		m_Data = other.m_Data;
-		m_Type = other.m_Type;
-		m_RefCount = other.m_RefCount;
-		if(m_RefCount){
-			*m_RefCount+=1;
-		}else{
-			Core::Log(ErrorType::Error,"Ref count is null");
-		}
-		return *this;
-	}
+		m_Data->RefCount++;
+		memset(&other,0,sizeof(Asset));
 
-	AssetType GetType() { return m_Type; }
-	void* GetData() { return m_Data; }
-	operator bool(){
-		return m_Type== AssetType::UNDIFINED? false:true;
-	}
-	~Asset() {
-		DecRefAndDel();
-	}
+
+        return *this;
+}
+
+    void* GetData(){return m_Data->Data;}
+    AssetType GetType(){return m_Data->Type;}
+	uint32_t GetRefCount(){return m_Data->RefCount;}
+
+    bool operator==(const Asset& other){return m_Data->ID == other.m_Data->ID? true:false;}
+    operator bool(){return m_Data==nullptr? false:true&&m_Data->Type == AssetType::NONE? false:true;}
+
+
+    ~Asset(){Release();}
 private:
+	Asset(AssetHandle* handle){m_Data = handle;m_Data->RefCount++;}
+ 
+    void CreateAsset(GUUID id,void* resource,const AssetType& type,AssetManager* manager){
 
-	void DecRefAndDel(){
-		//DEBUG
-		if(!m_RefCount){
-		Core::Log(ErrorType::Error,"DecRefAndDel m_RefCount is nullptr");
-		return;
+    
+         m_Data->Data = resource;
+		   m_Data->Manager = manager;
+        m_Data->Type= type;
+		m_Data->ID = id;
+        //*m_RefCount+=1;
+	}
+    void Release(){
+        if(m_Data){
+			m_Data->RefCount-=1;
 		}
-		
-		*m_RefCount-=1;
-		if(*m_RefCount <=0)
-		{
-		delete m_RefCount;
-		delete m_Data;
+        else{
+			return;
+		}
+        
+        if(m_Data->RefCount ==0)
+        {	
+			T* ConvertedData = (T*)m_Data->Data;
+			delete ConvertedData;
+//TODO 555
+			//m_Data->Manager->UnloadAsset(m_Data->ID,m_Data->Type);
+          	 
+        }
+	}
 
-		
-		}
-	
-	}
-	Asset(const AssetType& type,void* resource){
-		m_Data = resource;
-		m_Type = type;
-	}
-	void CreateAsset(const AssetType& Type, void* Data) {
-		m_Data = Data;
-		m_Type = Type;
-		m_RefCount= new int();
-	}
-	int* m_RefCount{};
-	AssetType m_Type{AssetType::UNDIFINED};
-	void* m_Data{};
+
+	AssetHandle* m_Data{};
 
 };
+
 class AssetManager
 {
 public:
 	void Init(Application* app);
+
 	void LoadAllAssets(std::string FolderPath, AssetType TypesToLoad);
-	Asset LoadAsset(void* Resource, AssetType type,std::string Name);
-	GUUID ReloadAsset(void* Resource, AssetType type, std::string Name);
+	template<typename T>
+	Asset<T> LoadAsset(void* Resource, AssetType type,std::string Name){
+		GUUID ID = Core::GetStringHash(Name);
+	  auto Index = m_Resources.find(ID);
+        if(Index != m_Resources.end())
+            return Asset<T>(&m_Resources[ID]);
+         m_Resources[ID] = AssetHandle(ID,this,type,Resource);
+		 m_ResourceCount[type]++;
+         return Asset<T>(&m_Resources[ID]);
+	}
+
 	uint64_t GetAssetCount(AssetType type) { return m_ResourceCount[type];}
+	uint64_t GetAssetCount() { return m_Resources.size();}
 
+	void UnloadAsset(GUUID handle,AssetType type){
+		DebugStatistics(false);
 
-	Asset GetAsset(GUUID Handle) {
+		auto Index = m_Resources.find(handle);
+		if(Index != m_Resources.end()){
+			printf("Type %i\n",(int)type);
+			m_Resources.erase(Index);
+
+			m_ResourceCount[type]--;
+		}
+		printf("UnloadAsset\n");
+	}
+	template<typename T>
+	Asset<T> GetAsset(GUUID Handle) {
 		if (m_Resources.find(Handle) == m_Resources.end()) {
 			Core::Log(ErrorType::Warning, "Resources wasn't found (ID", Handle.ID,")");
-				return Asset(AssetType::UNDIFINED,nullptr);
+			return Asset<T>();
 		}
-		return m_Resources[Handle];
+		return Asset<T>(&m_Resources[Handle]);
 	}
+	AssetType GetAssetType(GUUID id){
+		if (m_Resources.find(id) == m_Resources.end()) {
+			Core::Log(ErrorType::Warning, "Resources wasn't found (ID", id.ID,")");
+			return AssetType::NONE;
+		}
+		return m_Resources[id].Type;
+	}
+	void DebugStatistics(bool GUI);
 	
 	//void Save();
 private:
-	Asset CreateAsset(const AssetType& Type,void* Data);
 	void LoadFont(const std::string& FilePath);
 	void LoadAnimation(const std::string& FolderPath);
-	GUUID LoadTexture(const std::string& TexturePath);
 
-	std::unordered_map<GUUID, Asset> m_Resources{};
+	std::unordered_map<GUUID, AssetHandle> m_Resources{};
 	std::unordered_map<AssetType, uint64_t> m_ResourceCount;
 	Application* m_APP{};
 };
