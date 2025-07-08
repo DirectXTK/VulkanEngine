@@ -69,8 +69,8 @@ void FontTestingLayer::OnGUI()
 
 	static float TestNumber{ -1.0f };
 	m_App->m_GUIRenderer->Slider("Test123", &TestNumber, { 0.0f,0.5f }, { 0.1f,0.1f }, 1.0f, {0.0f,100.f});
-	m_App->m_GUIRenderer->Text("Number",std::to_string(m_App->m_AssetManager.GetAssetCount()),{-0.5f,0.5f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
-	m_App->m_GUIRenderer->Text("Number",std::to_string(m_App->m_AssetManager.GetAsset<Font>(Core::GetStringHash("Font46")).GetRefCount()),{-0.5f,0.4f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
+	m_App->m_GUIRenderer->Text("Number",std::to_string(m_App->m_AssetManager.GetAssetCount(AssetType::FONT)),{-0.5f,0.5f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
+	//m_App->m_GUIRenderer->Text("Number",std::to_string(m_App->m_AssetManager.GetAsset<Font>(Core::GetStringHash("Font46")).GetRefCount()),{-0.5f,0.4f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
 
 	m_App->m_GUIRenderer->PopStyle();
 

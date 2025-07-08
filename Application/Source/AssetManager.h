@@ -18,6 +18,9 @@ struct AssetHandle{
 	AssetType Type{};
 	void* Data{};
 };
+
+void ASSETLOADASSET(AssetHandle* data);
+
 template<typename T>
 class Asset {
 public:
@@ -50,9 +53,8 @@ public:
 		
 		m_Data = std::move(other.m_Data);
 		
-		m_Data->RefCount++;
+		//m_Data->RefCount++;
 		memset(&other,0,sizeof(Asset));
-
 
         return *this;
 }
@@ -90,8 +92,7 @@ private:
         {	
 			T* ConvertedData = (T*)m_Data->Data;
 			delete ConvertedData;
-//TODO 555
-			//m_Data->Manager->UnloadAsset(m_Data->ID,m_Data->Type);
+			ASSETLOADASSET(m_Data);
           	 
         }
 	}

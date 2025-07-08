@@ -214,6 +214,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     context->CommandPool = m_GraphicsPool.GetCommandPool();
 
     m_BlankWhiteTexture = new Texture(context, 1, 1,4, Pixels);
+    delete[] Pixels;
 
 
 
@@ -320,6 +321,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
              vkWaitForFences(m_Device,1,&m_DrawFences[m_CurrentFrame],true,std::numeric_limits<uint64_t>::max());
 
         vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),std::numeric_limits<uint64_t>::max(),m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
+            m_Textures.clear();
 
 
        
@@ -380,7 +382,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     {
         uint32_t Index{ 1 };
 
-        int lafa{};
         for (auto& it : m_Textures) {
             Texture* texture = (Texture*)it.second.texture.GetData();
 
@@ -414,7 +415,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         m_DrawCallCountGUI++;
         m_VertexPointer = 0;;
-        m_Textures.clear();
+
+        //m_Textures.clear();
+
     }
     void Renderer::FlushOutlines()
     {
@@ -515,7 +518,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             m_VertexPointer = 0;
             m_DrawCallCountGeometry++;
-            m_Textures.clear();
         }
     
 

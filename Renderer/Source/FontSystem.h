@@ -18,9 +18,9 @@ struct Font {
 	Float2* MaxCord{};
 	uint32_t GlyphCount{};
 	~Font(){
+		delete[] Coords;
 		delete[] MinCord;
 		delete[] MaxCord;
-		delete[] Coords;
 		printf("~Font");
 	}
 };

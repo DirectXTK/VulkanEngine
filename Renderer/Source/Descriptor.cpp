@@ -124,4 +124,5 @@
        VkResult result =  vkCreateDescriptorPool(context->Device, &createinfo, nullptr, &m_Pool);
        if (result != VK_SUCCESS)
            Core::Log(ErrorType::Error, "Failed to create DescriptorPool.");
+           delete[] PoolSizes;
     }

@@ -60,7 +60,6 @@
     
 
     VkResult result = vkCreateInstance(&createinfo, nullptr, &Instance);
-    printf("lafa %i\n",(int)result);
     if (result != VK_SUCCESS)
         Core::Log(ErrorType::Error, "Failed to create instance");
     if (desc.ValidationLayersEnabled)

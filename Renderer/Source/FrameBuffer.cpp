@@ -20,6 +20,7 @@
                     VkResult result = vkCreateFramebuffer(device,&createinfo,nullptr,&m_FrameBuffers);
                     if(result != VK_SUCCESS)
                         Core::Log(ErrorType::Error,"Failed to create framebuffer.");
+                    delete[] views;
 
 
             return true;

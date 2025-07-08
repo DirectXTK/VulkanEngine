@@ -9,7 +9,11 @@
             VkShaderModule ShaderModule{};
             uint64_t Size{};
 
-
+            if(!file.is_open())
+            {
+                    Core::Log(ErrorType::Error,"Can't open file ",desc.Path);
+                    return VkShaderModule(); 
+            }
             file.seekg(0, file.end);
 
             Size = file.tellg();

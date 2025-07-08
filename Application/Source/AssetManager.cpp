@@ -6,7 +6,9 @@
   
 
 
-
+void ASSETLOADASSET(AssetHandle* data){
+			data->Manager->UnloadAsset(data->ID,data->Type);
+}
 
 void AssetManager::Init(Application* app)
 {
