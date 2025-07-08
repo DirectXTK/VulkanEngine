@@ -56,3 +56,8 @@
              delete[] imagedata;
              return Ret;
     }
+    Buffer::~Buffer(){
+
+        vkDestroyBuffer(m_Device,m_Buffer,nullptr);
+        vkFreeMemory(m_Device,m_Memory,nullptr);
+    }

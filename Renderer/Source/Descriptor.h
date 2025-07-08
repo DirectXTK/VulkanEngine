@@ -50,9 +50,11 @@ public:
     VkDescriptorPool GetPool() { return m_Pool; }
     uint32_t GetPoolSize() { return m_DecriptorPoolSize; }
 
+    ~DescriptorPool();
 private:
     VkDescriptorPool m_Pool{};
     uint32_t m_DecriptorPoolSize{};
+    Context m_Context{};
 
     struct DescriptorPoolSizeCreateInfo {
         uint32_t Count{};

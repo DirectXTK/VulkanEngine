@@ -306,6 +306,8 @@ void FontSystem::KeyBoardCallback(KeyBoardEvent* event)
 
 FontSystem::~FontSystem()
 {
+	FT_Done_Face(m_Face);
+	FT_Done_FreeType(m_Library);
 }
 void FontSystem::SpecialCases(KeyCodes& Code, KeyState& State, char* Buffer, uint64_t Size)
 {
@@ -433,7 +435,6 @@ void FontSystem::ReRenderFaces()
 
 	Application* app = (Application*)m_App;
 	FT_GlyphSlot slot = m_Face->glyph;
-
 	//check if font is already loaded and renderer
 	Asset<Font> asset=m_App->m_AssetManager.GetAsset<Font>(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
 	if(asset){
@@ -442,7 +443,7 @@ void FontSystem::ReRenderFaces()
 	m_Padding = (m_CharacterSize * 0.1f) / m_Face->max_advance_width;
 	m_PaddingY = (m_CharacterSize * 0.25f) / m_Face->max_advance_width;
 
-	m_Renderer->SetCurrentFont(m_App->m_AssetManager.LoadAsset<Font>(currentFont, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
+	m_Renderer->SetCurrentFont(asset);
 
 	
 		return;
@@ -504,7 +505,6 @@ void FontSystem::ReRenderFaces()
 			Core::Log(ErrorType::Error, "Failed to render glyph");
 			continue;
 		}
-
 		if (slot->bitmap.rows == 0 || slot->bitmap.width == 0)
 			continue;
 		
@@ -574,7 +574,7 @@ void FontSystem::ReRenderFaces()
 
 		//Core::Log(ErrorType::Info,(char)i, "Left:", slot->bitmap_left, " Top:", slot->bitmap_top, " Diff:", -1*int((slot->metrics.height -slot->metrics.horiBearingY)/26));
 
-
+	 FT_Done_Glyph(glyph);
 	}
 	//Core::Log(ErrorType::Error, "dwadad");
 	Font* font = new Font();
@@ -587,12 +587,10 @@ void FontSystem::ReRenderFaces()
 
 	m_TextureSize = { FontAtlasWidth,FontAtlasHeight };
 	Texture* texture = new Texture(app->m_Renderer->GetContext(), FontAtlasWidth, FontAtlasHeight, 4, AtlasMapBitmap);
-	delete[] AtlasMapBitmap;
 	
 	font->TextureAsset = app->m_AssetManager.LoadAsset<Texture>(texture, AssetType::TEXTURE, "FontTexture"+std::to_string(m_CharacterSize));
-
 		m_Renderer->SetCurrentFont(m_App->m_AssetManager.LoadAsset<Font>(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
-		
+	delete[] AtlasMapBitmap;
 		
 	
 

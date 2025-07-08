@@ -771,10 +771,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     void Renderer::SetCurrentFont(Asset<Font> FontAsset)
     {
-	 printf("SetCurrentFont123\n");
         
         m_CurrentFont = FontAsset;
-	 printf("SetCurrentFont123\n");
        
 
    

@@ -120,8 +120,10 @@ void Texture::CopyFromBuffer(VkDevice device, Buffer* srcbuffer, VkCommandBuffer
 
 Texture::~Texture()
 {
+	vkDestroyImage(m_Context->Device,m_Image,nullptr);
 	vkFreeMemory(m_Context->Device, m_DeviceMemory, nullptr);
-	printf("~Texture");
+	vkDestroyImageView(m_Context->Device,m_ImageView,nullptr);
+	vkDestroySampler(m_Context->Device,m_Sampler,nullptr);
 }
 
 void Texture::CreateImageAndView(VkFormat Format,VkSharingMode ShareMode,VkImageTiling ImageTilling,VkImageUsageFlags UsageFlags,VkMemoryPropertyFlags MemoryPropertyFlags,VkImageLayout InitialImageLayout)
