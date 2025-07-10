@@ -34,7 +34,7 @@
             Core::Log(ErrorType::Error, "Failed to allocate descritor set.");
     }
 
-    void DescriptorSet::WriteTo(uint32_t Index, VkBuffer uniformBuffer, uint64_t Size)
+    void DescriptorSet::WriteTo(uint32_t Offset, uint32_t Count,VkBuffer uniformBuffer, uint64_t Size)
     {
         VkDescriptorBufferInfo info{};
         info.buffer = uniformBuffer;
@@ -47,16 +47,16 @@
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         write.dstSet = m_DescriptorSet;
-        write.dstArrayElement = Index;
+        write.dstArrayElement = Offset;
         write.dstBinding = 0;
-        write.descriptorCount = 1;
+        write.descriptorCount = Count;
         write.pBufferInfo = &info;
 
         //  write.pBufferInfo
         vkUpdateDescriptorSets(m_Context->Device, 1, &write, 0, nullptr);
     }
 
-    void DescriptorSet::WriteToTexture(uint32_t Index, VkImageView imageView, VkSampler sampler)
+    void DescriptorSet::WriteToTexture(uint32_t Offset,uint32_t Count, VkImageView imageView, VkSampler sampler)
     {
         VkDescriptorImageInfo info{};
         info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -69,9 +69,9 @@
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         write.dstSet = m_DescriptorSet;
-        write.dstArrayElement = Index;
+        write.dstArrayElement = Offset;
         write.dstBinding = 0;
-        write.descriptorCount = 1;
+        write.descriptorCount = Count;
         write.pImageInfo = &info;
 
 
@@ -121,7 +121,7 @@
         createinfo.poolSizeCount = (uint32_t)m_DescriptorPoolSizeInfo.size();
         createinfo.maxSets = (uint32_t)m_DescriptorPoolSizeInfo.size();
 
-       VkResult result =  vkCreateDescriptorPool(context->Device, &createinfo, nullptr, &m_Pool);
+       VkResult result =  vkCreateDescriptorPool(context->Device, &createinfo,nullptr, &m_Pool);
        if (result != VK_SUCCESS)
            Core::Log(ErrorType::Error, "Failed to create DescriptorPool.");
         delete[] PoolSizes;

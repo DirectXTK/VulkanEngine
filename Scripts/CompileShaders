@@ -1,0 +1,12 @@
+#! /bin/bash
+SCRIPT_PATH="$(realpath "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+vulkanSDK=$VULKAN_SDK
+cd $vulkanSDK
+cd bin
+PATH=$(pwd)
+echo $SCRIPT_DIR
+./glslangValidator -V $SCRIPT_DIR/../Shaders/**.frag -o $SCRIPT_DIR/../Shaders/Fragment.spv
+./glslangValidator -V $SCRIPT_DIR/../Shaders/**.vert -o $SCRIPT_DIR/../Shaders/Vertex.spv
+
+

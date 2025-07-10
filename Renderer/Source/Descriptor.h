@@ -32,8 +32,8 @@ public:
     uint32_t GetDescriptorCount() { return m_DescriptorCount; }
 
     //Write Fn
-    void WriteTo(uint32_t Index, VkBuffer uniformBuffer, uint64_t Size);
-    void WriteToTexture(uint32_t Index, VkImageView imageView, VkSampler sampler);
+    void WriteTo(uint32_t Index,uint32_t Count, VkBuffer uniformBuffer, uint64_t Size);
+    void WriteToTexture(uint32_t Index, uint32_t Count,VkImageView imageView, VkSampler sampler);
 private:
     void CreateDescriptorSetLayout(VkDescriptorSetLayout* descriptorSetLayout, uint32_t descriptorCount, VkDescriptorType descriptorType, VkShaderStageFlags stageFlags);
 

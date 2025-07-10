@@ -111,6 +111,7 @@ private:
     void CreateInstance();
     void CreateFrameBuffers();
     void CreateCommandBuffers();
+    void CreateDescriptorSets();
 
     Context m_Context{};
 
@@ -214,6 +215,10 @@ private:
     std::vector<Buffer*> m_StaggingBufferGUI{};
     std::vector<Buffer*> m_StaggingBufferOutlines{};
 
+    uint32_t m_CurrentTextureDescriptorSetOffset{1};
+    uint32_t m_CurrentCameraDescriptorSetOffset{};
+
+
     //Outlines
     uint32_t m_VertexCountOutlines{};
     uint64_t m_VertexOutineMaxCountPerDrawCall{ 4 * 100 };
@@ -229,21 +234,20 @@ private:
     uint32_t m_TextureSlotCount{ 4 };
     Texture* m_BlankWhiteTexture{};
     DescriptorPool m_DescriptorPoolTextures{};
-    std::vector<DescriptorSet> m_DescriptorSetTextures{};
+    DescriptorSet m_DescriptorSetTextures{};
+
     struct TextureRenderingData {
         Asset<Texture> texture{};
         uint32_t Index{};
     };
-    std::unordered_map<GUUID, TextureRenderingData> m_Textures{};
-    std::vector<GUUID> m_TextureIDByOrder{};
+    std::unordered_map<GUUID, TextureRenderingData> m_Textures[MAX_FRAME_DRAWS];
+    std::vector<GUUID> m_TextureIDByOrder[MAX_FRAME_DRAWS];
     //GUI stuff
     Vertex* m_VerticesGUI{};
     uint64_t m_VertexMaxCountGUI{ 100 * 4 };
     uint64_t m_VertexCountGUI{};
-    DescriptorSet m_GUICameraDescriptor{};
     Buffer* m_UniformGUICameraBuffer{};
     std::vector<DescriptorSet> m_DescriptorSetTexturesGUI{};
-    std::unordered_map<GUUID, TextureRenderingData> m_TexturesGUI{};
     bool m_GUIRendering{false};
     //
 
