@@ -47,21 +47,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     for(uint32_t i=0;i <MAX_FRAME_DRAWS;i++)
         m_TextureIDByOrder[i].resize(m_TextureSlotCount-1);
     //Matrices
-    m_UniformBuffers = new UniformBuffer[MAX_FRAME_DRAWS];
-    for (int i = 0; i < MAX_FRAME_DRAWS; i++) {
-        m_UniformBuffers[i].Init(m_Device, m_PhysicalDevice, sizeof(glm::mat4));
-
-
-    }
+   
     BufferDesc UniformBufferDesc{};
     UniformBufferDesc.Device = m_Device;
     UniformBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     UniformBufferDesc.Physdevice = m_PhysicalDevice;
     UniformBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
     UniformBufferDesc.Usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    UniformBufferDesc.SizeBytes = sizeof(glm::mat4);
-
-    m_UniformGUICameraBuffer = new Buffer(UniformBufferDesc);
+    UniformBufferDesc.SizeBytes = sizeof(UniformCameraBuffer);
+    m_UniformBuffers = new Buffer(UniformBufferDesc);
 
   
     CreateCommandBuffers();
@@ -193,16 +187,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-
-
-    //Initialize GUI renderer
-    m_DescriptorSetCamera.WriteTo(0,1, *m_UniformBuffers[0].GetBuffer(), sizeof(glm::mat4));
-    m_DescriptorSetCamera.WriteTo(1,1 ,*m_UniformGUICameraBuffer->GetBuffer(), sizeof(glm::mat4));
-
-    glm::mat4 ViewProj = desc.InitialCamera->GetViewProj();
-    if (&ViewProj) 
-     m_UniformBuffers->UploadToBuffer(m_Device, &ViewProj, sizeof(glm::mat4));
-
     
    // m_DescriptorSetTextures.WriteToTexture(0, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
   //  m_DescriptorSetTextures.WriteToTexture(1, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
@@ -254,7 +238,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_VertexCountPerDrawCall = 0;
 
             m_Camera = *camera;
-            m_CameraViewProj = m_Camera.GetViewProj();
+
+              m_UniformCameraData.GeometryCamera = m_Camera.GetViewProj();
+              m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
+
+            m_UniformBuffers->UploadToBuffer(m_Device, &m_UniformCameraData, sizeof(m_UniformCameraData));
+            m_DescriptorSetCamera.WriteTo(0,1,*m_UniformBuffers->GetBuffer(),sizeof(m_UniformCameraData));
+
 
             VkSwapchainKHR swapchain = m_SwapChain->GetSwapChain();
         
@@ -337,8 +327,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         if (m_DrawCallCountGUI == m_VertexBufferGUI.size())
             CreateNewBufferForBatch(m_VertexBufferGUI, m_StaggingBufferGUI);
 
-        glm::mat4 Identity = glm::identity<glm::mat4>();
-        m_UniformGUICameraBuffer->UploadToBuffer(m_Device, &Identity, sizeof(glm::mat4));
+
 
         m_StaggingBufferGUI[m_DrawCallCountGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
 
@@ -370,7 +359,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         if (m_DrawCallCountOutlines == m_VertexBufferOutlines.size())
             CreateNewBufferForBatch(m_VertexBufferOutlines, m_StaggingBufferOutlines);
 
-        m_UniformBuffers[0].UploadToBuffer(m_Device, &m_CameraViewProj, sizeof(glm::mat4));
 
         m_StaggingBufferOutlines[m_DrawCallCountOutlines]->UploadToBuffer(m_Device, m_VertexOutline, sizeof(Vertex) * m_VertexCountOutlines);
 
@@ -405,6 +393,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         std::vector<Texture*> debugTextures{};
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
         auto& textures = m_Textures[m_CurrentFrame];
+
+        //set the first descriptor to white texture for drawing without textures
+        m_DescriptorSetTextures.WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
+
 
         for (uint32_t i = 0; i < textures.size(); i++) {
             printf("WriteToTexture offset %i\n",m_CurrentTextureDescriptorSetOffset);
@@ -445,7 +437,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-            m_UniformBuffers[0].UploadToBuffer(m_Device, &m_CameraViewProj, sizeof(glm::mat4));
 
             m_StaggingBufferGeometry[m_CurrentVertexBufferIndex]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
 
@@ -478,6 +469,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         void Renderer::EndFrame()
         {
+          
             FlushOutlines();
             FlushGUI();
 
@@ -534,7 +526,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_GUIRendering = false;
 
             m_CurrentCameraDescriptorSetOffset =0;
-            m_CurrentTextureDescriptorSetOffset =0;
+            m_CurrentTextureDescriptorSetOffset =1;
 
         }
     
@@ -832,7 +824,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 Size.y = (float)font->Coords[LetterIndex].Height/1440;
                 //its the size of the bitmap not the character itself.
 
-                printf("RendererTextureIndex %i\n",texture.Index);
 
             m_Vertices[m_VertexPointer].TextureID = m_CurrentTextureDescriptorSetOffset;
             m_Vertices[m_VertexPointer + 1].TextureID = m_CurrentTextureDescriptorSetOffset;
@@ -1104,10 +1095,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 Renderer::~Renderer(){
     vkDeviceWaitIdle(m_Device);
 
-
+    delete m_UniformBuffers;
     vkDestroySurfaceKHR(m_Instance,m_Surface,nullptr);
     vkDestroyDevice(m_Device,nullptr);
     vkDestroyInstance(m_Instance,nullptr);
+
 }
 
 void Renderer::StartRecordingCommands()
@@ -1148,7 +1140,6 @@ void Renderer::DrawBatch()
     RenderPassBeginInfo.clearValueCount = 3;
     RenderPassBeginInfo.framebuffer = m_FrameBuffers[m_CurrentFrame].GetFrameBuffer(0);
 
-
     VkDeviceSize Offset{ 0 };
     vkCmdBeginRenderPass(m_CurrentCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdSetStencilTestEnable(m_CurrentCommandBuffer, VK_TRUE);
@@ -1173,8 +1164,8 @@ void Renderer::DrawBatch()
  
 
        
-
-
+        static uint32_t uniformBufferIndex{0};
+        vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
 
@@ -1201,7 +1192,8 @@ void Renderer::DrawBatch()
 
       
 
-
+        static uint32_t uniformBufferIndex{0};
+        vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
 
@@ -1227,8 +1219,8 @@ void Renderer::DrawBatch()
 
 
 
-
-
+       static  uint32_t uniformBufferIndex{1};
+        vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
 
@@ -1242,13 +1234,13 @@ void Renderer::DrawBatch()
 void Renderer::CreateDescriptorSets(){
     uint32_t descriptorTextureCount = MAX_FRAME_DRAWS*4;
 
-   m_DescriptorPool.AddDescriptorType(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+   m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
    m_DescriptorPool.AddDescriptorType(descriptorTextureCount, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
     m_DescriptorPool.CreatePool(m_Context);
 
     DescriptorSetDescription CameraDescriptordesc{ m_Context };
-    CameraDescriptordesc.DescriptorCount = 2;
+    CameraDescriptordesc.DescriptorCount = 1;
     CameraDescriptordesc.DescriptorPool = m_DescriptorPool.GetPool();
     CameraDescriptordesc.StageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     CameraDescriptordesc.Type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;

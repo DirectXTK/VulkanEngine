@@ -16,7 +16,7 @@ void FontTestingLayer::OnUpdate(float DeltaTime)
 {
 	DefaultCameraControlls(&m_App->m_InputSystem, &m_App->m_Camera);
 
-	m_App->m_Renderer->DrawQuad({ 0.0f,0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, 0);
+	m_App->m_Renderer->DrawQuad({ -0.5f,0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, 0);
 
 
 }

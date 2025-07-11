@@ -8,7 +8,7 @@ layout(location =3) in vec2 InTexCoords;
 layout(location =4) in uint InTexID;
 
 layout(binding=0) uniform MVP{
-    mat4 ProjView;
+    mat4 ProjView[2];
 }mvp;
 
 layout(location =0) out vec4 OutFragColor;
@@ -16,6 +16,9 @@ layout(location =1) out uvec2 OutPickID;
 layout(location =2) out highp vec2 OutTexCoords;
 layout(location =3) out uint OutTexID;
 
+layout(push_constant) uniform PushConstants{
+    uint uniformBufferIndex;
+}pc;
 
 
 
@@ -24,7 +27,7 @@ void main(){
 
 
 
-    gl_Position =mvp.ProjView* vec4(InPos,1.0);
+    gl_Position =mvp.ProjView[pc.uniformBufferIndex]* vec4(InPos,1.0);
     gl_Position.y = -gl_Position.y;
     OutTexCoords = InTexCoords;
     OutTexID = InTexID;

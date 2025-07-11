@@ -36,10 +36,11 @@
 
     void DescriptorSet::WriteTo(uint32_t Offset, uint32_t Count,VkBuffer uniformBuffer, uint64_t Size)
     {
-        VkDescriptorBufferInfo info{};
+        VkDescriptorBufferInfo info;
         info.buffer = uniformBuffer;
         info.offset = 0;
         info.range = Size;
+
 
 
 
@@ -52,7 +53,6 @@
         write.descriptorCount = Count;
         write.pBufferInfo = &info;
 
-        //  write.pBufferInfo
         vkUpdateDescriptorSets(m_Context->Device, 1, &write, 0, nullptr);
     }
 
@@ -75,7 +75,6 @@
         write.pImageInfo = &info;
 
 
-        //  write.pBufferInfo
         vkUpdateDescriptorSets(m_Context->Device, 1, &write, 0, nullptr);
     }
 

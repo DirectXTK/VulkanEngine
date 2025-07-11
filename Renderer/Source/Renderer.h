@@ -48,6 +48,10 @@ struct RendererDesc{
     Float4 ClearColor{};
     Camera2D* InitialCamera{nullptr}; //optional
 };
+struct UniformCameraBuffer{
+    glm::mat4 GeometryCamera{};
+    glm::mat4 GUICamera{};
+};
 class Renderer {
 public:
     //Initialization functions
@@ -159,7 +163,7 @@ private:
 
 
 
-    UniformBuffer* m_UniformBuffers{};
+    Buffer* m_UniformBuffers{};
     //Descriptors 
     DescriptorPool m_DescriptorPool{};
     DescriptorSet m_DescriptorSetCamera{};
@@ -189,7 +193,6 @@ private:
     uint32_t m_CurrentVertexBufferIndex{};
     uint64_t m_VertexCountPerDrawCall{};
 
-    glm::mat4 m_CameraViewProj{};
     Image* m_FrameImageIndexed{};
     //Diagnostics
     uint32_t m_DrawCallCountGeometry{};
@@ -217,7 +220,8 @@ private:
 
     uint32_t m_CurrentTextureDescriptorSetOffset{1};
     uint32_t m_CurrentCameraDescriptorSetOffset{};
-
+    //Camera
+    UniformCameraBuffer m_UniformCameraData{};
 
     //Outlines
     uint32_t m_VertexCountOutlines{};

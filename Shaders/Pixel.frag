@@ -12,6 +12,8 @@ layout(location =1) out uvec2 OutInColor2;
 
 layout(set =1 ,binding =0) uniform sampler2D TextureSampler[1000];
 
+
+
 void main(){
     OutInColor = InColor*texture(TextureSampler[TexID],TexCoords);
     OutInColor2 = InPickID;
