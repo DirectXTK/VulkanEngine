@@ -36,6 +36,7 @@ public:
     Collider CreateCollider(Float2* Position, Float2 *Size);
     void AddCallback( InputCallbacks* callbacks);
     
+    ~Application();
 private:
 
 

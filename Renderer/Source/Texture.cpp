@@ -216,7 +216,7 @@ void Texture::CreateTexture(void* initData)
 {
 	static float Anisotropy{ 0 };
 
-
+	
 	VkDeviceSize texturesize = m_Width * m_Height * m_ChannelCount;
 	VkFormat ImageFormat;
 	switch (m_ChannelCount) {
@@ -267,6 +267,7 @@ void Texture::CreateTexture(void* initData)
 	TrasitionFormat(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, TempCommandBuffer);
 
 	CommandBuffer::EndSingleUseCommandBuffer(m_Context, m_Context->CommandPool, TempCommandBuffer);
+	
 	//Maybe something with the spacing or placing of the quad that houses the texture.
 	//Create Sampler //TEMP
 	VkSamplerCreateInfo samplercreateinfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };

@@ -48,7 +48,7 @@ struct RendererDesc{
     Float4 ClearColor{};
     Camera2D* InitialCamera{nullptr}; //optional
 };
-struct UniformCameraBuffer{
+struct UniformCameraBufferData{
     glm::mat4 GeometryCamera{};
     glm::mat4 GUICamera{};
 };
@@ -221,7 +221,7 @@ private:
     uint32_t m_CurrentTextureDescriptorSetOffset{1};
     uint32_t m_CurrentCameraDescriptorSetOffset{};
     //Camera
-    UniformCameraBuffer m_UniformCameraData{};
+    UniformCameraBufferData m_UniformCameraData{};
 
     //Outlines
     uint32_t m_VertexCountOutlines{};
@@ -250,7 +250,6 @@ private:
     Vertex* m_VerticesGUI{};
     uint64_t m_VertexMaxCountGUI{ 100 * 4 };
     uint64_t m_VertexCountGUI{};
-    Buffer* m_UniformGUICameraBuffer{};
     std::vector<DescriptorSet> m_DescriptorSetTexturesGUI{};
     bool m_GUIRendering{false};
     //

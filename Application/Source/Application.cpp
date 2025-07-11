@@ -112,5 +112,12 @@
  {
      m_InputSystem.AddCallbacks(callbacks);
  }
+    Application::~Application(){
+        delete m_Window;
+        delete m_Renderer;
+        delete m_FontSystem;
+        delete m_GUIRenderer;
+    }
+
 
  

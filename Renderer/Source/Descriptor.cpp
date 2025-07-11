@@ -6,6 +6,8 @@
     void DescriptorSet::Init(DescriptorSetDescription desc)
     {
         m_Context = desc.context;
+        m_DescriptorCount = desc.DescriptorCount;
+        printf("desc.DescriptorCount %i",desc.DescriptorCount);
 
         VkDescriptorSetLayoutBinding binding{};
         binding.descriptorType = desc.Type;
@@ -36,10 +38,13 @@
 
     void DescriptorSet::WriteTo(uint32_t Offset, uint32_t Count,VkBuffer uniformBuffer, uint64_t Size)
     {
-        VkDescriptorBufferInfo info;
-        info.buffer = uniformBuffer;
-        info.offset = 0;
-        info.range = Size;
+        std::vector<VkDescriptorBufferInfo> info{};
+        info.resize(Count);
+        for(uint32_t i=0 ;i< Count;i++){
+        info[i].buffer = uniformBuffer;
+        info[i].offset = 0;
+        info[i].range = Size;
+        }
 
 
 
@@ -51,17 +56,20 @@
         write.dstArrayElement = Offset;
         write.dstBinding = 0;
         write.descriptorCount = Count;
-        write.pBufferInfo = &info;
+        write.pBufferInfo = info.data();
 
         vkUpdateDescriptorSets(m_Context->Device, 1, &write, 0, nullptr);
     }
 
     void DescriptorSet::WriteToTexture(uint32_t Offset,uint32_t Count, VkImageView imageView, VkSampler sampler)
     {
-        VkDescriptorImageInfo info{};
-        info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        info.imageView = imageView;
-        info.sampler = sampler;
+        std::vector<VkDescriptorImageInfo> info{};
+        info.resize(Count);
+        for(uint32_t i =0;i < Count;i++){
+        info[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        info[i].imageView = imageView;
+        info[i].sampler = sampler;
+    }
 
 
 
@@ -72,7 +80,7 @@
         write.dstArrayElement = Offset;
         write.dstBinding = 0;
         write.descriptorCount = Count;
-        write.pImageInfo = &info;
+        write.pImageInfo = info.data();
 
 
         vkUpdateDescriptorSets(m_Context->Device, 1, &write, 0, nullptr);

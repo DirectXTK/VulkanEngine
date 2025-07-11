@@ -287,5 +287,9 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
     VkResult result = vkCreateGraphicsPipelines(device, nullptr, 1, &pipeline, nullptr, &outputPipeline);
     if (result != VK_SUCCESS)
         Core::Log(ErrorType::Error, "Failed to create pipeline.");
+    
+    delete[] vertexinputattr;
+
+
     return outputPipeline;
 }

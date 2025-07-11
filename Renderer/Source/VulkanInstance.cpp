@@ -2,7 +2,7 @@
  VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallBack(VkDebugUtilsMessageSeverityFlagBitsEXT messageseverity, VkDebugUtilsMessageTypeFlagsEXT messagetype, const VkDebugUtilsMessengerCallbackDataEXT* pcallbackdata, void* puserData);
  VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
 
- VkInstance VulkanInstance::CreateInstance(InstanceDesc& desc, VkDebugUtilsMessengerEXT* out_messenger)
+    VkInstance VulkanInstance::CreateInstance(InstanceDesc& desc, VkDebugUtilsMessengerEXT* out_messenger)
 {
     std::vector<const char*> instanceExtensiosn{};
     std::vector<const char*> LayerNames{};
@@ -37,6 +37,7 @@
 
     if (desc.ValidationLayersEnabled) {
     instanceExtensiosn.push_back("VK_EXT_debug_utils");
+
     LayerNames.push_back("VK_LAYER_KHRONOS_validation");
     }
 
@@ -126,8 +127,8 @@ void VulkanInstance::InitializeValidationLayers(VkInstance instance,VkDebugUtils
 {
     VkDebugUtilsMessengerCreateInfoEXT creatinfo{};
     creatinfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    creatinfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-    creatinfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    creatinfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT|VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+    creatinfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT ;
     creatinfo.pfnUserCallback = VulkanDebugCallBack;
     creatinfo.pUserData = nullptr;
 

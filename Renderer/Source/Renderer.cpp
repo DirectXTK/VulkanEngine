@@ -54,7 +54,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     UniformBufferDesc.Physdevice = m_PhysicalDevice;
     UniformBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
     UniformBufferDesc.Usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    UniformBufferDesc.SizeBytes = sizeof(UniformCameraBuffer);
+    UniformBufferDesc.SizeBytes = sizeof(UniformCameraBufferData);
     m_UniformBuffers = new Buffer(UniformBufferDesc);
 
   
@@ -104,7 +104,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     m_VertexBufferGeometry.push_back(new Buffer(VertexBufferDesc));
     VertexBufferDesc.SizeBytes = m_VertexMaxCountGUI * sizeof(Vertex);
-    m_VertexBufferGUI.push_back(new Buffer(VertexBufferDesc));
+    m_VertexBufferGUI.push_back( new Buffer(VertexBufferDesc));
 
     m_VertexBufferOutlines.push_back(new Buffer(VertexBufferDesc));
 
@@ -127,9 +127,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     m_StaggingBufferGeometry.push_back(new Buffer(StaggingBufferDesc));
     StaggingBufferDesc.SizeBytes = m_VertexMaxCountGUI * sizeof(Vertex);
-    m_StaggingBufferGUI.push_back(new Buffer(StaggingBufferDesc));
+    m_StaggingBufferGUI.push_back( new Buffer(StaggingBufferDesc));
 
-    m_StaggingBufferOutlines.push_back(new Buffer(StaggingBufferDesc));
+    m_StaggingBufferOutlines.push_back( new Buffer(StaggingBufferDesc));
 
 
     //temp
@@ -161,6 +161,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
     m_IndexBuffers.push_back(new Buffer(IndexBufferDesc));
+
     m_IndexBuffers[0]->UploadToBuffer(m_Device, m_Indices, uint64_t(m_VertexCount * 1.5 * sizeof(uint32_t)));
 
     //VkFormat format2 = Core::ChooseBestFormat(m_PhysicalDevice,{ VK_FORMAT_R32G32_UINT },VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -181,18 +182,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
  
 
 
-
    
     context->CommandPool = m_GraphicsPool.GetCommandPool();
+    //Init CameraUniformBuffer and descriptors.
+    m_UniformCameraData.GeometryCamera = glm::identity<glm::mat4>();
+    m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
 
+    m_UniformBuffers->UploadToBuffer(m_Device,&m_UniformCameraData,sizeof(UniformCameraBufferData));
 
-
-    
-   // m_DescriptorSetTextures.WriteToTexture(0, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
-  //  m_DescriptorSetTextures.WriteToTexture(1, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
-   // m_DescriptorSetTextures.WriteToTexture(2, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
-  //  m_DescriptorSetTextures.WriteToTexture(3, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
-
+    m_DescriptorSetCamera.WriteTo(0,1,*m_UniformBuffers->GetBuffer(),sizeof(UniformCameraBufferData));
 
 
  }
@@ -200,12 +198,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
  {
     
 
-    VkDescriptorSetLayout descriptorLayout[2];
+    std::array<VkDescriptorSetLayout,2> descriptorLayout;
     descriptorLayout[0]= m_DescriptorSetCamera.GetDescriptorLayout();
     descriptorLayout[1]= m_DescriptorSetTextures.GetDescriptorLayout();
 
 
-     m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device, descriptorLayout,3);
+     m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device, descriptorLayout.data(),descriptorLayout.size());
      
      PipelineDesc pipelineDesc{};
      pipelineDesc.RenderPass = m_RenderPass;
@@ -225,6 +223,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
      m_Pipeline = Pipeline::CreatePipeline(pipelineDesc, m_Device);
+     delete[] pipelineDesc.VertexStageInput;
  }
     void Renderer::BeginFrame(Camera2D* camera){
                //RecordCommands(m_VertexCount,0);
@@ -304,8 +303,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     {
 
 
-        VertexBuffers.push_back(new Buffer(VertexBuffers[0]->GetBufferDesc()));
-        Stagging.push_back(new Buffer(Stagging[0]->GetBufferDesc()));
+        VertexBuffers.push_back( new Buffer(VertexBuffers[0]->GetBufferDesc()));
+        Stagging.push_back( new Buffer(Stagging[0]->GetBufferDesc()));
       
         
     }
@@ -326,7 +325,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         if (m_DrawCallCountGUI == m_VertexBufferGUI.size())
             CreateNewBufferForBatch(m_VertexBufferGUI, m_StaggingBufferGUI);
-
 
 
         m_StaggingBufferGUI[m_DrawCallCountGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
@@ -399,13 +397,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
         for (uint32_t i = 0; i < textures.size(); i++) {
-            printf("WriteToTexture offset %i\n",m_CurrentTextureDescriptorSetOffset);
             TextureRenderingData textureData = textures[textureIds[i]];
             Texture* texture = (Texture*)textureData.texture.GetData();
 
             if (textureData.texture){
                 m_DescriptorSetTextures.WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
-                printf("WriteToTexture offset %i\n",m_CurrentTextureDescriptorSetOffset);
                 debugTextures.push_back(texture);
             }
             else
@@ -432,6 +428,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         else {
             m_VertexCountRemaining -= m_VertexPointer;
         }
+        
 
         m_DrawCommandsGeometry.push_back({ m_VertexPointer,m_CurrentVertexBufferIndex,m_VertexBufferOffset,m_DrawCallCountGUI + m_DrawCallCountGeometry });
 
@@ -1095,7 +1092,21 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 Renderer::~Renderer(){
     vkDeviceWaitIdle(m_Device);
 
+    for(uint32_t i =0;i < m_VertexBufferGeometry.size();i++){
+        delete m_VertexBufferGeometry[i];
+    }
+    for(uint32_t i=0;i < m_IndexBuffers.size();i++){
+        delete m_IndexBuffers[i];
+    }
+    for(uint32_t i=0;i < m_StaggingBufferGeometry.size();i++){
+        delete m_StaggingBufferGeometry[i];
+    }
+
+
+    vkFreeCommandBuffers(m_Device,m_GraphicsPool.GetCommandPool(),m_CommandBuffers.size(),m_CommandBuffers.data());
+    vkDestroyCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),nullptr);
     delete m_UniformBuffers;
+    vkDestroySwapchainKHR(m_Device,m_SwapChain->GetSwapChain(),nullptr);
     vkDestroySurfaceKHR(m_Instance,m_Surface,nullptr);
     vkDestroyDevice(m_Device,nullptr);
     vkDestroyInstance(m_Instance,nullptr);
@@ -1232,7 +1243,7 @@ void Renderer::DrawBatch()
     m_VertexCountPerDrawCall = 0;
 }
 void Renderer::CreateDescriptorSets(){
-    uint32_t descriptorTextureCount = MAX_FRAME_DRAWS*4;
+    uint32_t descriptorTextureCount = 1000;
 
    m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
    m_DescriptorPool.AddDescriptorType(descriptorTextureCount, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
