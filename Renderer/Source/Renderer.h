@@ -138,9 +138,9 @@ private:
     VkCommandBuffer m_CurrentCommandBuffer{};
     VkCommandBuffer m_TransferCommandBuffer{};
     std::vector<FrameBuffer> m_FrameBuffers{};
-    std::vector<Image> m_ColorAttachments{};
+    std::vector<Texture*> m_ColorAttachments{};
     //
-    std::vector<Image> m_DepthStencilAttachments{};
+    std::vector<Texture*> m_DepthStencilAttachments{};
 
     //Queues
     VkQueue m_GraphicsQ{};
@@ -163,7 +163,7 @@ private:
 
 
 
-    Buffer* m_UniformBuffers{};
+    Buffer* m_UniformBuffer{};
     //Descriptors 
     DescriptorPool m_DescriptorPool{};
     DescriptorSet m_DescriptorSetCamera{};
@@ -193,7 +193,7 @@ private:
     uint32_t m_CurrentVertexBufferIndex{};
     uint64_t m_VertexCountPerDrawCall{};
 
-    Image* m_FrameImageIndexed{};
+    Texture* m_FrameImageIndexed{};
     //Diagnostics
     uint32_t m_DrawCallCountGeometry{};
     uint32_t m_DrawCallCountOutlines{};

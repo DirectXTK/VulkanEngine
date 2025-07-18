@@ -3,21 +3,41 @@
 #include "CommandBuffer.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb-master/stb_image.h"
-Texture::Texture(Context context,uint32_t Width, uint32_t Height,uint32_t ChannelCount,void* Pixels)
-{
 
-	m_Context = context;
-	m_ChannelCount = ChannelCount;
+	Texture::Texture(Context context, const TextureCreateInfo& createInfo,const TextureType& type){
+		m_Context = context;
+		m_Width = createInfo.Width;
+		m_Height = createInfo.Height;
+		switch(type){
+			case TextureType::Texture:{
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				break;
+			}
+			case TextureType::ColorAttachment:{
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+				return;
+			}
+			case TextureType::DepthStencilAttachment :{
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,nullptr,VkImageAspectFlagBits(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT));
+				return;
+			}
+			default :{
+				Core::Log(ErrorType::Error,"Texture type doesn't exist.");
+				break;
+			}
+		}
 
-	m_Width = Width;
-	m_Height = Height;
-
-	CreateTexture(Pixels);
 
 
-}
+	}
 
-Texture::Texture(Context context, std::string Path,TextureType type)
+	Texture::Texture(Context context,VkFormat format,VkImage image){
+		m_Context = context;
+		m_Image = image;
+		CreateView(format,VK_IMAGE_ASPECT_COLOR_BIT,m_Context->Device);
+	}
+
+Texture::Texture(Context context, const TextureCreateInfo& createInfo ,std::string Path,TextureType type)
 {
 	std::string Extension= Core::GetFileExtension(Path);
 	uint64_t Width{}, Height{};
@@ -28,12 +48,11 @@ Texture::Texture(Context context, std::string Path,TextureType type)
 	if (Extension == "png") {
 		unsigned char* InitData = LoadTextureDataFromFile(Path,&Width,&Height);
 		if (InitData) {
-
 			m_Width = Width;
 			m_Height =Height;
 
 
-			CreateTexture(InitData);
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,createInfo.ImageUsageFlags,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,InitData);
 
 			delete[] InitData;
 		}
@@ -52,8 +71,34 @@ Texture::Texture(Context context, std::string Path,TextureType type)
 		}
 	}
 }
-
-
+uint32_t CalculateBytesPerPixel(VkFormat format){
+		switch(format){
+			case VK_FORMAT_R8G8B8A8_UNORM:
+				return 8*4;
+			case VK_FORMAT_R8G8B8A8_UINT:
+				return 8*4;
+			case VK_FORMAT_R8G8B8_UNORM:
+				return 8*3;
+			case VK_FORMAT_R8G8B8_UINT:
+				return 8*3;
+			case VK_FORMAT_R8G8_UNORM:
+				return 8*2;
+			case VK_FORMAT_R8G8_UINT:
+				return 8*2;
+			case VK_FORMAT_R8_UNORM:
+				return 8*1;
+			case VK_FORMAT_R8_UINT:
+				return 8*1;
+			case VK_FORMAT_R32G32_UINT:
+				return 32*2;
+			case VK_FORMAT_D24_UNORM_S8_UINT: 
+				return 24+8;
+			default :{
+				Core::Log(ErrorType::Error,"CalculateBytesPerPixel invalid type.Type = ",(uint32_t)format);
+			}
+		}
+		return 0;
+}
 
 void Texture::TrasitionFormat(VkImageLayout OldLayout, VkImageLayout NewLayout,VkCommandBuffer CommandBuffer)
 {
@@ -63,7 +108,7 @@ void Texture::TrasitionFormat(VkImageLayout OldLayout, VkImageLayout NewLayout,V
 	barrier.image = m_Image;
 	barrier.dstQueueFamilyIndex = m_Context->QueueFamil.Graphics;
 	barrier.srcQueueFamilyIndex = m_Context->QueueFamil.Graphics;
-	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.aspectMask = m_AspectMask;
 	barrier.subresourceRange.levelCount = 1;
 	barrier.subresourceRange.baseMipLevel = 0;
 	barrier.subresourceRange.layerCount = 1;
@@ -81,6 +126,40 @@ void Texture::TrasitionFormat(VkImageLayout OldLayout, VkImageLayout NewLayout,V
 		DstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
 	else if (OldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		SourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		DstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+	}
+
+	if (OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+		DstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
+	else if (OldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		SourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		DstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+	}
+
+	if (OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+		DstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
+	else if (OldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) {
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
@@ -126,8 +205,10 @@ Texture::~Texture()
 	vkDestroySampler(m_Context->Device,m_Sampler,nullptr);
 }
 
-void Texture::CreateImageAndView(VkFormat Format,VkSharingMode ShareMode,VkImageTiling ImageTilling,VkImageUsageFlags UsageFlags,VkMemoryPropertyFlags MemoryPropertyFlags,VkImageLayout InitialImageLayout)
-{
+void Texture::CreateImageAndView(VkFormat Format,VkSharingMode ShareMode,VkImageTiling ImageTilling,VkImageUsageFlags UsageFlags,VkMemoryPropertyFlags MemoryPropertyFlags,VkImageLayout InitialImageLayout,VkImageAspectFlagBits aspectFlagBits)
+{	
+	m_AspectMask = aspectFlagBits;
+
 	VkImageCreateInfo imagecreateinfo{};
 	imagecreateinfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imagecreateinfo.format = Format;
@@ -165,7 +246,8 @@ void Texture::CreateImageAndView(VkFormat Format,VkSharingMode ShareMode,VkImage
 		Core::Log(ErrorType::Error, "Failed to bind memory to image.");
 
 	m_DeviceSize = memreq.size;
-	m_ImageView = CreateView(Format, VK_IMAGE_ASPECT_COLOR_BIT, m_Context->Device);
+	printf("Aspect bits %i\n",aspectFlagBits);
+	m_ImageView = CreateView(Format, aspectFlagBits, m_Context->Device);
 }
 
 VkImageView Texture::CreateView(VkFormat Format, VkImageAspectFlagBits AspectFlags, VkDevice Device)
@@ -212,34 +294,12 @@ unsigned char* Texture::LoadTextureDataFromFile(std::string Path,uint64_t* Width
 	return (unsigned char*)image;
 }
 
-void Texture::CreateTexture(void* initData)
+void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTiling imageTilling,VkImageUsageFlags usageFlags,VkMemoryPropertyFlags memoryPropertyFlags,VkImageLayout initLayout, VkImageLayout finalLayout,void* initData,VkImageAspectFlagBits aspectFlagBits)
 {
 	static float Anisotropy{ 0 };
 
 	
-	VkDeviceSize texturesize = m_Width * m_Height * m_ChannelCount;
-	VkFormat ImageFormat;
-	switch (m_ChannelCount) {
-	case 1: {
-		ImageFormat = VK_FORMAT_R8_UNORM;
-		break;
-	}
-	case 2: {
-		ImageFormat = VK_FORMAT_R8G8_UNORM;
-		break;
-	}
-	case 3: {
-		ImageFormat = VK_FORMAT_R8G8B8_UNORM;
-		break;
-	}
-	case 4: {
-		ImageFormat = VK_FORMAT_R8G8B8A8_UNORM;
-		break;
-	}
-	default: {
-		ImageFormat = VK_FORMAT_R8G8B8A8_UNORM;
-	}
-	}
+	VkDeviceSize texturesize = m_Width * m_Height * CalculateBytesPerPixel(format);
 	//create stagging buffer
 	BufferDesc bufferdesc{};
 	bufferdesc.Device = m_Context->Device;
@@ -249,12 +309,14 @@ void Texture::CreateTexture(void* initData)
 	bufferdesc.SizeBytes = texturesize;
 	bufferdesc.Usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
+	CreateImageAndView(format,shareMode,imageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|usageFlags, memoryPropertyFlags,initLayout,aspectFlagBits);
+
 	Buffer stagging(bufferdesc);
+	if(initData && finalLayout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL){
 	stagging.UploadToBuffer(m_Context->Device, initData, texturesize);
 
 	//Create texture and view
 
-	CreateImageAndView(ImageFormat,VK_SHARING_MODE_EXCLUSIVE,VK_IMAGE_TILING_OPTIMAL,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,VK_IMAGE_LAYOUT_UNDEFINED);
 
 	VkCommandBuffer TempCommandBuffer = CommandBuffer::StartSingleUseCommandBuffer(m_Context, m_Context->CommandPool);
 
@@ -264,10 +326,20 @@ void Texture::CreateTexture(void* initData)
 	CopyDataFromBuffer(TempCommandBuffer, *stagging.GetBuffer(), m_Image);
 
 
-	TrasitionFormat(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, TempCommandBuffer);
+	TrasitionFormat(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, finalLayout, TempCommandBuffer);
 
 	CommandBuffer::EndSingleUseCommandBuffer(m_Context, m_Context->CommandPool, TempCommandBuffer);
-	
+	}
+	else{
+
+	VkCommandBuffer TempCommandBuffer = CommandBuffer::StartSingleUseCommandBuffer(m_Context, m_Context->CommandPool);
+
+	TrasitionFormat(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, TempCommandBuffer);
+
+	TrasitionFormat(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, finalLayout, TempCommandBuffer);
+
+	CommandBuffer::EndSingleUseCommandBuffer(m_Context, m_Context->CommandPool, TempCommandBuffer);
+	}
 	//Maybe something with the spacing or placing of the quad that houses the texture.
 	//Create Sampler //TEMP
 	VkSamplerCreateInfo samplercreateinfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };

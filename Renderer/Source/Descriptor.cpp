@@ -7,7 +7,6 @@
     {
         m_Context = desc.context;
         m_DescriptorCount = desc.DescriptorCount;
-        printf("desc.DescriptorCount %i",desc.DescriptorCount);
 
         VkDescriptorSetLayoutBinding binding{};
         binding.descriptorType = desc.Type;

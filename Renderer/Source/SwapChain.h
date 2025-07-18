@@ -1,8 +1,8 @@
 #pragma once
-#include "Image.h"
+#include "Texture.h"
 class SwapChain{
     public:
-        SwapChain(VkInstance instance ,VkPhysicalDevice pdevice,VkDevice device,VkSurfaceKHR surface,QueueFamilies queuesfamilies);
+        SwapChain(VkInstance instance ,Context context,VkSurfaceKHR surface);
 
         VkSurfaceKHR GetSurface(){return m_Surface;}
 
@@ -20,7 +20,7 @@ class SwapChain{
         VkFormat GetFormat(){return m_SwapChainFormat;}
 
         uint32_t GetSwapChainImageCount(){ return (uint32_t)m_SwapChainImages.size();}
-        Image* GetSwapChainImage(uint32_t Index){ return &m_SwapChainImages[Index];}
+        Texture* GetSwapChainImage(uint32_t Index){ return m_SwapChainImages[Index];}
         
          void CreateSwapChain();
          void ReCreateSwapChain();
@@ -35,13 +35,11 @@ class SwapChain{
      SwapChainDetails m_Details{};
      GLFWwindow* m_Window{};
      VkInstance m_Instance{};
-     VkPhysicalDevice m_PDevice{};
-     VkDevice m_Device{};
+     Context m_Context{};
      VkSurfaceKHR m_Surface{};
-     QueueFamilies m_QueueFamilies{};
 
      VkFormat m_SwapChainFormat{};
      VkExtent2D m_SwapChainExtent{};
 
-     std::vector<Image> m_SwapChainImages{};
+     std::vector<Texture*> m_SwapChainImages{};
 };

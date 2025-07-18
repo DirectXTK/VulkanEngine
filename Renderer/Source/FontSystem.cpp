@@ -586,7 +586,15 @@ void FontSystem::ReRenderFaces()
 	font->TextureID = Core::GetStringHash("FontTexture"+std::to_string(m_CharacterSize));
 
 	m_TextureSize = { FontAtlasWidth,FontAtlasHeight };
-	Texture* texture = new Texture(app->m_Renderer->GetContext(), FontAtlasWidth, FontAtlasHeight, 4, AtlasMapBitmap);
+
+	TextureCreateInfo textureCreateInfo{};
+	textureCreateInfo.ImageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT;
+	textureCreateInfo.Format = VK_FORMAT_R8G8B8A8_UNORM;
+	textureCreateInfo.Width = FontAtlasWidth;
+	textureCreateInfo.Height = FontAtlasHeight;
+	textureCreateInfo.Pixels = AtlasMapBitmap;
+
+	Texture* texture = new Texture(app->m_Renderer->GetContext(),textureCreateInfo,TextureType::Texture);
 	
 	font->TextureAsset = app->m_AssetManager.LoadAsset<Texture>(texture, AssetType::TEXTURE, "FontTexture"+std::to_string(m_CharacterSize));
 		m_Renderer->SetCurrentFont(m_App->m_AssetManager.LoadAsset<Font>(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));

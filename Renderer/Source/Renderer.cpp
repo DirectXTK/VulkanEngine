@@ -37,8 +37,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     context->QueueFamil = m_QueueFamilies;
     
     m_Context = context;
-
-    m_SwapChain = new SwapChain(m_Instance, m_PhysicalDevice, m_Device, m_Surface, m_QueueFamilies);
+    m_SwapChain = new SwapChain(m_Instance,m_Context, m_Surface);
     m_SwapChainDetails = m_SwapChain->GetSwapChainCapabilities();
 
     m_SwapChain->CreateSwapChain();
@@ -55,7 +54,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     UniformBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
     UniformBufferDesc.Usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     UniformBufferDesc.SizeBytes = sizeof(UniformCameraBufferData);
-    m_UniformBuffers = new Buffer(UniformBufferDesc);
+    m_UniformBuffer = new Buffer(UniformBufferDesc);
 
   
     CreateCommandBuffers();
@@ -67,7 +66,14 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     for (int i = 0; i < 1; i++) {
         Pixels[i] = 0xFFFFFFFF;
     }
-        m_BlankWhiteTexture = new Texture(context, 1, 1,4, Pixels);
+    TextureCreateInfo whiteTextureCreateInfo{};
+    whiteTextureCreateInfo.Width =1;
+    whiteTextureCreateInfo.Height=1;
+    whiteTextureCreateInfo.Pixels = Pixels;
+    whiteTextureCreateInfo.Format = VK_FORMAT_R8G8B8A8_UNORM;
+    whiteTextureCreateInfo.ImageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT;
+
+    m_BlankWhiteTexture = new Texture(context, whiteTextureCreateInfo,TextureType::Texture);
     delete[] Pixels;
     
     CreateDescriptorSets();
@@ -78,14 +84,29 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_R32G32_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
     VkFormat DepthStencilFormat = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
+    TextureCreateInfo colorAttachTextureInfo{};
+    colorAttachTextureInfo.Format =format;
+    colorAttachTextureInfo.Width = m_SwapChain->GetExtent().width;
+    colorAttachTextureInfo.Height = m_SwapChain->GetExtent().height;
+    colorAttachTextureInfo.ImageTilling =  VK_IMAGE_TILING_OPTIMAL;
+    colorAttachTextureInfo.ImageUsageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    colorAttachTextureInfo.MemoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    colorAttachTextureInfo.SharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
 
     m_ColorAttachments.resize(MAX_FRAME_DRAWS);
     m_DepthStencilAttachments.resize(MAX_FRAME_DRAWS);
     for (int i = 0; i < m_ColorAttachments.size(); i++) {
-
-        m_ColorAttachments[i] = Image(m_PhysicalDevice, m_Device, format, VK_SHARING_MODE_EXCLUSIVE, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_TILING_OPTIMAL, m_SwapChain->GetExtent().width, m_SwapChain->GetExtent().height);
-        m_DepthStencilAttachments[i] = Image(m_PhysicalDevice, m_Device, DepthStencilFormat, VK_SHARING_MODE_EXCLUSIVE, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_TILING_OPTIMAL, m_SwapChain->GetExtent().width, m_SwapChain->GetExtent().height,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_ASPECT_STENCIL_BIT);
+        m_ColorAttachments[i] =new Texture(m_Context,colorAttachTextureInfo,TextureType::ColorAttachment);
     }
+    //change creat info for depth buffer
+    colorAttachTextureInfo.ImageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+    colorAttachTextureInfo.ImageUsageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    colorAttachTextureInfo.Format = DepthStencilFormat;
+
+    for(uint32_t i=0;i < m_DepthStencilAttachments.size();i++)
+        m_DepthStencilAttachments[i] =new Texture(m_Context,colorAttachTextureInfo,TextureType::DepthStencilAttachment);
+
     CreateFrameBuffers();
 
 
@@ -169,7 +190,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 // m_FrameImageIndexed = new Image(m_PhysicalDevice,m_Device,format2,VK_SHARING_MODE_EXCLUSIVE,VK_IMAGE_USAGE_STORAGE_BIT,  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT           ,VK_IMAGE_TILING_OPTIMAL,m_SwapChain->GetExtent().width,m_SwapChain->GetExtent().height);
 
     BufferDesc PickingImageBufferDesc{};
-    PickingImageBufferDesc.SizeBytes = m_ColorAttachments[0].GetSize();
+    PickingImageBufferDesc.SizeBytes = m_ColorAttachments[0]->GetByteSize();
     PickingImageBufferDesc.Usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     PickingImageBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
     PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
@@ -188,9 +209,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     m_UniformCameraData.GeometryCamera = glm::identity<glm::mat4>();
     m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
 
-    m_UniformBuffers->UploadToBuffer(m_Device,&m_UniformCameraData,sizeof(UniformCameraBufferData));
+    m_UniformBuffer->UploadToBuffer(m_Device,&m_UniformCameraData,sizeof(UniformCameraBufferData));
 
-    m_DescriptorSetCamera.WriteTo(0,1,*m_UniformBuffers->GetBuffer(),sizeof(UniformCameraBufferData));
+    m_DescriptorSetCamera.WriteTo(0,1,*m_UniformBuffer->GetBuffer(),sizeof(UniformCameraBufferData));
 
 
  }
@@ -241,8 +262,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
               m_UniformCameraData.GeometryCamera = m_Camera.GetViewProj();
               m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
 
-            m_UniformBuffers->UploadToBuffer(m_Device, &m_UniformCameraData, sizeof(m_UniformCameraData));
-            m_DescriptorSetCamera.WriteTo(0,1,*m_UniformBuffers->GetBuffer(),sizeof(m_UniformCameraData));
+            m_UniformBuffer->UploadToBuffer(m_Device, &m_UniformCameraData, sizeof(m_UniformCameraData));
+            m_DescriptorSetCamera.WriteTo(0,1,*m_UniformBuffer->GetBuffer(),sizeof(m_UniformCameraData));
 
 
             VkSwapchainKHR swapchain = m_SwapChain->GetSwapChain();
@@ -267,11 +288,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
            
             VkBufferImageCopy  copyregion{};
-            copyregion.bufferImageHeight = m_ColorAttachments[0].GetExtent().height;
-            copyregion.bufferRowLength = m_ColorAttachments[0].GetExtent().width;
+            copyregion.bufferImageHeight = m_ColorAttachments[0]->GetHeight();
+            copyregion.bufferRowLength = m_ColorAttachments[0]->GetWidth();
             copyregion.bufferOffset = 0;
 
-            copyregion.imageExtent = { m_ColorAttachments[0].GetExtent().width,m_ColorAttachments[0].GetExtent().height,1 };
+            copyregion.imageExtent = { m_ColorAttachments[0]->GetWidth(),m_ColorAttachments[0]->GetHeight(),1 };
             copyregion.imageOffset = { 0,0,0 };
             copyregion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             copyregion.imageSubresource.mipLevel = 0;
@@ -282,7 +303,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
             if (m_CurrentFrame ==1)
-                vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0].GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer->GetBuffer(), 1, &copyregion);
+                vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0]->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer->GetBuffer(), 1, &copyregion);
             
           
 
@@ -987,7 +1008,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         m_FrameBuffers.resize(MAX_FRAME_DRAWS);
         for(int i =0;i < m_FrameBuffers.size();i++){
-        Image images[]= {*m_SwapChain->GetSwapChainImage(i),m_ColorAttachments[i],m_DepthStencilAttachments[i]};
+        Texture* images[3]= {m_SwapChain->GetSwapChainImage(i),m_ColorAttachments[i],m_DepthStencilAttachments[i]};
                 m_FrameBuffers[i].Init(m_Device,m_SwapChain,m_RenderPass,images,3);
         }
 
@@ -1081,7 +1102,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         context->GraphicsQueue = m_GraphicsQ;
         context->QueueFamil = m_QueueFamilies;
         context->CommandPool = m_GraphicsPool.GetCommandPool();
-        Texture*texture = new Texture(context, Path);
+
+        TextureCreateInfo createInfo{};
+        createInfo.Format = VK_FORMAT_R8G8B8A8_UNORM;
+        createInfo.ImageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT;
+        Texture*texture = new Texture(context,createInfo, Path,TextureType::Texture);
         return texture;
     }
 
@@ -1092,20 +1117,33 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 Renderer::~Renderer(){
     vkDeviceWaitIdle(m_Device);
 
-    for(uint32_t i =0;i < m_VertexBufferGeometry.size();i++){
+    //deleting all buffers.
+    for(uint32_t i =0;i < m_VertexBufferGeometry.size();i++)
         delete m_VertexBufferGeometry[i];
-    }
-    for(uint32_t i=0;i < m_IndexBuffers.size();i++){
+    
+    for(uint32_t i=0;i < m_IndexBuffers.size();i++)
         delete m_IndexBuffers[i];
-    }
-    for(uint32_t i=0;i < m_StaggingBufferGeometry.size();i++){
+    
+    for(uint32_t i=0;i < m_StaggingBufferGeometry.size();i++)
         delete m_StaggingBufferGeometry[i];
-    }
+
+    for(uint32_t i=0;i < m_VertexBufferGUI.size();i++)
+        delete m_VertexBufferGUI[i];
+    for(uint32_t i=0;i < m_StaggingBufferGUI.size();i++)
+        delete m_StaggingBufferGUI[i];
+
+    for(uint32_t i=0;i < m_VertexBufferOutlines.size();i++)
+        delete m_VertexBufferOutlines[i];
+    for(uint32_t i=0;i < m_StaggingBufferOutlines.size();i++)
+        delete m_StaggingBufferOutlines[i];
+
+
+    delete m_UniformBuffer;
+    delete m_PickingImageBuffer;
 
 
     vkFreeCommandBuffers(m_Device,m_GraphicsPool.GetCommandPool(),m_CommandBuffers.size(),m_CommandBuffers.data());
     vkDestroyCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),nullptr);
-    delete m_UniformBuffers;
     vkDestroySwapchainKHR(m_Device,m_SwapChain->GetSwapChain(),nullptr);
     vkDestroySurfaceKHR(m_Instance,m_Surface,nullptr);
     vkDestroyDevice(m_Device,nullptr);
