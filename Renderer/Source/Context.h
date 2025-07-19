@@ -8,9 +8,11 @@ struct ContextData
 	QueueFamilies QueueFamil{};
 	VkQueue GraphicsQueue{};
 	VkCommandPool CommandPool{};
+	
 
 	//Temp
 	VkCommandBuffer TransferCommandBuffer{};
+
 };
 typedef ContextData* Context;
 

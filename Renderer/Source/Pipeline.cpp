@@ -289,6 +289,8 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
         Core::Log(ErrorType::Error, "Failed to create pipeline.");
     
     delete[] vertexinputattr;
+    vkDestroyShaderModule(device,Vertex,nullptr);
+    vkDestroyShaderModule(device,Pixel,nullptr);
 
 
     return outputPipeline;

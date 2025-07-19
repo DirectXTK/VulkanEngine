@@ -1,6 +1,5 @@
 #include "SwapChain.h"
 
-
         SwapChain::SwapChain(VkInstance instance,Context context,VkSurfaceKHR surface){
             m_Context = context;
             m_Surface= surface;
@@ -157,9 +156,9 @@
     }
     SwapChain::~SwapChain(){
 
+      vkDestroySwapchainKHR(m_Context->Device,m_SwapChain,nullptr);
       for(uint32_t i=0;i<m_SwapChainImages.size();i++)
        delete m_SwapChainImages[i];
-      vkDestroySwapchainKHR(m_Context->Device,m_SwapChain,nullptr);
 
 
     }

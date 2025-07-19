@@ -15,6 +15,6 @@
 
 
         }
-        CommandPool::~CommandPool(){
+        void CommandPool::Destroy(){
             vkDestroyCommandPool(m_Device,m_CommandPool,nullptr);
         }

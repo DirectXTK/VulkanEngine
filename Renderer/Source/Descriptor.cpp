@@ -4,7 +4,8 @@
 
 
     void DescriptorSet::Init(DescriptorSetDescription desc)
-    {
+    {   
+        m_Pool = desc.DescriptorPool;
         m_Context = desc.context;
         m_DescriptorCount = desc.DescriptorCount;
 
@@ -102,7 +103,7 @@
         if (result != VK_SUCCESS)
             Core::Log(ErrorType::Error, "Failed to create DescriptorSetLayout.");
     }
-
+ 
 
 
 
@@ -113,7 +114,8 @@
     }
 
     void DescriptorPool::CreatePool(Context context)
-    {
+    {   
+        m_Context = context;
         VkDescriptorPoolSize* PoolSizes{};
         PoolSizes = new VkDescriptorPoolSize[m_DescriptorPoolSizeInfo.size()];
         for (uint32_t i = 0; i < m_DescriptorPoolSizeInfo.size(); i++) {
@@ -132,7 +134,8 @@
            Core::Log(ErrorType::Error, "Failed to create DescriptorPool.");
         delete[] PoolSizes;
     }
-    DescriptorPool::~DescriptorPool(){
+    void DescriptorPool::Destroy(){
         vkDestroyDescriptorPool(m_Context->Device,m_Pool,nullptr);
+
     }
 

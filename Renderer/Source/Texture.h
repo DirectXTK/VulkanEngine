@@ -15,7 +15,7 @@ struct TextureCreateInfo {
 	uint32_t ChannelCount{};
 	void* Pixels{};
 };
-enum class TextureType{UNDIFINED,Texture,TextureAtlas,ColorAttachment,DepthStencilAttachment};
+enum class TextureType{UNDIFINED,Texture,TextureAtlas,ColorAttachment,DepthStencilAttachment,SwapChainImage};
 enum class TextureCreateFlagBits {
 	DEFAULT=0,CREATEATLAS=2,
 };

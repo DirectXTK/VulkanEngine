@@ -1136,36 +1136,48 @@ Renderer::~Renderer(){
         delete m_VertexBufferOutlines[i];
     for(uint32_t i=0;i < m_StaggingBufferOutlines.size();i++)
         delete m_StaggingBufferOutlines[i];
-
+    delete m_BlankWhiteTexture;
 
     delete m_UniformBuffer;
     delete m_PickingImageBuffer;
-
-
+    
     m_FrameBuffers.clear();
-
-
-    m_Textures->clear();
-
+    
+    for(uint32_t i =0;i < MAX_FRAME_DRAWS;i++)
+    m_Textures[i].clear();
+    
     for(uint32_t i=0;i < m_DepthStencilAttachments.size();i++)
-        delete m_DepthStencilAttachments[i];
+    delete m_DepthStencilAttachments[i];
     for(uint32_t i=0;i < m_ColorAttachments.size();i++)
-        delete m_ColorAttachments[i];
+    delete m_ColorAttachments[i];
     for(uint32_t i=0;i < m_RenderFinishedS.size();i++)
-         vkDestroySemaphore(m_Device,m_RenderFinishedS[i],nullptr);
+    vkDestroySemaphore(m_Device,m_RenderFinishedS[i],nullptr);
     for(uint32_t i=0;i < m_ImageAvailS.size();i++)
-         vkDestroySemaphore(m_Device,m_ImageAvailS[i],nullptr);
+    vkDestroySemaphore(m_Device,m_ImageAvailS[i],nullptr);
     for(uint32_t i=0;i < m_DrawFences.size();i++)
-         vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
+    vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
     m_CurrentFont.~Asset();
-    printf("\nTexture Count : %i\n",m_AssetManager->GetAssetCount(AssetType::TEXTURE));
-
+    
+    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetCamera.GetDescriptorLayout(),nullptr);
+    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetTextures.GetDescriptorLayout(),nullptr);
+    m_DescriptorPool.Destroy();
+    
+    vkDestroyRenderPass(m_Device,m_RenderPass,nullptr);
+    vkDestroyPipelineLayout(m_Device,m_PipelineLayout,nullptr);
     vkDestroyPipeline(m_Device,m_Pipeline,nullptr);
     vkFreeCommandBuffers(m_Device,m_GraphicsPool.GetCommandPool(),m_CommandBuffers.size(),m_CommandBuffers.data());
     vkDestroyCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),nullptr);
-    vkDestroySwapchainKHR(m_Device,m_SwapChain->GetSwapChain(),nullptr);
+    
+    delete m_SwapChain;
+    
     vkDestroySurfaceKHR(m_Instance,m_Surface,nullptr);
+    int lafa;
+    std::cin >> lafa;
     vkDestroyDevice(m_Device,nullptr);
+
+    auto destroyDebugMessenger = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_Instance,"vkDestroyDebugUtilsMessengerEXT");
+    destroyDebugMessenger(m_Instance,m_Messenger,nullptr);
+    
     vkDestroyInstance(m_Instance,nullptr);
 
 }

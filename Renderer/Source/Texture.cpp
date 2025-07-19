@@ -3,12 +3,17 @@
 #include "CommandBuffer.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb-master/stb_image.h"
+#include <execinfo.h>
+	#include <cxxabi.h>
 
+
+static int32_t g_TextureCount{};
 	Texture::Texture(Context context, const TextureCreateInfo& createInfo,const TextureType& type){
 		m_Context = context;
 		m_TextureType = type;
 		m_Width = createInfo.Width;
 		m_Height = createInfo.Height;
+		printf("Create Type%i\n",type);
 		switch(type){
 			case TextureType::Texture:{
 			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,createInfo.Pixels);
@@ -16,25 +21,26 @@
 			}
 			case TextureType::ColorAttachment:{
 			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|createInfo.ImageUsageFlags,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_UNDEFINED);
-				return;
+				break;
 			}
 			case TextureType::DepthStencilAttachment :{
 			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_UNDEFINED,nullptr,VkImageAspectFlagBits(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT));
-				return;
+				break;
 			}
 			default :{
 				Core::Log(ErrorType::Error,"Texture type doesn't exist.");
 				break;
 			}
 		}
-
-
+		g_TextureCount++;
+		
 
 	}
 
 	Texture::Texture(Context context,VkFormat format,VkImage image){
 		m_Context = context;
 		m_Image = image;
+		m_TextureType = TextureType::SwapChainImage;
 		CreateView(format,VK_IMAGE_ASPECT_COLOR_BIT,m_Context->Device);
 	}
 
@@ -43,8 +49,7 @@ Texture::Texture(Context context, const TextureCreateInfo& createInfo ,std::stri
 	std::string Extension= Core::GetFileExtension(Path);
 	m_TextureType = type;
 	uint64_t Width{}, Height{};
-
-
+	g_TextureCount++;
 	m_Context = context;
 	//Loads texture normaly
 	if (Extension == "png") {
@@ -168,7 +173,7 @@ void Texture::CopyFromBuffer(VkDevice device, Buffer* srcbuffer, VkCommandBuffer
 
 
 Texture::~Texture()
-{
+{		
 	vkDestroyImage(m_Context->Device,m_Image,nullptr);
 	vkFreeMemory(m_Context->Device, m_DeviceMemory, nullptr);
 	vkDestroyImageView(m_Context->Device,m_ImageView,nullptr);
