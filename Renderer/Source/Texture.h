@@ -70,6 +70,9 @@ public:
 
 	static TextureAtlasData* CreateTextureAtlasData(const std::string& MetaDataPath);
 
+	//Removes vkImage makes it nullptr.
+	void RemoveImage(){m_Image = nullptr;}
+
 	~Texture();
 private:
 

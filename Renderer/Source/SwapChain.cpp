@@ -157,8 +157,10 @@
     SwapChain::~SwapChain(){
 
       vkDestroySwapchainKHR(m_Context->Device,m_SwapChain,nullptr);
-      for(uint32_t i=0;i<m_SwapChainImages.size();i++)
-       delete m_SwapChainImages[i];
+      for(uint32_t i=0;i<m_SwapChainImages.size();i++){
+         m_SwapChainImages[i]->RemoveImage();
+         delete m_SwapChainImages[i];
+      }
 
 
     }

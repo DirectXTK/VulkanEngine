@@ -3,17 +3,13 @@
 #include "CommandBuffer.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb-master/stb_image.h"
-#include <execinfo.h>
-	#include <cxxabi.h>
 
 
-static int32_t g_TextureCount{};
 	Texture::Texture(Context context, const TextureCreateInfo& createInfo,const TextureType& type){
 		m_Context = context;
 		m_TextureType = type;
 		m_Width = createInfo.Width;
 		m_Height = createInfo.Height;
-		printf("Create Type%i\n",type);
 		switch(type){
 			case TextureType::Texture:{
 			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,createInfo.Pixels);
@@ -32,7 +28,6 @@ static int32_t g_TextureCount{};
 				break;
 			}
 		}
-		g_TextureCount++;
 		
 
 	}
@@ -49,7 +44,6 @@ Texture::Texture(Context context, const TextureCreateInfo& createInfo ,std::stri
 	std::string Extension= Core::GetFileExtension(Path);
 	m_TextureType = type;
 	uint64_t Width{}, Height{};
-	g_TextureCount++;
 	m_Context = context;
 	//Loads texture normaly
 	if (Extension == "png") {
@@ -221,7 +215,6 @@ void Texture::CreateImageAndView(VkFormat Format,VkSharingMode ShareMode,VkImage
 		Core::Log(ErrorType::Error, "Failed to bind memory to image.");
 
 	m_DeviceSize = memreq.size;
-	printf("Aspect bits %i\n",aspectFlagBits);
 	m_ImageView = CreateView(Format, aspectFlagBits, m_Context->Device);
 }
 
@@ -286,8 +279,6 @@ void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTilin
 
 
 	if(initData||m_TextureType == TextureType::Texture){
-		if(initData)
-		printf("nullptr\n");
 		Buffer stagging(bufferdesc);
 	CreateImageAndView(format,shareMode,imageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|usageFlags, memoryPropertyFlags,initLayout,aspectFlagBits);
 

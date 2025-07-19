@@ -35,7 +35,7 @@ public:
 	void EndGUI();
 
 private:
-	void DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor, float BorderWidth);
+	void DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor, const Float4& BackGroundColor,float BorderWidth);
 	void ReapplyStyles();
 
 	Application* m_Application{};
@@ -70,6 +70,7 @@ private:
 	std::stack<StyleContainer> m_Styles{};
 	Float4 m_CurrentColor{};
 	GUI::BorderStyle* m_CurrentBorderData{};
+	GUI::SliderStyle* m_CurrentSliderData{};
 
 
 

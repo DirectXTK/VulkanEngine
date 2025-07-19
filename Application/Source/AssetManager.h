@@ -127,17 +127,25 @@ public:
 
 		auto Index = m_Resources.find(handle);
 		if(Index != m_Resources.end()){
-			printf("Type %i\n",(int)type);
 			m_Resources.erase(Index);
 
 			m_ResourceCount[type]--;
 		}
-		printf("UnloadAsset\n");
 	}
+	template<typename T>
+	Asset<T> HasAsset(GUUID Handle) {
+		if (m_Resources.find(Handle) == m_Resources.end()) {
+			
+			return Asset<T>();
+		}
+		return Asset<T>(&m_Resources[Handle]);
+	}
+
 	template<typename T>
 	Asset<T> GetAsset(GUUID Handle) {
 		if (m_Resources.find(Handle) == m_Resources.end()) {
 			Core::Log(ErrorType::Warning, "Resources wasn't found (ID", Handle.ID,")");
+			
 			return Asset<T>();
 		}
 		return Asset<T>(&m_Resources[Handle]);

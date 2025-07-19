@@ -436,7 +436,7 @@ void FontSystem::ReRenderFaces()
 	Application* app = (Application*)m_App;
 	FT_GlyphSlot slot = m_Face->glyph;
 	//check if font is already loaded and renderer
-	Asset<Font> asset=m_App->m_AssetManager.GetAsset<Font>(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
+	Asset<Font> asset=m_App->m_AssetManager.HasAsset<Font>(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
 	if(asset){
 		Font* currentFont = (Font*)asset.GetData();
 

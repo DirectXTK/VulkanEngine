@@ -173,36 +173,62 @@ void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2
 		m_FontSystem->Text(Core::GetStringHash(strID), Text.c_str(), Position, { Size.x * 2,Size.y * 2 });
 	}
 }
-void GUIRenderer::DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor, float BorderWidth) {
+void GUIRenderer::DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor,const Float4& BackGroundColor, float BorderWidth) {
 	Renderer* renderer = m_Application->m_Renderer;
 	Float2 BorderSize{ Size.x+ BorderWidth,Size.y+ BorderWidth };
 	
-	
 	renderer->DrawQuad({ Position.x,Position.y,0.0f }, BorderColor, BorderSize, 0);
+	renderer->DrawQuad({ Position.x,Position.y,0.0f }, BackGroundColor, Size, 0);
 }
 void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Position, Float2 Size, float SlideAmount,Float2 MinMax, uint32_t DecimalPlaces)
 {
 	Float4 Color{m_CurrentColor};
+	Renderer* renderer= m_Application->m_Renderer;
 	std::string StringNumber = std::to_string(*number);
 	SliderData* CurrentSlider = &m_Sliders[strID];
+	 float sliderClickedColorMin{.2f};
 
-	if (m_CurrentBorderData->DrawBorder)
-		DrawBorder(Position, Size, m_CurrentBorderData->BorderColor, m_CurrentBorderData->BorderWidth);
-
+	
 	if (CurrentSlider->IsClicked == true)
-		Color = { Color.r - 0.15f,Color.g - 0.15f,Color.b - 0.15f,1.0f };
+		sliderClickedColorMin=0.2f;
+	else
+		sliderClickedColorMin=0;
+
+	Color = { Color.r - sliderClickedColorMin,Color.g - sliderClickedColorMin,Color.b - sliderClickedColorMin,m_CurrentColor.a};
+
+
+
+	if(m_CurrentBorderData){
+		if (m_CurrentBorderData->DrawBorder){
+				Float4 BackGroundColor = {m_CurrentBorderData->BackGroundColor.r-sliderClickedColorMin,m_CurrentBorderData->BackGroundColor.g-sliderClickedColorMin,m_CurrentBorderData->BackGroundColor.b-sliderClickedColorMin,m_CurrentBorderData->BackGroundColor.a};
+			DrawBorder(Position, Size, m_CurrentBorderData->BorderColor,BackGroundColor, m_CurrentBorderData->BorderWidth);
+		}
+	}
+
+	if(m_CurrentSliderData){
+		if(m_CurrentSliderData->FillOn)
+		{
+			Color.a =0;
+			float procent = *number/MinMax.y;
+			renderer->DrawQuad({Position.x-((1-procent)*Size.x),Position.y},m_CurrentSliderData->FillColor,{Size.x*procent,Size.y},Core::GetStringHash(strID).ID);
+		}
+	}
+
 
 	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - DecimalPlaces)), Position, { Color }, Size, MouseCodes::LEFT, 0, false)) {
 		if (!CurrentSlider->IsClicked) {
 			CurrentSlider->IsClicked = true;
-		Core::Log(ErrorType::Error,"Lafa");
 
 		}
 	}
 
 	
+
+
+	
+	
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
-		*number += m_Application->m_InputSystem.GetMousePosChange().x * SlideAmount;
+		*number -= m_Application->m_InputSystem.GetMousePosChange().x * SlideAmount;
 		*number=std::clamp(*number,MinMax.x,MinMax.y);
 	}
 	else {
@@ -218,10 +244,10 @@ void GUIRenderer::Slider(const std::string& strID, int* number, Float2 Position,
 	SliderData* CurrentSlider = &m_Sliders[strID];
 
 	if (m_CurrentBorderData->DrawBorder)
-		DrawBorder(Position, Size, m_CurrentBorderData->BorderColor, m_CurrentBorderData->BorderWidth);
+		DrawBorder(Position, Size, m_CurrentBorderData->BorderColor,m_CurrentBorderData->BackGroundColor, m_CurrentBorderData->BorderWidth);
 
 	if (CurrentSlider->IsClicked == true)
-		Color = { Color.r - 0.15f,Color.g - 0.15f,Color.b - 0.15f,1.0f };
+		Color = { Color.r - 0.15f,Color.g - 0.15f,Color.b - 0.15f};
 
 	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - 2)), Position, { Color }, Size, MouseCodes::LEFT, 0, false)) {
 		if (!CurrentSlider->IsClicked) {
@@ -289,6 +315,22 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 
 		break;
 	}
+	case GUI::Style::SLIDER: {
+		GUI::SliderStyle* TransformedData = (GUI::SliderStyle*)Data;
+		GUI::SliderStyle* sliderData{};
+
+		if (TransformedData->StructSize != sizeof(GUI::SliderStyle))
+		{
+			Core::Log(ErrorType::Error, "Invalid Style or size is specified incorectly.");
+			return;
+		}
+		sliderData = new GUI::SliderStyle();
+		*sliderData = *TransformedData;
+
+		m_Styles.push({ GUI::Style::SLIDER,sliderData });
+
+		break;
+	}
 	case GUI::Style::NONE: {
 		Core::Log(ErrorType::Error, "GUI style is not specified.");
 		break;
@@ -303,6 +345,9 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 void GUIRenderer::PopStyle() {
 	StyleContainer container = m_Styles.top();
 	delete container.StyleData;
+
+	m_CurrentBorderData= nullptr;
+	m_CurrentSliderData= nullptr;
 
 	m_Styles.pop();
 	ReapplyStyles();
@@ -323,6 +368,11 @@ void GUIRenderer::ReapplyStyles() {
 		GUI::BorderStyle* Border = (GUI::BorderStyle*)Container.StyleData;
 
 		m_CurrentBorderData = Border;
+		break;
+	}
+	case GUI::Style::SLIDER: {
+		GUI::SliderStyle* slider = (GUI::SliderStyle*)Container.StyleData;
+		m_CurrentSliderData = slider;
 		break;
 	}
 	case GUI::Style::NONE: {

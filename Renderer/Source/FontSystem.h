@@ -21,7 +21,6 @@ struct Font {
 		delete[] Coords;
 		delete[] MinCord;
 		delete[] MaxCord;
-		printf("~Font");
 	}
 };
 

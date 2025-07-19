@@ -207,6 +207,14 @@ struct Float4 {
 
         };
     };
+
+    Float4& operator-(const Float4& other){
+        r -=other.r;
+        g -=other.g;
+        b -=other.b;
+        a -=other.a;
+        return *this;
+    }
 };
 namespace Core {
     //works if this is ractangle

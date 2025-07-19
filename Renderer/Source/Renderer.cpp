@@ -1171,8 +1171,6 @@ Renderer::~Renderer(){
     delete m_SwapChain;
     
     vkDestroySurfaceKHR(m_Instance,m_Surface,nullptr);
-    int lafa;
-    std::cin >> lafa;
     vkDestroyDevice(m_Device,nullptr);
 
     auto destroyDebugMessenger = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_Instance,"vkDestroyDebugUtilsMessengerEXT");
