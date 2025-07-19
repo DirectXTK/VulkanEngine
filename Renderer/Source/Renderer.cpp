@@ -89,7 +89,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     colorAttachTextureInfo.Width = m_SwapChain->GetExtent().width;
     colorAttachTextureInfo.Height = m_SwapChain->GetExtent().height;
     colorAttachTextureInfo.ImageTilling =  VK_IMAGE_TILING_OPTIMAL;
-    colorAttachTextureInfo.ImageUsageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    colorAttachTextureInfo.ImageUsageFlags = VkImageUsageFlagBits(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
     colorAttachTextureInfo.MemoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     colorAttachTextureInfo.SharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -1142,6 +1142,25 @@ Renderer::~Renderer(){
     delete m_PickingImageBuffer;
 
 
+    m_FrameBuffers.clear();
+
+
+    m_Textures->clear();
+
+    for(uint32_t i=0;i < m_DepthStencilAttachments.size();i++)
+        delete m_DepthStencilAttachments[i];
+    for(uint32_t i=0;i < m_ColorAttachments.size();i++)
+        delete m_ColorAttachments[i];
+    for(uint32_t i=0;i < m_RenderFinishedS.size();i++)
+         vkDestroySemaphore(m_Device,m_RenderFinishedS[i],nullptr);
+    for(uint32_t i=0;i < m_ImageAvailS.size();i++)
+         vkDestroySemaphore(m_Device,m_ImageAvailS[i],nullptr);
+    for(uint32_t i=0;i < m_DrawFences.size();i++)
+         vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
+    m_CurrentFont.~Asset();
+    printf("\nTexture Count : %i\n",m_AssetManager->GetAssetCount(AssetType::TEXTURE));
+
+    vkDestroyPipeline(m_Device,m_Pipeline,nullptr);
     vkFreeCommandBuffers(m_Device,m_GraphicsPool.GetCommandPool(),m_CommandBuffers.size(),m_CommandBuffers.data());
     vkDestroyCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),nullptr);
     vkDestroySwapchainKHR(m_Device,m_SwapChain->GetSwapChain(),nullptr);

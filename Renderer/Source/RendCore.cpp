@@ -1,5 +1,4 @@
 #include "RendCore.h"
-#include "Image.h"
 namespace Core{
         uint32_t FindMemoryTypeIndex(VkPhysicalDevice physicaldevice,uint32_t Allowedtypes,VkMemoryPropertyFlags flags){
             VkPhysicalDeviceMemoryProperties memprops{};

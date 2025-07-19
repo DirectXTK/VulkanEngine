@@ -13,7 +13,6 @@
 #include "UniformBuffer.h"
 #include "Descriptor.h"
 #include "Camera.h"
-#include "Image.h"
 #include "Buffer.h"
 #include "VulkanInstance.h"
 #include "Texture.h"

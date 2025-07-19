@@ -113,13 +113,9 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 }
 	
 void AssetManager::DebugStatistics(bool GUI){
-	if(GUI){
-
-	}else{
 		//Core::Log(ErrorType::Info,"Font Count ",m_ResourceCount[AssetType::FONT]);
 		//Core::Log(ErrorType::Info,"Texture Count ",m_ResourceCount[AssetType::TEXTUREATLAS]);
 
-	}
 }
 
 

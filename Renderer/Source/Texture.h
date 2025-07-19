@@ -46,7 +46,7 @@ public:
 	Texture(Context context,VkFormat format,VkImage image);
 
 
-	void TrasitionFormat(VkImageLayout OldLayout, VkImageLayout NewLayout, VkCommandBuffer CommandBuffer);
+	void TrasitionFormat(bool Write,VkImageLayout OldLayout, VkImageLayout NewLayout, VkCommandBuffer CommandBuffer);
 	void CopyFromBuffer(VkDevice device, Buffer* srcbuffer, VkCommandBuffer commandbuffer);
 
 	VkImageView GetImageView() { return m_ImageView; }

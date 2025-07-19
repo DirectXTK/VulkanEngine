@@ -83,4 +83,5 @@ void CommandBuffer::EndSingleUseCommandBuffer(Context context,VkCommandPool pool
    if (result != VK_SUCCESS)
        Core::Log(ErrorType::Error, "Failed to wait for fences.");
     vkFreeCommandBuffers(context->Device, pool, 1, &commandBuffer);
+    vkDestroyFence(context->Device,fence,nullptr);
 }

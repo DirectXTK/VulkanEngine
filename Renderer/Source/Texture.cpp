@@ -6,19 +6,20 @@
 
 	Texture::Texture(Context context, const TextureCreateInfo& createInfo,const TextureType& type){
 		m_Context = context;
+		m_TextureType = type;
 		m_Width = createInfo.Width;
 		m_Height = createInfo.Height;
 		switch(type){
 			case TextureType::Texture:{
-			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,createInfo.Pixels);
 				break;
 			}
 			case TextureType::ColorAttachment:{
-			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|createInfo.ImageUsageFlags,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_UNDEFINED);
 				return;
 			}
 			case TextureType::DepthStencilAttachment :{
-			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,nullptr,VkImageAspectFlagBits(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT));
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_UNDEFINED,nullptr,VkImageAspectFlagBits(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT));
 				return;
 			}
 			default :{
@@ -40,6 +41,7 @@
 Texture::Texture(Context context, const TextureCreateInfo& createInfo ,std::string Path,TextureType type)
 {
 	std::string Extension= Core::GetFileExtension(Path);
+	m_TextureType = type;
 	uint64_t Width{}, Height{};
 
 
@@ -74,25 +76,25 @@ Texture::Texture(Context context, const TextureCreateInfo& createInfo ,std::stri
 uint32_t CalculateBytesPerPixel(VkFormat format){
 		switch(format){
 			case VK_FORMAT_R8G8B8A8_UNORM:
-				return 8*4;
+				return 4;
 			case VK_FORMAT_R8G8B8A8_UINT:
-				return 8*4;
+				return 4;
 			case VK_FORMAT_R8G8B8_UNORM:
-				return 8*3;
+				return 3;
 			case VK_FORMAT_R8G8B8_UINT:
-				return 8*3;
+				return 3;
 			case VK_FORMAT_R8G8_UNORM:
-				return 8*2;
+				return 2;
 			case VK_FORMAT_R8G8_UINT:
-				return 8*2;
+				return 2;
 			case VK_FORMAT_R8_UNORM:
-				return 8*1;
+				return 1;
 			case VK_FORMAT_R8_UINT:
-				return 8*1;
+				return 1;
 			case VK_FORMAT_R32G32_UINT:
-				return 32*2;
+				return 8;
 			case VK_FORMAT_D24_UNORM_S8_UINT: 
-				return 24+8;
+				return 4;
 			default :{
 				Core::Log(ErrorType::Error,"CalculateBytesPerPixel invalid type.Type = ",(uint32_t)format);
 			}
@@ -100,7 +102,7 @@ uint32_t CalculateBytesPerPixel(VkFormat format){
 		return 0;
 }
 
-void Texture::TrasitionFormat(VkImageLayout OldLayout, VkImageLayout NewLayout,VkCommandBuffer CommandBuffer)
+void Texture::TrasitionFormat(bool Write,VkImageLayout OldLayout, VkImageLayout NewLayout,VkCommandBuffer CommandBuffer)
 {
 	VkImageMemoryBarrier barrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 	barrier.oldLayout = OldLayout;
@@ -117,7 +119,7 @@ void Texture::TrasitionFormat(VkImageLayout OldLayout, VkImageLayout NewLayout,V
 	VkPipelineStageFlags SourceStage{};
 	VkPipelineStageFlagBits DstStage{};
 
-	if (OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+	if (Write) {
 		barrier.srcAccessMask = 0;
 		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
@@ -125,7 +127,7 @@ void Texture::TrasitionFormat(VkImageLayout OldLayout, VkImageLayout NewLayout,V
 
 		DstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
-	else if (OldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+	else if (!Write) {
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
@@ -134,39 +136,7 @@ void Texture::TrasitionFormat(VkImageLayout OldLayout, VkImageLayout NewLayout,V
 
 	}
 
-	if (OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-		SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-
-		DstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	}
-	else if (OldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		SourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		DstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-
-	}
-
-	if (OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-		SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-
-		DstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	}
-	else if (OldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) {
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		SourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		DstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-
-	}
+	
 
 	vkCmdPipelineBarrier(CommandBuffer, SourceStage, DstStage, 0, 0, 0, 0, 0, 1, &barrier);
 
@@ -309,10 +279,13 @@ void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTilin
 	bufferdesc.SizeBytes = texturesize;
 	bufferdesc.Usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
+
+	if(initData||m_TextureType == TextureType::Texture){
+		if(initData)
+		printf("nullptr\n");
+		Buffer stagging(bufferdesc);
 	CreateImageAndView(format,shareMode,imageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|usageFlags, memoryPropertyFlags,initLayout,aspectFlagBits);
 
-	Buffer stagging(bufferdesc);
-	if(initData && finalLayout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL){
 	stagging.UploadToBuffer(m_Context->Device, initData, texturesize);
 
 	//Create texture and view
@@ -320,25 +293,19 @@ void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTilin
 
 	VkCommandBuffer TempCommandBuffer = CommandBuffer::StartSingleUseCommandBuffer(m_Context, m_Context->CommandPool);
 
-	TrasitionFormat(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, TempCommandBuffer);
+	TrasitionFormat(true,VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, TempCommandBuffer);
 
 
 	CopyDataFromBuffer(TempCommandBuffer, *stagging.GetBuffer(), m_Image);
 
+	TrasitionFormat(false,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, finalLayout, TempCommandBuffer);
 
-	TrasitionFormat(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, finalLayout, TempCommandBuffer);
 
 	CommandBuffer::EndSingleUseCommandBuffer(m_Context, m_Context->CommandPool, TempCommandBuffer);
 	}
 	else{
+		CreateImageAndView(format,shareMode,imageTilling,usageFlags, memoryPropertyFlags,initLayout,aspectFlagBits);
 
-	VkCommandBuffer TempCommandBuffer = CommandBuffer::StartSingleUseCommandBuffer(m_Context, m_Context->CommandPool);
-
-	TrasitionFormat(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, TempCommandBuffer);
-
-	TrasitionFormat(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, finalLayout, TempCommandBuffer);
-
-	CommandBuffer::EndSingleUseCommandBuffer(m_Context, m_Context->CommandPool, TempCommandBuffer);
 	}
 	//Maybe something with the spacing or placing of the quad that houses the texture.
 	//Create Sampler //TEMP
