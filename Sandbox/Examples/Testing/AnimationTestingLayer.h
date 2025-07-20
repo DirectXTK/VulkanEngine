@@ -7,7 +7,7 @@ struct AnimationUnit {
 	Float2 Position{};
 	Float2* MoveLocation{};
 	float MoveSpeed{0.0003f};
-	Animator Animator{};
+	Animator animator{};
 	Collider Collid;
 	GUUID ID{};
 	bool Moving{false};

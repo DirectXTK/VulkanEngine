@@ -46,6 +46,7 @@ private:
 	bool m_MouseHold[3]{};
 
 	Double2 m_MouseChange{};
+	Double2 m_LastFrameMousePos{};
 
 
 	GLFWwindow* m_CurrentWindow{};

@@ -13,12 +13,13 @@
 #include "UniformBuffer.h"
 #include "Descriptor.h"
 #include "Camera.h"
-#include "Image.h"
 #include "Buffer.h"
 #include "VulkanInstance.h"
 #include "Texture.h"
 #include "Animator.h"
-#define MAX_FRAME_DRAWS 2
+#include "AssetManager.h"
+#include "FontSystem.h"
+#define MAX_FRAME_DRAWS 3
 
 class InputSystem;
 class AssetManager;
@@ -46,6 +47,10 @@ struct RendererDesc{
     Float4 ClearColor{};
     Camera2D* InitialCamera{nullptr}; //optional
 };
+struct UniformCameraBufferData{
+    glm::mat4 GeometryCamera{};
+    glm::mat4 GUICamera{};
+};
 class Renderer {
 public:
     //Initialization functions
@@ -66,7 +71,7 @@ public:
 
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
-    void SetCurrentFont(Texture* TextureFontAtlas);
+    void SetCurrentFont(Asset<Font> CurrentAsset);
     //PointerIndex = -1 means don't draw it.
     void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
     //GUI 
@@ -109,6 +114,7 @@ private:
     void CreateInstance();
     void CreateFrameBuffers();
     void CreateCommandBuffers();
+    void CreateDescriptorSets();
 
     Context m_Context{};
 
@@ -131,9 +137,9 @@ private:
     VkCommandBuffer m_CurrentCommandBuffer{};
     VkCommandBuffer m_TransferCommandBuffer{};
     std::vector<FrameBuffer> m_FrameBuffers{};
-    std::vector<Image> m_ColorAttachments{};
+    std::vector<Texture*> m_ColorAttachments{};
     //
-    std::vector<Image> m_DepthStencilAttachments{};
+    std::vector<Texture*> m_DepthStencilAttachments{};
 
     //Queues
     VkQueue m_GraphicsQ{};
@@ -156,8 +162,7 @@ private:
 
 
 
-
-    UniformBuffer* m_UniformBuffers{};
+    Buffer* m_UniformBuffer{};
     //Descriptors 
     DescriptorPool m_DescriptorPool{};
     DescriptorSet m_DescriptorSetCamera{};
@@ -187,8 +192,7 @@ private:
     uint32_t m_CurrentVertexBufferIndex{};
     uint64_t m_VertexCountPerDrawCall{};
 
-    glm::mat4 m_CameraViewProj{};
-    Image* m_FrameImageIndexed{};
+    Texture* m_FrameImageIndexed{};
     //Diagnostics
     uint32_t m_DrawCallCountGeometry{};
     uint32_t m_DrawCallCountOutlines{};
@@ -213,13 +217,17 @@ private:
     std::vector<Buffer*> m_StaggingBufferGUI{};
     std::vector<Buffer*> m_StaggingBufferOutlines{};
 
+    uint32_t m_CurrentTextureDescriptorSetOffset{1};
+    uint32_t m_CurrentCameraDescriptorSetOffset{};
+    //Camera
+    UniformCameraBufferData m_UniformCameraData{};
+
     //Outlines
     uint32_t m_VertexCountOutlines{};
     uint64_t m_VertexOutineMaxCountPerDrawCall{ 4 * 100 };
     Vertex* m_VertexOutline{};
     //Text
-    Texture* m_FontTextureAtlas{};
-
+    Asset<Font> m_CurrentFont{};
 
 
 
@@ -229,21 +237,19 @@ private:
     uint32_t m_TextureSlotCount{ 4 };
     Texture* m_BlankWhiteTexture{};
     DescriptorPool m_DescriptorPoolTextures{};
-    std::vector<DescriptorSet> m_DescriptorSetTextures{};
+    DescriptorSet m_DescriptorSetTextures{};
+
     struct TextureRenderingData {
-        Texture* texture{};
+        Asset<Texture> texture{};
         uint32_t Index{};
     };
-    std::unordered_map<GUUID, TextureRenderingData> m_Textures{};
-    std::vector<GUUID> m_TextureIDByOrder{};
+    std::unordered_map<GUUID, TextureRenderingData> m_Textures[MAX_FRAME_DRAWS];
+    std::vector<GUUID> m_TextureIDByOrder[MAX_FRAME_DRAWS];
     //GUI stuff
     Vertex* m_VerticesGUI{};
     uint64_t m_VertexMaxCountGUI{ 100 * 4 };
     uint64_t m_VertexCountGUI{};
-    DescriptorSet m_GUICameraDescriptor{};
-    Buffer* m_UniformGUICameraBuffer{};
     std::vector<DescriptorSet> m_DescriptorSetTexturesGUI{};
-    std::unordered_map<GUUID, TextureRenderingData> m_TexturesGUI{};
     bool m_GUIRendering{false};
     //
 

@@ -49,7 +49,6 @@ namespace Core{
 		    case ErrorType::Error : {
 				file << "Error: ";
 				std::cout << "Error: ";
-				__debugbreak();
 				break;
 			}
 			default: {
@@ -61,6 +60,11 @@ namespace Core{
 		LogRec(file, args...);
 		file.close();
 	}
+	template<typename... ARGS>
+	 void Log(ARGS ...args) {
+		Log(ErrorType::Info,args...);
+	 }
+	
 
 
 }

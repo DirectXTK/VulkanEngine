@@ -19,15 +19,15 @@ void AnimationTestingLayer::OnCreate()
 	m_App->m_Camera.SetPosition({ 0.0f,0.0f });
 
 	m_Units[0].Position = {0.0f,0.0f};
-	m_Units[0].Animator = *(Animator*)m_App->GetAsset("WARRIOR").GetData();
-	m_Units[0].Animator.SetStage("WALK");
+	//m_Units[0].animator = *(Animator*)(m_Assets->LoadAsset<Animator>(Core::GetStringHash("WARRIOR"),AssetType::ANIMATION,"Warrior")).GetData();
+	m_Units[0].animator.SetStage("WALK");
 	m_Units[0].Collid = m_System.CreateCollider();
 	m_Units[0].Collid.Update(&m_Units[0].Position, &m_Size);
 
 
 	m_Units[1].Position = { 0.04f*5,0.0f };
-	m_Units[1].Animator = *(Animator*)m_App->GetAsset("TOWN_HALL").GetData();
-	m_Units[1].Animator.SetStage("IDLE");
+	//m_Units[1].animator = *(Animator*)m_Assets->LoadAsset<Animator>(Core::GetStringHash("TOWN_HALL"),AssetType::ANIMATION,"TOWN_HALL").GetData();
+	m_Units[1].animator.SetStage("IDLE");
 	m_Units[1].Collid = m_System.CreateCollider();
 	m_Units[1].Collid.Update(&m_Units[1].Position, &m_Size);
 
@@ -62,19 +62,18 @@ void AnimationTestingLayer::OnUpdate(float DeltaTime)
 	bool Outline = true;
 
 	for (uint32_t i = 0; i < m_Units.size(); i++) {
-	if(m_Units[i].Animator.GetAnimationID() == Core::GetStringHash("WARRIOR"))
-		MoveUnit(&m_Units[i]);
-	m_Units[i].Collid.Update(&m_Units[i].Position,&m_Size);
+	//if(m_Units[i].animator);
+	//m_Units[i].Collid.Update(&m_Units[i].Position,&m_Size);
 
 	if (m_Units[i].Collid.IsCollided())
 		renderer->DrawOutline({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f },  m_Size,{0.0f,1.0f,0.0f,1.0f }, 0.003f);
 	else
 		renderer->DrawOutline({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f }, m_Size, {1.0f,1.0f,0.0f,1.0f}, 0.003f);
 
-	renderer->DrawQuad({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f}, {1.0f,1.0f,1.0f,1.0f}, m_Size, m_Units[i].Animator, m_Units[i].ID.ID);
+	renderer->DrawQuad({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f}, {1.0f,1.0f,1.0f,1.0f}, m_Size, m_Units[i].animator, m_Units[i].ID.ID);
 	
 
-	m_Units[i].Animator.Update(DeltaTime);
+	m_Units[i].animator.Update(DeltaTime);
 	}
 	if (m_PathGridTime > 0) {
 		for (uint32_t i = 0; i < m_PathGrid.size(); i++) {
@@ -108,7 +107,7 @@ void AnimationTestingLayer::OnGUI()
 		if (m_SpawnUnit) {
 			m_Units.push_back(AnimationUnit());
 			m_Units[m_Units.size() - 1].Position = { m_App->GetWorldMousePos().x, m_App->GetWorldMousePos().y };
-			m_Units[m_Units.size() - 1].Animator = *(Animator*)m_App->GetAsset(m_SpawnedUnit).GetData();
+			//m_Units[m_Units.size() - 1].animator = *(Animator*)m_App->GetAsset(m_SpawnedUnit).GetData();
 			m_Units[m_Units.size() - 1].Collid = m_System.CreateCollider();
 			m_Units[m_Units.size() - 1].Collid.Update(&m_Units[m_Units.size() - 1].Position, &m_Size);
 
@@ -123,13 +122,13 @@ void AnimationTestingLayer::OnGUI()
 		//make a map istead of vector
 	
 		
-				if (gui->Button("IDLE", {0.0f,0.0f}, {1.0f,0.0f,0.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, 0, false)) {
-						m_Units[0].Animator.SetStage("IDLE");
+				if (gui->Button("IDLE","", {0.0f,0.0f}, {1.0f,0.0f,0.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, 0, false)) {
+						m_Units[0].animator.SetStage("IDLE");
 						m_CurrentlySelectedUnit = 0;
 
 				}
-				if (gui->Button("WALK", {0.3f,0.0f}, {0.0f,1.0f,0.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, 0, false)) {
-					m_Units[0].Animator.SetStage("WALK");
+				if (gui->Button("WALK","", {0.3f,0.0f}, {0.0f,1.0f,0.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, 0, false)) {
+					m_Units[0].animator.SetStage("WALK");
 					m_CurrentlySelectedUnit = 0;
 
 
@@ -139,21 +138,21 @@ void AnimationTestingLayer::OnGUI()
 	}
 	gui->Panel("UI Bar", {0.0f,-0.8f}, {1.0f,1.0f,1.0f,1.0}, {1.0f,0.2f}, Core::GetStringHash("PANEL"));
 
-	if (gui->Button("TOWN_HALL", {0.0f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+	if (gui->Button("TOWN_HALL", "",{0.0f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
 		m_SpawnUnit = true;
 		m_SpawnedUnit = "TOWN_HALL";
 	}
-	if (gui->Button("TREE", { 0.25f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+	if (gui->Button("TREE", "",{ 0.25f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
 		m_SpawnUnit = true;
 		m_SpawnedUnit = "TREE";
 
 	}
-	if (gui->Button("SUN", {0.50f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+	if (gui->Button("SUN", "",{0.50f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
 		m_SpawnUnit = true;
 		m_SpawnedUnit = "SUN";
 
 	}
-	if (gui->Button("TEST", {0.75f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+	if (gui->Button("TEST", "",{0.75f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
 		m_SpawnUnit = true;
 		m_SpawnedUnit = "PEASANT";
 

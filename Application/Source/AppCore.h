@@ -1,10 +1,9 @@
 #pragma once
 //Defines
 
-#define __STDC_WANT_LIB_EXT1__
+//#define __STDC_WANT_LIB_EXT1__
 
 //Includes
-#include <Windows.h>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -26,16 +25,24 @@
 #include <cmath>
 #include <set>
 #include <stack>
+#include <cfloat>
+#include <cstring>
 
 #include "RandomGenerator.h"
 #include "AppTime.h"
 
 //Debug stuff
-#include <intrin.h>
+#include <x86intrin.h>
 
 #ifdef max
 #undef max
 #endif
+
+template<typename T, size_t N>
+constexpr size_t ARRAYSIZE(T (&)[N]) noexcept {
+    return N;
+}
+//
 //FORMAT means any format
 enum class Format{NULLFORMAT,INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE,CHAR,STRING,FORMAT};
 #define SEC(x) 1000*x
@@ -183,7 +190,7 @@ struct Float3{
         float r,g,b;
 
         };
-    struct{
+    struct{ 
         float x,y,z;
 
         };
@@ -200,6 +207,14 @@ struct Float4 {
 
         };
     };
+
+    Float4& operator-(const Float4& other){
+        r -=other.r;
+        g -=other.g;
+        b -=other.b;
+        a -=other.a;
+        return *this;
+    }
 };
 namespace Core {
     //works if this is ractangle
@@ -209,4 +224,20 @@ namespace Core {
     //2- right top
     //3- right bot
     bool IsWithinRegionOrg(const Float2& PointPos, Float2 Region[4]);
+
+
+
+
+#include <string>
+#if defined(_WIN32)
+#include <windows.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#include <limits.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
+
+ std::string GetModuleFileName();
+
 }

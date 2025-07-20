@@ -135,8 +135,12 @@ void InputSystem::ResetMouseChange()
 	glfwGetWindowSize(m_CurrentWindow, &Width, &Height);
 	glfwGetCursorPos(m_CurrentWindow, &x, &y);
 
-	m_MouseChange.x = float(x - m_MouseChange.x) ;
-	m_MouseChange.y = float(y - m_MouseChange.y);
+	m_MouseChange.x = float(m_LastFrameMousePos.x -x) ;
+	m_MouseChange.y = float(m_LastFrameMousePos.y -y);
+
+	glfwGetCursorPos(m_CurrentWindow, &x, &y);
+	m_LastFrameMousePos.x = x;
+	m_LastFrameMousePos.y = y;
 
 }
 
@@ -167,10 +171,7 @@ void InputSystem::ResetInput()
 		m_MouseHold[2] = false;
 
 	
-	double x, y{};
-	glfwGetCursorPos(m_CurrentWindow, &x, &y);
-	m_MouseChange.x = x;
-	m_MouseChange.y = y;
+	
 
 	
 

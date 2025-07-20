@@ -2,15 +2,20 @@
 #include "RendCore.h"
 #include "Buffer.h"
 #include "Context.h"
+//rework texture class for depth stencil and color attachment !!
 struct TextureCreateInfo {
 	VkFormat Format{ VK_FORMAT_R8G8B8A8_UNORM };
 	VkImageLayout ImageLayout{ VK_IMAGE_LAYOUT_UNDEFINED };
 	VkSharingMode SharingMode{ VK_SHARING_MODE_EXCLUSIVE };
 	VkImageTiling ImageTilling{ VK_IMAGE_TILING_OPTIMAL };
 	VkImageUsageFlagBits ImageUsageFlags{ VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT };
-	VkMemoryPropertyFlagBits MemoryPropertyFlags{};
+	VkMemoryPropertyFlagBits MemoryPropertyFlags{VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+	uint32_t Width{};
+	uint32_t Height{};
+	uint32_t ChannelCount{};
+	void* Pixels{};
 };
-enum class TextureType{UNDIFINED,Texture,TextureAtlas};
+enum class TextureType{UNDIFINED,Texture,TextureAtlas,ColorAttachment,DepthStencilAttachment,SwapChainImage};
 enum class TextureCreateFlagBits {
 	DEFAULT=0,CREATEATLAS=2,
 };
@@ -27,14 +32,21 @@ struct TextureAtlasData {
 class Texture
 {
 public:
-	Texture(Context context,uint32_t Width, uint32_t Height,uint32_t ChannelCount,void* Pixels );
-	Texture(Context context,std::string Path,TextureType type=TextureType::Texture);
+	Texture(Context context,const TextureCreateInfo& createInfo,std::string Path,TextureType type=TextureType::Texture);
+	
+
+	//predifined constructors for easier creation of simple texture types
+
+	Texture(Context context, const TextureCreateInfo& createInfo,const TextureType& type);
+
 
 	//Used for texture atlases.
 	Texture(Texture* texture, uint32_t TextureIndex);
+	//for swapChain
+	Texture(Context context,VkFormat format,VkImage image);
 
 
-	void TrasitionFormat(VkImageLayout OldLayout, VkImageLayout NewLayout, VkCommandBuffer CommandBuffer);
+	void TrasitionFormat(bool Write,VkImageLayout OldLayout, VkImageLayout NewLayout, VkCommandBuffer CommandBuffer);
 	void CopyFromBuffer(VkDevice device, Buffer* srcbuffer, VkCommandBuffer commandbuffer);
 
 	VkImageView GetImageView() { return m_ImageView; }
@@ -47,7 +59,7 @@ public:
 	//returns 4 points
 
 	//TextureAtlasCoords* GetSubTextureData(uint32_t TextureIndex) { return &m_TextureData->m_TextureAtlasData[TextureIndex]; }
-
+	uint64_t GetByteSize(){return (uint64_t)m_DeviceSize;}
 
 	Texture** GetTextureAtlas();
 	//Small texture inside this bigger texture.
@@ -58,13 +70,16 @@ public:
 
 	static TextureAtlasData* CreateTextureAtlasData(const std::string& MetaDataPath);
 
+	//Removes vkImage makes it nullptr.
+	void RemoveImage(){m_Image = nullptr;}
+
 	~Texture();
 private:
 
 	VkImageView CreateView(VkFormat Format,VkImageAspectFlagBits AspectFlags,VkDevice Device);
-	void CreateImageAndView(VkFormat Format, VkSharingMode ShareMode, VkImageTiling ImageTilling, VkImageUsageFlags UsageFlags, VkMemoryPropertyFlags MemoryPropertyFlags, VkImageLayout InitialImageLayout);
+	void CreateImageAndView(VkFormat Format, VkSharingMode ShareMode, VkImageTiling ImageTilling, VkImageUsageFlags UsageFlags, VkMemoryPropertyFlags MemoryPropertyFlags, VkImageLayout InitialImageLayout,VkImageAspectFlagBits aspectFlagBits);
 	unsigned char* LoadTextureDataFromFile(std::string Path,uint64_t* Width,uint64_t* Height);
-	void CreateTexture(void* initData);
+	void CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTiling imageTilling,VkImageUsageFlags usageFlags,VkMemoryPropertyFlags memoryPropertyFlags,VkImageLayout initialImageLayout,VkImageLayout finalLayout,void* initData=nullptr,VkImageAspectFlagBits aspectFlagBits= VK_IMAGE_ASPECT_COLOR_BIT );
 
 	void CreateTextureAtlasAndParent(const std::string& MetaData,uint64_t Width,uint64_t Height);
 
@@ -83,7 +98,7 @@ private:
 
 	uint64_t m_Width{}, m_Height{};
 
-
+	VkImageAspectFlagBits m_AspectMask{};
 	uint32_t m_TextureIndex{};
 	TextureType m_TextureType{};
 

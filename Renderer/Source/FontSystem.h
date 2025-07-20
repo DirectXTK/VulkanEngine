@@ -1,23 +1,36 @@
 #pragma once
-#include "Renderer.h"
 #include "FontStyles.h"
 #include "ft2build.h"
+#include "Texture.h"
+#include "AssetManager.h"
+#include "Event.h"
+
 #include FT_FREETYPE_H
+class Application;
+class Renderer;
 
 struct Font {
+	Asset<Texture> TextureAsset{};
 	GUUID TextureID{};
-	float FontSize{};
+	uint32_t FontSize{};
 	TextureCoords* Coords{};
+	Float2* MinCord{};
+	Float2* MaxCord{};
 	uint32_t GlyphCount{};
+	~Font(){
+		delete[] Coords;
+		delete[] MinCord;
+		delete[] MaxCord;
+	}
 };
-class Application;
+
 class FontSystem
 {
 public:
 	FontSystem(Application* app);
 	void Run(void* app,void* Renderer);
 
-	void SetCharcterSize(float CharSize);
+	void SetCharcterSize(uint32_t CharSize);
 
 	uint32_t GetWidthOfChar();
 	uint32_t GetHeightOfChar();
@@ -36,7 +49,9 @@ public:
 
 
 	void Text(const char* StrID,const char* Message, Float2 Position, Float2 MaxSize = {0.f,0.f});
+	void Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize = { 0.f,0.f });
 
+	uint32_t GetFontSize() { return m_CharacterSize;}
 	void PopFont();
 
 	void KeyBoardCallback(KeyBoardEvent* event);
@@ -55,6 +70,7 @@ private:
 
 	Renderer* m_Renderer{};
 	Application* m_App{};
+	Float2 m_TextureSize{};
 	void ReRenderFaces();
 	FT_Library m_Library{};
 
@@ -65,7 +81,7 @@ private:
 	Texture* m_Texture1{};
 	float m_Padding{ 0.1f };
 	float m_PaddingY{0.1f};
-	float m_CharacterSize{16};
+	uint32_t m_CharacterSize{46};
 
 	uint32_t m_FontAtlasSize{};
 	Texture* m_FontTexture{};

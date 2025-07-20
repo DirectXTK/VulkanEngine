@@ -6,33 +6,39 @@ project "Renderer"
     targetdir("../bin".. outputdir.."/%{prj.name}")
     objdir("../bin-int".. outputdir.."/%{prj.name}")
 
+    RendererLib="../bin".. outputdir.."/%{prj.name}"
+
     files{
         "Source/**.cpp",
         "Source/**.h"
     }
 
     defines{
-        "WINDOWS"
+        "linux"
     }
 
     includedirs{
       "%{prj.location}/../Application/Source/",
+      "%{prj.location}/Source/",
       vulkanSDK.."/Include/",
-
-
       "%{prj.location}/../Include",
       GlobalIncludes,
     }
 
      libdirs{
-        "%{prj.location}/../Libs",
+        "%{prj.location}/../Libs/",
         vulkanSDK.."/Lib/",
     }
 
     links{
-      "vulkan-1.lib",
-      "glfw3.lib"
+      "vulkan",
+      "glfw3",
+      "freetype","z","png16",
     }
+    postbuildcommands { 
+      "{COPY} %{cfg.targetdir}/libRenderer.a "..LibLocation..""
+    }
+
 
     filter{"configurations:Debug"}
       runtime "Debug"

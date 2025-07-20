@@ -1,20 +1,28 @@
 #include "AssetManager.h"
 #include "Renderer.h"
 #include "Application.h"
-#include <Windows.h>
 #include "Animator.h"
+
+  
+
+
+void ASSETLOADASSET(AssetHandle* data){
+			data->Manager->UnloadAsset(data->ID,data->Type);
+}
+
 void AssetManager::Init(Application* app)
 {
 	m_APP = app;
 }
 void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 {
+	/*
 	std::string FilePath{};
 	switch (TypesToLoad) {
 	case AssetType::TEXTURE: {
-		std::wstring str{};
+		std::string str{};
 		str.resize(200);
-		GetModuleFileName(nullptr, str.data(), 200);
+		str = Core::GetModuleFileName();
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 			FilePath = dir_entry.path().string();
 			
@@ -28,7 +36,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		
 			m_ResourceCount[TypesToLoad]++;
 
-			m_Resources[t] = Asset(TypesToLoad,texture);
+			m_Resources[t].CreateAsset((GUUID)t,texture,TypesToLoad,this);
 		}
 		break;
 	}
@@ -65,9 +73,9 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 
 			
 			m_ResourceCount[TypesToLoad]++;
-			m_Resources[Core::GetStringHash(FilePath)]= Asset(TypesToLoad,AtlasData);
+			//m_Resources[Core::GetStringHash(FilePath)].CreateAsset(Core::GetStringHash(FilePath), AtlasData,TypesToLoad,this);
 
-			/*
+			
 			
 			Texture** atlases = texture->GetTextureAtlas();
 			AtlasCount = texture->GetTextureAtlasSize();
@@ -81,7 +89,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 					m_Resources[t] = atlases[i];
 
 				}
-				*/
+				
 
 		
 		}
@@ -98,42 +106,18 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		break;
 	}
 	}
+	*/
+	
 
 
 }
+	
+void AssetManager::DebugStatistics(bool GUI){
+		//Core::Log(ErrorType::Info,"Font Count ",m_ResourceCount[AssetType::FONT]);
+		//Core::Log(ErrorType::Info,"Texture Count ",m_ResourceCount[AssetType::TEXTUREATLAS]);
 
-GUUID AssetManager::LoadAsset(void* Resource, AssetType type,std::string Name)
-{
-	GUUID ID = Core::GetStringHash(Name);
-	auto Index = m_Resources.find(ID);
-	if (Index == m_Resources.end()) {
-		Core::Log(ErrorType::Warning, "Resource is being loaded twice.If you intended to overwrite this resources please use ReloadResource() function");
-		m_ResourceCount[type]++;
-
-	}
-	m_Resources[ID] = Asset(type,Resource);
-	return ID;
 }
 
-GUUID AssetManager::ReloadAsset(void* Resource, AssetType type, std::string Name)
-{
-	GUUID ID = Core::GetStringHash(Name);
-	Asset oldAsset = m_Resources[ID];
-	switch (oldAsset.GetType()) {
-		case AssetType::TEXTURE:{
-			Texture* texture = (Texture*)oldAsset.GetData();
-			texture->~Texture();
-			break;
-		}
-		default: {
-			Core::Log(ErrorType::Error, "Implement other resource type cases at ReloardResource() function");
-			break;
-		}
-	}
-
-	Core::Log(ErrorType::Error, "This Function isn't implemented yet.");
-	return ID;
-}
 
 void AssetManager::LoadAnimation(const std::string& FolderPath)
 {
@@ -182,23 +166,11 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 		Animator* animator= new Animator(dir_entry.path().string(), atlasGUUID, FilePath);
 		animator->SetStage("IDLE");
 		m_Resources[atlasGUUID] = animator;
-		m_ResourceCount[AssetType::ANIMATION]++;
+		m_ResourceCount[AssetType::ANIMATION]++;::
 
 
 	
 	}*/
 	Core::Log(ErrorType::Error, "This function isn't implemented yet");
-}
-
-GUUID AssetManager::LoadTexture(const std::string& TexturePath)
-{
-		Texture* texture = m_APP->m_Renderer->LoadTexture(TexturePath);
-
-		std::string Temp = TexturePath.substr(0, TexturePath.find("."));
-
-		GUUID ID = Core::GetStringHash(Temp);
-		m_ResourceCount[AssetType::TEXTURE]++;
-		m_Resources[ID] = Asset(AssetType::TEXTURE,texture);
-		return ID;
 }
 

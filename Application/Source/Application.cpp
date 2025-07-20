@@ -24,17 +24,19 @@
      m_Renderer = new Renderer(desc, m_Window->GetHandle(), &m_InputSystem,&m_AssetManager);
 
 
-     m_GUIRenderer = new GUIRenderer(this,false);
      m_AssetManager.Init(this);
   
 
      m_Renderer->InitializePipeline(500);
 
+
+     m_FontSystem = new FontSystem(this);
+     m_GUIRenderer = new GUIRenderer(this, false);
  }
 
  void Application::AddLayer(Layer* layer)
  {
-     layer->SetSystem(this);
+     layer->Init(this,&m_AssetManager,m_Renderer);
     m_LayerController.CreateLayer(layer);
  }
 
@@ -75,6 +77,7 @@
 
  void Application::Run(){
     while(!glfwWindowShouldClose(m_Window->GetHandle())){
+        m_InputSystem.ResetMouseChange();
 
         m_DeltaTime = Time::GetTimeMs() - m_LastFrameTime;
         m_LastFrameTime = Time::GetTimeMs();
@@ -87,13 +90,13 @@
         m_LayerController.UpdateGUILayers();
 
         m_Renderer->EndFrame();
-
         m_InputSystem.ResetInput();
+
         glfwSwapBuffers(m_Window->GetHandle());
         glfwPollEvents();
-  
 
-        m_InputSystem.ResetMouseChange();
+  
+        m_AssetManager.DebugStatistics(false);
 
     }
  }
@@ -109,5 +112,12 @@
  {
      m_InputSystem.AddCallbacks(callbacks);
  }
+    Application::~Application(){
+        delete m_Window;
+        delete m_Renderer;
+        delete m_FontSystem;
+        delete m_GUIRenderer;
+    }
+
 
  

@@ -2,7 +2,7 @@
 
         void CommandPool::Init(VkDevice device,uint32_t QueueIndex){
 
-
+            m_Device = device;
 
             VkCommandPoolCreateInfo poolinfo{};
             poolinfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -14,4 +14,7 @@
                 Core::Log(ErrorType::Error,"Failed to create command pool.");
 
 
+        }
+        void CommandPool::Destroy(){
+            vkDestroyCommandPool(m_Device,m_CommandPool,nullptr);
         }

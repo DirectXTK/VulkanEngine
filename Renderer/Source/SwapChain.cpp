@@ -1,15 +1,11 @@
 #include "SwapChain.h"
 
-
-        SwapChain::SwapChain(VkInstance instance,VkPhysicalDevice pdevice,VkDevice device,VkSurfaceKHR surface,QueueFamilies queuesfamilies){
-
-            m_PDevice=pdevice;
-            m_Device = device;
+        SwapChain::SwapChain(VkInstance instance,Context context,VkSurfaceKHR surface){
+            m_Context = context;
             m_Surface= surface;
             m_Instance = instance;
-            m_QueueFamilies = queuesfamilies;
 
-            m_Details = SwapChain::GetSwapChainCapabilities(pdevice,surface);
+            m_Details = SwapChain::GetSwapChainCapabilities(m_Context->PDevice,surface);
         }
 
          void SwapChain::CreateSwapChain(){
@@ -33,9 +29,9 @@
              createinfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
              createinfo.clipped = VK_TRUE;
 
-              if(m_QueueFamilies.Graphics != m_QueueFamilies.Presentation)
+              if(m_Context->QueueFamil.Graphics != m_Context->QueueFamil.Presentation)
               {
-                uint32_t indices[] = { (uint32_t)m_QueueFamilies.Graphics,(uint32_t)m_QueueFamilies.Presentation};
+                uint32_t indices[] = { (uint32_t)m_Context->QueueFamil.Graphics,(uint32_t)m_Context->QueueFamil.Presentation};
                 createinfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
                 createinfo.queueFamilyIndexCount = 2;
                 
@@ -51,7 +47,7 @@
 
 
 
-              VkResult result =vkCreateSwapchainKHR(m_Device,&createinfo,nullptr,&m_SwapChain);
+              VkResult result =vkCreateSwapchainKHR(m_Context->Device,&createinfo,nullptr,&m_SwapChain);
             if(result != VK_SUCCESS)
             Core::Log(ErrorType::Error,"Failed to create swap chain.");
 
@@ -61,16 +57,18 @@
 
             uint32_t ImageCount{};
             std::vector<VkImage> Images{};
-            
-            vkGetSwapchainImagesKHR(m_Device,m_SwapChain,&ImageCount,nullptr);
+            TextureCreateInfo swapChainTextureInfo{};
+
+
+
+            vkGetSwapchainImagesKHR(m_Context->Device,m_SwapChain,&ImageCount,nullptr);
             m_SwapChainImages.resize(ImageCount);
             Images.resize(ImageCount);
-            vkGetSwapchainImagesKHR(m_Device,m_SwapChain,&ImageCount,Images.data());
+            vkGetSwapchainImagesKHR(m_Context->Device,m_SwapChain,&ImageCount,Images.data());
 
             for(uint32_t i =0;i < ImageCount;i++){
 
-                m_SwapChainImages[i].SetImage(Images[i]);
-                m_SwapChainImages[i].CreateView(m_SwapChainFormat,VK_IMAGE_ASPECT_COLOR_BIT,m_Device);
+                m_SwapChainImages[i]= new Texture(m_Context,surfaceformat.format,Images[i]);
             
             }
 
@@ -132,7 +130,6 @@
      }
      VkPresentModeKHR SwapChain::GetBestPresentationMode(){
 
-
         for(int i=0;i <m_Details.PresentModes.size();i++){
 
             if(m_Details.PresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
@@ -156,6 +153,16 @@
         extent.width = std::max(std::min(m_Details.Capabilities.maxImageExtent.width,  extent.width ),m_Details.Capabilities.minImageExtent.width );
         extent.height = std::max(std::min(m_Details.Capabilities.maxImageExtent.height,  extent.height ),m_Details.Capabilities.minImageExtent.height );;
       return extent;
+    }
+    SwapChain::~SwapChain(){
+
+      vkDestroySwapchainKHR(m_Context->Device,m_SwapChain,nullptr);
+      for(uint32_t i=0;i<m_SwapChainImages.size();i++){
+         m_SwapChainImages[i]->RemoveImage();
+         delete m_SwapChainImages[i];
+      }
+
+
     }
      
 

@@ -27,4 +27,35 @@ namespace Core {
 			}
 			return false;
 	}
+
+
+
+ std::string GetModuleFileName(){
+	
+	    #if defined(_WIN32)
+	    char path[MAX_PATH];
+	    GetModuleFileNameA(nullptr, path, MAX_PATH);
+	    return wstd::string(path);
+	#elif defined(__linux__)
+	   char buffer[PATH_MAX];
+	    ssize_t count = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+	    if (count == -1) {
+	        return "";
+	    }
+	    buffer[count] = '\0';
+	
+	    std::string narrowPath(buffer);
+	    return narrowPath;
+	#elif defined(__APPLE__)
+	    char path[PATH_MAX];
+	    uint32_t size = sizeof(path);
+	    if (_NSGetExecutablePath(path, &size) == 0) {
+	        return std::string(path);
+	    }
+	    return {};
+	#else
+	    return {};
+	#endif
+}
+
 }

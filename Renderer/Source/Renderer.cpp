@@ -7,6 +7,9 @@
 #include "Context.h"
 #include "AssetManager.h"
 #include "FontSystem.h"
+
+#include "Debug.h"
+
 Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem,AssetManager* assetManager) {
     m_Window = window;
     m_ClearColor = desc.ClearColor;
@@ -27,70 +30,53 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     m_Device = LogicalDevice::CreateLogicalDevice(m_PhysicalDevice, m_QueueFamilies);
     LogicalDevice::GetQueues(m_Device, m_QueueFamilies, &m_GraphicsQ, &m_PresentationQ);
 
-
-
-    m_SwapChain = new SwapChain(m_Instance, m_PhysicalDevice, m_Device, m_Surface, m_QueueFamilies);
+       Context context = new ContextData();
+    context->PDevice = m_PhysicalDevice;
+    context->Device = m_Device;
+    context->GraphicsQueue = m_GraphicsQ;
+    context->QueueFamil = m_QueueFamilies;
+    
+    m_Context = context;
+    m_SwapChain = new SwapChain(m_Instance,m_Context, m_Surface);
     m_SwapChainDetails = m_SwapChain->GetSwapChainCapabilities();
 
     m_SwapChain->CreateSwapChain();
 
     //One is reserved for white texture
-    m_TextureIDByOrder.resize(m_TextureSlotCount-1);
+    for(uint32_t i=0;i <MAX_FRAME_DRAWS;i++)
+        m_TextureIDByOrder[i].resize(m_TextureSlotCount-1);
     //Matrices
-    m_UniformBuffers = new UniformBuffer[MAX_FRAME_DRAWS];
-    for (int i = 0; i < MAX_FRAME_DRAWS; i++) {
-        m_UniformBuffers[i].Init(m_Device, m_PhysicalDevice, sizeof(glm::mat4));
-
-
-    }
+   
     BufferDesc UniformBufferDesc{};
     UniformBufferDesc.Device = m_Device;
     UniformBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     UniformBufferDesc.Physdevice = m_PhysicalDevice;
     UniformBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
     UniformBufferDesc.Usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    UniformBufferDesc.SizeBytes = sizeof(glm::mat4);
-
-    m_UniformGUICameraBuffer = new Buffer(UniformBufferDesc);
+    UniformBufferDesc.SizeBytes = sizeof(UniformCameraBufferData);
+    m_UniformBuffer = new Buffer(UniformBufferDesc);
 
   
+    CreateCommandBuffers();
+    context->CommandPool =m_GraphicsPool.GetCommandPool();
+    m_Context->CommandPool = m_GraphicsPool.GetCommandPool();
+
+    uint32_t* Pixels = new uint32_t[1];
+
+    for (int i = 0; i < 1; i++) {
+        Pixels[i] = 0xFFFFFFFF;
+    }
+    TextureCreateInfo whiteTextureCreateInfo{};
+    whiteTextureCreateInfo.Width =1;
+    whiteTextureCreateInfo.Height=1;
+    whiteTextureCreateInfo.Pixels = Pixels;
+    whiteTextureCreateInfo.Format = VK_FORMAT_R8G8B8A8_UNORM;
+    whiteTextureCreateInfo.ImageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT;
+
+    m_BlankWhiteTexture = new Texture(context, whiteTextureCreateInfo,TextureType::Texture);
+    delete[] Pixels;
     
-
-
-    //m_DescriptorLayout[0].Init(m_Device,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT);
-   
-
-   // m_DescriptorLayout[1].Init(m_Device, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
-    Context context = new ContextData();
-    context->PDevice = m_PhysicalDevice;
-    context->Device = m_Device;
-    context->GraphicsQueue = m_GraphicsQ;
-    context->QueueFamil = m_QueueFamilies;
-
-    m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT);
-    m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT);
-
-
-    m_DescriptorPool.CreatePool(context);
-
-    DescriptorSetDescription CameraDescriptordesc{ context };
-    CameraDescriptordesc.DescriptorCount = 1;
-    CameraDescriptordesc.DescriptorPool = m_DescriptorPool.GetPool();
-    CameraDescriptordesc.StageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    CameraDescriptordesc.Type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-
-    m_DescriptorSetCamera.Init(CameraDescriptordesc);
-    m_GUICameraDescriptor.Init(CameraDescriptordesc);
-
-    DescriptorSetDescription TextureDescriptordesc{ context };
-    TextureDescriptordesc.DescriptorCount = 4;
-    TextureDescriptordesc.DescriptorPool = m_DescriptorPool.GetPool();
-    TextureDescriptordesc.StageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    TextureDescriptordesc.Type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-   // m_DescriptorSetTextures.Init(TextureDescriptordesc);
-
-   
-
+    CreateDescriptorSets();
     m_RenderPass = Pipeline::CreateRenderPass(m_Device, m_SwapChain->GetFormat());
 
  
@@ -98,18 +84,32 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_R32G32_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
     VkFormat DepthStencilFormat = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
+    TextureCreateInfo colorAttachTextureInfo{};
+    colorAttachTextureInfo.Format =format;
+    colorAttachTextureInfo.Width = m_SwapChain->GetExtent().width;
+    colorAttachTextureInfo.Height = m_SwapChain->GetExtent().height;
+    colorAttachTextureInfo.ImageTilling =  VK_IMAGE_TILING_OPTIMAL;
+    colorAttachTextureInfo.ImageUsageFlags = VkImageUsageFlagBits(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+    colorAttachTextureInfo.MemoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    colorAttachTextureInfo.SharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
 
     m_ColorAttachments.resize(MAX_FRAME_DRAWS);
     m_DepthStencilAttachments.resize(MAX_FRAME_DRAWS);
     for (int i = 0; i < m_ColorAttachments.size(); i++) {
-
-        m_ColorAttachments[i] = Image(m_PhysicalDevice, m_Device, format, VK_SHARING_MODE_EXCLUSIVE, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_TILING_OPTIMAL, m_SwapChain->GetExtent().width, m_SwapChain->GetExtent().height);
-        m_DepthStencilAttachments[i] = Image(m_PhysicalDevice, m_Device, DepthStencilFormat, VK_SHARING_MODE_EXCLUSIVE, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_TILING_OPTIMAL, m_SwapChain->GetExtent().width, m_SwapChain->GetExtent().height,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_ASPECT_STENCIL_BIT);
+        m_ColorAttachments[i] =new Texture(m_Context,colorAttachTextureInfo,TextureType::ColorAttachment);
     }
+    //change creat info for depth buffer
+    colorAttachTextureInfo.ImageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+    colorAttachTextureInfo.ImageUsageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    colorAttachTextureInfo.Format = DepthStencilFormat;
+
+    for(uint32_t i=0;i < m_DepthStencilAttachments.size();i++)
+        m_DepthStencilAttachments[i] =new Texture(m_Context,colorAttachTextureInfo,TextureType::DepthStencilAttachment);
+
     CreateFrameBuffers();
 
 
-    CreateCommandBuffers();
     CreateSamaphore();
 
 
@@ -125,7 +125,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     m_VertexBufferGeometry.push_back(new Buffer(VertexBufferDesc));
     VertexBufferDesc.SizeBytes = m_VertexMaxCountGUI * sizeof(Vertex);
-    m_VertexBufferGUI.push_back(new Buffer(VertexBufferDesc));
+    m_VertexBufferGUI.push_back( new Buffer(VertexBufferDesc));
 
     m_VertexBufferOutlines.push_back(new Buffer(VertexBufferDesc));
 
@@ -148,9 +148,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     m_StaggingBufferGeometry.push_back(new Buffer(StaggingBufferDesc));
     StaggingBufferDesc.SizeBytes = m_VertexMaxCountGUI * sizeof(Vertex);
-    m_StaggingBufferGUI.push_back(new Buffer(StaggingBufferDesc));
+    m_StaggingBufferGUI.push_back( new Buffer(StaggingBufferDesc));
 
-    m_StaggingBufferOutlines.push_back(new Buffer(StaggingBufferDesc));
+    m_StaggingBufferOutlines.push_back( new Buffer(StaggingBufferDesc));
 
 
     //temp
@@ -182,6 +182,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
     m_IndexBuffers.push_back(new Buffer(IndexBufferDesc));
+
     m_IndexBuffers[0]->UploadToBuffer(m_Device, m_Indices, uint64_t(m_VertexCount * 1.5 * sizeof(uint32_t)));
 
     //VkFormat format2 = Core::ChooseBestFormat(m_PhysicalDevice,{ VK_FORMAT_R32G32_UINT },VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -189,7 +190,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 // m_FrameImageIndexed = new Image(m_PhysicalDevice,m_Device,format2,VK_SHARING_MODE_EXCLUSIVE,VK_IMAGE_USAGE_STORAGE_BIT,  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT           ,VK_IMAGE_TILING_OPTIMAL,m_SwapChain->GetExtent().width,m_SwapChain->GetExtent().height);
 
     BufferDesc PickingImageBufferDesc{};
-    PickingImageBufferDesc.SizeBytes = m_ColorAttachments[0].GetSize();
+    PickingImageBufferDesc.SizeBytes = m_ColorAttachments[0]->GetByteSize();
     PickingImageBufferDesc.Usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     PickingImageBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
     PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
@@ -199,85 +200,31 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
 
-    //TEMP code
+ 
 
 
-
-    uint32_t* Pixels = new uint32_t[1];
    
-  
-
-    for (int i = 0; i < 1; i++) {
-        Pixels[i] = 0xFFFFFFFF;
-    }
     context->CommandPool = m_GraphicsPool.GetCommandPool();
+    //Init CameraUniformBuffer and descriptors.
+    m_UniformCameraData.GeometryCamera = glm::identity<glm::mat4>();
+    m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
 
-    m_BlankWhiteTexture = new Texture(context, 1, 1,4, Pixels);
+    m_UniformBuffer->UploadToBuffer(m_Device,&m_UniformCameraData,sizeof(UniformCameraBufferData));
 
-
-
-    //Initialize GUI renderer
-    m_DescriptorSetCamera.WriteTo(0, *m_UniformBuffers[0].GetBuffer(), sizeof(glm::mat4));
-    m_GUICameraDescriptor.WriteTo(0, *m_UniformGUICameraBuffer->GetBuffer(), sizeof(glm::mat4));
-
-    if (desc.InitialCamera) 
-     m_UniformBuffers->UploadToBuffer(m_Device, &desc.InitialCamera->GetViewProj(), sizeof(glm::mat4));
-
-    
-   // m_DescriptorSetTextures.WriteToTexture(0, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
-  //  m_DescriptorSetTextures.WriteToTexture(1, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
-   // m_DescriptorSetTextures.WriteToTexture(2, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
-  //  m_DescriptorSetTextures.WriteToTexture(3, WhiteTexture.GetImageView(), WhiteTexture.GetSampler());
-
-    m_Context = new ContextData();
-    m_Context->Device = m_Device;
-    m_Context->PDevice = m_PhysicalDevice;
-    m_Context->QueueFamil = m_QueueFamilies;
-    m_Context->GraphicsQueue = m_GraphicsQ;
-    m_Context->CommandPool = m_GraphicsPool.GetCommandPool();
+    m_DescriptorSetCamera.WriteTo(0,1,*m_UniformBuffer->GetBuffer(),sizeof(UniformCameraBufferData));
 
 
  }
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
  {
-     uint32_t DescriptorPoolSize = (uint32_t)std::ceil((float)(MaxTextureCount*10) / (float)m_TextureSlotCount);
-     for (uint64_t i = 0; i < DescriptorPoolSize; i++) {
+    
 
-     m_DescriptorPoolTextures.AddDescriptorType(m_TextureSlotCount, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-     m_DescriptorPoolTextures.CreatePool(m_Context);
-     }
-
-     DescriptorSetDescription DescriptorDesc{};
-     DescriptorDesc.context = m_Context;
-     DescriptorDesc.DescriptorCount = 4;
-     DescriptorDesc.DescriptorPool = m_DescriptorPoolTextures.GetPool();
-     DescriptorDesc.StageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-     DescriptorDesc.Type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-
-     
-
-     VkDescriptorSetLayout* descriptorsetlayout = new VkDescriptorSetLayout[3];
+    std::array<VkDescriptorSetLayout,2> descriptorLayout;
+    descriptorLayout[0]= m_DescriptorSetCamera.GetDescriptorLayout();
+    descriptorLayout[1]= m_DescriptorSetTextures.GetDescriptorLayout();
 
 
-        uint32_t Offset{ 0 };
-     for (uint32_t i = 0; i < uint32_t(DescriptorPoolSize*0.5f); i++) {
-         m_DescriptorSetTextures.emplace_back();
-         m_DescriptorSetTextures[i].Init(DescriptorDesc);
-
-
-
-        for (uint32_t j = 0; j < m_TextureSlotCount; j++) {
-         m_DescriptorSetTextures[i].WriteToTexture(j, m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
-
-        }
-     }
-     
-        descriptorsetlayout[0] = m_DescriptorSetCamera.GetDescriptorLayout();
-        descriptorsetlayout[1] = m_DescriptorSetTextures[0].GetDescriptorLayout();
-        descriptorsetlayout[2] = m_GUICameraDescriptor.GetDescriptorLayout();
-
-
-     m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device, descriptorsetlayout,3);
+     m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device, descriptorLayout.data(),descriptorLayout.size());
      
      PipelineDesc pipelineDesc{};
      pipelineDesc.RenderPass = m_RenderPass;
@@ -297,6 +244,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
      m_Pipeline = Pipeline::CreatePipeline(pipelineDesc, m_Device);
+     delete[] pipelineDesc.VertexStageInput;
  }
     void Renderer::BeginFrame(Camera2D* camera){
                //RecordCommands(m_VertexCount,0);
@@ -310,7 +258,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_VertexCountPerDrawCall = 0;
 
             m_Camera = *camera;
-            m_CameraViewProj = m_Camera.GetViewProj();
+
+              m_UniformCameraData.GeometryCamera = m_Camera.GetViewProj();
+              m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
+
+            m_UniformBuffer->UploadToBuffer(m_Device, &m_UniformCameraData, sizeof(m_UniformCameraData));
+            m_DescriptorSetCamera.WriteTo(0,1,*m_UniformBuffer->GetBuffer(),sizeof(m_UniformCameraData));
+
 
             VkSwapchainKHR swapchain = m_SwapChain->GetSwapChain();
         
@@ -318,6 +272,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
              vkWaitForFences(m_Device,1,&m_DrawFences[m_CurrentFrame],true,std::numeric_limits<uint64_t>::max());
 
         vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),std::numeric_limits<uint64_t>::max(),m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
+            m_Textures[m_CurrentFrame].clear();
 
 
        
@@ -333,11 +288,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
            
             VkBufferImageCopy  copyregion{};
-            copyregion.bufferImageHeight = m_ColorAttachments[0].GetExtent().height;
-            copyregion.bufferRowLength = m_ColorAttachments[0].GetExtent().width;
+            copyregion.bufferImageHeight = m_ColorAttachments[0]->GetHeight();
+            copyregion.bufferRowLength = m_ColorAttachments[0]->GetWidth();
             copyregion.bufferOffset = 0;
 
-            copyregion.imageExtent = { m_ColorAttachments[0].GetExtent().width,m_ColorAttachments[0].GetExtent().height,1 };
+            copyregion.imageExtent = { m_ColorAttachments[0]->GetWidth(),m_ColorAttachments[0]->GetHeight(),1 };
             copyregion.imageOffset = { 0,0,0 };
             copyregion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             copyregion.imageSubresource.mipLevel = 0;
@@ -348,7 +303,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
             if (m_CurrentFrame ==1)
-                vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0].GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer->GetBuffer(), 1, &copyregion);
+                vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0]->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer->GetBuffer(), 1, &copyregion);
             
           
 
@@ -369,8 +324,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     {
 
 
-        VertexBuffers.push_back(new Buffer(VertexBuffers[0]->GetBufferDesc()));
-        Stagging.push_back(new Buffer(Stagging[0]->GetBufferDesc()));
+        VertexBuffers.push_back( new Buffer(VertexBuffers[0]->GetBufferDesc()));
+        Stagging.push_back( new Buffer(Stagging[0]->GetBufferDesc()));
       
         
     }
@@ -378,8 +333,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     {
         uint32_t Index{ 1 };
 
-        for (auto& it : m_Textures) {
-           m_DescriptorSetTextures[m_DrawCallCountGUI+m_DrawCallCountGeometry].WriteToTexture(Index, it.second.texture->GetImageView(), it.second.texture->GetSampler());
+        for (auto& it : m_Textures[m_CurrentFrame]) {
+            TextureRenderingData textureData = it.second;
+            Texture* texture = (Texture*)textureData.texture.GetData();
+
+            m_DescriptorSetTextures.WriteToTexture(textureData.Index,1,texture->GetImageView(), texture->GetSampler());
             Index++;
         }
 
@@ -389,8 +347,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         if (m_DrawCallCountGUI == m_VertexBufferGUI.size())
             CreateNewBufferForBatch(m_VertexBufferGUI, m_StaggingBufferGUI);
 
-        glm::mat4 Identity = glm::identity<glm::mat4>();
-        m_UniformGUICameraBuffer->UploadToBuffer(m_Device, &Identity, sizeof(glm::mat4));
 
         m_StaggingBufferGUI[m_DrawCallCountGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
 
@@ -405,10 +361,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-
         m_DrawCallCountGUI++;
         m_VertexPointer = 0;;
-        m_Textures.clear();
+
+        //m_Textures.clear();
+
     }
     void Renderer::FlushOutlines()
     {
@@ -421,7 +378,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         if (m_DrawCallCountOutlines == m_VertexBufferOutlines.size())
             CreateNewBufferForBatch(m_VertexBufferOutlines, m_StaggingBufferOutlines);
 
-        m_UniformBuffers[0].UploadToBuffer(m_Device, &m_CameraViewProj, sizeof(glm::mat4));
 
         m_StaggingBufferOutlines[m_DrawCallCountOutlines]->UploadToBuffer(m_Device, m_VertexOutline, sizeof(Vertex) * m_VertexCountOutlines);
 
@@ -453,13 +409,28 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             return;
         }
 
-        for (uint32_t i = 0; i < m_Textures.size(); i++) {
-            Texture* texture = (Texture*)m_AssetManager->GetAsset(m_TextureIDByOrder[i]).GetData();
-            if (texture)
-                m_DescriptorSetTextures[m_DrawCallCountGeometry].WriteToTexture(i + 1, texture->GetImageView(), texture->GetSampler());
+        std::vector<Texture*> debugTextures{};
+        std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
+        auto& textures = m_Textures[m_CurrentFrame];
+
+        //set the first descriptor to white texture for drawing without textures
+        m_DescriptorSetTextures.WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
+
+
+        for (uint32_t i = 0; i < textures.size(); i++) {
+            TextureRenderingData textureData = textures[textureIds[i]];
+            Texture* texture = (Texture*)textureData.texture.GetData();
+
+            if (textureData.texture){
+                m_DescriptorSetTextures.WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
+                debugTextures.push_back(texture);
+            }
             else
                 Core::Log(ErrorType::Error, "Texture id was invalid.");
         }
+
+        //Debug
+        Debug::ValidateDrawBatch(debugTextures);
 
 
         if (m_VertexPointer == m_VertexCountRemaining) {
@@ -478,12 +449,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         else {
             m_VertexCountRemaining -= m_VertexPointer;
         }
+        
 
         m_DrawCommandsGeometry.push_back({ m_VertexPointer,m_CurrentVertexBufferIndex,m_VertexBufferOffset,m_DrawCallCountGUI + m_DrawCallCountGeometry });
 
 
 
-            m_UniformBuffers[0].UploadToBuffer(m_Device, &m_CameraViewProj, sizeof(glm::mat4));
 
             m_StaggingBufferGeometry[m_CurrentVertexBufferIndex]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
 
@@ -509,7 +480,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             m_VertexPointer = 0;
             m_DrawCallCountGeometry++;
-            m_Textures.clear();
         }
     
 
@@ -517,6 +487,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         void Renderer::EndFrame()
         {
+          
             FlushOutlines();
             FlushGUI();
 
@@ -561,7 +532,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             presentinfo.swapchainCount = 1;
             presentinfo.pSwapchains = &swapchain;
             presentinfo.pImageIndices = &m_ImageIndex;
-
+            
 
             result = vkQueuePresentKHR(m_PresentationQ, &presentinfo);
 
@@ -571,26 +542,32 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAME_DRAWS;
             m_GUIRendering = false;
+
+            m_CurrentCameraDescriptorSetOffset =0;
+            m_CurrentTextureDescriptorSetOffset =1;
+
         }
     
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,int TextureIndex)
     {
         GUUID CurrentTextureHandle{};
-        Texture* CurrentTexture{};
+        Asset<Texture> TexutreAsset{};
+        //texture map gets current container
+        auto& textures = m_Textures[m_CurrentFrame];
+        std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
 
         if (m_VertexPointer + 4 > m_VertexCount )
             FlushGeometry();
         if (TextureHandle != 0) {
-            Asset asset = m_AssetManager->GetAsset(TextureHandle);
+            AssetType type = m_AssetManager->GetAssetType(TextureHandle);
 
 
 
 
-                switch (asset.GetType()) {
+                switch (type) {
                 case AssetType::TEXTURE: {
                     CurrentTextureHandle = TextureHandle;
-                    CurrentTexture = (Texture*)asset.GetData();
 
                     m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
                     m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
@@ -599,10 +576,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     break;
                 }
                 case AssetType::TEXTUREATLAS:{
-                    TextureAtlasData* textureAtlasData = (TextureAtlasData*)asset.GetData();
+                    TextureAtlasData* textureAtlasData = (TextureAtlasData*)m_AssetManager->GetAsset<TextureAtlasData>(TextureHandle).GetData();
 
-                    CurrentTextureHandle = ((TextureAtlasData*)asset.GetData())->TextureID;
-                    CurrentTexture = (Texture*)m_AssetManager->GetAsset(textureAtlasData->TextureID).GetData();
+                    CurrentTextureHandle = textureAtlasData->TextureID;
 
                     m_Vertices[m_VertexPointer].TexCoords = textureAtlasData->Data[TextureIndex].Coords[0];
                     m_Vertices[m_VertexPointer + 1].TexCoords = textureAtlasData->Data[TextureIndex].Coords[1];
@@ -619,19 +595,21 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 }
 
 
-                if (m_Textures.find(CurrentTextureHandle) == m_Textures.end()) {
-                    if (m_Textures.size() == m_TextureSlotCount - 1)
+                if (textures.find(CurrentTextureHandle) == textures.end()) {
+                    if (textures.size() == m_TextureSlotCount - 1)
                         FlushGeometry();
-                    m_Textures[CurrentTextureHandle] = { CurrentTexture ,(uint32_t)m_Textures.size() + 1 };
-                    m_TextureIDByOrder[m_Textures.size() - 1] = CurrentTextureHandle;
+                    m_CurrentTextureDescriptorSetOffset++;
+                    TexutreAsset= m_AssetManager->GetAsset<Texture>(CurrentTextureHandle);
+                    textures[CurrentTextureHandle] = { TexutreAsset ,m_CurrentTextureDescriptorSetOffset};
+                    textureIds[textures.size() - 1] = CurrentTextureHandle;
 
                 }
-                uint32_t RendererTextureIndex = m_Textures[CurrentTextureHandle].Index;
+                uint32_t RendererTextureIndex = textures[CurrentTextureHandle].Index;
 
-                m_Vertices[m_VertexPointer].TextureID = RendererTextureIndex;
-                m_Vertices[m_VertexPointer + 1].TextureID = RendererTextureIndex;
-                m_Vertices[m_VertexPointer + 2].TextureID = RendererTextureIndex;
-                m_Vertices[m_VertexPointer + 3].TextureID = RendererTextureIndex;
+                m_Vertices[m_VertexPointer].TextureID = m_CurrentTextureDescriptorSetOffset;
+                m_Vertices[m_VertexPointer + 1].TextureID = m_CurrentTextureDescriptorSetOffset;
+                m_Vertices[m_VertexPointer + 2].TextureID = m_CurrentTextureDescriptorSetOffset;
+                m_Vertices[m_VertexPointer + 3].TextureID = m_CurrentTextureDescriptorSetOffset;
          
        
 
@@ -670,15 +648,19 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID)
     {
+        //texture map gets current container
+        auto& textures = m_Textures[m_CurrentFrame];
+        std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
+
         if (m_VertexPointer + 4 > m_VertexCount)
             FlushGeometry();
-            if (m_Textures.find(Animation.GetCurrentTextureID()) == m_Textures.end()) {
-                if (m_Textures.size() == m_TextureSlotCount - 1)
+            if (textures.find(Animation.GetCurrentTextureID()) == textures.end()) {
+                if (textures.size() == m_TextureSlotCount - 1)
                     FlushGeometry();
-                m_Textures[Animation.GetCurrentTextureID()] = { (Texture*)m_AssetManager->GetAsset(Animation.GetCurrentTextureID()).GetData() ,(uint32_t)m_Textures.size() + 1};
-                m_TextureIDByOrder[m_Textures.size() - 1] = Animation.GetCurrentTextureID();
+                //m_Textures[Animation.GetCurrentTextureID()] = { m_AssetManager->GetAsset(Animation.GetCurrentTextureID()) ,(uint32_t)textures.size() + 1};
+                textureIds[textures.size() - 1] = Animation.GetCurrentTextureID();
             }
-            TextureRenderingData texture = m_Textures[Animation.GetCurrentTextureID()];
+            TextureRenderingData texture = textures[Animation.GetCurrentTextureID()];
             if (!texture.texture)
                 return;
             m_Vertices[m_VertexPointer].TextureID = texture.Index;
@@ -762,9 +744,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_VertexPointer += 4;
     }
 
-    void Renderer::SetCurrentFont(Texture* TextureFontAtlas)
+    void Renderer::SetCurrentFont(Asset<Font> FontAsset)
     {
-        m_FontTextureAtlas = TextureFontAtlas;
+        
+        m_CurrentFont = FontAsset;
+       
+
+   
     }
 
     void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
@@ -773,37 +759,49 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //
         //temp
         //Char being edited index
-
-        Asset asset = m_AssetManager->GetAsset(Core::GetStringHash("Font"));
-        Font* font = (Font*)asset.GetData();
-        Texture* FontAtlasTexture{};
-
-        Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
-        float CharSizeNorm = CharSizePixels / GetViewPortExtent().width;
-
-        float SpaceBetweenLines{ (CharSizePixels/ GetViewPortExtent().height) * .25f };
-
-        float OffsetX{ FixedPadding  };
-        float OffsetY{ SpaceBetweenLines };
-        GUUID TextureHandle = font->TextureID;
-        float Space{ 0.06f };
-
-
-        if (asset.GetType() != AssetType::FONT)
+        if (m_CurrentFont.GetType() != AssetType::FONT)
         {
             Core::Log(ErrorType::Error, "Invalid type");
             return;
         }
 
-        FontAtlasTexture = (Texture*)m_AssetManager->GetAsset(font->TextureID).GetData();
+        auto& textures = m_Textures[m_CurrentFrame];
+        std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
+        Font* font = (Font*)m_CurrentFont.GetData();
+        Texture* FontAtlasTexture{};
+
+        Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
+        float CharSizeNorm{};
+
+        float SpaceBetweenLines{ };
+
+        float OffsetX{ FixedPadding  };
+        float OffsetY{ };
+        Float2 MinCord{}, MaxCord{};
+        GUUID TextureHandle = font->TextureID;
+        float Space{ 0.06f };
+
+
+       
+
+        if(font->TextureAsset.GetType() != AssetType::TEXTURE){
+            Core::Log(ErrorType::Error, "Invalid type");
+            return;
+        }
+        FontAtlasTexture = (Texture*)font->TextureAsset.GetData();
+
+         CharSizeNorm = CharSizePixels / FontAtlasTexture->GetWidth();
+         SpaceBetweenLines={ (CharSizePixels / FontAtlasTexture->GetHeight()) * .25f };
+         OffsetY={ SpaceBetweenLines+ CharSizeNorm };
+
 
      
-        if (m_Textures.size() == m_TextureSlotCount - 1)
+        if (textures.size() == m_TextureSlotCount - 1)
             FlushGeometry();
-        if (m_Textures.find(TextureHandle) == m_Textures.end()) {
-         m_Textures[TextureHandle] = { FontAtlasTexture ,(uint32_t)m_Textures.size() + 1 };
-         m_TextureIDByOrder[m_Textures.size() - 1] = TextureHandle;
-
+        if (textures.find(TextureHandle) == textures.end()) {
+        m_CurrentTextureDescriptorSetOffset++;
+         textures[TextureHandle] = { font->TextureAsset ,m_CurrentTextureDescriptorSetOffset };
+         textureIds[textures.size() - 1] = TextureHandle;
         }
 
         //Do this for every letter
@@ -818,7 +816,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             //draw pointer
             if(PointerIndex ==i)
-                DrawQuad({ BoundingBox[0].x + OffsetX -(FixedPadding*0.5f) ,BoundingBox[1].y- OffsetY - (CharSizeNorm * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding * 0.5f ,CharSizeNorm*0.5f }, 0);
+                DrawQuad({ BoundingBox[0].x + OffsetX -(FixedPadding*0.5f) ,BoundingBox[1].y- OffsetY + (CharSizeNorm * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding * 0.5f ,CharSizeNorm * 0.75f }, 0);
 
             //edge cases
             //Special cases
@@ -839,16 +837,16 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (m_VertexPointer + 8 > m_VertexCount)
                 FlushGeometry();
           
-            TextureRenderingData texture = m_Textures[TextureHandle];
+            TextureRenderingData texture = textures[TextureHandle];
                 Size.x = (float)font->Coords[LetterIndex].Width;
-                Size.y = (float)font->Coords[LetterIndex].Height;
+                Size.y = (float)font->Coords[LetterIndex].Height/1440;
                 //its the size of the bitmap not the character itself.
 
 
-            m_Vertices[m_VertexPointer].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
+            m_Vertices[m_VertexPointer].TextureID = m_CurrentTextureDescriptorSetOffset;
+            m_Vertices[m_VertexPointer + 1].TextureID = m_CurrentTextureDescriptorSetOffset;
+            m_Vertices[m_VertexPointer + 2].TextureID = m_CurrentTextureDescriptorSetOffset;
+            m_Vertices[m_VertexPointer + 3].TextureID = m_CurrentTextureDescriptorSetOffset;
             if (LetterIndex != -1) {
 
                 m_Vertices[m_VertexPointer].TexCoords = font->Coords[LetterIndex].Coords[0];
@@ -866,46 +864,44 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             float RemainingOffset{};
 
-            RemainingOffset = CharSizePixels - Size.x;
-            Size.x = Size.x / GetViewPortExtent().width;
-            if (RemainingOffset < 0)
-                Size.x = CharSizeNorm;
-            else
-                OffsetX += (RemainingOffset * 0.5f) / GetViewPortExtent().width;
-           // Size.x = CharSizeNorm;
-            Size.y = std::min(CharSizeNorm, Size.y / GetViewPortExtent().height);
+            RemainingOffset = CharSizePixels - font->Coords[LetterIndex].Width;
+            if (RemainingOffset > 0)
+                OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
+       
 
+            MaxCord = font->MaxCord[LetterIndex];
+            MinCord = font->MinCord[LetterIndex];
 
             //Stop drawing if text is going out of bounds.
-            if (BoundingBox[0].x + Size.x + OffsetX > BoundingBox[3].x) {
+            if (BoundingBox[0].x + CharSizeNorm + OffsetX > BoundingBox[3].x) {
 
                 OffsetY += SpaceBetweenLines + CharSizeNorm;
                 OffsetX = FixedPadding;
 
             }
-            if (BoundingBox[1].y - Size.y - OffsetY < BoundingBox[0].y)
+            if (BoundingBox[1].y - CharSizeNorm - OffsetY < BoundingBox[0].y)
                 break;
 
-   
 
 
-            OffsetX = std::round(OffsetX * GetViewPortExtent().width * 0.5f) / (GetViewPortExtent().width*0.5f);
+            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x + OffsetX + MinCord.x,BoundingBox[1].y - OffsetY + MinCord.y,0.0f };
+            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x + OffsetX + MinCord.x,BoundingBox[1].y - OffsetY + MaxCord.y,0.0f };
+            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x + OffsetX + MaxCord.x,BoundingBox[1].y - OffsetY + MaxCord.y,0.0f };
+            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x + OffsetX + MaxCord.x,BoundingBox[1].y - OffsetY + MinCord.y,0.0f };
+
+
+
+
+            //OffsetX = std::round(OffsetX * GetViewPortExtent().width * 0.5f) / (GetViewPortExtent().width*0.5f);
            
-
-            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x+ OffsetX,BoundingBox[1].y- CharSizeNorm -OffsetY,0.0f };
-            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x+ OffsetX,BoundingBox[1].y - CharSizeNorm + Size.y - OffsetY,0.0f };
-            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x+ OffsetX + Size.x,BoundingBox[1].y - CharSizeNorm + Size.y -OffsetY ,0.0f };
-            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x+ OffsetX + Size.x,BoundingBox[1].y - CharSizeNorm - OffsetY,0.0f};
+            if (RemainingOffset > 0)
+                OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
+    
 
 
+     
 
-            //add half of the missing size to the offest
-            if (RemainingOffset < 0)
-                Size.x = CharSizeNorm;
-            else
-                OffsetX += (RemainingOffset * 0.5f) / GetViewPortExtent().width;
-
-
+          
 
             m_Vertices[m_VertexPointer].Color = Color;
             m_Vertices[m_VertexPointer + 1].Color = Color;
@@ -927,7 +923,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             //Draw the pointer
           
 
-            OffsetX += Size.x + FixedPadding;
+            OffsetX += std::abs(MinCord.x)+MaxCord.x+ FixedPadding;
         }
        // OffsetX = -FixedPadding;
        // Core::Log(ErrorType::Info, OffsetX / 4);
@@ -1012,7 +1008,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         m_FrameBuffers.resize(MAX_FRAME_DRAWS);
         for(int i =0;i < m_FrameBuffers.size();i++){
-        Image images[]= {*m_SwapChain->GetSwapChainImage(i),m_ColorAttachments[i],m_DepthStencilAttachments[i]};
+        Texture* images[3]= {m_SwapChain->GetSwapChainImage(i),m_ColorAttachments[i],m_DepthStencilAttachments[i]};
                 m_FrameBuffers[i].Init(m_Device,m_SwapChain,m_RenderPass,images,3);
         }
 
@@ -1106,7 +1102,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         context->GraphicsQueue = m_GraphicsQ;
         context->QueueFamil = m_QueueFamilies;
         context->CommandPool = m_GraphicsPool.GetCommandPool();
-        Texture*texture = new Texture(context, Path);
+
+        TextureCreateInfo createInfo{};
+        createInfo.Format = VK_FORMAT_R8G8B8A8_UNORM;
+        createInfo.ImageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT;
+        Texture*texture = new Texture(context,createInfo, Path,TextureType::Texture);
         return texture;
     }
 
@@ -1117,10 +1117,67 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 Renderer::~Renderer(){
     vkDeviceWaitIdle(m_Device);
 
+    //deleting all buffers.
+    for(uint32_t i =0;i < m_VertexBufferGeometry.size();i++)
+        delete m_VertexBufferGeometry[i];
+    
+    for(uint32_t i=0;i < m_IndexBuffers.size();i++)
+        delete m_IndexBuffers[i];
+    
+    for(uint32_t i=0;i < m_StaggingBufferGeometry.size();i++)
+        delete m_StaggingBufferGeometry[i];
 
+    for(uint32_t i=0;i < m_VertexBufferGUI.size();i++)
+        delete m_VertexBufferGUI[i];
+    for(uint32_t i=0;i < m_StaggingBufferGUI.size();i++)
+        delete m_StaggingBufferGUI[i];
+
+    for(uint32_t i=0;i < m_VertexBufferOutlines.size();i++)
+        delete m_VertexBufferOutlines[i];
+    for(uint32_t i=0;i < m_StaggingBufferOutlines.size();i++)
+        delete m_StaggingBufferOutlines[i];
+    delete m_BlankWhiteTexture;
+
+    delete m_UniformBuffer;
+    delete m_PickingImageBuffer;
+    
+    m_FrameBuffers.clear();
+    
+    for(uint32_t i =0;i < MAX_FRAME_DRAWS;i++)
+    m_Textures[i].clear();
+    
+    for(uint32_t i=0;i < m_DepthStencilAttachments.size();i++)
+    delete m_DepthStencilAttachments[i];
+    for(uint32_t i=0;i < m_ColorAttachments.size();i++)
+    delete m_ColorAttachments[i];
+    for(uint32_t i=0;i < m_RenderFinishedS.size();i++)
+    vkDestroySemaphore(m_Device,m_RenderFinishedS[i],nullptr);
+    for(uint32_t i=0;i < m_ImageAvailS.size();i++)
+    vkDestroySemaphore(m_Device,m_ImageAvailS[i],nullptr);
+    for(uint32_t i=0;i < m_DrawFences.size();i++)
+    vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
+    m_CurrentFont.~Asset();
+    
+    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetCamera.GetDescriptorLayout(),nullptr);
+    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetTextures.GetDescriptorLayout(),nullptr);
+    m_DescriptorPool.Destroy();
+    
+    vkDestroyRenderPass(m_Device,m_RenderPass,nullptr);
+    vkDestroyPipelineLayout(m_Device,m_PipelineLayout,nullptr);
+    vkDestroyPipeline(m_Device,m_Pipeline,nullptr);
+    vkFreeCommandBuffers(m_Device,m_GraphicsPool.GetCommandPool(),m_CommandBuffers.size(),m_CommandBuffers.data());
+    vkDestroyCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),nullptr);
+    
+    delete m_SwapChain;
+    
     vkDestroySurfaceKHR(m_Instance,m_Surface,nullptr);
     vkDestroyDevice(m_Device,nullptr);
+
+    auto destroyDebugMessenger = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_Instance,"vkDestroyDebugUtilsMessengerEXT");
+    destroyDebugMessenger(m_Instance,m_Messenger,nullptr);
+    
     vkDestroyInstance(m_Instance,nullptr);
+
 }
 
 void Renderer::StartRecordingCommands()
@@ -1141,7 +1198,7 @@ void Renderer::StartRecordingCommands()
 
 void Renderer::StopRecordingCommands()
 {
-
+    
     vkEndCommandBuffer(m_CurrentCommandBuffer);
     m_DrawCommandsGeometry.resize(0);
     m_DrawCommandsOutlines.resize(0);
@@ -1160,7 +1217,6 @@ void Renderer::DrawBatch()
     RenderPassBeginInfo.pClearValues = ClearColor;          
     RenderPassBeginInfo.clearValueCount = 3;
     RenderPassBeginInfo.framebuffer = m_FrameBuffers[m_CurrentFrame].GetFrameBuffer(0);
-
 
     VkDeviceSize Offset{ 0 };
     vkCmdBeginRenderPass(m_CurrentCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -1181,13 +1237,13 @@ void Renderer::DrawBatch()
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
         VkDescriptorSet DescriptorSets[2];
-        DescriptorSets[1] = m_DescriptorSetTextures[DrawCall.DescriptorSetTextureIndex].GetDescriptorSet();
+        DescriptorSets[0] = m_DescriptorSetCamera.GetDescriptorSet();
+        DescriptorSets[1] = m_DescriptorSetTextures.GetDescriptorSet();
  
 
        
-            DescriptorSets[0] = m_DescriptorSetCamera.GetDescriptorSet();
-
-
+        static uint32_t uniformBufferIndex{0};
+        vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
 
@@ -1206,15 +1262,16 @@ void Renderer::DrawBatch()
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
         VkDescriptorSet DescriptorSets[2];
-        DescriptorSets[1] = m_DescriptorSetTextures[0].GetDescriptorSet();
+        DescriptorSets[0] = m_DescriptorSetCamera.GetDescriptorSet();
+        DescriptorSets[1] = m_DescriptorSetTextures.GetDescriptorSet();
 
        
-            DescriptorSets[0] = m_DescriptorSetCamera.GetDescriptorSet();
 
 
       
 
-
+        static uint32_t uniformBufferIndex{0};
+        vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
 
@@ -1233,15 +1290,15 @@ void Renderer::DrawBatch()
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
         VkDescriptorSet DescriptorSets[2];
-        DescriptorSets[1] = m_DescriptorSetTextures[m_DrawCommandsGUI[i].DescriptorSetTextureIndex].GetDescriptorSet();
-
-
-        DescriptorSets[0] = m_GUICameraDescriptor.GetDescriptorSet();
+        DescriptorSets[0] = m_DescriptorSetCamera.GetDescriptorSet();
+        DescriptorSets[1] = m_DescriptorSetTextures.GetDescriptorSet();
 
 
 
 
 
+       static  uint32_t uniformBufferIndex{1};
+        vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
 
@@ -1252,6 +1309,39 @@ void Renderer::DrawBatch()
 
     m_VertexCountPerDrawCall = 0;
 }
+void Renderer::CreateDescriptorSets(){
+    uint32_t descriptorTextureCount = 1000;
+
+   m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+   m_DescriptorPool.AddDescriptorType(descriptorTextureCount, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
+    m_DescriptorPool.CreatePool(m_Context);
+
+    DescriptorSetDescription CameraDescriptordesc{ m_Context };
+    CameraDescriptordesc.DescriptorCount = 1;
+    CameraDescriptordesc.DescriptorPool = m_DescriptorPool.GetPool();
+    CameraDescriptordesc.StageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    CameraDescriptordesc.Type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+    m_DescriptorSetCamera.Init(CameraDescriptordesc);
+
+
+    DescriptorSetDescription TextureDescriptordesc{ m_Context };
+    TextureDescriptordesc.DescriptorCount = descriptorTextureCount;
+    TextureDescriptordesc.DescriptorPool = m_DescriptorPool.GetPool();
+    TextureDescriptordesc.StageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    TextureDescriptordesc.Type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+
+    m_DescriptorSetTextures.Init(TextureDescriptordesc);
+
+
+
+
+    //overwriting all descriptor to blank white .
+     m_DescriptorSetTextures.WriteToTexture(0,m_DescriptorSetTextures.GetDescriptorCount(), m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
+
+    }
 
 void Renderer::DrawGUIBatch()
 {

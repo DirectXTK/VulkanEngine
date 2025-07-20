@@ -10,7 +10,9 @@ layout(location =3) flat in uint TexID;
 layout(location =0) out vec4 OutInColor;
 layout(location =1) out uvec2 OutInColor2;
 
-layout(set =1 ,binding =0) uniform sampler2D TextureSampler[4];
+layout(set =1 ,binding =0) uniform sampler2D TextureSampler[1000];
+
+
 
 void main(){
     OutInColor = InColor*texture(TextureSampler[TexID],TexCoords);

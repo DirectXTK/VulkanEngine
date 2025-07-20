@@ -1,11 +1,12 @@
 #pragma once
 #include "AppCore.h"
-#include "Renderer.h"
+#include <Renderer.h>
 #include "Window.h"
 #include "InputSystem.h"
 #include "Layer.h"
 #include "AssetManager.h"
 #include "Collider.h"
+#include "FontSystem.h"
 struct ApplicationSpecs{
     uint32_t WindowHeight{500};
      uint32_t WindowWidth{500};
@@ -27,8 +28,6 @@ public:
 
     GUUID GetCurrentlyHoveredPixelID();
 
-    Asset GetAsset(GUUID id) { return m_AssetManager.GetAsset(id); }
-    Asset GetAsset(const std::string& Path) { return m_AssetManager.GetAsset(Core::GetStringHash(Path)); }
 
     AssetManager* GetAssetManager() { return &m_AssetManager; }
     void LoadAssets(std::string Path,AssetType type);
@@ -37,6 +36,7 @@ public:
     Collider CreateCollider(Float2* Position, Float2 *Size);
     void AddCallback( InputCallbacks* callbacks);
     
+    ~Application();
 private:
 
 
@@ -57,6 +57,7 @@ public:
 
 
 #ifdef GUI_HEADER
+    FontSystem* m_FontSystem{};
     GUIRenderer* m_GUIRenderer{};
 #endif
 

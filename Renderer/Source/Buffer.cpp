@@ -24,7 +24,7 @@
 
             result = vkAllocateMemory(desc.Device,&allocinfo,nullptr,&m_Memory);
             if(result != VK_SUCCESS)
-                Core::Log(ErrorType::Error,"Failed to allocate memory for vertex buffer.");
+                Core::Log(ErrorType::Error,"Failed to allocate memory for vertex buffer. Error ",result," memReq size ",memReq.size);
 
             vkBindBufferMemory(desc.Device,m_Buffer,m_Memory,0);
         }
@@ -33,7 +33,7 @@
             void* map{};
             vkMapMemory(device, m_Memory, Offset, m_BufferSize, 0, &map);
             memcpy(map, data, Size);
-            vkUnmapMemory(device, m_Memory);
+            vkUnmapMemory(device,m_Memory);
         }
         Float2 Buffer::ReadPixel(uint32_t x, uint32_t y,uint32_t Width,uint32_t Height){
              void* map{};
@@ -55,4 +55,8 @@
 
              delete[] imagedata;
              return Ret;
+    }
+    Buffer::~Buffer(){
+        vkDestroyBuffer(m_Device,m_Buffer,nullptr);
+        vkFreeMemory(m_Device,m_Memory,nullptr);
     }

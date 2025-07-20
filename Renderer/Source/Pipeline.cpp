@@ -101,11 +101,18 @@ VkRenderPass Pipeline::CreateRenderPass(VkDevice device, VkFormat format) {
 VkPipelineLayout Pipeline::CreatePipelineLayout(VkDevice device,VkDescriptorSetLayout* DescriptorSetLayout,uint32_t DescriptorSetCount)
 {
     VkPipelineLayout PipelineLayout{};
+
+    VkPushConstantRange pushConstantRange{};
+    pushConstantRange.offset =0;
+    pushConstantRange.size = sizeof(uint32_t);
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
     VkPipelineLayoutCreateInfo pipelinelayout{};
     pipelinelayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelinelayout.setLayoutCount = DescriptorSetCount;
     pipelinelayout.pSetLayouts = DescriptorSetLayout;
-    pipelinelayout.pushConstantRangeCount = 0;
+    pipelinelayout.pushConstantRangeCount=1;
+    pipelinelayout.pPushConstantRanges=&pushConstantRange;
 
     VkResult result = vkCreatePipelineLayout(device, &pipelinelayout, nullptr, &PipelineLayout);
     if (result != VK_SUCCESS)
@@ -116,8 +123,8 @@ VkPipelineLayout Pipeline::CreatePipelineLayout(VkDevice device,VkDescriptorSetL
 VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
 {
     VkPipeline outputPipeline{};
-    VkShaderModule Vertex= ShaderDesc::CreateShader({ ShaderType::VertexShader,"C:/Repos/VulkanEngine/Shaders/Vertex.spv" },device);
-    VkShaderModule Pixel= ShaderDesc::CreateShader({ ShaderType::PixelShader,"C:/Repos/VulkanEngine/Shaders/Fragment.spv" },device);
+    VkShaderModule Vertex= ShaderDesc::CreateShader({ ShaderType::VertexShader,"Shaders/Vertex.spv" },device);
+    VkShaderModule Pixel= ShaderDesc::CreateShader({ ShaderType::PixelShader,"Shaders/Fragment.spv" },device);
 
 
     VkPipelineShaderStageCreateInfo vertexstage{};
@@ -280,5 +287,11 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
     VkResult result = vkCreateGraphicsPipelines(device, nullptr, 1, &pipeline, nullptr, &outputPipeline);
     if (result != VK_SUCCESS)
         Core::Log(ErrorType::Error, "Failed to create pipeline.");
+    
+    delete[] vertexinputattr;
+    vkDestroyShaderModule(device,Vertex,nullptr);
+    vkDestroyShaderModule(device,Pixel,nullptr);
+
+
     return outputPipeline;
 }

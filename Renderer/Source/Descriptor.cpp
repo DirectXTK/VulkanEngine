@@ -4,8 +4,10 @@
 
 
     void DescriptorSet::Init(DescriptorSetDescription desc)
-    {
+    {   
+        m_Pool = desc.DescriptorPool;
         m_Context = desc.context;
+        m_DescriptorCount = desc.DescriptorCount;
 
         VkDescriptorSetLayoutBinding binding{};
         binding.descriptorType = desc.Type;
@@ -34,12 +36,16 @@
             Core::Log(ErrorType::Error, "Failed to allocate descritor set.");
     }
 
-    void DescriptorSet::WriteTo(uint32_t Index, VkBuffer uniformBuffer, uint64_t Size)
+    void DescriptorSet::WriteTo(uint32_t Offset, uint32_t Count,VkBuffer uniformBuffer, uint64_t Size)
     {
-        VkDescriptorBufferInfo info{};
-        info.buffer = uniformBuffer;
-        info.offset = 0;
-        info.range = Size;
+        std::vector<VkDescriptorBufferInfo> info{};
+        info.resize(Count);
+        for(uint32_t i=0 ;i< Count;i++){
+        info[i].buffer = uniformBuffer;
+        info[i].offset = 0;
+        info[i].range = Size;
+        }
+
 
 
 
@@ -47,21 +53,23 @@
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         write.dstSet = m_DescriptorSet;
-        write.dstArrayElement = Index;
+        write.dstArrayElement = Offset;
         write.dstBinding = 0;
-        write.descriptorCount = 1;
-        write.pBufferInfo = &info;
+        write.descriptorCount = Count;
+        write.pBufferInfo = info.data();
 
-        //  write.pBufferInfo
         vkUpdateDescriptorSets(m_Context->Device, 1, &write, 0, nullptr);
     }
 
-    void DescriptorSet::WriteToTexture(uint32_t Index, VkImageView imageView, VkSampler sampler)
+    void DescriptorSet::WriteToTexture(uint32_t Offset,uint32_t Count, VkImageView imageView, VkSampler sampler)
     {
-        VkDescriptorImageInfo info{};
-        info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        info.imageView = imageView;
-        info.sampler = sampler;
+        std::vector<VkDescriptorImageInfo> info{};
+        info.resize(Count);
+        for(uint32_t i =0;i < Count;i++){
+        info[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        info[i].imageView = imageView;
+        info[i].sampler = sampler;
+    }
 
 
 
@@ -69,13 +77,12 @@
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         write.dstSet = m_DescriptorSet;
-        write.dstArrayElement = Index;
+        write.dstArrayElement = Offset;
         write.dstBinding = 0;
-        write.descriptorCount = 1;
-        write.pImageInfo = &info;
+        write.descriptorCount = Count;
+        write.pImageInfo = info.data();
 
 
-        //  write.pBufferInfo
         vkUpdateDescriptorSets(m_Context->Device, 1, &write, 0, nullptr);
     }
 
@@ -96,7 +103,7 @@
         if (result != VK_SUCCESS)
             Core::Log(ErrorType::Error, "Failed to create DescriptorSetLayout.");
     }
-
+ 
 
 
 
@@ -107,7 +114,8 @@
     }
 
     void DescriptorPool::CreatePool(Context context)
-    {
+    {   
+        m_Context = context;
         VkDescriptorPoolSize* PoolSizes{};
         PoolSizes = new VkDescriptorPoolSize[m_DescriptorPoolSizeInfo.size()];
         for (uint32_t i = 0; i < m_DescriptorPoolSizeInfo.size(); i++) {
@@ -121,7 +129,13 @@
         createinfo.poolSizeCount = (uint32_t)m_DescriptorPoolSizeInfo.size();
         createinfo.maxSets = (uint32_t)m_DescriptorPoolSizeInfo.size();
 
-       VkResult result =  vkCreateDescriptorPool(context->Device, &createinfo, nullptr, &m_Pool);
+       VkResult result =  vkCreateDescriptorPool(context->Device, &createinfo,nullptr, &m_Pool);
        if (result != VK_SUCCESS)
            Core::Log(ErrorType::Error, "Failed to create DescriptorPool.");
+        delete[] PoolSizes;
     }
+    void DescriptorPool::Destroy(){
+        vkDestroyDescriptorPool(m_Context->Device,m_Pool,nullptr);
+
+    }
+
