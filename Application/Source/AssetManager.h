@@ -124,7 +124,6 @@ public:
 	template<typename T>
 	Asset<T> LoadAssetPerma(void* Resource, AssetType type,std::string Name){
 		GUUID ID = Core::GetStringHash(Name);
-		PRINTDEBUG(ErrorType::Info,"Asset loaded name ",Name);
 	  auto Index = m_Resources.find(ID);
         if(Index != m_Resources.end())
             return Asset<T>(&m_Resources[ID]);

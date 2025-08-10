@@ -257,6 +257,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_VertexBufferOffset = 0;
             m_VertexCountPerDrawCall = 0;
 
+            m_VertexBufferOffsetGUI =0;
+            m_VertexGUIRemaining = m_VertexMaxCountGUI;
+            m_CurrentVertexBufferIndexGUI =0;
+
             m_Camera = *camera;
 
               m_UniformCameraData.GeometryCamera = m_Camera.GetViewProj();
@@ -332,43 +336,76 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::FlushGUI()
     {
         uint32_t Index{ 1 };
+        auto& textures = m_Textures[m_CurrentFrame];
+        auto& textureIds = m_TextureIDByOrder[m_CurrentFrame];
 
-        for (auto& it : m_Textures[m_CurrentFrame]) {
-            TextureRenderingData textureData = it.second;
-            Texture* texture{};
-            if(!textureData.texture)
-                continue;
-            texture = (Texture*)textureData.texture.GetData();
+        
+        for (uint32_t i = 0; i < textureIds.size(); i++) {
+            TextureRenderingData textureData = textures[textureIds[i]];
+            
+           // if(!textureData.texture.GetData())
+            //printf("Get data nullptr\n");
+            if(!textureData.texture){
+                if(m_AssetManager->HasAsset<Texture>(textureIds[i])){
+                    Core::Log(ErrorType::Warning,"Manager has the asset but isn't loaded in renderer");
+                }else
+                    Core::Log(ErrorType::Error,"Texture isn't loaded at all.");
+            }
+            if (textureData.texture){
+                Texture* texture = (Texture*)textureData.texture.GetData();
+                printf("TextureData.Index %i\n",textureData.Index);
 
-            m_DescriptorSetTextures.WriteToTexture(textureData.Index,1,texture->GetImageView(), texture->GetSampler());
-            Index++;
+                m_DescriptorSetTextures.WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
+            }
+        }
+      
+        if (m_VertexPointerGUI == m_VertexGUIRemaining) {
+
+            m_VertexBufferOffsetGUI = 0;
         }
 
+        //m_VertexCountPerDrawCall += m_VertexPointer;
+        if (m_VertexPointer > m_VertexCountRemaining) {
+                 CreateNewBufferForBatch(m_VertexBufferGeometry, m_StaggingBufferGeometry);
+            m_CurrentVertexBufferIndexGUI++;
+            m_VertexGUIRemaining = m_VertexMaxCountGUI;
 
-        m_DrawCommandsGUI.push_back({ m_VertexPointer,0,0,m_DrawCallCountGUI + m_DrawCallCountGeometry });
+            m_VertexBufferOffsetGUI = 0;
+            
+        }
+        else {
+            m_VertexGUIRemaining -= m_VertexPointerGUI;
+        }
+    
 
-        if (m_DrawCallCountGUI == m_VertexBufferGUI.size())
-            CreateNewBufferForBatch(m_VertexBufferGUI, m_StaggingBufferGUI);
 
 
-        m_StaggingBufferGUI[m_DrawCallCountGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
+        m_DrawCommandsGUI.push_back({ m_VertexPointerGUI,m_CurrentVertexBufferIndexGUI,m_VertexBufferOffsetGUI,m_DrawCallCountGUI + m_DrawCallCountGeometry });
+
+        
+        m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointerGUI);
+        
 
         VkBufferCopy region{};
-        region.size = sizeof(Vertex) * m_VertexPointer;
+        region.size = sizeof(Vertex) * m_VertexPointerGUI;
+        region.srcOffset = m_VertexBufferOffsetGUI;
+        region.dstOffset = m_VertexBufferOffsetGUI;
 
-        if (m_VertexPointer != 0)
+
+        if (m_VertexPointerGUI != 0)
         {
-            vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGUI[m_DrawCallCountGUI]->GetBuffer(), *m_VertexBufferGUI[m_DrawCallCountGUI]->GetBuffer(), 1, &region);
+            vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->GetBuffer(), *m_VertexBufferGUI[m_CurrentVertexBufferIndexGUI]->GetBuffer(), 1, &region);
         }
 
 
+        m_VertexBufferOffsetGUI+=m_VertexPointerGUI;
 
 
         m_DrawCallCountGUI++;
-        m_VertexPointer = 0;;
+        m_VertexPointerGUI = 0;
 
-        //m_Textures.clear();
-
+        //textures.clear();
+        //textureIds.clear();
     }
     void Renderer::FlushOutlines()
     {
@@ -395,7 +432,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-
+        //read here somehow the textures doens't render after adding more objects its something to do with flush geometry because after its called the second time textures start to disappear
 
 
 
@@ -408,52 +445,63 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::FlushGeometry()
     {
         if (m_GUIRendering) {
-            FlushGUI();
+            //FlushGUI();
             return;
-        }
-
+        }   
         std::vector<Texture*> debugTextures{};
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
         auto& textures = m_Textures[m_CurrentFrame];
-
+    
         //set the first descriptor to white texture for drawing without textures
         m_DescriptorSetTextures.WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
 
+if(m_DrawCallCountGeometry ==1){
+        printf("lafaf");
+      }
 
-        for (uint32_t i = 0; i < textures.size(); i++) {
-            Core::Log("ZYKT",textureIds[i].ID);
+        for (uint32_t i = 0; i < textureIds.size(); i++) {
             TextureRenderingData textureData = textures[textureIds[i]];
             
             if (textureData.texture){
                 Texture* texture = (Texture*)textureData.texture.GetData();
+                printf("TextureData.Index %i\n",textureData.Index);
                 m_DescriptorSetTextures.WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
                 debugTextures.push_back(texture);
             }
-            else
-                Core::Log(ErrorType::Error, "Texture id was invalid.");
+            else{
+                if(m_AssetManager->HasAsset<Texture>(textureIds[i])){
+                    Core::Log(ErrorType::Warning,"Manager has the asset but isn't loaded in renderer");
+                }else
+                    Core::Log(ErrorType::Error,"Texture isn't loaded at all.");
+            }
         }
 
         //Debug
-        Debug::ValidateDrawBatch(debugTextures);
-
+        //Debug::ValidateDrawBatch(debugTextures);
 
         if (m_VertexPointer == m_VertexCountRemaining) {
-            m_DrawCommandsGeometry.push_back({ m_VertexPointer,m_CurrentVertexBufferIndex,0,m_DrawCallCountGUI + m_DrawCallCountGeometry });
             m_VertexBufferOffset = 0;
+
         }
 
         m_VertexCountPerDrawCall += m_VertexPointer;
         if (m_VertexPointer > m_VertexCountRemaining) {
-            if(m_VertexCountPerDrawCall >m_VertexBufferGeometry.size()*m_VertexCount )
+            if(m_VertexCountPerDrawCall >m_VertexBufferGeometry.size()*m_VertexCount ){
                  CreateNewBufferForBatch(m_VertexBufferGeometry, m_StaggingBufferGeometry);
             m_CurrentVertexBufferIndex++;
+
             m_VertexCountRemaining = m_VertexCount;
             m_VertexBufferOffset = 0;
+            }
         }
         else {
             m_VertexCountRemaining -= m_VertexPointer;
+
         }
-        
+              printf("VertexPointer %i\n",m_VertexPointer);
+        printf("m_VertexBufferOffset %i\n",m_VertexBufferOffset);
+        printf("m_VertexBufferGeometry.size() %i\n",m_CurrentVertexBufferIndex);
+
 
         m_DrawCommandsGeometry.push_back({ m_VertexPointer,m_CurrentVertexBufferIndex,m_VertexBufferOffset,m_DrawCallCountGUI + m_DrawCallCountGeometry });
 
@@ -461,7 +509,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
             m_StaggingBufferGeometry[m_CurrentVertexBufferIndex]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
-
 
             VkBufferCopy region{};
             region.size = sizeof(Vertex) * m_VertexPointer;
@@ -477,13 +524,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-            m_VertexBufferOffset = m_VertexPointer;
+            m_VertexBufferOffset += m_VertexPointer;
 
 
 
 
             m_VertexPointer = 0;
             m_DrawCallCountGeometry++;
+          // textures.clear();
+          // textureIds.clear();
         }
     
 
@@ -543,12 +592,17 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (result != VK_SUCCESS)
                 Core::Log(ErrorType::Error, "Failed to queue present.");
 
+        m_Textures[m_CurrentFrame].clear();
+        m_TextureIDByOrder[m_CurrentFrame].clear();
 
             m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAME_DRAWS;
             m_GUIRendering = false;
 
             m_CurrentCameraDescriptorSetOffset =0;
             m_CurrentTextureDescriptorSetOffset =1;
+
+
+        
 
         }
     
@@ -557,6 +611,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     {
         GUUID CurrentTextureHandle{};
         Asset<Texture> TexutreAsset{};
+        uint32_t TextureID{};
         //texture map gets current container
         auto& textures = m_Textures[m_CurrentFrame];
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
@@ -598,22 +653,31 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 }
                 }
 
-
-                if (textures.find(CurrentTextureHandle) == textures.end()) {
+                auto index = textures.find(CurrentTextureHandle);
+                if (index== textures.end()) {
                     if (textures.size() == m_TextureSlotCount - 1)
                         FlushGeometry();
-                    m_CurrentTextureDescriptorSetOffset++;
-                    TexutreAsset= m_AssetManager->GetAsset<Texture>(CurrentTextureHandle);
-                    textures[CurrentTextureHandle] = { TexutreAsset ,m_CurrentTextureDescriptorSetOffset};
-                    textureIds.push_back(CurrentTextureHandle);
+                        TexutreAsset= m_AssetManager->GetAsset<Texture>(CurrentTextureHandle);
+                        textures[CurrentTextureHandle] = { TexutreAsset ,m_CurrentTextureDescriptorSetOffset};
+                        textureIds.push_back(CurrentTextureHandle);
+                        
+                        TextureID= m_CurrentTextureDescriptorSetOffset;
+                        m_CurrentTextureDescriptorSetOffset++;
+                    printf("arba %i\n",TextureID);
 
+
+                }else{
+                    printf("ci %i\n",TextureID);
+
+                    TextureID = index->second.Index;
                 }
                 uint32_t RendererTextureIndex = textures[CurrentTextureHandle].Index;
+                    printf("TextureID %i\n",TextureID);
 
-                m_Vertices[m_VertexPointer].TextureID = m_CurrentTextureDescriptorSetOffset;
-                m_Vertices[m_VertexPointer + 1].TextureID = m_CurrentTextureDescriptorSetOffset;
-                m_Vertices[m_VertexPointer + 2].TextureID = m_CurrentTextureDescriptorSetOffset;
-                m_Vertices[m_VertexPointer + 3].TextureID = m_CurrentTextureDescriptorSetOffset;
+                m_Vertices[m_VertexPointer].TextureID = TextureID;
+                m_Vertices[m_VertexPointer + 1].TextureID = TextureID;
+                m_Vertices[m_VertexPointer + 2].TextureID = TextureID;
+                m_Vertices[m_VertexPointer + 3].TextureID = TextureID;
          
        
 
@@ -664,9 +728,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 if (textures.size() == m_TextureSlotCount - 1)
                     FlushGeometry();
 
-                 m_CurrentTextureDescriptorSetOffset++;
-                 textures[textureID] = { Animation.GetCurrentTexture() ,m_CurrentTextureDescriptorSetOffset};
-                 textureIds.push_back(textureID);
+                    textures[textureID] = { Animation.GetCurrentTexture() ,m_CurrentTextureDescriptorSetOffset};
+                    textureIds.push_back(textureID);
+                    m_CurrentTextureDescriptorSetOffset++;
 
             }
             TextureRenderingData textureData = textures[textureID];
@@ -678,7 +742,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_Vertices[m_VertexPointer + 2].TextureID = textureData.Index;
             m_Vertices[m_VertexPointer + 3].TextureID = textureData.Index;
 
-            PRINTDEBUG(ErrorType::Info,"TextureIndex ",Animation.GetTextureIndex());
 
             m_Vertices[m_VertexPointer].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[0];
             m_Vertices[m_VertexPointer + 1].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[1];
@@ -811,9 +874,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         if (textures.size() == m_TextureSlotCount - 1)
             FlushGeometry();
         if (textures.find(TextureHandle) == textures.end()) {
-        m_CurrentTextureDescriptorSetOffset++;
-         textures[TextureHandle] = { font->TextureAsset ,m_CurrentTextureDescriptorSetOffset };
-         textureIds.push_back(TextureHandle);
+            textures[TextureHandle] = { font->TextureAsset ,m_CurrentTextureDescriptorSetOffset };
+            textureIds.push_back(TextureHandle);
+            m_CurrentTextureDescriptorSetOffset++;
  
         }
 
@@ -856,10 +919,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 //its the size of the bitmap not the character itself.
 
 
-            m_Vertices[m_VertexPointer].TextureID = m_CurrentTextureDescriptorSetOffset;
-            m_Vertices[m_VertexPointer + 1].TextureID = m_CurrentTextureDescriptorSetOffset;
-            m_Vertices[m_VertexPointer + 2].TextureID = m_CurrentTextureDescriptorSetOffset;
-            m_Vertices[m_VertexPointer + 3].TextureID = m_CurrentTextureDescriptorSetOffset;
+            m_Vertices[m_VertexPointer].TextureID = texture.Index;
+            m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
+            m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
+            m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
             if (LetterIndex != -1) {
 
                 m_Vertices[m_VertexPointer].TexCoords = font->Coords[LetterIndex].Coords[0];
@@ -1254,6 +1317,7 @@ void Renderer::DrawBatch()
 
 
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(DrawCall.VertexCount * 1.5f), 1, 0, 0, 0);
+        printf("DrawIndexed Greometry\n");
     }
 
     vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0x00);
@@ -1289,9 +1353,9 @@ void Renderer::DrawBatch()
     vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
 
     for (uint32_t i = 0; i < m_DrawCommandsGUI.size(); i++) {
-        
+        uint64_t VertexBufferOffset = m_DrawCommandsGUI[i].VertexBufferOffset;
 
-        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGUI[i]->GetBuffer(), &Offset);
+        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGUI[m_DrawCommandsGUI[i].VertexBufferIndex]->GetBuffer(), &VertexBufferOffset);
 
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
@@ -1307,6 +1371,7 @@ void Renderer::DrawBatch()
         vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
+        printf("DrawIndexed GUI\n");
 
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGUI[i].VertexCount * 1.5f), 1, 0, 0, 0);
     }

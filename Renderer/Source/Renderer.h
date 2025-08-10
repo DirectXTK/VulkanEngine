@@ -249,6 +249,10 @@ private:
     Vertex* m_VerticesGUI{};
     uint64_t m_VertexMaxCountGUI{ 100 * 4 };
     uint64_t m_VertexCountGUI{};
+    uint64_t m_VertexGUIRemaining{};
+    uint64_t m_VertexPointerGUI{};
+    uint64_t m_VertexBufferOffsetGUI{};
+    uint32_t m_CurrentVertexBufferIndexGUI{};
     std::vector<DescriptorSet> m_DescriptorSetTexturesGUI{};
     bool m_GUIRendering{false};
     //

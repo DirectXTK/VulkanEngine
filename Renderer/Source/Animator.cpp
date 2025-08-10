@@ -1,5 +1,5 @@
 #include "Animator.h"
-Animator::Animator(const std::string& animationPathAbs,GUUID animationID,const std::string& texturePath,AssetManager* assetManager)
+Animator::Animator(const std::string& animationPathAbs,GUUID animationID,GUUID textureID,AssetManager* assetManager)
 {
 	m_AnimationID = animationID;
 	//Texture data
@@ -32,11 +32,11 @@ Animator::Animator(const std::string& animationPathAbs,GUUID animationID,const s
 			Index += DurationOffset;
 			StageInfo stageinfo{};
 			uint64_t Duration{};
-			stageinfo.TextureAsset = assetManager->GetAsset<Texture>(Core::GetStringHash(texturePath));
+			stageinfo.TextureAsset = assetManager->GetAsset<Texture>(textureID);
 			stageinfo.TextureIndex = TextureIndex;
 			if(!stageinfo.TextureAsset)
 			{
-				Core::Log(ErrorType::Error,"Texture doeos't exists Animator::Animator ",texturePath);
+				Core::Log(ErrorType::Error,"Texture doeos't exists Animator::Animator ",textureID.ID);
 				return;
 			}
 			Duration = std::stoull(Data.substr(Index, Data.find("\n",Index) -Index));

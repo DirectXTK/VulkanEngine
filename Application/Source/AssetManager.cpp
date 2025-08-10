@@ -113,6 +113,7 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 {
 	
 	std::string TexturePath{};
+	std::string AnimationPath{};
 	std::string FilePath{};
 	uint32_t AtlasCount{};
 	for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
@@ -139,6 +140,7 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 		auto index =TexturePath.find("Resources");
 
 		TexturePath = TexturePath.substr(FolderPath.size(),TexturePath.size()-FolderPath.size()-4);
+		TexturePath +="Texture";
 		printf("Texture path %s %lu\n",TexturePath.c_str(),Core::GetStringHash(TexturePath));
 
 		Asset<Texture> asset=LoadAssetPerma<Texture>(baseTexture,AssetType::TEXTURE,TexturePath);
@@ -147,23 +149,21 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 
 		baseTexture->CreateTextureAtlasData(FilePath);
 
-			LoadAssetPerma<Texture>(baseTexture,AssetType::TEXTURE,TexturePath );
 
-		FilePath = FilePath.substr(FolderPath.size(), FilePath.find(".json") - FolderPath.size());
+		AnimationPath = FilePath;
 		//Load animation
-		size_t atlasGUUID = std::hash<std::string>{}(FilePath);
+		size_t atlasGUUID = std::hash<std::string>{}(AnimationPath.substr(FolderPath.size(),AnimationPath.size()-FolderPath.size()-5));
 	
-		std::string str = dir_entry.path().string();
+	
 
-		 index =str.find("Resources");
 
-		str = str.substr(index+10,str.size()-10-index);
-		printf("Animation path %s %lu\n",str.c_str(),Core::GetStringHash(str));
-		Animator* animator= new Animator(dir_entry.path().string(), Core::GetStringHash(str), TexturePath,&m_APP->m_AssetManager);
+		Animator* animator= new Animator(AnimationPath,atlasGUUID, TextureID,&m_APP->m_AssetManager);
+		AnimationPath =AnimationPath.substr(FolderPath.size(),AnimationPath.size()-FolderPath.size()-5);
+		printf("Animation path %s %lu\n",AnimationPath.c_str(),atlasGUUID);
 		animator->SetStage("IDLE");
 		
 	
-		LoadAssetPerma<Animator>(animator,AssetType::ANIMATION,str);
+		LoadAssetPerma<Animator>(animator,AssetType::ANIMATION,AnimationPath);
 
 	}
 	Core::Log(ErrorType::Error, "This function isn't implemented yet");

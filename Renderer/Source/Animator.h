@@ -7,7 +7,7 @@ class Animator
 public:
 	Animator() {};
 	//pass texture if you use textureatlases.
-	Animator(const std::string& animationPathAbs,GUUID AnimationID,const std::string& AtlasHashPath,AssetManager* assetManager);
+	Animator(const std::string& animationPathAbs,GUUID AnimationID,GUUID TextureID,AssetManager* assetManager);
 	//This Doesn't use textureatlases
 	Animator(const std::string& Path);
 

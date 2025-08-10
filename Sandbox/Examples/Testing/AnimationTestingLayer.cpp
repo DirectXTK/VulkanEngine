@@ -19,14 +19,14 @@ void AnimationTestingLayer::OnCreate()
 	m_App->m_Camera.SetPosition({ 0.0f,0.0f });
 
 	m_Units[0].Position = {0.0f,0.0f};
-	m_Units[0].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("Animation/WARRIOR.json")).GetData();
+	m_Units[0].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("WARRIOR")).GetData();
 	m_Units[0].animator.SetStage("WALK");
 	m_Units[0].Collid = m_System.CreateCollider();
 	m_Units[0].Collid.Update(&m_Units[0].Position, &m_Size);
 
 
 	m_Units[1].Position = { 0.04f*5,0.0f };
-	m_Units[1].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("Animation/TOWN_HALL.json")).GetData();
+	m_Units[1].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("TOWN_HALL")).GetData();
 	m_Units[1].animator.SetStage("IDLE");
 	m_Units[1].Collid = m_System.CreateCollider();
 	m_Units[1].Collid.Update(&m_Units[1].Position, &m_Size);
