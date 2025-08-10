@@ -16,8 +16,8 @@ void FontTestingLayer::OnUpdate(float DeltaTime)
 {
 	DefaultCameraControlls(&m_App->m_InputSystem, &m_App->m_Camera);
 
-	m_App->m_Renderer->DrawQuad({ -0.5f,0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, 0);
-
+	for(uint32_t i=0;i < 1000;i++)
+		m_App->m_Renderer->DrawQuad({ 0.01f*i,0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, 0);
 
 }
 
@@ -62,6 +62,8 @@ void FontTestingLayer::OnGUI()
 	BorderStyle.BackGroundColor = { 0.0f,0.0f,0.7f,1.0f };
 	BorderStyle.BorderWidth = 0.007f;
 	m_App->m_GUIRenderer->SetFontSize(FontSize);
+
+	m_App->m_GUIRenderer->Text("FrameTime",std::to_string(m_App->GetDeltaTime()),{-0.8f,-0.8f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
 
 	m_App->m_GUIRenderer->PushStyle(GUI::Style::BORDER, &BorderStyle);
 	m_App->m_GUIRenderer->PushStyle(GUI::Style::COLOR, &ColorStyle);

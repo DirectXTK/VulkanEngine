@@ -26,14 +26,12 @@ struct TextureCoords {
 };
 struct TextureAtlasData {
 	TextureCoords* Data{};
-	uint32_t TextureCount{};
 	GUUID TextureID{};
 };
 class Texture
 {
 public:
 	Texture(Context context,const TextureCreateInfo& createInfo,std::string Path,TextureType type=TextureType::Texture);
-	
 
 	//predifined constructors for easier creation of simple texture types
 
@@ -55,20 +53,20 @@ public:
 
 	uint32_t GetWidth() { return m_Width; }
 	uint32_t GetHeight() { return m_Height; }
+
+	TextureCoords* GetTextureCoords(uint32_t Index){return &m_TextureAtlasData->Data[Index];}
 	//texture atlas
 	//returns 4 points
 
 	//TextureAtlasCoords* GetSubTextureData(uint32_t TextureIndex) { return &m_TextureData->m_TextureAtlasData[TextureIndex]; }
 	uint64_t GetByteSize(){return (uint64_t)m_DeviceSize;}
 
-	Texture** GetTextureAtlas();
 	//Small texture inside this bigger texture.
-	uint32_t GetTextureAtlasSize();
 	void CreateTextureAtlas(uint32_t WidthOfOneTexture, uint32_t HeightOfOneTexture, uint32_t NumOfTexture);
 	//used for differentSizedTextures
 	//void CreateTextureAtlas(TextureAtlasCoords* coords, uint32_t NumOfTexture,Float2* SubTextureSizes);
 
-	static TextureAtlasData* CreateTextureAtlasData(const std::string& MetaDataPath);
+	 TextureAtlasData* CreateTextureAtlasData(const std::string& MetaDataPath);
 
 	//Removes vkImage makes it nullptr.
 	void RemoveImage(){m_Image = nullptr;}
@@ -87,6 +85,10 @@ private:
 	void CopyDataFromBuffer(VkCommandBuffer CommandBuffer, VkBuffer BufferSrc, VkImage ImageDst);
 
 	
+	//Atlas data
+	TextureAtlasData* m_TextureAtlasData{};
+	uint32_t m_TextureCount{};
+
 	VkImage m_Image{};
 	VkImageView m_ImageView{};
 	uint32_t m_ChannelCount{};
@@ -103,28 +105,5 @@ private:
 	TextureType m_TextureType{};
 
 
-};
-class TextureAtlas {
-public:
-	//use this if size of textures are the same and they are packed and the size is known
-	TextureAtlas(Context context,Float2 OneTextureSize, Texture* texture);
-	TextureAtlas(Context context, std::string PathToMetaData,Texture* texture);
-
-
-	Float2* GetTexCoords(uint32_t Index);
-	uint32_t GetOneTextureWidth(uint32_t Index) { return m_TextureAtlasData[Index].SizeX; }
-	uint32_t GetOneTextureHeight(uint32_t Index) { return m_TextureAtlasData[Index].SizeY; }
-
-	Texture* GetTexture() { return m_Texture; }
-
-	~TextureAtlas();
-private:
-	struct TextureAtlasCoords {
-		Float2 Points[4];
-		uint32_t SizeX, SizeY{};
-	};
-	uint32_t m_TextureCount{};
-	TextureAtlasCoords* m_TextureAtlasData{};
-	Texture* m_Texture{};
 };
 

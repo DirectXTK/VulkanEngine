@@ -15,6 +15,7 @@
 /Libs
 Makefile
 vgcore*
+ExeLocation
 
 
 # User-specific files (MonoDevelop/Xamarin Studio)

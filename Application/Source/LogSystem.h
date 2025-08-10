@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+
 enum class ErrorType{Info,Warning,Error,FatalError};
 namespace Core{
     void EmptyLogFile();
@@ -68,3 +69,8 @@ namespace Core{
 
 
 }
+#ifdef DEBUG
+#define PRINTDEBUG(x,...) Core::Log(x,__VA_ARGS__)
+#else
+#define PRINTDEBUG(x,...)
+#endif 

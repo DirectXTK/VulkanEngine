@@ -12,6 +12,7 @@ struct AssetHandle{
 	}
 	AssetHandle(){}
 
+	void MakeItPermaHandle(){RefCount++;}
 	GUUID ID{};
 	uint32_t RefCount{};
 	AssetManager* Manager{};
@@ -28,14 +29,15 @@ public:
 	Asset(){}
     Asset(const Asset& other){
 		  m_Data = other.m_Data;
-
-        m_Data->RefCount+=1;
+		if(m_Data)
+        	m_Data->RefCount+=1;
 	}
     Asset( Asset&& other){
         m_Data = std::move(other.m_Data);
 
 		memset(&other,0,sizeof(Asset));
-		 m_Data->RefCount++;
+		if(m_Data)
+        	m_Data->RefCount+=1;
 	}
     Asset& operator=(const Asset& other){
 		if(&other == this)
@@ -43,8 +45,8 @@ public:
 		Release();
 
 		m_Data = other.m_Data;
-
-        m_Data->RefCount+=1;
+		if(m_Data)
+        	m_Data->RefCount+=1;
         return *this;
 
 
@@ -62,6 +64,7 @@ public:
     void* GetData(){return m_Data->Data;}
     AssetType GetType(){return m_Data->Type;}
 	uint32_t GetRefCount(){return m_Data->RefCount;}
+	GUUID GetID(){return m_Data->ID;}
 
     bool operator==(const Asset& other){return m_Data->ID == other.m_Data->ID? true:false;}
     operator bool(){return m_Data==nullptr? false:true&&m_Data->Type == AssetType::NONE? false:true;}
@@ -118,6 +121,20 @@ public:
 		 m_ResourceCount[type]++;
          return Asset<T>(&m_Resources[ID]);
 	}
+	template<typename T>
+	Asset<T> LoadAssetPerma(void* Resource, AssetType type,std::string Name){
+		GUUID ID = Core::GetStringHash(Name);
+		PRINTDEBUG(ErrorType::Info,"Asset loaded name ",Name);
+	  auto Index = m_Resources.find(ID);
+        if(Index != m_Resources.end())
+            return Asset<T>(&m_Resources[ID]);
+         m_Resources[ID] = AssetHandle(ID,this,type,Resource);
+		 m_Resources[ID].MakeItPermaHandle();
+		 m_ResourceCount[type]++;
+         return Asset<T>(&m_Resources[ID]);
+	}
+	
+
 
 	uint64_t GetAssetCount(AssetType type) { return m_ResourceCount[type];}
 	uint64_t GetAssetCount() { return m_Resources.size();}
@@ -160,12 +177,16 @@ public:
 	void DebugStatistics(bool GUI);
 	
 	//void Save();
+	void FreeAssetsPerma();
 private:
 	void LoadFont(const std::string& FilePath);
 	void LoadAnimation(const std::string& FolderPath);
 
 	std::unordered_map<GUUID, AssetHandle> m_Resources{};
 	std::unordered_map<AssetType, uint64_t> m_ResourceCount;
+
+
+
 	Application* m_APP{};
 };
 

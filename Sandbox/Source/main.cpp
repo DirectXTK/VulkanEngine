@@ -2,6 +2,9 @@
 //#include "../Examples/Testing/GUITesting.h"
 #include "../Examples/Testing/FontTestingLayer.h"
 #include "../Examples/Testing/TextureTestingLayer.h"
+#include "../Examples/Testing/AnimationTestingLayer.h"
+
+#define DEBUG
 
 int main() {
 	ApplicationSpecs specs{};
@@ -11,7 +14,7 @@ int main() {
 	specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
 
 	Application app(specs);
-	app.AddLayer(new FontTestingLayer());
+	app.AddLayer(new AnimationTestingLayer());
 	app.Run();
    
 

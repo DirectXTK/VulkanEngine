@@ -38,7 +38,11 @@
 		m_TextureType = TextureType::SwapChainImage;
 		CreateView(format,VK_IMAGE_ASPECT_COLOR_BIT,m_Context->Device);
 	}
+	Texture::Texture(Texture* texture, uint32_t TextureIndex){
+		*this = *texture;
+		m_TextureIndex= TextureIndex;
 
+	}
 Texture::Texture(Context context, const TextureCreateInfo& createInfo ,std::string Path,TextureType type)
 {
 	std::string Extension= Core::GetFileExtension(Path);
@@ -167,7 +171,10 @@ void Texture::CopyFromBuffer(VkDevice device, Buffer* srcbuffer, VkCommandBuffer
 
 
 Texture::~Texture()
-{		
+{	
+	if(m_TextureAtlasData)
+		delete[] m_TextureAtlasData;
+
 	vkDestroyImage(m_Context->Device,m_Image,nullptr);
 	vkFreeMemory(m_Context->Device, m_DeviceMemory, nullptr);
 	vkDestroyImageView(m_Context->Device,m_ImageView,nullptr);
@@ -460,11 +467,11 @@ void Texture::CopyDataFromBuffer(VkCommandBuffer CommandBuffer,VkBuffer BufferSr
 	//
 
 	///here
-	DataRet = new TextureAtlasData();
+	m_TextureAtlasData = new TextureAtlasData();
 
-	DataRet->Data = new TextureCoords[AtlasCoords.size()];
-	DataRet->TextureCount = (uint32_t)AtlasCoords.size();
-	memcpy(DataRet->Data, AtlasCoords.data(), sizeof(TextureCoords) * AtlasCoords.size());
+	m_TextureAtlasData->Data = new TextureCoords[AtlasCoords.size()];
+	m_TextureCount = (uint32_t)AtlasCoords.size();
+	memcpy(m_TextureAtlasData->Data, AtlasCoords.data(), sizeof(TextureCoords) * AtlasCoords.size());
 
 	return DataRet;
 }

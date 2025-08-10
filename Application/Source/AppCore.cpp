@@ -1,6 +1,6 @@
 #include "AppCore.h"
 namespace Core {
-	GUUID GetStringHash(const std::string& Path) { return (uint64_t)std::hash<std::string>{}(Path); }
+	GUUID GetStringHash(const std::string& Path) {if((uint64_t)std::hash<std::string>{}(Path)== 3680703176168916660) printf("This is %s\n",Path.c_str()); return (uint64_t)std::hash<std::string>{}(Path); }
 
 	std::string GetFileExtension(const std::string& File)
 	{

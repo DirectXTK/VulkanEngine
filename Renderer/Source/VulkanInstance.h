@@ -12,7 +12,7 @@ class VulkanInstance
 public:
 
 	static VkInstance CreateInstance(InstanceDesc& desc,VkDebugUtilsMessengerEXT* out_messenger);
-	static VkPhysicalDevice GetPhysicalDevice(VkInstance instance,VkSurfaceKHR surface);
+	static void GetPhysicalDevice(VkInstance instance,VkSurfaceKHR surface,VkPhysicalDevice* pDevice);
 	static VkDevice CreateLogicalDevice();
 
 	static QueueFamilies GetQueueFamilies(VkPhysicalDevice device,VkSurfaceKHR surface);

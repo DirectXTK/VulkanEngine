@@ -43,7 +43,7 @@ project "Sandbox"
     defines{
         "linux"
     }
-
+    postbuildcommands { "echo lafaf","touch ../ExeLocation","echo "..outputdir.."/%{prj.name} > ../ExeLocation" }
 
     filter{"configurations:Debug"}
       runtime "Debug"
@@ -54,3 +54,6 @@ project "Sandbox"
     filter{"configurations:Release"}
       runtime "Release"
       optimize "on"
+
+
+

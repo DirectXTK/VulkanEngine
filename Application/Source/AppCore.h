@@ -34,6 +34,16 @@
 //Debug stuff
 #include <x86intrin.h>
 
+#ifdef DEBUG
+    #define WORKINGDIR ../../../../../
+#endif
+#ifdef RELEASE
+    #define WORKINGDIR ../../../../../
+#endif
+#ifdef DISTRIB
+    #define WORKINGDIR
+#endif
+
 #ifdef max
 #undef max
 #endif

@@ -55,10 +55,6 @@
     createinfo.ppEnabledLayerNames = LayerNames.data();
     createinfo.enabledLayerCount = LayerNames.size();
 
-    for(int i =0;i < instanceExtensiosn.size();i++){
-        printf("Extension %s\n",instanceExtensiosn[i]);
-    }
-    
 
     VkResult result = vkCreateInstance(&createinfo, nullptr, &Instance);
     if (result != VK_SUCCESS)
@@ -68,7 +64,7 @@
     return Instance;
 }
 
- VkPhysicalDevice VulkanInstance::GetPhysicalDevice(VkInstance instance,VkSurfaceKHR surface)
+ void VulkanInstance::GetPhysicalDevice(VkInstance instance,VkSurfaceKHR surface,VkPhysicalDevice* pDevice)
  {
      uint32_t DeviceCount{};
      std::vector<VkPhysicalDevice> Devices{};
@@ -79,13 +75,15 @@
 
      for (uint32_t i = 0; i < DeviceCount; i++) {
 
-         if (IsPhysicalDeviceSiutable(Devices[i],surface))
-             return Devices[i];
+         if (IsPhysicalDeviceSiutable(Devices[i],surface)){
+             *pDevice = Devices[i];
+              return;
+         }
 
      }
 
      Core::Log(ErrorType::Info, "Failed to get physical device.");
-     return VkPhysicalDevice();
+     *pDevice=nullptr;
  }
 
  VkDevice VulkanInstance::CreateLogicalDevice()

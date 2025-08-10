@@ -16,13 +16,14 @@ void AssetManager::Init(Application* app)
 }
 void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 {
-	/*
+	
 	std::string FilePath{};
 	switch (TypesToLoad) {
 	case AssetType::TEXTURE: {
 		std::string str{};
 		str.resize(200);
 		str = Core::GetModuleFileName();
+
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 			FilePath = dir_entry.path().string();
 			
@@ -30,13 +31,12 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 				continue;
 
 			Texture* texture = m_APP->m_Renderer->LoadTexture(FilePath);
-			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
+			//name of the file
+			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size()-4);
 
 			size_t t = std::hash<std::string>{}(FilePath);
 		
-			m_ResourceCount[TypesToLoad]++;
-
-			m_Resources[t].CreateAsset((GUUID)t,texture,TypesToLoad,this);
+			LoadAssetPerma<Texture>(texture,AssetType::TEXTURE,FilePath);
 		}
 		break;
 	}
@@ -48,6 +48,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 			uint32_t AtlasCount{};
 
 			FilePath = dir_entry.path().string();
+
 			if (Core::GetFileExtension(FilePath) == ".json")
 				continue;
 
@@ -60,35 +61,24 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 			TexturePath = FilePath.substr(0, FilePath.size() - 5);
 
 			TexturePath = TexturePath.substr(FolderPath.size(), TexturePath.find(".png")- FolderPath.size());
-			TexturePath += ".png";
 
 					
 
 			//Get texture info 
+			//texture= m_APP->m_Renderer->LoadTexture(FilePath);
+			//LoadAssetPerma<TextureAtlasData>(texture,AssetType::TEXTURE,TexturePath );
+			
 
-			TextureAtlasData* AtlasData =Texture::CreateTextureAtlasData(FilePath);
-			AtlasData->TextureID = Core::GetStringHash(TexturePath);
+			texture->CreateTextureAtlasData(FilePath);
+
+
 
 			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
 
 			
 			m_ResourceCount[TypesToLoad]++;
-			//m_Resources[Core::GetStringHash(FilePath)].CreateAsset(Core::GetStringHash(FilePath), AtlasData,TypesToLoad,this);
-
-			
-			
-			Texture** atlases = texture->GetTextureAtlas();
-			AtlasCount = texture->GetTextureAtlasSize();
-
-			//TexturePath = TexturePath.substr(0,TexturePath.size());
-			
-
-				for (uint32_t i = 0; i < AtlasCount; i++) {
-					m_ResourceCount[AssetType::TEXTURE]++;
-					GUUID t = Core::GetStringHash((TexturePath + std::to_string(i)));
-					m_Resources[t] = atlases[i];
-
-				}
+					
+					LoadAssetPerma<Texture>(texture,AssetType::TEXTURE,TexturePath );
 				
 
 		
@@ -106,7 +96,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		break;
 	}
 	}
-	*/
+	
 	
 
 
@@ -121,7 +111,7 @@ void AssetManager::DebugStatistics(bool GUI){
 
 void AssetManager::LoadAnimation(const std::string& FolderPath)
 {
-	/*
+	
 	std::string TexturePath{};
 	std::string FilePath{};
 	uint32_t AtlasCount{};
@@ -141,36 +131,41 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 		//TODO: CHange so it support seperate textures also.
 
 		TexturePath = FilePath;
+		TexturePath = TexturePath.substr(0,TexturePath.size()-5);
+		TexturePath +=".png";
 
-		GUUID TextureID =LoadTexture(TexturePath);
+		Texture* baseTexture = m_APP->m_Renderer->LoadTexture(TexturePath);
 
-		Asset Basetexture = GetAsset(TextureID);
-		Texture** atlases = Basetexture->GetTextureAtlas();
-		AtlasCount = Basetexture->GetTextureAtlasSize();
+		auto index =TexturePath.find("Resources");
 
-		//TexturePath = TexturePath.substr(0, TexturePath.size() - 4);
-		TexturePath = TexturePath.substr(FolderPath.size(), TexturePath.find(".json")-FolderPath.size());
+		TexturePath = TexturePath.substr(FolderPath.size(),TexturePath.size()-FolderPath.size()-4);
+		printf("Texture path %s %lu\n",TexturePath.c_str(),Core::GetStringHash(TexturePath));
 
+		Asset<Texture> asset=LoadAssetPerma<Texture>(baseTexture,AssetType::TEXTURE,TexturePath);
 
-		for (uint32_t i = 0; i < AtlasCount; i++) {
-			m_ResourceCount[AssetType::TEXTURE]++;
-			m_Resources[Core::GetStringHash((TexturePath + std::to_string(i)))] = atlases[i];
+		GUUID TextureID =Core::GetStringHash(TexturePath);
 
-		}
+		baseTexture->CreateTextureAtlasData(FilePath);
+
+			LoadAssetPerma<Texture>(baseTexture,AssetType::TEXTURE,TexturePath );
+
 		FilePath = FilePath.substr(FolderPath.size(), FilePath.find(".json") - FolderPath.size());
 		//Load animation
 		size_t atlasGUUID = std::hash<std::string>{}(FilePath);
 	
 		std::string str = dir_entry.path().string();
-		//Something wrong with renderer texture id or something
-		Animator* animator= new Animator(dir_entry.path().string(), atlasGUUID, FilePath);
+
+		 index =str.find("Resources");
+
+		str = str.substr(index+10,str.size()-10-index);
+		printf("Animation path %s %lu\n",str.c_str(),Core::GetStringHash(str));
+		Animator* animator= new Animator(dir_entry.path().string(), Core::GetStringHash(str), TexturePath,&m_APP->m_AssetManager);
 		animator->SetStage("IDLE");
-		m_Resources[atlasGUUID] = animator;
-		m_ResourceCount[AssetType::ANIMATION]++;::
-
-
+		
 	
-	}*/
+		LoadAssetPerma<Animator>(animator,AssetType::ANIMATION,str);
+
+	}
 	Core::Log(ErrorType::Error, "This function isn't implemented yet");
 }
 

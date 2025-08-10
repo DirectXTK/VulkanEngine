@@ -1,5 +1,5 @@
 #include "Animator.h"
-Animator::Animator(const std::string& Path,GUUID animationID,std::string AtlasHashPath)
+Animator::Animator(const std::string& animationPathAbs,GUUID animationID,const std::string& texturePath,AssetManager* assetManager)
 {
 	m_AnimationID = animationID;
 	//Texture data
@@ -8,8 +8,14 @@ Animator::Animator(const std::string& Path,GUUID animationID,std::string AtlasHa
 	uint32_t TextureIndex{};
 	uint64_t Index{};
 	std::string Data{};
-	std::ifstream input(Path);
+	std::ifstream input(animationPathAbs);
 	uint64_t FileSize{};
+
+	if(!std::filesystem::exists(animationPathAbs))
+	{
+		Core::Log(ErrorType::Error,"File path doesn't exist ",animationPathAbs);
+		return;
+	}
 
 	input.seekg(0, input.end);
 	FileSize = input.tellg();
@@ -26,8 +32,13 @@ Animator::Animator(const std::string& Path,GUUID animationID,std::string AtlasHa
 			Index += DurationOffset;
 			StageInfo stageinfo{};
 			uint64_t Duration{};
-			stageinfo.TextureID = Core::GetStringHash(AtlasHashPath+ std::to_string(TextureIndex));
-			//stageinfo.TextureIndex = TextureIndex;
+			stageinfo.TextureAsset = assetManager->GetAsset<Texture>(Core::GetStringHash(texturePath));
+			stageinfo.TextureIndex = TextureIndex;
+			if(!stageinfo.TextureAsset)
+			{
+				Core::Log(ErrorType::Error,"Texture doeos't exists Animator::Animator ",texturePath);
+				return;
+			}
 			Duration = std::stoull(Data.substr(Index, Data.find("\n",Index) -Index));
 			stageinfo.Duration = (float)Duration;
 
@@ -104,16 +115,11 @@ void Animator::KeepStage(const std::string& StageTag)
 }
 
 
-GUUID Animator::GetCurrentTextureID() {
-	return m_CurrentStageInfo.TextureID;
+Asset<Texture> Animator::GetCurrentTexture() {
+	return m_CurrentStageInfo.TextureAsset;
 }
 
 GUUID Animator::GetAnimationID()
 {
 	return m_AnimationID;
-}
-
-uint32_t Animator::GetTextureIndex()
-{
-	return m_CurrentStageInfo.TextureIndex;
 }

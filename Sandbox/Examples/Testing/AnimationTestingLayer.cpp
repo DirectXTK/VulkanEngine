@@ -9,8 +9,8 @@ void AnimationTestingLayer::OnCreate()
 {
 	//m_Animation = m_App->GetAssetManager()->GetResource<Animator>(Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.json"));
 	//m_Animation->SetStage("BBZ");
-	m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Animation\\", AssetType::ANIMATION);
-	m_App->LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", AssetType::TEXTURE);
+	m_App->LoadAssets("/users/jimy/Repos/VulkanEngine/bin/Debug/linux/x86_64/Sandbox/Resources/Animation/", AssetType::ANIMATION);
+	m_App->LoadAssets("/users/jimy/Repos/VulkanEngine/bin/Debug/linux/x86_64/Sandbox/Resources/Textures/", AssetType::TEXTURE);
 
 	m_Units.reserve(10);
 	m_Units.push_back(AnimationUnit());
@@ -19,14 +19,14 @@ void AnimationTestingLayer::OnCreate()
 	m_App->m_Camera.SetPosition({ 0.0f,0.0f });
 
 	m_Units[0].Position = {0.0f,0.0f};
-	//m_Units[0].animator = *(Animator*)(m_Assets->LoadAsset<Animator>(Core::GetStringHash("WARRIOR"),AssetType::ANIMATION,"Warrior")).GetData();
+	m_Units[0].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("Animation/WARRIOR.json")).GetData();
 	m_Units[0].animator.SetStage("WALK");
 	m_Units[0].Collid = m_System.CreateCollider();
 	m_Units[0].Collid.Update(&m_Units[0].Position, &m_Size);
 
 
 	m_Units[1].Position = { 0.04f*5,0.0f };
-	//m_Units[1].animator = *(Animator*)m_Assets->LoadAsset<Animator>(Core::GetStringHash("TOWN_HALL"),AssetType::ANIMATION,"TOWN_HALL").GetData();
+	m_Units[1].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("Animation/TOWN_HALL.json")).GetData();
 	m_Units[1].animator.SetStage("IDLE");
 	m_Units[1].Collid = m_System.CreateCollider();
 	m_Units[1].Collid.Update(&m_Units[1].Position, &m_Size);
@@ -107,7 +107,9 @@ void AnimationTestingLayer::OnGUI()
 		if (m_SpawnUnit) {
 			m_Units.push_back(AnimationUnit());
 			m_Units[m_Units.size() - 1].Position = { m_App->GetWorldMousePos().x, m_App->GetWorldMousePos().y };
-			//m_Units[m_Units.size() - 1].animator = *(Animator*)m_App->GetAsset(m_SpawnedUnit).GetData();
+			if(!m_Assets->HasAsset<Animator>(Core::GetStringHash(m_SpawnedUnit)))
+				printf("Doesn't have %s",m_SpawnedUnit.c_str());
+			m_Units[m_Units.size()-1].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash(m_SpawnedUnit)).GetData();
 			m_Units[m_Units.size() - 1].Collid = m_System.CreateCollider();
 			m_Units[m_Units.size() - 1].Collid.Update(&m_Units[m_Units.size() - 1].Position, &m_Size);
 
@@ -138,21 +140,21 @@ void AnimationTestingLayer::OnGUI()
 	}
 	gui->Panel("UI Bar", {0.0f,-0.8f}, {1.0f,1.0f,1.0f,1.0}, {1.0f,0.2f}, Core::GetStringHash("PANEL"));
 
-	if (gui->Button("TOWN_HALL", "",{0.0f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+	if (gui->Button("TOWN_HALL", "",{0.0f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI/SpawnButton"), false)) {
 		m_SpawnUnit = true;
 		m_SpawnedUnit = "TOWN_HALL";
 	}
-	if (gui->Button("TREE", "",{ 0.25f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+	if (gui->Button("TREE", "",{ 0.25f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, MouseCodes::LEFT, Core::GetStringHash("GUI/SpawnButton"), false)) {
 		m_SpawnUnit = true;
 		m_SpawnedUnit = "TREE";
 
 	}
-	if (gui->Button("SUN", "",{0.50f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+	if (gui->Button("SUN", "",{0.50f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI/SpawnButton"), false)) {
 		m_SpawnUnit = true;
 		m_SpawnedUnit = "SUN";
 
 	}
-	if (gui->Button("TEST", "",{0.75f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI\\SpawnButton"), false)) {
+	if (gui->Button("TEST", "",{0.75f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI/SpawnButton"), false)) {
 		m_SpawnUnit = true;
 		m_SpawnedUnit = "PEASANT";
 

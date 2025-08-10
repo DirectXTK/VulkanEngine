@@ -23,7 +23,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     CreateSurface(window, &m_Surface);
 
-    m_PhysicalDevice = VulkanInstance::GetPhysicalDevice(m_Instance, m_Surface);
+    VulkanInstance::GetPhysicalDevice(m_Instance, m_Surface,&m_PhysicalDevice);
     m_SwapChainDetails = SwapChain::GetSwapChainCapabilities(m_PhysicalDevice, m_Surface);
 
     m_QueueFamilies = VulkanInstance::GetQueueFamilies(m_PhysicalDevice, m_Surface);
@@ -335,7 +335,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         for (auto& it : m_Textures[m_CurrentFrame]) {
             TextureRenderingData textureData = it.second;
-            Texture* texture = (Texture*)textureData.texture.GetData();
+            Texture* texture{};
+            if(!textureData.texture)
+                continue;
+            texture = (Texture*)textureData.texture.GetData();
 
             m_DescriptorSetTextures.WriteToTexture(textureData.Index,1,texture->GetImageView(), texture->GetSampler());
             Index++;
@@ -418,10 +421,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
         for (uint32_t i = 0; i < textures.size(); i++) {
+            Core::Log("ZYKT",textureIds[i].ID);
             TextureRenderingData textureData = textures[textureIds[i]];
-            Texture* texture = (Texture*)textureData.texture.GetData();
-
+            
             if (textureData.texture){
+                Texture* texture = (Texture*)textureData.texture.GetData();
                 m_DescriptorSetTextures.WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
                 debugTextures.push_back(texture);
             }
@@ -576,14 +580,14 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     break;
                 }
                 case AssetType::TEXTUREATLAS:{
-                    TextureAtlasData* textureAtlasData = (TextureAtlasData*)m_AssetManager->GetAsset<TextureAtlasData>(TextureHandle).GetData();
+                    Texture* texture = (Texture*)TexutreAsset.GetData();
 
-                    CurrentTextureHandle = textureAtlasData->TextureID;
+                    CurrentTextureHandle = TextureHandle;
 
-                    m_Vertices[m_VertexPointer].TexCoords = textureAtlasData->Data[TextureIndex].Coords[0];
-                    m_Vertices[m_VertexPointer + 1].TexCoords = textureAtlasData->Data[TextureIndex].Coords[1];
-                    m_Vertices[m_VertexPointer + 2].TexCoords = textureAtlasData->Data[TextureIndex].Coords[2];
-                    m_Vertices[m_VertexPointer + 3].TexCoords = textureAtlasData->Data[TextureIndex].Coords[3];
+                    m_Vertices[m_VertexPointer].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[0];
+                    m_Vertices[m_VertexPointer + 1].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[1];
+                    m_Vertices[m_VertexPointer + 2].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[2];
+                    m_Vertices[m_VertexPointer + 3].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[3];
                      break;
                 }
                 case AssetType::ANIMATION: {
@@ -601,7 +605,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     m_CurrentTextureDescriptorSetOffset++;
                     TexutreAsset= m_AssetManager->GetAsset<Texture>(CurrentTextureHandle);
                     textures[CurrentTextureHandle] = { TexutreAsset ,m_CurrentTextureDescriptorSetOffset};
-                    textureIds[textures.size() - 1] = CurrentTextureHandle;
+                    textureIds.push_back(CurrentTextureHandle);
 
                 }
                 uint32_t RendererTextureIndex = textures[CurrentTextureHandle].Index;
@@ -650,28 +654,36 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     {
         //texture map gets current container
         auto& textures = m_Textures[m_CurrentFrame];
+        Asset<Texture> textureAsset = Animation.GetCurrentTexture();
+        GUUID textureID = textureAsset.GetID();
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
 
         if (m_VertexPointer + 4 > m_VertexCount)
             FlushGeometry();
-            if (textures.find(Animation.GetCurrentTextureID()) == textures.end()) {
+            if (textures.find(textureID) == textures.end()) {
                 if (textures.size() == m_TextureSlotCount - 1)
                     FlushGeometry();
-                //m_Textures[Animation.GetCurrentTextureID()] = { m_AssetManager->GetAsset(Animation.GetCurrentTextureID()) ,(uint32_t)textures.size() + 1};
-                textureIds[textures.size() - 1] = Animation.GetCurrentTextureID();
-            }
-            TextureRenderingData texture = textures[Animation.GetCurrentTextureID()];
-            if (!texture.texture)
-                return;
-            m_Vertices[m_VertexPointer].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
 
-            m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
-            m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
-            m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,0.0f };
-            m_Vertices[m_VertexPointer + 3].TexCoords = { 1.0f,1.0f };
+                 m_CurrentTextureDescriptorSetOffset++;
+                 textures[textureID] = { Animation.GetCurrentTexture() ,m_CurrentTextureDescriptorSetOffset};
+                 textureIds.push_back(textureID);
+
+            }
+            TextureRenderingData textureData = textures[textureID];
+            Texture* texture = (Texture*)textureData.texture.GetData();
+            if (!texture)
+                return;
+            m_Vertices[m_VertexPointer].TextureID = textureData.Index;
+            m_Vertices[m_VertexPointer + 1].TextureID = textureData.Index;
+            m_Vertices[m_VertexPointer + 2].TextureID = textureData.Index;
+            m_Vertices[m_VertexPointer + 3].TextureID = textureData.Index;
+
+            PRINTDEBUG(ErrorType::Info,"TextureIndex ",Animation.GetTextureIndex());
+
+            m_Vertices[m_VertexPointer].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[0];
+            m_Vertices[m_VertexPointer + 1].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[1];
+            m_Vertices[m_VertexPointer + 2].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[2];
+            m_Vertices[m_VertexPointer + 3].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[3];
 
 
       
@@ -801,7 +813,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         if (textures.find(TextureHandle) == textures.end()) {
         m_CurrentTextureDescriptorSetOffset++;
          textures[TextureHandle] = { font->TextureAsset ,m_CurrentTextureDescriptorSetOffset };
-         textureIds[textures.size() - 1] = TextureHandle;
+         textureIds.push_back(TextureHandle);
+ 
         }
 
         //Do this for every letter
@@ -1096,17 +1109,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     Texture* Renderer::LoadTexture(std::string Path,TextureType type)
     {
-        Context context = new ContextData();
-        context->Device = m_Device;
-        context->PDevice = m_PhysicalDevice;
-        context->GraphicsQueue = m_GraphicsQ;
-        context->QueueFamil = m_QueueFamilies;
-        context->CommandPool = m_GraphicsPool.GetCommandPool();
-
         TextureCreateInfo createInfo{};
         createInfo.Format = VK_FORMAT_R8G8B8A8_UNORM;
         createInfo.ImageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT;
-        Texture*texture = new Texture(context,createInfo, Path,TextureType::Texture);
+        Texture*texture = new Texture(m_Context,createInfo, Path,type);
         return texture;
     }
 

@@ -1,12 +1,13 @@
 #pragma once
 #include "RendCore.h"
 #include "Texture.h"
+#include "AssetManager.h"
 class Animator
 {
 public:
 	Animator() {};
 	//pass texture if you use textureatlases.
-	Animator(const std::string& Path,GUUID AnimationID,std::string AtlasHashPath);
+	Animator(const std::string& animationPathAbs,GUUID AnimationID,const std::string& AtlasHashPath,AssetManager* assetManager);
 	//This Doesn't use textureatlases
 	Animator(const std::string& Path);
 
@@ -16,10 +17,10 @@ public:
 	//Changes the stage if it's different.
 	void KeepStage(const std::string& Stage);
 
-	GUUID GetCurrentTextureID();
+	Asset<Texture> GetCurrentTexture();
+	uint32_t GetTextureIndex(){return m_CurrentStageInfo.TextureIndex;}
 	GUUID GetAnimationID();
 
-	uint32_t GetTextureIndex();
 
 private:
 	struct Stage {
@@ -27,8 +28,8 @@ private:
 		uint32_t To{};
 	};
 	struct StageInfo {
-		GUUID TextureID{};
 		uint32_t TextureIndex{};
+		Asset<Texture> TextureAsset{};
 		float Duration{};
 	};
 	//key is stage name

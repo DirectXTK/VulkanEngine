@@ -1,5 +1,7 @@
 make -j12
 status=$?
+exePath=$(cat ExeLocation)
+echo $exePath
 if [ $status = 0 ]; then
- ./bin/linux/x86_64/Sandbox/Sandbox
+ ./bin/$exePath/Sandbox
 fi

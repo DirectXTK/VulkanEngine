@@ -6,21 +6,29 @@ workspace "VulkanEngine"
     buildoptions("-MP")
     configurations{
         "Debug",
-        "Release"
+        "Release",
+        "Distrib"
     }
     linkoptions {
     "-Wl,--start-group",
     "-lApplication",
     "-lRenderer",
     "-Wl,--end-group",
-    }   
+    }
+    filter{"configurations:Release"}
+      defines {"RELEASE"}
+    filter{"configurations:Debug"}
+      defines {"DEBUG"}
+    filter{"configurations:Distrib"}
+      defines {"DISTRIB"}
+
     
     startproject "Application"
     startproject "Renderer"
     startproject "Sandbox"
 
 LibLocation="%{wks.location}/Libs/"
-outputdir = "%{cfg.build}/%{cfg.system}/%{cfg.architecture}"
+outputdir = "/%{cfg.buildcfg}/%{cfg.system}/%{cfg.architecture}"
 vulkanSDK = os.getenv("VULKAN_SDK")
 GlobalIncludes = {
     "%{prj.location}/../Include/FreeType",
