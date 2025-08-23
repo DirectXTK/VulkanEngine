@@ -36,6 +36,8 @@ public:
     Collider CreateCollider(Float2* Position, Float2 *Size);
     void AddCallback( InputCallbacks* callbacks);
     
+    void Shutdown();
+
     ~Application();
 private:
 
@@ -54,7 +56,7 @@ public:
     Camera2D m_Camera{};
     InputSystem m_InputSystem{};
     AssetManager m_AssetManager{};
-
+    bool m_Running{};
 
 #ifdef GUI_HEADER
     FontSystem* m_FontSystem{};

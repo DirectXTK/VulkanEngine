@@ -1,7 +1,28 @@
 #include "Application.h"
 #include "AppTime.h"
 #include "AssetManager.h"
-
+void ChechCommands(Application* app,std::string Command){
+    if(Command == "prtassets"){
+        app->GetAssetManager()->DebugStatistics(false);
+    }else if(Command == "help"){
+        Core::Log("prtassets -prints all loaded assets");
+        Core::Log("exit -exits the program");
+    }else if(Command == "exit"){
+        app->Shutdown();
+    }else{
+        Core::Log("Invalid command");
+    }
+}
+void RunCommandLineInputTemp(Application* inapp){
+    Application* App = inapp; 
+    std::string input{};
+    while(true){
+    std::cin >> input;
+    ChechCommands(App,input);
+    if(input == "exit")
+        return;
+    }
+}
  Application::Application(ApplicationSpecs specs){
     //init glfw
      //m_ApplicationLayer = (ApplicationLayer*)m_LayerController.CreateLayer(new ApplicationLayer(specs));
@@ -67,7 +88,9 @@
  }
 
 
-
+void Application::Shutdown(){
+    m_Running = false;
+}
 
 
  void Application::LoadAssets(std::string Path, AssetType type)
@@ -76,7 +99,9 @@
  }
 
  void Application::Run(){
-    while(!glfwWindowShouldClose(m_Window->GetHandle())){
+    std::thread InputThread(RunCommandLineInputTemp,this);
+    m_Running = true;
+    while(!glfwWindowShouldClose(m_Window->GetHandle())&& m_Running){
         m_InputSystem.ResetMouseChange();
 
         m_DeltaTime = Time::GetTimeMs() - m_LastFrameTime;
@@ -87,6 +112,7 @@
 
         m_GUIRenderer->BeginGUI();
         m_Renderer->BeginGUIFrame();
+
         m_LayerController.UpdateGUILayers();
 
         m_Renderer->EndFrame();
@@ -94,9 +120,8 @@
 
         glfwSwapBuffers(m_Window->GetHandle());
         glfwPollEvents();
-
+        
   
-        m_AssetManager.DebugStatistics(false);
 
     }
  }

@@ -5,6 +5,10 @@
 
 enum class ErrorType{Info,Warning,Error,FatalError};
 namespace Core{
+	const std::string COUTRED{"\033[31m"};
+	const std::string COUTGREEN{"\033[32m"};
+	const std::string COUTYELLOW{"\033[33m"};
+	const std::string COUTWHITE{"\033[0m"};
     void EmptyLogFile();
     
 	template<typename T>
@@ -25,17 +29,16 @@ namespace Core{
 	template<typename... ARGS>
 	 void Log(ErrorType type, ARGS ...args) {
 		std::ofstream file("C:/Repos/Game/bin/windows/x86_64/Application/Log.txt", std::ios::app);
-
 		switch (type) {
 			case ErrorType::Info:{
 				file << "Info: ";
-				std::cout << "Info: ";
+				std::cout <<COUTGREEN<< "Info: ";
 
 				break;
 			}
 			case ErrorType::Warning : {
 				file << "Warning: ";
-				std::cout << "Warning: ";
+				std::cout <<COUTYELLOW<< "Warning: ";
 
 				break;
 
@@ -49,7 +52,7 @@ namespace Core{
 			}
 		    case ErrorType::Error : {
 				file << "Error: ";
-				std::cout << "Error: ";
+				std::cout <<COUTRED<< "Error: ";
 				break;
 			}
 			default: {
@@ -59,6 +62,7 @@ namespace Core{
 		};
 
 		LogRec(file, args...);
+		std::cout << COUTWHITE;
 		file.close();
 	}
 	template<typename... ARGS>

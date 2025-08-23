@@ -178,6 +178,7 @@ struct Float2 {
         };
     };
 };
+
 inline bool operator==(const Float2& l, const Float2& r) {
     if (l.x == r.x&& l.y == r.y)
         return true;
@@ -233,9 +234,9 @@ namespace Core {
     //1- left top
     //2- right top
     //3- right bot
+    
     bool IsWithinRegionOrg(const Float2& PointPos, Float2 Region[4]);
-
-
+    uint64_t Align(uint64_t Number,uint64_t Aligment);
 
 
 #include <string>

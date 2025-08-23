@@ -27,6 +27,9 @@ namespace Core {
 			}
 			return false;
 	}
+	  uint64_t Align(uint64_t Number,uint64_t Aligment){
+    return (Number +Aligment-1)& ~(Aligment - 1);
+}
 
 
 

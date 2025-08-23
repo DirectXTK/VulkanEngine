@@ -97,12 +97,41 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	}
 	}
 	
-	
 
 
 }
 	
 void AssetManager::DebugStatistics(bool GUI){
+	Core::Log("Resource count",m_Resources.size());
+	for(auto it = m_Resources.begin();it != m_Resources.end();it++){
+		
+		switch(it->second.GetType()){
+			case AssetType::FONT:{
+				Core::Log("Font ID{",it->first.ID,"}");
+
+				break;
+			}
+				case AssetType::TEXTURE:{
+				Core::Log("Texture ID{",it->first.ID,"}");
+
+				break;
+			}
+				case AssetType::TEXTUREATLAS:{
+				Core::Log("Animation ID{",it->first.ID,"}");
+
+				break;
+			}
+				case AssetType::ANIMATION:{
+				Core::Log("Animation ID{",it->first.ID,"}");
+
+				break;
+			}
+			default:{
+				Core::Log("Not implemented or invalid type{",(uint32_t)it->second.GetType(),"}");
+				break;
+			}
+		}
+	}
 		//Core::Log(ErrorType::Info,"Font Count ",m_ResourceCount[AssetType::FONT]);
 		//Core::Log(ErrorType::Info,"Texture Count ",m_ResourceCount[AssetType::TEXTUREATLAS]);
 
@@ -141,7 +170,6 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 
 		TexturePath = TexturePath.substr(FolderPath.size(),TexturePath.size()-FolderPath.size()-4);
 		TexturePath +="Texture";
-		printf("Texture path %s %lu\n",TexturePath.c_str(),Core::GetStringHash(TexturePath));
 
 		Asset<Texture> asset=LoadAssetPerma<Texture>(baseTexture,AssetType::TEXTURE,TexturePath);
 
@@ -159,7 +187,6 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 
 		Animator* animator= new Animator(AnimationPath,atlasGUUID, TextureID,&m_APP->m_AssetManager);
 		AnimationPath =AnimationPath.substr(FolderPath.size(),AnimationPath.size()-FolderPath.size()-5);
-		printf("Animation path %s %lu\n",AnimationPath.c_str(),atlasGUUID);
 		animator->SetStage("IDLE");
 		
 	

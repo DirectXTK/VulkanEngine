@@ -18,5 +18,5 @@ int main() {
 	app.Run();
    
 
-    return 1;
+    return 0;
 }

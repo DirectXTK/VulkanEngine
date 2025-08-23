@@ -13,6 +13,7 @@ struct AssetHandle{
 	AssetHandle(){}
 
 	void MakeItPermaHandle(){RefCount++;}
+	AssetType GetType(){return Type;}
 	GUUID ID{};
 	uint32_t RefCount{};
 	AssetManager* Manager{};
@@ -139,7 +140,6 @@ public:
 	uint64_t GetAssetCount() { return m_Resources.size();}
 
 	void UnloadAsset(GUUID handle,AssetType type){
-		DebugStatistics(false);
 
 		auto Index = m_Resources.find(handle);
 		if(Index != m_Resources.end()){
