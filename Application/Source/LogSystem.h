@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <mutex>
 
 enum class ErrorType{Info,Warning,Error,FatalError};
 namespace Core{
@@ -9,6 +10,9 @@ namespace Core{
 	const std::string COUTGREEN{"\033[32m"};
 	const std::string COUTYELLOW{"\033[33m"};
 	const std::string COUTWHITE{"\033[0m"};
+
+	static std::mutex LogMutex{};
+
     void EmptyLogFile();
     
 	template<typename T>
@@ -28,6 +32,8 @@ namespace Core{
 	}
 	template<typename... ARGS>
 	 void Log(ErrorType type, ARGS ...args) {
+		std::lock_guard<std::mutex> lock(LogMutex);
+
 		std::ofstream file("C:/Repos/Game/bin/windows/x86_64/Application/Log.txt", std::ios::app);
 		switch (type) {
 			case ErrorType::Info:{
@@ -62,8 +68,9 @@ namespace Core{
 		};
 
 		LogRec(file, args...);
-		std::cout << COUTWHITE;
 		file.close();
+		std::cout <<COUTWHITE;
+
 	}
 	template<typename... ARGS>
 	 void Log(ARGS ...args) {

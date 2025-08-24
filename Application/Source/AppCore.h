@@ -27,12 +27,16 @@
 #include <stack>
 #include <cfloat>
 #include <cstring>
+#include <atomic>
+#include <mutex>
 
 #include "RandomGenerator.h"
 #include "AppTime.h"
 
 //Debug stuff
 #include <x86intrin.h>
+
+#include "LinuxSpecificCode.h"
 
 #ifdef DEBUG
     #define WORKINGDIR ../../../../../

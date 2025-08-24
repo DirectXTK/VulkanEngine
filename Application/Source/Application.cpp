@@ -13,19 +13,27 @@ void ChechCommands(Application* app,std::string Command){
         Core::Log("Invalid command");
     }
 }
-void RunCommandLineInputTemp(Application* inapp){
-    Application* App = inapp; 
+
+void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning){
     std::string input{};
-    while(true){
-    std::cin >> input;
-    ChechCommands(App,input);
+    while(threadRunning.load()){
+
+        input =Core::ReadInputFromConsole(threadRunning);
+
+        ChechCommands(inapp,input);
+
+    
     if(input == "exit")
         return;
     }
+    printf("VSIO\n");
 }
  Application::Application(ApplicationSpecs specs){
     //init glfw
      //m_ApplicationLayer = (ApplicationLayer*)m_LayerController.CreateLayer(new ApplicationLayer(specs));
+
+    tcgetattr(STDIN_FILENO,&m_DefaultConsoleSett);
+
      Core::EmptyLogFile();
      glfwInit();
      glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -90,6 +98,12 @@ void RunCommandLineInputTemp(Application* inapp){
 
 void Application::Shutdown(){
     m_Running = false;
+    //set the  font color of cout to default.
+    tcsetattr(STDIN_FILENO,TCSANOW,&m_DefaultConsoleSett);
+    std::cout << "\033[0m"<<std::flush;
+    std::cout << "Shutting Down...";
+    printf("Sght");
+
 }
 
 
@@ -99,8 +113,11 @@ void Application::Shutdown(){
  }
 
  void Application::Run(){
-    std::thread InputThread(RunCommandLineInputTemp,this);
+    std::atomic<bool> ThreadRunning(true);
     m_Running = true;
+
+    std::thread InputThread(RunCommandLineInputTemp,this,std::ref(ThreadRunning));
+
     while(!glfwWindowShouldClose(m_Window->GetHandle())&& m_Running){
         m_InputSystem.ResetMouseChange();
 
@@ -124,7 +141,18 @@ void Application::Shutdown(){
   
 
     }
- }
+    ThreadRunning = false;
+    m_Running = false;
+    if(InputThread.joinable()){
+        printf("Joinable\n");
+        InputThread.join();
+    }
+    tcsetattr(STDIN_FILENO,TCSANOW,&m_DefaultConsoleSett);
+    printf("Continuy");
+    
+    Shutdown();
+
+}
 
  Collider Application::CreateCollider(Float2* Position,Float2* Size)
  {
@@ -138,10 +166,12 @@ void Application::Shutdown(){
      m_InputSystem.AddCallbacks(callbacks);
  }
     Application::~Application(){
+        Shutdown();
         delete m_Window;
         delete m_Renderer;
         delete m_FontSystem;
         delete m_GUIRenderer;
+        glfwTerminate();
     }
 
 

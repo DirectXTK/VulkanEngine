@@ -14,3 +14,6 @@
 
 
  }
+ Window::~Window(){
+    glfwDestroyWindow(m_Window);
+ }

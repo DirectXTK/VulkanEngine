@@ -58,6 +58,9 @@ public:
     AssetManager m_AssetManager{};
     bool m_Running{};
 
+    //console
+    termios m_DefaultConsoleSett{};
+
 #ifdef GUI_HEADER
     FontSystem* m_FontSystem{};
     GUIRenderer* m_GUIRenderer{};

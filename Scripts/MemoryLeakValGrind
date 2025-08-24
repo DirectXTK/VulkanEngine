@@ -3,4 +3,4 @@ SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
 cd $SCRIPT_DIR
 ls
 cd ../
-valgrind --leak-check=full --show-leak-kinds=definite --track-origins=yes ./bin/linux/x86_64/Sandbox/Sandbox 
+valgrind --leak-check=full --show-leak-kinds=definite --track-origins=yes ./bin/Debug/linux/x86_64/Sandbox/Sandbox 
