@@ -26,7 +26,6 @@ void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning
     if(input == "exit")
         return;
     }
-    printf("VSIO\n");
 }
  Application::Application(ApplicationSpecs specs){
     //init glfw
@@ -50,8 +49,8 @@ void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning
 
 
      m_InputSystem.Init(m_Window->GetHandle());
-     m_Renderer = new Renderer(desc, m_Window->GetHandle(), &m_InputSystem,&m_AssetManager);
 
+     m_Renderer = new Renderer(desc, m_Window->GetHandle(), &m_InputSystem,&m_AssetManager);
 
      m_AssetManager.Init(this);
   
@@ -61,6 +60,7 @@ void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning
 
      m_FontSystem = new FontSystem(this);
      m_GUIRenderer = new GUIRenderer(this, false);
+
  }
 
  void Application::AddLayer(Layer* layer)
@@ -141,14 +141,13 @@ void Application::Shutdown(){
   
 
     }
-    ThreadRunning = false;
+    ThreadRunning.store(false);
     m_Running = false;
     if(InputThread.joinable()){
         printf("Joinable\n");
         InputThread.join();
     }
     tcsetattr(STDIN_FILENO,TCSANOW,&m_DefaultConsoleSett);
-    printf("Continuy");
     
     Shutdown();
 

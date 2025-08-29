@@ -3,7 +3,7 @@ workspace "VulkanEngine"
     cppdialect "C++17"
     characterset ("Unicode")
     toolset "clang"
-    buildoptions("-MP")
+    buildoptions { "-MP"}
     configurations{
         "Debug",
         "Release",

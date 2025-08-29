@@ -5,6 +5,7 @@ VkDevice LogicalDevice::CreateLogicalDevice(VkPhysicalDevice physicalDevice,Queu
     VkDevice Device{};
     std::vector<VkDeviceQueueCreateInfo> queueInfos{};
     std::set<int> QueueFamilyIndices{families.Graphics, families.Presentation};
+    std::vector<float> Priorities{};
 
     for (int Index : QueueFamilyIndices) {
         VkDeviceQueueCreateInfo  queueInfo{};
@@ -12,13 +13,17 @@ VkDevice LogicalDevice::CreateLogicalDevice(VkPhysicalDevice physicalDevice,Queu
         queueInfo.queueFamilyIndex = Index;
         queueInfo.queueCount = 1;
 
-        float Priority = 1.0f;
-        queueInfo.pQueuePriorities = &Priority;
-
+         Priorities.push_back(1.0f);
         queueInfos.push_back(queueInfo);
     }
+    for(uint32_t i=0;i < Priorities.size();i++)
+        queueInfos[i].pQueuePriorities = &Priorities[i];
 
-
+        
+    VkPhysicalDeviceFeatures deviceFeatures{};
+    deviceFeatures.independentBlend = true;
+    deviceFeatures.samplerAnisotropy = true;
+    deviceFeatures.fillModeNonSolid = false;
 
     VkDeviceCreateInfo devicecreateinfo{};
     devicecreateinfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -28,18 +33,17 @@ VkDevice LogicalDevice::CreateLogicalDevice(VkPhysicalDevice physicalDevice,Queu
     devicecreateinfo.ppEnabledExtensionNames = nullptr;
     devicecreateinfo.enabledExtensionCount = (uint32_t)g_DeviceExtensions.size();
     devicecreateinfo.ppEnabledExtensionNames = g_DeviceExtensions.data();
-
-
-    VkPhysicalDeviceFeatures deviceFeatures{};
-    deviceFeatures.independentBlend = true;
-    deviceFeatures.samplerAnisotropy = true;
-    deviceFeatures.fillModeNonSolid = false;
     devicecreateinfo.pEnabledFeatures = &deviceFeatures;
 
 
-    VkResult result = vkCreateDevice(physicalDevice, &devicecreateinfo, nullptr, &Device);
-    if (result != VK_SUCCESS)
-        Core::Log(ErrorType::Error, "Failed to create Device.");
+
+
+
+  vkCreateDevice(physicalDevice, &devicecreateinfo, nullptr, &Device);
+
+    //if (result != VK_SUCCESS)
+     //   Core::Log(ErrorType::Error, "Failed to create Device.");
+
 
     return Device;
  

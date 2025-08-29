@@ -16,6 +16,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     m_AssetManager = assetManager;
     //m_VertexBufferSize = 3*100;
    //Create vulkan instance
+
     InstanceDesc instancedesc{};
     instancedesc.ApiVersion = VK_API_VERSION_1_3;
     instancedesc.ValidationLayersEnabled = true;
@@ -24,10 +25,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     CreateSurface(window, &m_Surface);
 
     VulkanInstance::GetPhysicalDevice(m_Instance, m_Surface,&m_PhysicalDevice);
+
     m_SwapChainDetails = SwapChain::GetSwapChainCapabilities(m_PhysicalDevice, m_Surface);
 
     m_QueueFamilies = VulkanInstance::GetQueueFamilies(m_PhysicalDevice, m_Surface);
-    m_Device = LogicalDevice::CreateLogicalDevice(m_PhysicalDevice, m_QueueFamilies);
+
+   m_Device = LogicalDevice::CreateLogicalDevice(m_PhysicalDevice, m_QueueFamilies);
+
     LogicalDevice::GetQueues(m_Device, m_QueueFamilies, &m_GraphicsQ, &m_PresentationQ);
 
        Context context = new ContextData();
@@ -256,11 +260,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_CurrentVertexBufferIndex = 0;
             m_VertexBufferOffset = 0;
             m_VertexCountPerDrawCall = 0;
-
             m_VertexBufferOffsetGUI =0;
             m_VertexGUIRemaining = m_VertexMaxCountGUI;
             m_CurrentVertexBufferIndexGUI =0;
-
             m_Camera = *camera;
 
               m_UniformCameraData.GeometryCamera = m_Camera.GetViewProj();
@@ -317,7 +319,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::BeginGUIFrame()
     {
         FlushGeometry();
-      // m_CameraViewProj = glm::identity<glm::mat4>();
+        m_VertexPointer =0;
        m_GUIRendering = true;
     }
 
@@ -337,7 +339,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     {
         auto& textures = m_Textures[m_CurrentFrame];
         auto& textureIds = m_TextureIDByOrder[m_CurrentFrame];
-
+        Core::Log("m_VertexPointer ",m_VertexPointer );
         m_DescriptorSetTextures.WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
 
 
@@ -396,7 +398,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_VertexBufferOffsetGUI+=m_VertexPointer;
 
         m_DrawCallCountGUI++;
-        m_VertexPointer = 0;
+            m_VertexPointer = 0;
 
         textures.clear();
         textureIds.clear();
@@ -426,7 +428,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-        //read here somehow the textures doens't render after adding more objects its something to do with flush geometry because after its called the second time textures start to disappear
 
 
 
@@ -518,6 +519,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_VertexBufferOffset += m_VertexPointer;
 
 
+            m_VertexPointer = 0;
 
             m_DrawCallCountGeometry++;
            textures.clear();
@@ -609,6 +611,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             memset(m_Vertices,0,sizeof(Vertex)*m_VertexCount);
             m_VertexBufferOffsetGUI =0;
             m_VertexBufferOffset =0;
+            m_VertexPointer = 0;
             m_CurrentVertexBufferIndexGUI=0;;
             m_VertexGUIRemaining=m_VertexMaxCountGUI;
         }
@@ -1327,7 +1330,6 @@ void Renderer::DrawBatch()
     }
 
    
-
     for (uint32_t i = 0; i < m_DrawCommandsGUI.size(); i++) {
         uint64_t VertexBufferOffset = m_DrawCommandsGUI[i].VertexBufferOffset;
 
@@ -1346,7 +1348,6 @@ void Renderer::DrawBatch()
        static  uint32_t uniformBufferIndex{1};
         vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
-
 
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGUI[i].VertexCount * 1.5f), 1, 0, 0, 0);
     }

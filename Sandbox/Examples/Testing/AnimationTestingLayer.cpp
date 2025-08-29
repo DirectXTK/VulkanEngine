@@ -12,12 +12,12 @@ void AnimationTestingLayer::OnCreate()
 	m_App->LoadAssets("/users/jimy/Repos/VulkanEngine/bin/Debug/linux/x86_64/Sandbox/Resources/Animation/", AssetType::ANIMATION);
 	m_App->LoadAssets("/users/jimy/Repos/VulkanEngine/bin/Debug/linux/x86_64/Sandbox/Resources/Textures/", AssetType::TEXTURE);
 
-	m_Units.reserve(10);
-	m_Units.push_back(AnimationUnit());
-	m_Units.push_back(AnimationUnit());
+	m_Units.reserve(1000);
+
+
 
 	m_App->m_Camera.SetPosition({ 0.0f,0.0f });
-
+/*
 	m_Units[0].Position = {0.0f,0.0f};
 	m_Units[0].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("WARRIOR")).GetData();
 	m_Units[0].animator.SetStage("WALK");
@@ -30,8 +30,18 @@ void AnimationTestingLayer::OnCreate()
 	m_Units[1].animator.SetStage("IDLE");
 	m_Units[1].Collid = m_System.CreateCollider();
 	m_Units[1].Collid.Update(&m_Units[1].Position, &m_Size);
+	*/
 
+for(uint32_t i=0;i < 1000;i++){
+	m_Units.push_back(AnimationUnit());
 
+		m_Units[i].Position = { 0.04f*2.0f*i,0.0f };
+	m_Units[i].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("TOWN_HALL")).GetData();
+	m_Units[i].animator.SetStage("IDLE");
+	m_Units[i].Collid = m_System.CreateCollider();
+	m_Units[i].Collid.Update(&m_Units[i].Position, &m_Size);
+
+}
 	//temp
 	/*m_PathGrid.resize(50 * 50);
 	for (uint32_t x = 0; x < 50; x++) {

@@ -3,7 +3,7 @@
 #include "Application.h"
 namespace Core{
 
-    char GetCharFromConsole(uint64_t* size){
+    char GetCharFromConsole(int64_t* size){
         termios oldt,newt{};
         char ch{};
 
@@ -26,7 +26,7 @@ namespace Core{
     }
     std::string ReadInputFromConsole(std::atomic<bool>& threadRunning){
         char ch{};
-        uint64_t Size{};
+        int64_t Size{};
         std::string ret{};
         while(threadRunning.load()){
             
@@ -48,6 +48,7 @@ namespace Core{
                 
 
     }
+    return "";
 }
 }
    
