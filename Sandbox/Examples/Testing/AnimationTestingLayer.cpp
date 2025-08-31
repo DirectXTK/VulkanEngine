@@ -16,7 +16,7 @@ void AnimationTestingLayer::OnCreate()
 
 
 
-	m_App->m_Camera.SetPosition({ 0.0f,0.0f });
+	m_App->m_Camera.SetPosition({ 0.0f,-0.3f });
 /*
 	m_Units[0].Position = {0.0f,0.0f};
 	m_Units[0].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("WARRIOR")).GetData();
@@ -32,7 +32,7 @@ void AnimationTestingLayer::OnCreate()
 	m_Units[1].Collid.Update(&m_Units[1].Position, &m_Size);
 	*/
 
-for(uint32_t i=0;i < 1000;i++){
+for(uint32_t i=0;i < 1;i++){
 	m_Units.push_back(AnimationUnit());
 
 		m_Units[i].Position = { 0.04f*2.0f*i,0.0f };

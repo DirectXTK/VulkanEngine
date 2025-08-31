@@ -31,10 +31,17 @@
         void Buffer::UploadToBuffer(VkDevice device, void* data, uint64_t Size,uint64_t Offset)
         {
             void* map{};
-            vkMapMemory(device, m_Memory, 0, m_BufferSize, 0, &map);
+            vkMapMemory(device, m_Memory, Offset, Size, 0, &map);
             memcpy(map, data, Size);
             vkUnmapMemory(device,m_Memory);
         }
+    void Buffer::LoadFromBufferToVar(VkDevice device,void* out_data,uint64_t size,uint64_t Offset){
+         void* map{};
+        vkMapMemory(device, m_Memory, 0, m_BufferSize, 0, &map);
+        memcpy(out_data, map, size);
+        vkUnmapMemory(device,m_Memory);
+    }
+        
         Float2 Buffer::ReadPixel(uint32_t x, uint32_t y,uint32_t Width,uint32_t Height){
              void* map{};
              Float2* imagedata{};
