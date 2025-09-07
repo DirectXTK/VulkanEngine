@@ -11,6 +11,7 @@ struct ApplicationSpecs{
     uint32_t WindowHeight{500};
      uint32_t WindowWidth{500};
     std::string WindowTitle{"Untitled"};
+    bool RendererDebugging{false};
 
     //Renderer stuff
     Float4 ClearColor{ 0.5f,0.5f,0.5f,1.0f };
@@ -57,7 +58,8 @@ public:
     InputSystem m_InputSystem{};
     AssetManager m_AssetManager{};
     bool m_Running{};
-
+    //Debugging
+    bool m_RendererDebugging{false};
     //console
     termios m_DefaultConsoleSett{};
 

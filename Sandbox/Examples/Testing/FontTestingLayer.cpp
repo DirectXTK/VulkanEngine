@@ -14,7 +14,7 @@ void FontTestingLayer::OnCreate()
 
 void FontTestingLayer::OnUpdate(float DeltaTime)
 {
-	DefaultCameraControlls(&m_App->m_InputSystem, &m_App->m_Camera);
+	DefaultCameraControlls(m_App, &m_App->m_Camera);
 
 	for(uint32_t i=0;i < 1000;i++)
 		m_App->m_Renderer->DrawQuad({ 0.01f*i,0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, 0);
@@ -36,12 +36,6 @@ void FontTestingLayer::OnGUI()
 	}
 	static Float2 Pos{ -0.99f,-0.99f };
 
-	StyleBorderData props{};
-	props.BorderWidth = 0.0005f;
-	props.BackGroundColor = { 0.2f,0.2f,0.2f,1.0f };
-	props.BorderColor = { 1.0f,0.0f,.9f,1.0f };
-	props.BackGroundTexture = nullptr;
-	props.BorderTexture = nullptr;
 
 	//	m_FontSystem->Text("Play", "PLAY", { 0.0f,0.5f });
 		//m_FontSystem->Text("Options", "OPTIONS", { -0.1f,0.4f });

@@ -90,7 +90,7 @@ public:
     void EndFrame();
 
 
-    void Statistics();
+    void Statistics(bool renderGui = true,void* guirenderer= nullptr);
 
     Texture* LoadTexture(std::string Path,TextureType = TextureType::Texture);
 
@@ -169,6 +169,8 @@ private:
 
     //Debug
     VkDebugUtilsMessengerEXT m_Messenger{};
+    //all the rendered vertecies of the frame.
+    uint64_t m_VertexCountPerFrame{};
     void CreateDebugger();
 
 

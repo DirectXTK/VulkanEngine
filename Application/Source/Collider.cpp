@@ -81,7 +81,6 @@ Float2* TraceDest(Node* Details, uint64_t DestIndex,uint32_t* outDestCount) {
 	while (!Path.empty()) {
 		Output[Index] = Path.top().Position;
 		Path.pop();
-		//Core::Log(ErrorType::Info, Output[Index].x, " ", Output[Index].y);
 			Index++;
 	}
 	

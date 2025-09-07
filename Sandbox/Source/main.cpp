@@ -12,6 +12,7 @@ int main() {
 	specs.WindowHeight = 500;
 	specs.WindowWidth = 500;
 	specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
+	specs.RendererDebugging = true;
 
 	Application app(specs);
 	app.AddLayer(new AnimationTestingLayer());

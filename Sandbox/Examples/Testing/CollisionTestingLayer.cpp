@@ -39,7 +39,7 @@ void CollisionTestingLayer::OnUpdate(float Deltatime)
 			}
 		}
 	}
-	DefaultCameraControlls(&m_App->m_InputSystem, &m_App->m_Camera);
+	DefaultCameraControlls(m_App, &m_App->m_Camera);
 }
 
 void CollisionTestingLayer::OnDestroy()

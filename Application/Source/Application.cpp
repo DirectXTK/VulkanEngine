@@ -38,7 +38,7 @@ void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning
      glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
      glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-
+    m_RendererDebugging = specs.RendererDebugging;
      m_Window = new Window(specs.WindowWidth, specs.WindowHeight, specs.WindowTitle);
      m_Camera.Init({ 0.0f,0.0f }, { 1.0f,1.0f });
 
@@ -131,8 +131,14 @@ void Application::Shutdown(){
         m_Renderer->BeginGUIFrame();
 
         m_LayerController.UpdateGUILayers();
-
+        
+          if(m_RendererDebugging){
+            m_Renderer->Statistics(true,m_GUIRenderer);
+        }
         m_Renderer->EndFrame();
+
+      
+
         m_InputSystem.ResetInput();
 
         glfwSwapBuffers(m_Window->GetHandle());

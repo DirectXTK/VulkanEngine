@@ -32,7 +32,7 @@ void AnimationTestingLayer::OnCreate()
 	m_Units[1].Collid.Update(&m_Units[1].Position, &m_Size);
 	*/
 
-for(uint32_t i=0;i < 1;i++){
+for(uint32_t i=0;i < 1000;i++){
 	m_Units.push_back(AnimationUnit());
 
 		m_Units[i].Position = { 0.04f*2.0f*i,0.0f };
@@ -96,7 +96,7 @@ void AnimationTestingLayer::OnUpdate(float DeltaTime)
 	//Float2* loc =  m_Units[0].Collid.GetPathToObj(m_Units[0].Position, m_Units[1].Position,&PathCount);
 	//m_System.CheckCollisions();
 
-	DefaultCameraControlls(&m_App->m_InputSystem, &m_App->m_Camera);
+	DefaultCameraControlls(m_App, &m_App->m_Camera);
 }
 
 void AnimationTestingLayer::OnDestroy()
@@ -127,7 +127,6 @@ void AnimationTestingLayer::OnGUI()
 			m_SpawnUnit = false;
 		}
 	
-		Core::Log(ErrorType::Info, ConvertPositionToNodeIndexa(m_App->GetWorldMousePos()));
 	}
 
 	if (m_CurrentlySelectedUnit != 0&& false) {
@@ -149,7 +148,6 @@ void AnimationTestingLayer::OnGUI()
 		
 	}
 	gui->Panel("UI Bar", {0.0f,-0.8f}, {1.0f,1.0f,1.0f,1.0}, {1.0f,0.2f}, Core::GetStringHash("PANEL"));
-
 	if (gui->Button("TOWN_HALL", "",{0.0f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, Core::GetStringHash("GUI/SpawnButton"), false)) {
 		m_SpawnUnit = true;
 		m_SpawnedUnit = "TOWN_HALL";

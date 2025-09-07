@@ -1,4 +1,5 @@
 #pragma once
+#include "AppCore.h"
 namespace GUI {
 	enum class Style { NONE, COLOR, BORDER ,SLIDER};
 	struct ColorStyle {
@@ -14,7 +15,7 @@ namespace GUI {
 		Float4 BackGroundColor{ 1.0f,1.0f,1.0f,0.0f };
 
 		//placeholder for now
-		void* BackGroundTexture{};
+		void* BackGroundTexture{nullptr};
 		void* BorderTexture{ nullptr };
 	};
 	struct SliderStyle{

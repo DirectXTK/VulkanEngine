@@ -170,15 +170,24 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 }
 void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size) {
 	if (Text.size() != 0) {
+		
+	
+
+		if (m_CurrenPanelParent) {
+		Position = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		Size = {Size.x*m_CurrenPanelParent->Size.x,Size.y*m_CurrenPanelParent->Size.y};
+		}
+		DrawBorder(Position,Size,m_CurrentBorderData->BorderColor,m_CurrentBorderData->BackGroundColor,m_CurrentBorderData->BorderWidth);
 		m_FontSystem->Text(Core::GetStringHash(strID), Text.c_str(), Position, { Size.x * 2,Size.y * 2 });
 	}
 }
 void GUIRenderer::DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor,const Float4& BackGroundColor, float BorderWidth) {
 	Renderer* renderer = m_Application->m_Renderer;
 	Float2 BorderSize{ Size.x+ BorderWidth,Size.y+ BorderWidth };
+	Float2 RealPosition= {Position.x+(Size.x),Position.y+(Size.y)};
 	
-	renderer->DrawQuad({ Position.x,Position.y,0.0f }, BorderColor, BorderSize, 0);
-	renderer->DrawQuad({ Position.x,Position.y,0.0f }, BackGroundColor, Size, 0);
+	renderer->DrawQuad({ RealPosition.x,RealPosition.y,0.0f }, BorderColor, BorderSize, 0);
+	renderer->DrawQuad({ RealPosition.x,RealPosition.y,0.0f }, BackGroundColor, Size, 0);
 }
 void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Position, Float2 Size, float SlideAmount,Float2 MinMax, uint32_t DecimalPlaces)
 {

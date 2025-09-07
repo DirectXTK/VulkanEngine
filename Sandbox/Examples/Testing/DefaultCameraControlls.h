@@ -1,3 +1,3 @@
 #pragma once
 #include "Application.h"
-void DefaultCameraControlls(InputSystem* inputsystem, Camera2D* camera);
+void DefaultCameraControlls(Application* app, Camera2D* camera);

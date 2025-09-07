@@ -132,8 +132,6 @@ void AssetManager::DebugStatistics(bool GUI){
 			}
 		}
 	}
-		//Core::Log(ErrorType::Info,"Font Count ",m_ResourceCount[AssetType::FONT]);
-		//Core::Log(ErrorType::Info,"Texture Count ",m_ResourceCount[AssetType::TEXTUREATLAS]);
 
 }
 

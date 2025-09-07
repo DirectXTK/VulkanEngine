@@ -254,7 +254,7 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 	BoundingBox[2] = { Position.x + Size.x,Position.y + Size.y };
 	BoundingBox[3] = { Position.x + Size.x,Position.y };
 
-	DrawBorder(Position, Size, SelectID);
+	//DrawBorder(Position, Size, SelectID);
 
 
 	renderer->RenderText(Message, { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
@@ -268,16 +268,19 @@ void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 	
 	Float4 DefBackGroundColor{ 0.2f,0.2f,0.2f,1.0f };
 
+	Core::Log("Size",m_Style.size());
 	if (m_Style.empty()) {
-		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,0.0f }, { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
+		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
 		return;
 	}
 
 	//style switcthes
 	switch (m_Style.top()) {
-	case Style::DrawBorder: {
+	case GUI::Style::BORDER: {
 
-		StyleBorderData* BorderData = (StyleBorderData*)m_StyleData.top();
+		GUI::BorderStyle* BorderData = (GUI::BorderStyle*)m_StyleData.top();
+		Core::Log("MakyYra");
+		Core::Log("BorderWith",BorderData->BorderWidth);
 
 		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, BorderData->BorderColor, { (Size.x * 0.5f) + BorderData->BorderWidth,(Size.y * 0.5f)+ BorderData->BorderWidth }, ID.ID);
 		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, BorderData->BackGroundColor, { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
@@ -607,15 +610,15 @@ void FontSystem::ReRenderFaces()
 
 
 }
-void FontSystem::PushStyle(const Style& style,void* StyleData) {
+void FontSystem::PushStyle(const GUI::Style& style,void* StyleData) {
 	m_Style.push(style);
 	switch (style) {
-	case Style::DrawBorder: {
+	case GUI::Style::BORDER :{
 		
 		//Store style data somehow and transfer it.
-			m_StyleData.push(new StyleBorderData());
+			m_StyleData.push(new GUI::BorderStyle());
 			if (StyleData) {
-				memcpy(m_StyleData.top(), StyleData, sizeof(StyleBorderData));
+				memcpy(m_StyleData.top(), StyleData, sizeof(GUI::BorderStyle));
 			}
 
 		break;

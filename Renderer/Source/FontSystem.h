@@ -1,5 +1,5 @@
 #pragma once
-#include "FontStyles.h"
+#include "GUIStyles.h"
 #include "ft2build.h"
 #include "Texture.h"
 #include "AssetManager.h"
@@ -37,7 +37,7 @@ public:
 
 	Texture* GetFontAtlas();
 
-	void PushStyle(const Style& style,void* StyleData=nullptr);
+	void PushStyle(const GUI::Style& style,void* StyleData=nullptr);
 	void PopStyle();
 
 
@@ -95,7 +95,7 @@ private:
 	
 
 	//styles
-	std::stack<Style> m_Style{};
+	std::stack<GUI::Style> m_Style{};
 	std::stack<void*> m_StyleData{};
 
 
