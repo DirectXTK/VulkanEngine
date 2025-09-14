@@ -4,6 +4,7 @@
 #include "GUI.h"
 #endif
 
+#include "Pipeline.h"
 #include "SwapChain.h"
 #include "Shader.h"
 #include "CommandPool.h"
@@ -37,14 +38,13 @@ struct DrawCommand {
     uint64_t VertexBufferOffset{};
     uint32_t DescriptorSetTextureIndex{};
 };
-enum class RenderFeature {NONE,DRAWOUTLINE};
-struct RenderMode {
-    RenderFeature Feature{ RenderFeature::NONE};
-    bool Enable{ true };
-};
+enum class RenderMode{SOLID,WIREFRAME};
+
 struct RendererDesc{
     uint32_t VertexCountPerDrawCall{100};
     Float4 ClearColor{};
+    RenderMode Rendermode{RenderMode::SOLID};
+    bool Blending{true};
     Camera2D* InitialCamera{nullptr}; //optional
 };
 struct UniformCameraBufferData{
@@ -57,7 +57,7 @@ public:
     Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem, AssetManager* assetManager);
     void InitializePipeline(uint64_t MaxTextureCount);
     //
-    void BeginFrame(Camera2D* camera);
+    void BeginFrame(Camera2D* camera,float deltaTime);
     void BeginGUIFrame();
 
     //GUI
@@ -75,6 +75,7 @@ public:
     //PointerIndex = -1 means don't draw it.
     void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
     //GUI 
+    void SetRenderDesc(const RendererDesc& desc);
 
     void DrawOutline(Float3 Position, Float2 Size,Float4 Color, float OutlineWidth);
 
@@ -98,6 +99,8 @@ public:
 
     ~Renderer();
 private:
+    void ReCreatePipeline(const PipelineDesc& desc);
+
     void StartRecordingCommands();
     void StopRecordingCommands();
 
@@ -115,6 +118,9 @@ private:
     void CreateFrameBuffers();
     void CreateCommandBuffers();
     void CreateDescriptorSets();
+    //Options
+    RendererDesc m_RendererDesc{};
+    PipelineDesc m_PipelineDesc{};
 
     Context m_Context{};
 
@@ -193,6 +199,8 @@ private:
     uint64_t m_VertexBufferOffset{};
     uint32_t m_CurrentVertexBufferIndex{};
     uint64_t m_VertexCountPerDrawCall{};
+
+    float m_DeltaTime{};
 
     Texture* m_FrameImageIndexed{};
     //Diagnostics

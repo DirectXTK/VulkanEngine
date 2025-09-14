@@ -249,15 +249,15 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 
 
 	Float2 BoundingBox[4];
-	BoundingBox[0] = { Position.x ,Position.y };
-	BoundingBox[1] = { Position.x ,Position.y + Size.y };
+	BoundingBox[0] = { Position.x-Size.x ,Position.y-Size.y };
+	BoundingBox[1] = { Position.x -Size.x,Position.y + Size.y };
 	BoundingBox[2] = { Position.x + Size.x,Position.y + Size.y };
-	BoundingBox[3] = { Position.x + Size.x,Position.y };
+	BoundingBox[3] = { Position.x + Size.x,Position.y-Size.y };
 
 	//DrawBorder(Position, Size, SelectID);
 
 
-	renderer->RenderText(Message, { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	renderer->RenderText(Message, { BoundingBox[1].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
 
 }
 void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)

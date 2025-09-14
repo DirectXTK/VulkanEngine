@@ -120,7 +120,7 @@ VkPipelineLayout Pipeline::CreatePipelineLayout(VkDevice device,VkDescriptorSetL
     return PipelineLayout;
 }
 
-VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
+VkPipeline Pipeline::CreatePipeline(const PipelineDesc& desc,VkDevice device)
 {
     VkPipeline outputPipeline{};
     VkShaderModule Vertex= ShaderDesc::CreateShader({ ShaderType::VertexShader,"Shaders/Vertex.spv" },device);
@@ -170,7 +170,7 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
 
     VkPipelineInputAssemblyStateCreateInfo inputassassembly{};
     inputassassembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputassassembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputassassembly.topology = desc.Topology;
     inputassassembly.primitiveRestartEnable = false;
 
     //Depth stencil
@@ -191,7 +191,9 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
     VkPipelineDepthStencilStateCreateInfo DepthStencilCreateInfo{};
    DepthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
    DepthStencilCreateInfo.depthBoundsTestEnable = false;
-   DepthStencilCreateInfo.stencilTestEnable = true;
+   DepthStencilCreateInfo.stencilTestEnable = false;
+   DepthStencilCreateInfo.depthWriteEnable = false;
+
    //DepthStencilCreateInfo.front = FrontState;
   // DepthStencilCreateInfo.back = BackState;
 
@@ -209,15 +211,23 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
     viewportinfo.scissorCount = 1;
     viewportinfo.pScissors = &Scissor;
 
+
+
+
     VkPipelineRasterizationStateCreateInfo rasterizationstate{};
     rasterizationstate.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizationstate.depthClampEnable = false;
     rasterizationstate.rasterizerDiscardEnable = false;
-    rasterizationstate.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizationstate.polygonMode = desc.RenderType;
     rasterizationstate.lineWidth = 1.0f;
     rasterizationstate.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizationstate.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    rasterizationstate.depthBiasEnable = false;
+    rasterizationstate.depthBiasEnable = VK_FALSE;
+    rasterizationstate.depthBiasConstantFactor = 0.0f;
+    rasterizationstate.depthBiasSlopeFactor = 0.0f;
+
+
+
 
     VkPipelineMultisampleStateCreateInfo multisampleinfo{};
     multisampleinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -228,7 +238,7 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
 
     VkPipelineColorBlendAttachmentState blendattachment{};
     blendattachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    blendattachment.blendEnable = true;
+    blendattachment.blendEnable = desc.Blending;
 
     blendattachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     blendattachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -260,13 +270,13 @@ VkPipeline Pipeline::CreatePipeline(PipelineDesc& desc,VkDevice device)
     VkDynamicState DynamicState[5] = { VK_DYNAMIC_STATE_STENCIL_TEST_ENABLE,VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,VK_DYNAMIC_STATE_STENCIL_OP,VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,VK_DYNAMIC_STATE_STENCIL_REFERENCE };
 
     VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo{VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
-    DynamicStateCreateInfo.dynamicStateCount = 5;
-    DynamicStateCreateInfo.pDynamicStates = DynamicState;
+    DynamicStateCreateInfo.dynamicStateCount = 0;
+    DynamicStateCreateInfo.pDynamicStates = nullptr;
     
  
 
 
-    VkGraphicsPipelineCreateInfo pipeline{};
+VkGraphicsPipelineCreateInfo pipeline{};
     pipeline.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipeline.stageCount = 2;
     pipeline.pStages = stages;

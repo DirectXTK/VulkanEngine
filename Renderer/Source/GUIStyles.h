@@ -1,7 +1,7 @@
 #pragma once
 #include "AppCore.h"
 namespace GUI {
-	enum class Style { NONE, COLOR, BORDER ,SLIDER};
+	enum class Style { NONE, COLOR, BORDER ,SLIDER,OUTLINE};
 	struct ColorStyle {
 		//used for debbuging
 		uint8_t StructSize{};
@@ -23,6 +23,11 @@ namespace GUI {
 		uint8_t StructSize{};
 		bool FillOn{false};
 		Float4 FillColor{1.0f,1.0f,1.0f,1.0f};
+	};
+	struct OutlineStyle{
+		uint8_t StructSize{};
+		float Width{0.01f};
+		Float4 Color{1.0f,1.0f,0.0f,1.0f};
 	};
 
 }

@@ -14,14 +14,22 @@ GUIRenderer::GUIRenderer(Application* app,bool SaveState): m_Application(app),m_
 	GUI::BorderStyle BorderData{ sizeof(GUI::BorderStyle) };
 	BorderData.DrawBorder = false;
 
+	GUI::OutlineStyle OutlineStyle{sizeof(GUI::OutlineStyle)};
+	OutlineStyle.Color = {1.0f,1.0f,0.0f,1.0f};
+	OutlineStyle.Width =0.01f;
+
 	PushStyle(GUI::Style::COLOR, &ColorData);
 	PushStyle(GUI::Style::BORDER,&BorderData);
+	PushStyle(GUI::Style::OUTLINE,&OutlineStyle);
+
 
 }
 void GUIRenderer::BeginGUI()
 {
 	m_CurrentPanel = 0;
 }
+
+
 void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Float2 Size, GUUID TextureHandle, bool Dragable)
 {
 	InputSystem* inputSystem = &m_Application->m_InputSystem;
@@ -111,6 +119,7 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 		m_CurrentPanel++;
 	
 }
+
 bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Position,Float4 Color,Float2 Size,MouseCodes mousecode,GUUID TextureHandle,bool SavesState, bool Dragable,bool** IsPressed)
 {
 	Renderer* renderer = m_Application->m_Renderer;
@@ -129,8 +138,13 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 
 	if (m_CurrenPanelParent) {
 		LPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
-
 	}
+	Float2 OutlineSize{Size.x+m_CurrentOutlineData->Width,Size.y+m_CurrentOutlineData->Width};
+	if(CurrentButtonData->IsPressed == true)
+	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},m_CurrentOutlineData->Color,OutlineSize,0);
+
+
+
 	if(TextureHandle ==0)
 		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, CurrentButtonID.ID);
 	else
@@ -141,31 +155,41 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 		m_FontSystem->Text(CurrentButtonID, Text.c_str(), { LPosition.x - Size.x ,LPosition.y - Size.y }, { Size.x*2,Size.y*2 });
 	}
 
+	
 
-	if (IsPressed)
-		Core::Log(ErrorType::Error, "Not implemented.");
 
 	if (inputsystem->IsMouseClicked(mousecode))
 	{
 		Buffer* buffer = renderer->GetCustomBuffer(0);
 		Float2 data = buffer->ReadPixel((uint32_t)inputsystem->GetMousePos().x, (uint32_t)inputsystem->GetMousePos().y, renderer->GetViewPortExtent().width, renderer->GetViewPortExtent().height);
 		Float2 Pos = inputsystem->GetMousePos();
-		id = (uint64_t*)&data;
-		if (CurrentButtonID.ID == *id) {
-			if (SavesState == false) {
-				
-				return true;
 
+		id = (uint64_t*)&data;
+
+		if (CurrentButtonID.ID == *id) {
+		Core::Log("Clicked");
+
+			if (SavesState )
+			{
+				if(CurrentButtonData->IsPressed==true)
+					CurrentButtonData->IsPressed=false;
+				else
+					CurrentButtonData->IsPressed=true;
+
+				return CurrentButtonData->IsPressed;
 			}
-			if (CurrentButtonData->IsPressed == true)
-				CurrentButtonData->IsPressed = false;
 			else
-				CurrentButtonData->IsPressed= true;
+			CurrentButtonData->IsPressed=true;
+				
+		}else{
+			if(!SavesState)
+			CurrentButtonData->IsPressed=false;
+
 		}
 	}
 	
-	if (SavesState == false)
-		return false;
+
+
 	return CurrentButtonData->IsPressed;
 }
 void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size) {
@@ -174,17 +198,17 @@ void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2
 	
 
 		if (m_CurrenPanelParent) {
-		Position = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
-		Size = {Size.x*m_CurrenPanelParent->Size.x,Size.y*m_CurrenPanelParent->Size.y};
+			Size = {Size.x*m_CurrenPanelParent->Size.x,Size.y*m_CurrenPanelParent->Size.y};
+		Position = {m_CurrenPanelParent->Size.x*Position.x+m_CurrenPanelParent->Position.x,m_CurrenPanelParent->Size.y*Position.y+m_CurrenPanelParent->Position.y};
 		}
 		DrawBorder(Position,Size,m_CurrentBorderData->BorderColor,m_CurrentBorderData->BackGroundColor,m_CurrentBorderData->BorderWidth);
-		m_FontSystem->Text(Core::GetStringHash(strID), Text.c_str(), Position, { Size.x * 2,Size.y * 2 });
+		m_FontSystem->Text(Core::GetStringHash(strID), Text.c_str(), Position, { Size.x ,Size.y  });
 	}
 }
 void GUIRenderer::DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor,const Float4& BackGroundColor, float BorderWidth) {
 	Renderer* renderer = m_Application->m_Renderer;
 	Float2 BorderSize{ Size.x+ BorderWidth,Size.y+ BorderWidth };
-	Float2 RealPosition= {Position.x+(Size.x),Position.y+(Size.y)};
+	Float2 RealPosition= {Position.x,Position.y};
 	
 	renderer->DrawQuad({ RealPosition.x,RealPosition.y,0.0f }, BorderColor, BorderSize, 0);
 	renderer->DrawQuad({ RealPosition.x,RealPosition.y,0.0f }, BackGroundColor, Size, 0);
@@ -258,7 +282,7 @@ void GUIRenderer::Slider(const std::string& strID, int* number, Float2 Position,
 	if (CurrentSlider->IsClicked == true)
 		Color = { Color.r - 0.15f,Color.g - 0.15f,Color.b - 0.15f};
 
-	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - 2)), Position, { Color }, Size, MouseCodes::LEFT, 0, false)) {
+	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - 2)), Position, { Color }, Size, MouseCodes::LEFT,0,false)) {
 		if (!CurrentSlider->IsClicked) {
 			CurrentSlider->IsClicked = true;
 		Core::Log(ErrorType::Error,"Lafa");
@@ -320,7 +344,7 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 		OutputBorder = new GUI::BorderStyle();
 		*OutputBorder = *TransformedData;
 
-		m_Styles.push({ GUI::Style::BORDER,OutputBorder });
+		m_Styles.push({ style,OutputBorder });
 
 		break;
 	}
@@ -336,10 +360,27 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 		sliderData = new GUI::SliderStyle();
 		*sliderData = *TransformedData;
 
-		m_Styles.push({ GUI::Style::SLIDER,sliderData });
+		m_Styles.push({ style,sliderData });
 
 		break;
 	}
+	case GUI::Style::OUTLINE: {
+		GUI::OutlineStyle* TransformedData = (GUI::OutlineStyle*)Data;
+		GUI::OutlineStyle* sliderData{};
+
+		if (TransformedData->StructSize != sizeof(GUI::OutlineStyle))
+		{
+			Core::Log(ErrorType::Error, "Invalid Style or size is specified incorectly.");
+			return;
+		}
+		sliderData = new GUI::OutlineStyle();
+		*sliderData = *TransformedData;
+
+		m_Styles.push({ style,sliderData });
+
+		break;
+	}
+	
 	case GUI::Style::NONE: {
 		Core::Log(ErrorType::Error, "GUI style is not specified.");
 		break;
@@ -384,11 +425,16 @@ void GUIRenderer::ReapplyStyles() {
 		m_CurrentSliderData = slider;
 		break;
 	}
+	case GUI::Style::OUTLINE: {
+		GUI::OutlineStyle* outline = (GUI::OutlineStyle*)Container.StyleData;
+		m_CurrentOutlineData = outline;
+		break;
+	}
 	case GUI::Style::NONE: {
 
 	}
 	default: {
-
+		Core::Log(ErrorType::Error,"Reapply styles style in invalid ",(uint32_t)Container.StyleType);
 	}
 	}
 }

@@ -9,8 +9,8 @@
 int main() {
 	ApplicationSpecs specs{};
 	specs.WindowTitle = "Example";
-	specs.WindowHeight = 500;
-	specs.WindowWidth = 500;
+	specs.WindowHeight = 800;
+	specs.WindowWidth = 800;
 	specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
 	specs.RendererDebugging = true;
 

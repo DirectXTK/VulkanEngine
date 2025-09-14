@@ -12,6 +12,8 @@
 #include "Debug.h"
 
 Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem,AssetManager* assetManager) {
+    m_RendererDesc = desc;
+
     m_Window = window;
     m_ClearColor = desc.ClearColor;
     m_AssetManager = assetManager;
@@ -164,13 +166,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     uint32_t offset{};
     for (int i = 0; i < m_VertexCount * 1.5; i += 6) {
 
-        m_Indices[i] = offset;
-        m_Indices[i + 1] = offset + 1;
-        m_Indices[i + 2] = offset + 2;
+        m_Indices[i] = offset+1;
+        m_Indices[i + 1] = offset +2;
+        m_Indices[i + 2] = offset + 3;
 
-        m_Indices[i + 3] = offset + 2;
-        m_Indices[i + 4] = offset + 3;
-        m_Indices[i + 5] = offset;
+        m_Indices[i + 3] = offset +3;
+        m_Indices[i + 4] = offset ;
+        m_Indices[i + 5] = offset+1 ;
         offset += 4;
     }
 
@@ -234,29 +236,26 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
      m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device, descriptorLayout.data(),descriptorLayout.size());
      
-     PipelineDesc pipelineDesc{};
-     pipelineDesc.RenderPass = m_RenderPass;
-     pipelineDesc.PipelineLayout = m_PipelineLayout;
-     pipelineDesc.VertexStageInputCount = 5;
-     pipelineDesc.VertexInputStride = sizeof(Vertex);
-     pipelineDesc.VertexStageInput = new VertexStageInputAttrib[pipelineDesc.VertexStageInputCount];
-     pipelineDesc.VertexStageInput[0] = { VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex,Position),0,0 };
-     pipelineDesc.VertexStageInput[1] = { VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(Vertex,Color),1,0 };
-     pipelineDesc.VertexStageInput[2] = { VK_FORMAT_R32G32_UINT,offsetof(Vertex,ID),2,0 };
-     pipelineDesc.VertexStageInput[3] = { VK_FORMAT_R32G32_SFLOAT,offsetof(Vertex,TexCoords),3,0 };
-     pipelineDesc.VertexStageInput[4] = { VK_FORMAT_R32_UINT,offsetof(Vertex,TextureID),4,0 };
+     m_PipelineDesc.RenderPass = m_RenderPass;
+     m_PipelineDesc.PipelineLayout = m_PipelineLayout;
+     m_PipelineDesc.VertexStageInputCount = 5;
+     m_PipelineDesc.VertexInputStride = sizeof(Vertex);
+     m_PipelineDesc.VertexStageInput = new VertexStageInputAttrib[m_PipelineDesc.VertexStageInputCount];
+     m_PipelineDesc.VertexStageInput[0] = { VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex,Position),0,0 };
+     m_PipelineDesc.VertexStageInput[1] = { VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(Vertex,Color),1,0 };
+     m_PipelineDesc.VertexStageInput[2] = { VK_FORMAT_R32G32_UINT,offsetof(Vertex,ID),2,0 };
+     m_PipelineDesc.VertexStageInput[3] = { VK_FORMAT_R32G32_SFLOAT,offsetof(Vertex,TexCoords),3,0 };
+     m_PipelineDesc.VertexStageInput[4] = { VK_FORMAT_R32_UINT,offsetof(Vertex,TextureID),4,0 };
 
 
 
-     pipelineDesc.Viewport = { 0,0,(float)m_SwapChain->GetExtent().width,(float)m_SwapChain->GetExtent().height,0.0f,1.0f };
+     m_PipelineDesc.Viewport = { 0,0,(float)m_SwapChain->GetExtent().width,(float)m_SwapChain->GetExtent().height,0.0f,1.0f };
 
-
-     m_Pipeline = Pipeline::CreatePipeline(pipelineDesc, m_Device);
-     delete[] pipelineDesc.VertexStageInput;
+    ReCreatePipeline(m_PipelineDesc);
  }
-    void Renderer::BeginFrame(Camera2D* camera){
+    void Renderer::BeginFrame(Camera2D* camera,float deltaTime){
                //RecordCommands(m_VertexCount,0);
-        
+            m_DeltaTime =deltaTime;
             m_DrawCallCountGUI = 0;
             m_DrawCallCountGeometry =0;
             m_DrawCallCountOutlines = 0;
@@ -1175,7 +1174,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         GUIRenderer* gui = (GUIRenderer*)guiRenderer;
         if(renderGui){
 
-            gui->Panel("GuiStatistics",{-0.8f,0.8f},{1.0f,1.0f,0.5f,1.0f},{0.2f,0.2f});
+            gui->Panel("GuiStatistics",{-0.7f,0.7f},{1.0f,1.0f,0.5f,1.0f},{0.3f,0.3f});
 
             GUI::BorderStyle style{sizeof(GUI::BorderStyle)};
             style.BorderWidth = 0.01f;
@@ -1183,9 +1182,16 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             style.BorderColor = {1.0f,0.0f,0.0f,1.0f};
             style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
             gui->PushStyle(GUI::Style::BORDER,&style);
-            gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(m_DrawCallCountGeometry+m_DrawCallCountGUI),{-0.9f,0.3f},{1.0f,1.0f,1.0f,1.0f},{0.9f,0.3f});
-            gui->Text("TriangleCount","TRIANGLE: "+std::to_string(m_VertexCountPerFrame/3),{-0.9f,-0.3f},{1.0f,1.0f,1.0f,1.0f},{0.9f,0.3f});
-            gui->Text("VertexCount","VERTEX: "+std::to_string(m_VertexCountPerFrame),{-0.9f,-1.0f},{1.0f,1.0f,1.0f,1.0f},{0.9f,0.3f});
+            gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(m_DrawCallCountGeometry+m_DrawCallCountGUI),{0.0f,0.75f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
+            gui->Text("TriangleCount","TRIANGLE: "+std::to_string(m_VertexCountPerFrame/3),{0.0f,0.25f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
+            gui->Text("VertexCount","VERTEX: "+std::to_string(m_VertexCountPerFrame),{0.0f,-0.25f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
+
+            std::string deltatimeString = std::to_string(m_DeltaTime);
+
+            uint64_t Index = deltatimeString.find_last_of(".");
+            uint32_t Prec = 3;
+            deltatimeString = deltatimeString.substr(0,Index+Prec);
+            gui->Text("Frametime","FRAMETIME: "+deltatimeString,{0.0f,-0.75f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
 
             gui->PopStyle();
             gui->EndPanel();
@@ -1206,8 +1212,55 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         Texture*texture = new Texture(m_Context,createInfo, Path,type);
         return texture;
     }
+    void Renderer::SetRenderDesc(const RendererDesc& Desc){
+        m_RendererDesc = Desc;
 
-   
+        switch(m_RendererDesc.Rendermode){
+            case RenderMode::SOLID:{
+                m_PipelineDesc.RenderType = VK_POLYGON_MODE_FILL;
+                m_PipelineDesc.Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+                m_PipelineDesc.Blending = true;
+                break;
+            }
+            case RenderMode::WIREFRAME:{
+                m_PipelineDesc.RenderType = VK_POLYGON_MODE_LINE;
+                m_PipelineDesc.Topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+                m_PipelineDesc.Blending = false;
+
+
+                uint32_t* Indices = new uint32_t[m_VertexCount*1.5];
+                uint32_t Offset{};
+                for(uint32_t i =0;i < m_VertexCount*1.5;i+=8)
+                {
+                    Indices[i] = Offset;
+                    Indices[i+1]=Offset+1;
+                    Indices[i+2] = Offset+1;
+                    Indices[i+3]=Offset+2;
+                    Indices[i+4] = Offset+2;
+                    Indices[i+5]=Offset+3;
+                    Indices[i+6] = Offset+3;
+                    Indices[i+7]=Offset;
+                    Offset+=4;
+                }
+                m_IndexBuffers[0]->UploadToBuffer(m_Device,Indices,m_IndexBuffers[0]->GetBufferDesc().SizeBytes);
+                break;
+            }
+            default: {
+                Core::Log(ErrorType::Error,"Invalid rendermode falling back to solid");
+                m_RendererDesc.Rendermode = RenderMode::SOLID;
+                m_PipelineDesc.RenderType = VK_POLYGON_MODE_FILL;
+                m_PipelineDesc.Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+                m_PipelineDesc.Blending = true;
+                break;
+            }
+        }
+
+        ReCreatePipeline(m_PipelineDesc);
+
+    }
+   void Renderer::ReCreatePipeline(const PipelineDesc& desc){
+        m_Pipeline = Pipeline::CreatePipeline(desc,m_Device);
+   }
 
 
 
@@ -1290,7 +1343,6 @@ void Renderer::StartRecordingCommands()
     vkBeginCommandBuffer(m_CurrentCommandBuffer, &bufferbegininfo);
     vkCmdBindPipeline(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
 
-
 }
 
 void Renderer::StopRecordingCommands()
@@ -1320,12 +1372,12 @@ void Renderer::DrawBatch()
 
     VkDeviceSize Offset{ 0 };
     vkCmdBeginRenderPass(m_CurrentCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdSetStencilTestEnable(m_CurrentCommandBuffer, VK_TRUE);
+   // vkCmdSetStencilTestEnable(m_CurrentCommandBuffer, VK_TRUE);
 
-    vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0xFF);
-    vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
-    vkCmdSetStencilReference(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
-    vkCmdSetStencilCompareMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
+    //vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0xFF);
+    //vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
+    //vkCmdSetStencilReference(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
+    //vkCmdSetStencilCompareMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
 
     for (int i = 0; i < m_DrawCommandsGeometry.size(); i++) {
         DrawCommand DrawCall = m_DrawCommandsGeometry[i];
@@ -1377,15 +1429,10 @@ void Renderer::DrawBatch()
 
     }
 
-     vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0x00);
-    vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_NOT_EQUAL);
-
-
-   
- 
-
-    vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0xFF);
-    vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
+    // vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0x00);
+    //vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_NOT_EQUAL);
+    //vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0xFF);
+   // vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
    
     vkCmdEndRenderPass(m_CurrentCommandBuffer);
 

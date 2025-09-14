@@ -47,7 +47,6 @@ void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning
      desc.ClearColor = specs.ClearColor;
      desc.InitialCamera = &m_Camera;
 
-
      m_InputSystem.Init(m_Window->GetHandle());
 
      m_Renderer = new Renderer(desc, m_Window->GetHandle(), &m_InputSystem,&m_AssetManager);
@@ -102,7 +101,6 @@ void Application::Shutdown(){
     tcsetattr(STDIN_FILENO,TCSANOW,&m_DefaultConsoleSett);
     std::cout << "\033[0m"<<std::flush;
     std::cout << "Shutting Down...";
-    printf("Sght");
 
 }
 
@@ -123,7 +121,7 @@ void Application::Shutdown(){
 
         m_DeltaTime = Time::GetTimeMs() - m_LastFrameTime;
         m_LastFrameTime = Time::GetTimeMs();
-        m_Renderer->BeginFrame(&m_Camera);
+        m_Renderer->BeginFrame(&m_Camera,m_DeltaTime);
 
         m_LayerController.UpdateLayers(m_DeltaTime);
 
@@ -149,12 +147,9 @@ void Application::Shutdown(){
     }
     ThreadRunning.store(false);
     m_Running = false;
-    if(InputThread.joinable()){
-        printf("Joinable\n");
-        InputThread.join();
-    }
-    tcsetattr(STDIN_FILENO,TCSANOW,&m_DefaultConsoleSett);
+    InputThread.join();
     
+    tcsetattr(STDIN_FILENO,TCSANOW,&m_DefaultConsoleSett);
     Shutdown();
 
 }

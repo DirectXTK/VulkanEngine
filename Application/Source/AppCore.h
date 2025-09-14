@@ -110,7 +110,6 @@ struct GUUID {
         return *this;
     }
 
-
 };
 namespace Core {
     GUUID GetStringHash(const std::string& Path);

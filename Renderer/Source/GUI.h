@@ -12,7 +12,11 @@ public:
 	void BeginGUI();
 
 	void Panel(const std::string& ID, Float2 Position, Float4 Color, Float2 Size, GUUID TextureHandle = 0, bool Dragable = false);
+
+
+
 	bool Button(const std::string& ID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size, MouseCodes mousecode = MouseCodes::LEFT, GUUID TextureHandle = 0, bool SaveState = true, bool Dragable = false, bool** IsPressed = nullptr);
+
 
 	void Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size);
 
@@ -71,6 +75,7 @@ private:
 	Float4 m_CurrentColor{};
 	GUI::BorderStyle* m_CurrentBorderData{};
 	GUI::SliderStyle* m_CurrentSliderData{};
+	GUI::OutlineStyle* m_CurrentOutlineData{};
 
 
 

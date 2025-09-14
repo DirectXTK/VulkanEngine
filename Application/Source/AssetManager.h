@@ -159,13 +159,26 @@ public:
 
 	template<typename T>
 	Asset<T> GetAsset(GUUID Handle) {
-		if (m_Resources.find(Handle) == m_Resources.end()) {
+		auto Index = m_Resources.find(Handle);
+		if (Index== m_Resources.end()) {
 			Core::Log(ErrorType::Warning, "Resources wasn't found (ID", Handle.ID,")");
 			
 			return Asset<T>();
 		}
-		return Asset<T>(&m_Resources[Handle]);
+		return Asset<T>(&Index->second);
 	}
+		template<typename T>
+	Asset<T> GetAsset(const std::string& strHandle) {
+		GUUID id = Core::GetStringHash(strHandle);
+		auto Index = m_Resources.find(id);
+		if (Index == m_Resources.end()) {
+			Core::Log(ErrorType::Warning, "Resources wasn't found (ID", id.ID,")");
+			
+			return Asset<T>();
+		}
+		return Asset<T>(&Index->second);
+	}
+
 	AssetType GetAssetType(GUUID id){
 		if (m_Resources.find(id) == m_Resources.end()) {
 			Core::Log(ErrorType::Warning, "Resources wasn't found (ID", id.ID,")");
