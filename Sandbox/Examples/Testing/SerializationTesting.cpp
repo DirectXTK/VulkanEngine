@@ -38,63 +38,62 @@ void SerializationTestingLayer::OnCreate() {
 }
 void SerializationTestingLayer::OnUpdate(float deltatime)
 {
-    Camera2D* camera = &m_App->m_Camera;
-    InputSystem* inputsystem = &m_App->m_InputSystem;
-    Renderer* renderer = m_App->m_Renderer;
+    Camera2D* camera = Application::GetCurrentCamera();
+    Renderer* renderer = Application::GetRenderer();
 
     // for(int i =0;i < 26;i++){
 
     // }
               //m_Renderer->DrawQuad({0.42f,0.0f,0.0f},{0.0f,1.0f,1.0f,0.0f},{0.2f,0.2f});
 
-    if (inputsystem->IsKeyPressed(KeyCodes::D)) {
+    if (Application::IsKeyPressed(KeyCodes::D)) {
         Float2 pos = camera->GetPosition();
         pos.x += m_Direct;
         camera->SetPosition(pos);
     }
-    else if (inputsystem->IsKeyPressed(KeyCodes::A)) {
+    else if (Application::IsKeyPressed(KeyCodes::A)) {
         Float2 pos = camera->GetPosition();
         pos.x -= m_Direct;
         camera->SetPosition(pos);
     }
-    else if (inputsystem->IsKeyPressed(KeyCodes::W)) {
+    else if (Application::IsKeyPressed(KeyCodes::W)) {
         Float2 pos = camera->GetPosition();
         pos.y += m_Direct;
         camera->SetPosition(pos);
     }
-    else if (inputsystem->IsKeyPressed(KeyCodes::S)) {
+    else if (Application::IsKeyPressed(KeyCodes::S)) {
         Float2 pos = camera->GetPosition();
         pos.y -= m_Direct;
         camera->SetPosition(pos);
     }
 
-    if (inputsystem->IsKeyPressed(KeyCodes::X)) {
+    if (Application::IsKeyPressed(KeyCodes::X)) {
         Float2 size = camera->GetScale();
         size.x += 0.1f;
         size.y += 0.1f;
 
         camera->SetScale(size);
     }
-    if (inputsystem->IsKeyPressed(KeyCodes::Z)) {
+    if (Application::IsKeyPressed(KeyCodes::Z)) {
         Float2 size = camera->GetScale();
         size.x -= 0.1f;
         size.y -= 0.1f;
 
         camera->SetScale(size);
     }
-    if (inputsystem->GetScroll() != 0) {
+    if (Application::GetScroll() != 0) {
         Float2 size = camera->GetScale();
-        size.x -= 0.1f * inputsystem->GetScroll();
-        size.y -= 0.1f * inputsystem->GetScroll();
+        size.x -= 0.1f * Application::GetScroll();
+        size.y -= 0.1f * Application::GetScroll();
 
         camera->SetScale(size);
     }
 
-    if (inputsystem->IsMouseClicked(MouseCodes::LEFT)) {
+    if (Application::IsMouseClicked(MouseCodes::LEFT)) {
         Buffer* buffer = renderer->GetCustomBuffer(0);
-        //  Core::Log(ErrorType::Info,"Pos", inputsystem->GetMousePos().x, " ", inputsystem->GetMousePos().y);
+        //  Core::Log(ErrorType::Info,"Pos", Application::GetMousePos().x, " ", Application::GetMousePos().y);
 
-        Float2 a = buffer->ReadPixel((uint32_t)inputsystem->GetMousePos().x, (uint32_t)inputsystem->GetMousePos().y, renderer->GetViewPortExtent().width, renderer->GetViewPortExtent().height);
+        Float2 a = buffer->ReadPixel((uint32_t)Application::GetMousePos().x, (uint32_t)Application::GetMousePos().y, renderer->GetViewPortExtent().width, renderer->GetViewPortExtent().height);
         uint64_t* ID = (uint64_t*)&a;
         if (*ID != 0) {
             for (int i = 0; i < m_Units.size(); i++) {
@@ -117,12 +116,12 @@ void SerializationTestingLayer::OnUpdate(float deltatime)
   
     for (uint32_t i = 0; i < m_Units.size(); i++) {
         Unit* unit = &m_Units[i];
-        m_App->m_Renderer->DrawQuad({ unit->Position.x,unit->Position.y,0.0f }, { unit->Color.r,unit->Color.g,unit->Color.b,1.0f },{ 0.08f,0.08f },unit->TextureHandle, unit->ID);
+        renderer->DrawQuad({ unit->Position.x,unit->Position.y,0.0f }, { unit->Color.r,unit->Color.g,unit->Color.b,1.0f },{ 0.08f,0.08f },unit->TextureHandle, unit->ID);
     }
 
 
 
-    // Core::Log( ErrorType::Info,inputsystem->GetScroll());
+    // Core::Log( ErrorType::Info,Application::GetScroll());
 
     // m_Renderer->Statistics();
 
@@ -130,14 +129,15 @@ void SerializationTestingLayer::OnUpdate(float deltatime)
 }
 
 void SerializationTestingLayer::OnGUI()
-{
-	if (m_App->m_GUIRenderer->Button("Save", "",{0.0f,0.0f}, {1.0f,1.0f,0.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, false)) {
+{   
+    GUIRenderer* guiRenderer = Application::GetGUIRenderer();
+	if (guiRenderer->Button("Save", "",{0.0f,0.0f}, {1.0f,1.0f,0.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, false)) {
         Save();
 	}
-    if (m_App->m_GUIRenderer->Button("Load","", {0.5f,0.0f}, {1.0f,0.0f,0.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, false)) {
+    if (guiRenderer->Button("Load","", {0.5f,0.0f}, {1.0f,0.0f,0.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, false)) {
         Load();
     }
-    if (m_App->m_GUIRenderer->Button("CreateNewUnit", "",{-0.5f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, false)) {
+    if (guiRenderer->Button("CreateNewUnit", "",{-0.5f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT, false)) {
         m_Units.push_back(Unit());
         MakeUnitRandom(&m_Units[m_Units.size() - 1]);
     }

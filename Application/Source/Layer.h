@@ -10,15 +10,12 @@ public:
     virtual void OnDestroy()=0;
     virtual void OnGUI()=0;
 
-    void Init(Application* app,AssetManager* manager,Renderer* renderer);
+    void Init();
 protected:
     Layer(std::string name);
 
     std::string m_LayerName{};
 public:
-    Application* m_App{};
-    AssetManager* m_Assets{};
-    Renderer* m_Renderer{};
 };
 class LayerController{
     public:

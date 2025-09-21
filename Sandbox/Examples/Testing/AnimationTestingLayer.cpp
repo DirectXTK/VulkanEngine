@@ -7,16 +7,16 @@ AnimationTestingLayer::AnimationTestingLayer():Layer("AnimationTestingLayer")
 
 void AnimationTestingLayer::OnCreate()
 {
-	//m_Animation = m_App->GetAssetManager()->GetResource<Animator>(Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.json"));
+	//m_Animation = Application::GetAssetManager()->GetResource<Animator>(Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.json"));
 	//m_Animation->SetStage("BBZ");
-	m_App->LoadAssets("/users/jimy/Repos/VulkanEngine/bin/Debug/linux/x86_64/Sandbox/Resources/Animation/", AssetType::ANIMATION);
-	m_App->LoadAssets("/users/jimy/Repos/VulkanEngine/bin/Debug/linux/x86_64/Sandbox/Resources/Textures/", AssetType::TEXTURE);
+	Application::LoadAssets("/users/jimy/Repos/VulkanEngine/bin/Debug/linux/x86_64/Sandbox/Resources/Animation/", AssetType::ANIMATION);
+	Application::LoadAssets("/users/jimy/Repos/VulkanEngine/bin/Debug/linux/x86_64/Sandbox/Resources/Textures/", AssetType::TEXTURE);
 
 	m_Units.reserve(1000);
 
 
 
-	m_App->m_Camera.SetPosition({ 0.0f,-0.3f });
+	Application::GetCurrentCamera()->SetPosition({ 0.0f,-0.3f });
 /*
 	m_Units[0].Position = {0.0f,0.0f};
 	m_Units[0].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("WARRIOR")).GetData();
@@ -36,7 +36,7 @@ for(uint32_t i=0;i < 100;i++){
 	m_Units.push_back(AnimationUnit());
 
 		m_Units[i].Position = { 0.04f*2.0f*i,0.0f };
-	m_Units[i].animator = *(Animator*)m_Assets->GetAsset<Animator>("TOWN_HALL").GetData();
+	m_Units[i].animator = *(Animator*)Application::GetAssetManager()->GetAsset<Animator>("TOWN_HALL").GetData();
 	m_Units[i].animator.SetStage("IDLE");
 	m_Units[i].Collid = m_System.CreateCollider();
 	m_Units[i].Collid.Update(&m_Units[i].Position, &m_Size);
@@ -60,9 +60,9 @@ for(uint32_t i=0;i < 100;i++){
 
 void AnimationTestingLayer::OnUpdate(float DeltaTime)
 {
-	Renderer* renderer = m_App->m_Renderer;
+	Renderer* renderer = Application::GetRenderer();
 
-	//Core::Log(ErrorType::Info,m_App->GetWorldMousePos().x," ", m_App->GetWorldMousePos().y);
+	//Core::Log(ErrorType::Info,Application::GetWorldMousePos().x," ", Application::GetWorldMousePos().y);
 	//GUUID id = Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.png");
 	m_PathGridTime -= DeltaTime;
 
@@ -93,7 +93,7 @@ void AnimationTestingLayer::OnUpdate(float DeltaTime)
 	//Float2* loc =  m_Units[0].Collid.GetPathToObj(m_Units[0].Position, m_Units[1].Position,&PathCount);
 	//m_System.CheckCollisions();
 
-	DefaultCameraControlls(m_App, &m_App->m_Camera);
+	DefaultCameraControlls(Application::GetCurrentCamera());
 }
 
 void AnimationTestingLayer::OnDestroy()
@@ -106,16 +106,20 @@ int ConvertPositionToNodeIndexa(Float2 Position) {
 }
 void AnimationTestingLayer::OnGUI()
 {
-	GUIRenderer* gui = m_App->m_GUIRenderer;
+	GUIRenderer* gui = Application::GetGUIRenderer();
 	
-	if (m_App->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, false) ) {
-		m_CurrentlySelectedUnit = m_App->GetCurrentlyHoveredPixelID();
+		RendererDesc desc{};
+		desc.Rendermode = RenderMode::SOLID;
+		Application::GetRenderer()->SetRenderDesc(desc);
+
+	if (Application::IsMouseClicked(MouseCodes::LEFT, false) ) {
+		m_CurrentlySelectedUnit = Application::GetCurrentlyHoveredPixelID();
 		if (m_SpawnUnit) {
 			m_Units.push_back(AnimationUnit());
-			m_Units[m_Units.size() - 1].Position = { m_App->GetWorldMousePos().x, m_App->GetWorldMousePos().y };
-			if(!m_Assets->HasAsset<Animator>(Core::GetStringHash(m_SpawnedUnit)))
+			m_Units[m_Units.size() - 1].Position = { Application::GetWorldMousePos().x, Application::GetWorldMousePos().y };
+			if(!Application::GetAssetManager()->HasAsset<Animator>(Core::GetStringHash(m_SpawnedUnit)))
 				printf("Doesn't have %s",m_SpawnedUnit.c_str());
-			m_Units[m_Units.size()-1].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash(m_SpawnedUnit)).GetData();
+			m_Units[m_Units.size()-1].animator = *(Animator*)Application::GetAssetManager()->GetAsset<Animator>(Core::GetStringHash(m_SpawnedUnit)).GetData();
 			m_Units[m_Units.size() - 1].Collid = m_System.CreateCollider();
 			m_Units[m_Units.size() - 1].Collid.Update(&m_Units[m_Units.size() - 1].Position, &m_Size);
 
@@ -143,16 +147,10 @@ void AnimationTestingLayer::OnGUI()
 
 		
 	}
-	RendererDesc desc{};
-			desc.Rendermode = RenderMode::SOLID;
-			m_Renderer->SetRenderDesc(desc);
+
 	
 
-	if(gui->Button("Wireframe","",{0.8f,0.9f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},MouseCodes::LEFT,0,false)){
-			RendererDesc desc{};
-			desc.Rendermode = RenderMode::WIREFRAME;
-			m_Renderer->SetRenderDesc(desc);
-	}
+
 			
 
 	gui->Panel("UI Bar", {0.0f,-0.8f}, {1.0f,1.0f,1.0f,1.0}, {1.0f,0.2f}, Core::GetStringHash("PANEL"));
@@ -184,7 +182,14 @@ void AnimationTestingLayer::OnGUI()
 
 	gui->EndPanel();
 	
-	
+		if(gui->Button("Wireframe","",{0.8f,0.9f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},MouseCodes::LEFT,0,false)){
+			desc.Rendermode = RenderMode::WIREFRAME;
+			Application::GetRenderer()->SetRenderDesc(desc);
+	}
+	if(gui->Button("Solid","",{0.5f,0.9f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},MouseCodes::LEFT,0,false)){
+			desc.Rendermode = RenderMode::SOLID;
+			Application::GetRenderer()->SetRenderDesc(desc);
+	}
 
 }
 
@@ -194,8 +199,8 @@ void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 	Float2 MoveAmount{0.0f,0.0f};
 	if (m_CurrentlySelectedUnit.ID == unit->ID) {
 
-		if (m_App->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, false) ){
-			Float2 Dest = { m_App->GetWorldMousePos().x,m_App->GetWorldMousePos().y };
+		if (Application::IsMouseClicked(MouseCodes::LEFT, false) ){
+			Float2 Dest = { Application::GetWorldMousePos().x,Application::GetWorldMousePos().y };
 			unit->MoveLocation = unit->Collid.GetPathToObj(unit->Position, Dest, &unit->MoveCellCount);
 
 			if (unit->MoveCellCount != 0) {

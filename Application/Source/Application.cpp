@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "AppTime.h"
 #include "AssetManager.h"
+ Application* Application::m_Application = nullptr;
 void ChechCommands(Application* app,std::string Command){
     if(Command == "prtassets"){
         app->GetAssetManager()->DebugStatistics(false);
@@ -27,7 +28,27 @@ void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning
         return;
     }
 }
- Application::Application(ApplicationSpecs specs){
+bool Application::IsMouseClicked(const MouseCodes& codes,bool hold){
+    Application* app = GetApplication();
+    return app->m_InputSystem.IsMouseClicked(codes,hold);
+} 
+ bool Application::IsKeyPressed(const KeyCodes& codes){
+      Application* app = GetApplication();
+   return app->m_InputSystem.IsKeyPressed(codes);
+}
+
+ bool Application::IsKeyReleased(const KeyCodes& codes){
+      Application* app = GetApplication();
+    return app->m_InputSystem.IsKeyReleased(codes);
+ }
+
+ float Application::GetScroll(){
+      Application* app = GetApplication();
+    return app->m_InputSystem.GetScroll();
+ }
+
+Application::Application(){}
+ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
     //init glfw
      //m_ApplicationLayer = (ApplicationLayer*)m_LayerController.CreateLayer(new ApplicationLayer(specs));
 
@@ -57,48 +78,66 @@ void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning
      m_Renderer->InitializePipeline(500);
 
 
-     m_FontSystem = new FontSystem(this);
+     m_FontSystem = new FontSystem();
      m_GUIRenderer = new GUIRenderer(this, false);
 
- }
+     return true;
 
+ }
+     bool Application::DeleteApplication(){
+        delete Application::GetApplication();
+    }
+
+Float2 Application::GetMousePosChange(){
+    Application* app = Application::GetApplication();
+    return app->m_InputSystem.GetMousePosChange();
+}
  void Application::AddLayer(Layer* layer)
  {
-     layer->Init(this,&m_AssetManager,m_Renderer);
-    m_LayerController.CreateLayer(layer);
+    Application* app = GetApplication();
+     layer->Init();
+    app->m_LayerController.CreateLayer(layer);
  }
+    uint64_t Application::GetAssetCount(const AssetType& type){
+        Application* app = Application::GetApplication();
+        app->m_AssetManager.GetAssetCount(type);
+    } 
 
  Float2 Application::GetMousePos()
  {
-     return m_InputSystem.GetMousePos();
+    Application* app = GetApplication();
+     return app->m_InputSystem.GetMousePos();
  }
 
  Float2 Application::GetMousePosNorm()
  {
- 
-     return { (m_InputSystem.GetMousePos().x/m_Renderer->GetViewPortExtent().width*2.f)-1.0f,1.0f-(m_InputSystem.GetMousePos().y / m_Renderer->GetViewPortExtent().height*2.0f )};
+    Application* app = GetApplication();
+     return { (app->m_InputSystem.GetMousePos().x/app->m_Renderer->GetViewPortExtent().width*2.f)-1.0f,1.0f-(app->m_InputSystem.GetMousePos().y / app->m_Renderer->GetViewPortExtent().height*2.0f )};
  }
 
  Float2 Application::GetWorldMousePos()
  {
-     return m_InputSystem.GetWorldMousePos(m_Camera.GetPosition(), m_Camera.GetScale(), { (float)m_Renderer->GetViewPortExtent().width,(float)m_Renderer->GetViewPortExtent().height });
+    Application* app = GetApplication();
+     return app->m_InputSystem.GetWorldMousePos(app->m_Camera.GetPosition(), app->m_Camera.GetScale(), { (float)app->m_Renderer->GetViewPortExtent().width,(float)app->m_Renderer->GetViewPortExtent().height });
  }
 
  GUUID Application::GetCurrentlyHoveredPixelID()
  {
-    Buffer* buffer =  m_Renderer->GetCustomBuffer(0);
+    Application* app = GetApplication();
+    Buffer* buffer =  app->m_Renderer->GetCustomBuffer(0);
     Float2 MousePos = GetMousePos();
 
-    Float2 RawID = buffer->ReadPixel((uint32_t)MousePos.x, (uint32_t)MousePos.y,m_Renderer->GetViewPortExtent().width, m_Renderer->GetViewPortExtent().height);
+    Float2 RawID = buffer->ReadPixel((uint32_t)MousePos.x, (uint32_t)MousePos.y,app->m_Renderer->GetViewPortExtent().width, app->m_Renderer->GetViewPortExtent().height);
     uint64_t* ID = (uint64_t*)&RawID;
      return GUUID(*ID);
  }
 
 
 void Application::Shutdown(){
-    m_Running = false;
+    Application* app = GetApplication();
+    app->m_Running = false;
     //set the  font color of cout to default.
-    tcsetattr(STDIN_FILENO,TCSANOW,&m_DefaultConsoleSett);
+    tcsetattr(STDIN_FILENO,TCSANOW,&app->m_DefaultConsoleSett);
     std::cout << "\033[0m"<<std::flush;
     std::cout << "Shutting Down...";
 
@@ -107,63 +146,67 @@ void Application::Shutdown(){
 
  void Application::LoadAssets(std::string Path, AssetType type)
  {
-     m_AssetManager.LoadAllAssets(Path, type);
+    Application* app = GetApplication();
+     app->m_AssetManager.LoadAllAssets(Path, type);
  }
 
  void Application::Run(){
     std::atomic<bool> ThreadRunning(true);
-    m_Running = true;
+    Application* app = GetApplication();
+    app->m_Running = true;
 
-    std::thread InputThread(RunCommandLineInputTemp,this,std::ref(ThreadRunning));
+    std::thread InputThread(RunCommandLineInputTemp,app,std::ref(ThreadRunning));
 
-    while(!glfwWindowShouldClose(m_Window->GetHandle())&& m_Running){
-        m_InputSystem.ResetMouseChange();
+    while(!glfwWindowShouldClose(app->m_Window->GetHandle())&& app->m_Running){
+        app->m_InputSystem.ResetMouseChange();
 
-        m_DeltaTime = Time::GetTimeMs() - m_LastFrameTime;
-        m_LastFrameTime = Time::GetTimeMs();
-        m_Renderer->BeginFrame(&m_Camera,m_DeltaTime);
+        app->m_DeltaTime = Time::GetTimeMs() - app->m_LastFrameTime;
+        app->m_LastFrameTime = Time::GetTimeMs();
+        app->m_Renderer->BeginFrame(&app->m_Camera,app->m_DeltaTime);
 
-        m_LayerController.UpdateLayers(m_DeltaTime);
+        app->m_LayerController.UpdateLayers(app->m_DeltaTime);
 
-        m_GUIRenderer->BeginGUI();
-        m_Renderer->BeginGUIFrame();
+        app->m_GUIRenderer->BeginGUI();
+        app->m_Renderer->BeginGUIFrame();
 
-        m_LayerController.UpdateGUILayers();
+        app->m_LayerController.UpdateGUILayers();
         
-          if(m_RendererDebugging){
-            m_Renderer->Statistics(true,m_GUIRenderer);
+          if(app->m_RendererDebugging){
+            app->m_Renderer->Statistics(true,app->m_GUIRenderer);
         }
-        m_Renderer->EndFrame();
+        app->m_Renderer->EndFrame();
 
       
 
-        m_InputSystem.ResetInput();
+        app->m_InputSystem.ResetInput();
 
-        glfwSwapBuffers(m_Window->GetHandle());
+        glfwSwapBuffers(app->m_Window->GetHandle());
         glfwPollEvents();
         
   
 
     }
     ThreadRunning.store(false);
-    m_Running = false;
+    app->m_Running = false;
     InputThread.join();
     
-    tcsetattr(STDIN_FILENO,TCSANOW,&m_DefaultConsoleSett);
+    tcsetattr(STDIN_FILENO,TCSANOW,&app->m_DefaultConsoleSett);
     Shutdown();
 
 }
 
  Collider Application::CreateCollider(Float2* Position,Float2* Size)
  {
-    Collider collider = m_CollisionSystem.CreateCollider();
+    Application* app = GetApplication();
+    Collider collider = app->m_CollisionSystem.CreateCollider();
     collider.Update(Position,Size);
      return Collider();
  }
 
  void Application::AddCallback( InputCallbacks* callbacks)
  {
-     m_InputSystem.AddCallbacks(callbacks);
+    Application* app = GetApplication();
+     app->m_InputSystem.AddCallbacks(callbacks);
  }
     Application::~Application(){
         Shutdown();

@@ -19,28 +19,47 @@ struct ApplicationSpecs{
 
 class Application {
 public:
-    Application(ApplicationSpecs specs);
-    void AddLayer(Layer* layer);
-    float GetDeltaTime() { return (float)m_DeltaTime; }
+    Application();
+    static bool InitApplication(ApplicationSpecs specs){m_Application = new Application();return m_Application->InitApplicationBackEnd(specs);}
+    static void AddLayer(Layer* layer);
+    static float GetDeltaTime() { return (float)GetApplication()->m_DeltaTime; }
 
-    Float2 GetMousePos();
-    Float2 GetMousePosNorm();
-    Float2 GetWorldMousePos();
+    static GUUID GetCurrentlyHoveredPixelID();
+    static AssetManager* GetAssetManager() { return &GetApplication()->m_AssetManager; }
+    static Camera2D* GetCurrentCamera(){return &Application::GetApplication()->m_Camera;}
+    static Renderer* GetRenderer(){return GetApplication()->m_Renderer;}
+    static GUIRenderer* GetGUIRenderer(){return GetApplication()->m_GUIRenderer;}
 
-    GUUID GetCurrentlyHoveredPixelID();
+
+    static void LoadAssets(std::string Path,AssetType type);
+    static void Run();
+
+    static Collider CreateCollider(Float2* Position, Float2 *Size);
+    static void AddCallback( InputCallbacks* callbacks);
+    static void Shutdown();
+
+    //Input
+    static bool IsMouseClicked(const MouseCodes& codes,bool hold= false);
+    static bool IsKeyPressed(const KeyCodes& codes);
+    static bool IsKeyReleased(const KeyCodes& codes);    
+    static float GetScroll();
+    static Float2 GetMousePos();
+    static Float2 GetMousePosChange();
+    static Float2 GetMousePosNorm();
+    static Float2 GetWorldMousePos();
+    //Assets
+    static uint64_t GetAssetCount(const AssetType& type); 
 
 
-    AssetManager* GetAssetManager() { return &m_AssetManager; }
-    void LoadAssets(std::string Path,AssetType type);
 
-    void Run();
-    Collider CreateCollider(Float2* Position, Float2 *Size);
-    void AddCallback( InputCallbacks* callbacks);
-    
-    void Shutdown();
-
+    static Application* GetApplication(){return m_Application;}
+    static bool DeleteApplication();
     ~Application();
 private:
+//has to be non static
+     bool InitApplicationBackEnd(ApplicationSpecs specs);
+
+    static Application* m_Application;
 
 
 

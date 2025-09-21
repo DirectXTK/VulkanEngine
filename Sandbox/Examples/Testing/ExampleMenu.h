@@ -18,9 +18,9 @@ void RunExampleMenu() {
 	specs.WindowHeight = 500;
 	specs.WindowWidth = 500;
 
-	Application app(specs);
-	app.AddLayer(new ExampleMenu());
-	app.Run();
+	Application::InitApplication(specs);
+	Application::AddLayer(new ExampleMenu());
+	Application::Run();;
 
 }
 

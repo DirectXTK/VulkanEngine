@@ -20,25 +20,25 @@ void GUITestingLayer::OnGUI()
 {
 	static float Position{ -0.8f };
 	static float Position2{-0.1f};
-
+	GUIRenderer* guiRenderer = Application::GetGUIRenderer();
 	
 
 
-	m_App->m_GUIRenderer->Panel("Panel", {Position,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.2f,1.0f}, 0, true);
+	guiRenderer->Panel("Panel", {Position,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.2f,1.0f}, 0, true);
 
-	m_App->m_GUIRenderer->Button("Start Button","Lafa", { 0.5f,0.5f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.1f,0.1f });
+	guiRenderer->Button("Start Button","Lafa", { 0.5f,0.5f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.1f,0.1f });
 
-	m_App->m_GUIRenderer->EndPanel();
+	guiRenderer->EndPanel();
 
-	static Float2 CurrentPos{ m_App->m_InputSystem.GetMousePos() };
+	static Float2 CurrentPos{ Application::GetMousePos() };
 
-	CurrentPos.x += m_App->m_InputSystem.GetMousePosChange().x;
-	CurrentPos.y += m_App->m_InputSystem.GetMousePosChange().y;
+	CurrentPos.x += Application::GetMousePosChange().x;
+	CurrentPos.y += Application::GetMousePosChange().y;
 
-	//Core::Log(ErrorType::Info, "Change ", m_App->m_InputSystem.GetMousePosChange().x);
+	//Core::Log(ErrorType::Info, "Change ", Application::m_InputSystem.GetMousePosChange().x);
 
-	if (m_App->m_InputSystem.IsKeyPressed(KeyCodes::X)) {
-		Core::Log(ErrorType::Info, "Real position", m_App->m_InputSystem.GetMousePos().x, " ", m_App->m_InputSystem.GetMousePos().y);
+	if (Application::IsKeyPressed(KeyCodes::X)) {
+		Core::Log(ErrorType::Info, "Real position", Application::GetMousePos().x, " ", Application::GetMousePos().y);
 		Core::Log(ErrorType::Info, "CHangePos position", CurrentPos.x, " ", CurrentPos.y);
 	}
 }

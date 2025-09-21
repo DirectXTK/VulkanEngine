@@ -6,14 +6,12 @@ FontSystem* g_FontSystem{};
 void KeyBoardCallbackFn(KeyBoardEvent* event) {
 	g_FontSystem->KeyBoardCallback(event);
 }
-FontSystem::FontSystem(Application* App)
+FontSystem::FontSystem()
 {
-	m_App = App;
-	m_Renderer = App->m_Renderer;
+	m_Renderer = Application::GetRenderer();
 	g_FontSystem = this;
 
 	const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Daydream.ttf";
-	Application* CurrentApp = (Application*)App;
 
 	FT_Error error = FT_Init_FreeType(&m_Library);
 	if (error) {
@@ -32,7 +30,7 @@ FontSystem::FontSystem(Application* App)
 	InputCallbacks callbacks{};
 	callbacks.KeyBoardCallback = KeyBoardCallbackFn;
 
-	CurrentApp->AddCallback(&callbacks);
+	Application::AddCallback(&callbacks);
 
 }
 
@@ -76,7 +74,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	GUUID SelectID = Core::GetStringHash(ID);
 	bool ScrollableBoundBox{};
 
-	m_PointerCooldown -= m_App->GetDeltaTime();
+	m_PointerCooldown -= Application::GetDeltaTime();
 
 	Float2 BoundingBox[4];
 	BoundingBox[0] = { Position.x ,Position.y  };
@@ -86,9 +84,9 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	
 
 	//letter selecting
-	if (m_App->m_InputSystem.IsMouseClicked(MouseCodes::LEFT)) {
-		if (m_App->GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID)){
-			Float2 MousePos = m_App->GetMousePosNorm();
+	if (Application::IsMouseClicked(MouseCodes::LEFT)) {
+		if (Application::GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID)){
+			Float2 MousePos = Application::GetMousePosNorm();
 			float PosXInBox = std::fabs(MousePos.x- BoundingBox[0].x);
 			m_CharEditedIndex = PosXInBox / ((m_CharacterSize/m_TextureSize.x)+m_Padding);
 
@@ -173,8 +171,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Float2 MaxSize)
 {
 
-	Application* app = (Application*)m_App;
-	Renderer* renderer = ((Application*)m_App)->m_Renderer;
+	Renderer* renderer = Application::GetRenderer();
 
 	GUUID SelectID = Core::GetStringHash(StrId);
 	Float2 CharacterSizeNorm = { float(m_CharacterSize   / renderer->GetViewPortExtent().width),float(m_CharacterSize/ renderer->GetViewPortExtent().height) };
@@ -218,8 +215,7 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
 {
 
-	Application* app = (Application*)m_App;
-	Renderer* renderer = ((Application*)m_App)->m_Renderer;
+	Renderer* renderer = Application::GetRenderer();
 
 	GUUID SelectID =id;
 	Float2 CharacterSizeNorm = { float(m_CharacterSize / renderer->GetViewPortExtent().width),float(m_CharacterSize / renderer->GetViewPortExtent().height) };
@@ -262,8 +258,7 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 }
 void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 {
-	Application* app =(Application*)m_App;
-	Renderer* renderer = (Renderer*)app->m_Renderer;
+	Renderer* renderer = Application::GetRenderer();
 
 	
 	Float4 DefBackGroundColor{ 0.2f,0.2f,0.2f,1.0f };
@@ -424,8 +419,7 @@ void FontSystem::SpecialCases(KeyCodes& Code, KeyState& State, char* Buffer, uin
 }
 void FontSystem::DrawPointer(Float2 Position, float CharacterSize,float SizeY)
 {
-	Application* app = (Application*)m_App;
-	Renderer* renderer = app->m_Renderer;
+	Renderer* renderer = Application::GetRenderer();
 
 	//renderer->DrawQuad({ Position.x,Position.y }, { 1.0f,1.0f,1.0f,1.0f }, { m_Padding * CharacterSize ,SizeY},0);
 }
@@ -436,10 +430,10 @@ void FontSystem::ReRenderFaces()
 
 
 
-	Application* app = (Application*)m_App;
 	FT_GlyphSlot slot = m_Face->glyph;
+	AssetManager* manager = Application::GetAssetManager();
 	//check if font is already loaded and renderer
-	Asset<Font> asset=m_App->m_AssetManager.HasAsset<Font>(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
+	Asset<Font> asset=manager->HasAsset<Font>(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
 	if(asset){
 		Font* currentFont = (Font*)asset.GetData();
 
@@ -597,10 +591,10 @@ void FontSystem::ReRenderFaces()
 	textureCreateInfo.Height = FontAtlasHeight;
 	textureCreateInfo.Pixels = AtlasMapBitmap;
 
-	Texture* texture = new Texture(app->m_Renderer->GetContext(),textureCreateInfo,TextureType::Texture);
+	Texture* texture = new Texture(Application::GetRenderer()->GetContext(),textureCreateInfo,TextureType::Texture);
 	
-	font->TextureAsset = app->m_AssetManager.LoadAsset<Texture>(texture, AssetType::TEXTURE, "FontTexture"+std::to_string(m_CharacterSize));
-		m_Renderer->SetCurrentFont(m_App->m_AssetManager.LoadAsset<Font>(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
+	font->TextureAsset = manager->LoadAsset<Texture>(texture, AssetType::TEXTURE, "FontTexture"+std::to_string(m_CharacterSize));
+		m_Renderer->SetCurrentFont(manager->LoadAsset<Font>(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
 	delete[] AtlasMapBitmap;
 		
 	

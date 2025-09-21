@@ -6,18 +6,20 @@ FontTestingLayer::FontTestingLayer(): Layer("FontTestingLayer")
 
 void FontTestingLayer::OnCreate()
 {
-	m_App->m_GUIRenderer->SetFontSize(46.0f);
-	//m_App->m_AssetManager.LoadAsset(fontatlas, AssetType::TEXTURE, "FONTAtlas");
+	GUIRenderer* guiRenderer= Application::GetGUIRenderer();
+	guiRenderer->SetFontSize(46.0f);
+	//Application::m_AssetManager.LoadAsset(fontatlas, AssetType::TEXTURE, "FONTAtlas");
 
-	//m_App->m_Renderer->SetCurrentFont(fontatlas);
+	//Application::m_Renderer->SetCurrentFont(fontatlas);
 }
 
 void FontTestingLayer::OnUpdate(float DeltaTime)
 {
-	DefaultCameraControlls(m_App, &m_App->m_Camera);
+	Renderer* renderer = Application::GetRenderer();
+	DefaultCameraControlls(Application::GetCurrentCamera());
 
 	for(uint32_t i=0;i < 1000;i++)
-		m_App->m_Renderer->DrawQuad({ 0.01f*i,0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, 0);
+		renderer->DrawQuad({ 0.01f*i,0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, 0);
 
 }
 
@@ -35,15 +37,11 @@ void FontTestingLayer::OnGUI()
 
 	}
 	static Float2 Pos{ -0.99f,-0.99f };
+	Renderer* renderer = Application::GetRenderer();
+	GUIRenderer* guiRenderer = Application::GetGUIRenderer();
 
-
-	//	m_FontSystem->Text("Play", "PLAY", { 0.0f,0.5f });
-		//m_FontSystem->Text("Options", "OPTIONS", { -0.1f,0.4f });
-		//m_FontSystem->Text("Exit", "EXIT", { 0.0f,0.3f });
-
-		//m_FontSystem->PushStyle(Style::DrawBorder);
-	m_App->m_GUIRenderer->Text("FontSize", std::to_string(m_App->m_GUIRenderer->GetFontSize()), { -0.5f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.05f });
-	//m_App->m_GUIRenderer->Button("makt", "GALVA MAKT YRA", { 0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f });
+	guiRenderer->Text("FontSize", std::to_string(guiRenderer->GetFontSize()), { -0.5f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.05f });
+	//guiRenderer->Button("makt", "GALVA MAKT YRA", { 0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f });
 	static float number{ 0.1f };
 	static float FontSize{ 46.f };
 
@@ -55,34 +53,34 @@ void FontTestingLayer::OnGUI()
 	BorderStyle.BorderColor = { 0.0f,0.0f,1.0f,1.0f };
 	BorderStyle.BackGroundColor = { 0.0f,0.0f,0.7f,1.0f };
 	BorderStyle.BorderWidth = 0.007f;
-	m_App->m_GUIRenderer->SetFontSize(FontSize);
+	guiRenderer->SetFontSize(FontSize);
 
-	m_App->m_GUIRenderer->Text("FrameTime",std::to_string(m_App->GetDeltaTime()),{-0.8f,-0.8f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
+	guiRenderer->Text("FrameTime",std::to_string(Application::GetDeltaTime()),{-0.8f,-0.8f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
 
-	m_App->m_GUIRenderer->PushStyle(GUI::Style::BORDER, &BorderStyle);
-	m_App->m_GUIRenderer->PushStyle(GUI::Style::COLOR, &ColorStyle);
-	m_App->m_GUIRenderer->Slider("Slider", &FontSize, { 0.0f,0.0f }, { 0.1f,0.1f }, 1.0f,{0.0f,100.f},1);
-	m_App->m_GUIRenderer->InputText("Mkat", Buffer, ARRAYSIZE(Buffer), { 0.0f, -0.5f },{0.5f,0.1f});
-	m_App->m_GUIRenderer->PopStyle();
+	guiRenderer->PushStyle(GUI::Style::BORDER, &BorderStyle);
+	guiRenderer->PushStyle(GUI::Style::COLOR, &ColorStyle);
+	guiRenderer->Slider("Slider", &FontSize, { 0.0f,0.0f }, { 0.1f,0.1f }, 1.0f,{0.0f,100.f},1);
+	guiRenderer->InputText("Mkat", Buffer, ARRAYSIZE(Buffer), { 0.0f, -0.5f },{0.5f,0.1f});
+	guiRenderer->PopStyle();
 	
 	
-	m_App->m_GUIRenderer->PushStyle(GUI::Style::SLIDER,&sliderStyle);
-	m_App->m_GUIRenderer->Slider("Slider1", &FontSize, { 0.5f,0.0f }, { 0.1f,0.1f }, 0.01f, {0.0f,100.f});
-	m_App->m_GUIRenderer->Slider("ldwad", &FontSize, { 0.5f,0.5f }, { 0.1f,0.1f }, 1.0f, {0.0f,100.f});
-	m_App->m_GUIRenderer->PopStyle();
+	guiRenderer->PushStyle(GUI::Style::SLIDER,&sliderStyle);
+	guiRenderer->Slider("Slider1", &FontSize, { 0.5f,0.0f }, { 0.1f,0.1f }, 0.01f, {0.0f,100.f});
+	guiRenderer->Slider("ldwad", &FontSize, { 0.5f,0.5f }, { 0.1f,0.1f }, 1.0f, {0.0f,100.f});
+	guiRenderer->PopStyle();
 	
 	static float TestNumber{ -1.0f };
-	m_App->m_GUIRenderer->Slider("Test123", &TestNumber, { 0.0f,0.5f }, { 0.1f,0.1f }, 1.0f, {0.0f,100.f});
-	m_App->m_GUIRenderer->Text("Number",std::to_string(m_App->m_AssetManager.GetAssetCount(AssetType::FONT)),{-0.5f,0.5f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
-	m_App->m_GUIRenderer->Text("Number",std::to_string(m_App->m_AssetManager.GetAssetCount(AssetType::TEXTURE)),{-0.5f,0.8f},{0.0f,0.0f,0.1f,1.0f},{0.1f,0.1f});
+	guiRenderer->Slider("Test123", &TestNumber, { 0.0f,0.5f }, { 0.1f,0.1f }, 1.0f, {0.0f,100.f});
+	guiRenderer->Text("Number",std::to_string(Application::GetAssetCount(AssetType::FONT)),{-0.5f,0.5f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
+	guiRenderer->Text("Number",std::to_string(Application::GetAssetCount(AssetType::TEXTURE)),{-0.5f,0.8f},{0.0f,0.0f,0.1f,1.0f},{0.1f,0.1f});
 
-	//m_App->m_GUIRenderer->Text("Number",std::to_string(m_App->m_AssetManager.GetAsset<Font>(Core::GetStringHash("Font46")).GetRefCount()),{-0.5f,0.4f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
+	//guiRenderer->Text("Number",std::to_string(Application::m_AssetManager.GetAsset<Font>(Core::GetStringHash("Font46")).GetRefCount()),{-0.5f,0.4f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
 
-	m_App->m_GUIRenderer->PopStyle();
+	guiRenderer->PopStyle();
 
 	//m_FontSystem->PopStyle();
 
-	//m_App->m_Renderer->DrawOutline({ 0.45f,0 .525f }, { 0.5f,0.05f }, { 1.0f,1.0f,1.0f,1.0f }, 0.001f);
+	//Application::m_Renderer->DrawOutline({ 0.45f,0 .525f }, { 0.5f,0.05f }, { 1.0f,1.0f,1.0f,1.0f }, 0.001f);
 }
 
 void FontTestingLayer::OnDestroy()

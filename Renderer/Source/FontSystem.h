@@ -27,7 +27,7 @@ struct Font {
 class FontSystem
 {
 public:
-	FontSystem(Application* app);
+	FontSystem();
 	void Run(void* app,void* Renderer);
 
 	void SetCharcterSize(uint32_t CharSize);
@@ -69,7 +69,6 @@ private:
 	const float m_CharSizeNormCoe{ 0.000043f };
 
 	Renderer* m_Renderer{};
-	Application* m_App{};
 	Float2 m_TextureSize{};
 	void ReRenderFaces();
 	FT_Library m_Library{};

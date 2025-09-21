@@ -254,7 +254,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     ReCreatePipeline(m_PipelineDesc);
  }
     void Renderer::BeginFrame(Camera2D* camera,float deltaTime){
-               //RecordCommands(m_VertexCount,0);
+        //recreate pipeline if needed
+        if(m_RendererDesc.Rendermode != m_RendererDescNext.Rendermode){
+            InitRenderDesc(m_RendererDescNext);
+        }
+
+
             m_DeltaTime =deltaTime;
             m_DrawCallCountGUI = 0;
             m_DrawCallCountGeometry =0;
@@ -1212,7 +1217,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         Texture*texture = new Texture(m_Context,createInfo, Path,type);
         return texture;
     }
-    void Renderer::SetRenderDesc(const RendererDesc& Desc){
+    void Renderer::SetRenderDesc(const RendererDesc& desc){
+        m_RendererDescNext = desc;
+    }
+    void Renderer::InitRenderDesc(const RendererDesc& Desc){
         m_RendererDesc = Desc;
 
         switch(m_RendererDesc.Rendermode){
@@ -1220,6 +1228,21 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 m_PipelineDesc.RenderType = VK_POLYGON_MODE_FILL;
                 m_PipelineDesc.Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
                 m_PipelineDesc.Blending = true;
+
+                uint32_t* Indices = new uint32_t[m_VertexCount*1.5];
+                uint32_t Offset{};
+                for(uint32_t i =0;i < m_VertexCount*1.5;i+=6)
+                {
+                    Indices[i] = Offset;
+                    Indices[i+1]=Offset+1;
+                    Indices[i+2] = Offset+2;
+                    Indices[i+3]=Offset+2;
+                    Indices[i+4] = Offset+3;
+                    Indices[i+5]=Offset;
+                    Offset+=4;
+                }
+                m_IndexBuffers[0]->UploadToBuffer(m_Device,Indices,m_IndexBuffers[0]->GetBufferDesc().SizeBytes);
+                delete[] Indices;
                 break;
             }
             case RenderMode::WIREFRAME:{
@@ -1227,10 +1250,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 m_PipelineDesc.Topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
                 m_PipelineDesc.Blending = false;
 
-
-                uint32_t* Indices = new uint32_t[m_VertexCount*1.5];
+                uint32_t* Indices = new uint32_t[m_VertexCount*2];
                 uint32_t Offset{};
-                for(uint32_t i =0;i < m_VertexCount*1.5;i+=8)
+                for(uint32_t i =0;i < m_VertexCount*2;i+=8)
                 {
                     Indices[i] = Offset;
                     Indices[i+1]=Offset+1;
@@ -1243,6 +1265,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     Offset+=4;
                 }
                 m_IndexBuffers[0]->UploadToBuffer(m_Device,Indices,m_IndexBuffers[0]->GetBufferDesc().SizeBytes);
+                delete[] Indices;
                 break;
             }
             default: {
@@ -1259,6 +1282,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     }
    void Renderer::ReCreatePipeline(const PipelineDesc& desc){
+        vkDestroyPipeline(m_Device,m_Pipeline,nullptr);
         m_Pipeline = Pipeline::CreatePipeline(desc,m_Device);
    }
 

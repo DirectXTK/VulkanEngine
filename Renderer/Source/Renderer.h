@@ -75,13 +75,13 @@ public:
     //PointerIndex = -1 means don't draw it.
     void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
     //GUI 
-    void SetRenderDesc(const RendererDesc& desc);
 
     void DrawOutline(Float3 Position, Float2 Size,Float4 Color, float OutlineWidth);
 
     //Particles
     void DrawParticle();
 
+    void SetRenderDesc(const RendererDesc& desc);
 
     Buffer* GetCustomBuffer(uint32_t index) { return m_PickingImageBuffer; }
     Buffer* GetViewportWithID();
@@ -99,6 +99,9 @@ public:
 
     ~Renderer();
 private:
+    void InitRenderDesc(const RendererDesc& desc);
+
+
     void ReCreatePipeline(const PipelineDesc& desc);
 
     void StartRecordingCommands();
@@ -120,6 +123,7 @@ private:
     void CreateDescriptorSets();
     //Options
     RendererDesc m_RendererDesc{};
+    RendererDesc m_RendererDescNext{};
     PipelineDesc m_PipelineDesc{};
 
     Context m_Context{};

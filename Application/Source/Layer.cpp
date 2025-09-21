@@ -1,11 +1,9 @@
 #include "Layer.h"
 #include "AssetManager.h"
 #include "Renderer.h"
-void Layer::Init(Application* app,AssetManager* manager,Renderer* renderer)
+void Layer::Init()
 {
-	m_App = app;
-	m_Renderer = renderer;
-	m_Assets = manager;
+	
 }
 
 Layer::Layer(std::string Name): m_LayerName(Name)
