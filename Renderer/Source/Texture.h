@@ -70,6 +70,7 @@ public:
 
 	//Removes vkImage makes it nullptr.
 	void RemoveImage(){m_Image = nullptr;}
+	void DestroyView();
 
 	~Texture();
 private:

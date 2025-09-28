@@ -48,7 +48,8 @@ bool Application::IsMouseClicked(const MouseCodes& codes,bool hold){
  }
 
 Application::Application(){}
- bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
+
+bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
     //init glfw
      //m_ApplicationLayer = (ApplicationLayer*)m_LayerController.CreateLayer(new ApplicationLayer(specs));
 
@@ -57,7 +58,7 @@ Application::Application(){}
      Core::EmptyLogFile();
      glfwInit();
      glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+     glfwWindowHint(GLFW_RESIZABLE, specs.IsWindowResizable);
 
     m_RendererDebugging = specs.RendererDebugging;
      m_Window = new Window(specs.WindowWidth, specs.WindowHeight, specs.WindowTitle);
@@ -80,6 +81,10 @@ Application::Application(){}
 
      m_FontSystem = new FontSystem();
      m_GUIRenderer = new GUIRenderer(this, false);
+     if(specs.IsWindowResizable){
+        glfwSetFramebufferSizeCallback(m_Window->GetHandle(),DefaultWindowResizeCallback);
+        
+     }
 
      return true;
 
@@ -164,6 +169,8 @@ void Application::Shutdown(){
         app->m_LastFrameTime = Time::GetTimeMs();
         app->m_Renderer->BeginFrame(&app->m_Camera,app->m_DeltaTime);
 
+        if(app->m_Renderer->GetSwapChainState() == VK_SUCCESS){
+
         app->m_LayerController.UpdateLayers(app->m_DeltaTime);
 
         app->m_GUIRenderer->BeginGUI();
@@ -175,6 +182,7 @@ void Application::Shutdown(){
             app->m_Renderer->Statistics(true,app->m_GUIRenderer);
         }
         app->m_Renderer->EndFrame();
+    }
 
       
 

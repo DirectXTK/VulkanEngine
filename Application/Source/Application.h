@@ -12,6 +12,7 @@ struct ApplicationSpecs{
      uint32_t WindowWidth{500};
     std::string WindowTitle{"Untitled"};
     bool RendererDebugging{false};
+    bool IsWindowResizable{true};
 
     //Renderer stuff
     Float4 ClearColor{ 0.5f,0.5f,0.5f,1.0f };
@@ -37,7 +38,6 @@ public:
     static Collider CreateCollider(Float2* Position, Float2 *Size);
     static void AddCallback( InputCallbacks* callbacks);
     static void Shutdown();
-
     //Input
     static bool IsMouseClicked(const MouseCodes& codes,bool hold= false);
     static bool IsKeyPressed(const KeyCodes& codes);

@@ -11,6 +11,11 @@
          void SwapChain::CreateSwapChain(){
 
               VkExtent2D extent = ChooseSwapExtent();
+
+              VkSurfaceCapabilitiesKHR cap{};
+              vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_Context->PDevice,m_Surface,&cap);
+              extent = cap.currentExtent;
+
               VkPresentModeKHR presentation =GetBestPresentationMode();
 
               VkSurfaceFormatKHR surfaceformat = GetBestSurfaceFormat();
@@ -47,9 +52,10 @@
 
 
 
-              VkResult result =vkCreateSwapchainKHR(m_Context->Device,&createinfo,nullptr,&m_SwapChain);
+            VkResult result =vkCreateSwapchainKHR(m_Context->Device,&createinfo,nullptr,&m_SwapChain);
             if(result != VK_SUCCESS)
-            Core::Log(ErrorType::Error,"Failed to create swap chain.");
+              Core::Log(ErrorType::Error,"Failed to create swap chain.",(int32_t)result);
+        
 
             m_SwapChainFormat = surfaceformat.format;
             m_SwapChainExtent = extent;
@@ -74,6 +80,44 @@
 
             
            }
+        void SwapChain::DestroyImageViews(){
+          for(uint32_t i=0;i < m_SwapChainImages.size();i++){
+            m_SwapChainImages[i]->DestroyView();
+          }
+        }
+       
+
+        bool SwapChain::TransitionLayout(VkImage image,VkImageLayout imageLayout){
+          VkPipelineStageFlagBits srcFlagBits{},dstFlagBits{};
+
+          VkImageMemoryBarrier imagePresentBarrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+          imagePresentBarrier.image = image;
+          imagePresentBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+          imagePresentBarrier.subresourceRange.baseArrayLayer = 0;
+          imagePresentBarrier.subresourceRange.layerCount=1;
+          imagePresentBarrier.subresourceRange.levelCount = 1;
+          imagePresentBarrier.subresourceRange.baseMipLevel =0;
+          imagePresentBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+          imagePresentBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+          imagePresentBarrier.srcAccessMask =0;
+          imagePresentBarrier.dstAccessMask =0;
+
+
+          if(imageLayout == VK_IMAGE_LAYOUT_UNDEFINED){
+            imagePresentBarrier.oldLayout = imageLayout;
+            imagePresentBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            srcFlagBits = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            dstFlagBits = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+
+          }else{
+            Core::Log(ErrorType::Error,"Invalid SwapChain TransitionFormat ",(int)imageLayout);
+            return false;
+          }
+
+
+          vkCmdPipelineBarrier(m_Context->CurrentCommandBuffer,srcFlagBits,dstFlagBits,0,0,0,0,0,1,&imagePresentBarrier);
+          return true;
+        }
 
      void SwapChain::CreateSurface(){
      

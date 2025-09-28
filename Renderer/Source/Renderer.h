@@ -46,6 +46,7 @@ struct RendererDesc{
     RenderMode Rendermode{RenderMode::SOLID};
     bool Blending{true};
     Camera2D* InitialCamera{nullptr}; //optional
+    VkViewport Viewport{};
 };
 struct UniformCameraBufferData{
     glm::mat4 GeometryCamera{};
@@ -88,6 +89,7 @@ public:
 
     VkExtent2D GetViewPortExtent() { return m_SwapChain->GetExtent(); }
 
+
     void EndFrame();
 
 
@@ -96,10 +98,12 @@ public:
     Texture* LoadTexture(std::string Path,TextureType = TextureType::Texture);
 
     Context GetContext() { return m_Context; }
+    VkResult GetSwapChainState(){return m_AcquireImageResult;}
 
     ~Renderer();
 private:
     void InitRenderDesc(const RendererDesc& desc);
+    void ResizeWindow();
 
 
     void ReCreatePipeline(const PipelineDesc& desc);
@@ -118,9 +122,14 @@ private:
     void FlushGUI();
 
     void CreateInstance();
+    void CreateColorAttachments(uint32_t Count,std::vector<Texture*>& colorAttachments,const TextureCreateInfo& createInfo);
     void CreateFrameBuffers();
+    void ReCreateFrameBuffers();
+
     void CreateCommandBuffers();
     void CreateDescriptorSets();
+
+    void CreatePickingImage();
     //Options
     RendererDesc m_RendererDesc{};
     RendererDesc m_RendererDescNext{};
@@ -139,8 +148,12 @@ private:
     GLFWwindow* m_Window{};
     //Swap chain stuff
     SwapChainDetails m_SwapChainDetails{};
+    uint32_t m_NewWindowWidth{};
+    uint32_t m_NewWindowHeight{};
+    bool m_Resize{};
 
     SwapChain* m_SwapChain{};
+    VkResult m_AcquireImageResult{};
 
     uint32_t m_ImageIndex{};
     std::vector<VkCommandBuffer> m_CommandBuffers{};

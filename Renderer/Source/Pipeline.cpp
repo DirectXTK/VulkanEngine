@@ -93,7 +93,7 @@ VkRenderPass Pipeline::CreateRenderPass(VkDevice device, VkFormat format) {
 
     VkResult result = vkCreateRenderPass(device, &RenderPassinfo, nullptr, &RenderPass);
     if (result != VK_SUCCESS)
-        Core::Log(ErrorType::Error, "Failed to create renderpass.");
+        Core::Log(ErrorType::Error, "Failed to create renderpass ",(int)result );
     return RenderPass;
 }
 

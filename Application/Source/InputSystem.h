@@ -52,3 +52,5 @@ private:
 	GLFWwindow* m_CurrentWindow{};
 
 };
+//defaults
+void DefaultWindowResizeCallback(GLFWwindow* window,int width,int height);

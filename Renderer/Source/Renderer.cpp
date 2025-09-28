@@ -60,7 +60,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     UniformBufferDesc.Physdevice = m_PhysicalDevice;
     UniformBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
     UniformBufferDesc.Usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    UniformBufferDesc.SizeBytes = sizeof(UniformCameraBufferData);
+    UniformBufferDesc.SizeBytes = sizeof(UniformCameraBufferData);  
     m_UniformBuffer = new Buffer(UniformBufferDesc);
 
   
@@ -253,7 +253,85 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     ReCreatePipeline(m_PipelineDesc);
  }
+    void Renderer::ResizeWindow(){
+            vkResetFences(m_Device, 1, &m_DrawFences[m_CurrentFrame]);
+            vkQueueWaitIdle(m_GraphicsQ);
+            vkDeviceWaitIdle(m_Device);
+            
+            for(uint32_t i=0 ;i < m_FrameBuffers.size();i++){
+                m_FrameBuffers[i].~FrameBuffer();
+            }
+            m_SwapChain->DestroyImageViews();
+            vkDestroySwapchainKHR(m_Device,m_SwapChain->GetSwapChain(),nullptr);
+            m_SwapChain->CreateSwapChain();
+            ReCreateFrameBuffers();
+            m_RendererDesc.Viewport.width = m_SwapChain->GetExtent().width;
+            m_RendererDesc.Viewport.height = m_SwapChain->GetExtent().height;
+            
+            
+            vkDestroyRenderPass(m_Device,m_RenderPass,nullptr);
+            m_RenderPass =  Pipeline::CreateRenderPass(m_Device,m_SwapChain->GetFormat());
+            InitRenderDesc(m_RendererDesc);
+
+            delete m_PickingImageBuffer;
+            CreatePickingImage();
+            m_ImageIndex=0;
+            vkResetCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
+                VkCommandBufferBeginInfo bufferbegininfo{};
+                bufferbegininfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+            
+            VkResult result = vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),std::numeric_limits<uint32_t>::max(),m_ImageAvailS[m_CurrentFrame],m_DrawFences[m_CurrentFrame],&m_ImageIndex);
+            if(result != VK_SUCCESS)
+                Core::Log(ErrorType::Error,"Failed to acquire next image and resizeWindow. ",(int)result);
+             vkBeginCommandBuffer(m_CurrentCommandBuffer,&bufferbegininfo);
+
+            m_SwapChain->TransitionLayout(m_SwapChain->GetSwapChainImage(m_ImageIndex)->GetImage(),VK_IMAGE_LAYOUT_UNDEFINED);
+
+            vkEndCommandBuffer(m_CurrentCommandBuffer);
+               vkWaitForFences(m_Device, 1, &m_DrawFences[m_CurrentFrame], true, std::numeric_limits<uint64_t>::max());
+            vkResetFences(m_Device, 1, &m_DrawFences[m_CurrentFrame]);
+            VkPipelineStageFlags waitstages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+                VkSubmitInfo submitinfo{};
+            submitinfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            submitinfo.waitSemaphoreCount = 0;
+            submitinfo.pWaitSemaphores = nullptr;
+            submitinfo.pWaitDstStageMask = waitstages;
+            submitinfo.commandBufferCount = 1;
+            submitinfo.pCommandBuffers = &m_CurrentCommandBuffer;
+            submitinfo.signalSemaphoreCount = 0;
+            submitinfo.pSignalSemaphores = nullptr;
+
+             result = vkQueueSubmit(m_GraphicsQ, 1, &submitinfo, m_DrawFences[m_CurrentFrame]);
+            vkQueueWaitIdle(m_GraphicsQ);
+
+            VkSwapchainKHR swapChain = m_SwapChain->GetSwapChain();
+            if (result != VK_SUCCESS)
+                Core::Log(ErrorType::Error, "Failed to submit queue ",(int)result);
+             VkPresentInfoKHR presentinfo{};
+            presentinfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+            presentinfo.waitSemaphoreCount = 0;
+            presentinfo.pWaitSemaphores = 0;
+            presentinfo.swapchainCount = 1;
+            presentinfo.pSwapchains = &swapChain;
+            presentinfo.pImageIndices = &m_ImageIndex;
+            
+
+            result = vkQueuePresentKHR(m_PresentationQ, &presentinfo);
+
+            if (result != VK_SUCCESS){
+                Core::Log(ErrorType::Error, "Failed to queue present ",(int)result);
+            }
+         
+
+
+    }
     void Renderer::BeginFrame(Camera2D* camera,float deltaTime){
+
+        m_CurrentCommandBuffer = m_CommandBuffers[m_CurrentFrame];
+        m_Context->CurrentCommandBuffer = m_CurrentCommandBuffer;
         //recreate pipeline if needed
         if(m_RendererDesc.Rendermode != m_RendererDescNext.Rendermode){
             InitRenderDesc(m_RendererDescNext);
@@ -287,8 +365,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
              vkWaitForFences(m_Device,1,&m_DrawFences[m_CurrentFrame],true,std::numeric_limits<uint64_t>::max());
 
-        vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),std::numeric_limits<uint64_t>::max(),m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
-            m_Textures[m_CurrentFrame].clear();
+       m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),1000000000ULL,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
+       if(m_AcquireImageResult == VK_ERROR_OUT_OF_DATE_KHR){
+            ResizeWindow();
+           return;
+       }
+       else if(m_AcquireImageResult != VK_SUCCESS)
+          Core::Log(ErrorType::Error,"Failed to acquire image ",(int)m_AcquireImageResult);
+
+        m_Textures[m_CurrentFrame].clear();
 
 
        
@@ -325,7 +410,18 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
     }
+    void Renderer::CreatePickingImage(){
+        BufferDesc PickingImageBufferDesc{};
+        PickingImageBufferDesc.SizeBytes = m_ColorAttachments[0]->GetByteSize();
+        PickingImageBufferDesc.Usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        PickingImageBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
+        PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
+        PickingImageBufferDesc.Device = m_Device;
+        PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
+
+        m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
+    }
     void Renderer::BeginGUIFrame()
     {
 
@@ -526,6 +622,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         void Renderer::EndFrame()
         {
+           
               VkBufferCopy region{};
             region.size = sizeof(Vertex) * m_VertexCount;
             region.dstOffset = 0;
@@ -552,8 +649,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     
             DrawBatch();
 
-
             StopRecordingCommands();
+
 
             vkWaitForFences(m_Device, 1, &m_DrawFences[m_CurrentFrame], true, std::numeric_limits<uint64_t>::max());
             vkResetFences(m_Device, 1, &m_DrawFences[m_CurrentFrame]);
@@ -575,10 +672,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             submitinfo.pCommandBuffers = commandsbuffers;
             submitinfo.signalSemaphoreCount = 1;
             submitinfo.pSignalSemaphores = &m_RenderFinishedS[m_CurrentFrame];
+
             VkResult result = vkQueueSubmit(m_GraphicsQ, 1, &submitinfo, m_DrawFences[m_CurrentFrame]);
             vkQueueWaitIdle(m_GraphicsQ);
             if (result != VK_SUCCESS)
-                Core::Log(ErrorType::Error, "Failed to submit queue.");
+                Core::Log(ErrorType::Error, "Failed to submit queue ",(int)result);
 
 
 
@@ -595,8 +693,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             result = vkQueuePresentKHR(m_PresentationQ, &presentinfo);
 
-            if (result != VK_SUCCESS)
-                Core::Log(ErrorType::Error, "Failed to queue present.");
+            if (result != VK_SUCCESS){
+                Core::Log(ErrorType::Error, "Failed to queue present ",(int)result);
+            }
 
         m_Textures[m_CurrentFrame].clear();
         m_TextureIDByOrder[m_CurrentFrame].clear();
@@ -1089,7 +1188,40 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
     
     }
+    void Renderer::ReCreateFrameBuffers(){
+        VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_R32G32_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
+        VkFormat DepthStencilFormat = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
+        TextureCreateInfo colorAttachTextureInfo{};
+        colorAttachTextureInfo.Format =format;
+        colorAttachTextureInfo.Width = m_SwapChain->GetExtent().width;
+        colorAttachTextureInfo.Height = m_SwapChain->GetExtent().height;
+        colorAttachTextureInfo.ImageTilling =  VK_IMAGE_TILING_OPTIMAL;
+        colorAttachTextureInfo.ImageUsageFlags = VkImageUsageFlagBits(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+        colorAttachTextureInfo.MemoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+        colorAttachTextureInfo.SharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+
+  
+            for(uint32_t i =0;i < m_ColorAttachments.size();i++){
+                delete m_ColorAttachments[i];
+
+                m_ColorAttachments[i] = new Texture(m_Context,colorAttachTextureInfo,TextureType::ColorAttachment);
+
+                
+            }
+             //change creat info for depth buffer
+                colorAttachTextureInfo.ImageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+                colorAttachTextureInfo.ImageUsageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+                colorAttachTextureInfo.Format = DepthStencilFormat;
+                for(uint32_t i =0;i < m_DepthStencilAttachments.size();i++){
+                delete m_DepthStencilAttachments[i];
+                m_DepthStencilAttachments[i] = new Texture(m_Context,colorAttachTextureInfo,TextureType::DepthStencilAttachment);
+                }
+
+
+            CreateFrameBuffers();
+    }
     void Renderer::CreateFrameBuffers(){
 
         m_FrameBuffers.resize(MAX_FRAME_DRAWS);
@@ -1100,6 +1232,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
     }
+    void Renderer::CreateColorAttachments(uint32_t Count,std::vector<Texture*>& colorAttachments,const TextureCreateInfo& createInfo){
+        
+        colorAttachments.resize(Count);
+        for(uint32_t i =0;i  < colorAttachments.size();i++){
+            colorAttachments[i] = new Texture(m_Context,createInfo,TextureType::ColorAttachment);
+        }
+
+    }
+
 
     void Renderer::CreateCommandBuffers(){
 
@@ -1223,6 +1364,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::InitRenderDesc(const RendererDesc& Desc){
         m_RendererDesc = Desc;
 
+        m_PipelineDesc.RenderPass = m_RenderPass;
+        m_PipelineDesc.Viewport.width = (float)m_SwapChain->GetExtent().width;
+        m_PipelineDesc.Viewport.height = (float)m_SwapChain->GetExtent().height;
         switch(m_RendererDesc.Rendermode){
             case RenderMode::SOLID:{
                 m_PipelineDesc.RenderType = VK_POLYGON_MODE_FILL;
@@ -1360,7 +1504,6 @@ void Renderer::StartRecordingCommands()
     VkCommandBufferBeginInfo bufferbegininfo{};
     bufferbegininfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    m_CurrentCommandBuffer = m_CommandBuffers[m_CurrentFrame];
 
 
     vkResetCommandBuffer(m_CurrentCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);

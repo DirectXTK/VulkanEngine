@@ -11,6 +11,7 @@ struct ContextData
 	
 
 	//Temp
+	VkCommandBuffer CurrentCommandBuffer{};
 	VkCommandBuffer TransferCommandBuffer{};
 
 };

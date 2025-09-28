@@ -134,7 +134,6 @@ void InputSystem::ResetMouseChange()
 	double x, y{};
 	glfwGetWindowSize(m_CurrentWindow, &Width, &Height);
 	glfwGetCursorPos(m_CurrentWindow, &x, &y);
-
 	m_MouseChange.x = float(m_LastFrameMousePos.x -x) ;
 	m_MouseChange.y = float(m_LastFrameMousePos.y -y);
 
@@ -182,3 +181,5 @@ void InputSystem::AddCallbacks(InputCallbacks* callbacks)
 	m_Callbacks = *callbacks;
 }
 
+void DefaultWindowResizeCallback(GLFWwindow* window,int width,int height){
+	}

@@ -23,7 +23,9 @@ class SwapChain{
         Texture* GetSwapChainImage(uint32_t Index){ return m_SwapChainImages[Index];}
         
          void CreateSwapChain();
-         void ReCreateSwapChain();
+
+        void DestroyImageViews();
+        bool TransitionLayout(VkImage image,VkImageLayout imageLayout);
 
          ~SwapChain();
     private:

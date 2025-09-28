@@ -344,6 +344,9 @@ void Texture::CreateTextureAtlasAndParent(const std::string& MetaData,uint64_t W
 }
 
 
+	void Texture::DestroyView(){
+		vkDestroyImageView(m_Context->Device,m_ImageView,nullptr);
+	}
 
 void Texture::CreateTextureAtlas(uint32_t WidthOfOneTexture, uint32_t HeightOfOneTexture, uint32_t NumOfTexture)
 {
