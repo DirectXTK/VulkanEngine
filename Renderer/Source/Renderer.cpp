@@ -8,6 +8,7 @@
 #include "AssetManager.h"
 #include "FontSystem.h"
 #include "GUI.h"
+#include "CommandBuffer.h"
 
 #include "Debug.h"
 
@@ -249,83 +250,66 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-     m_PipelineDesc.Viewport = { 0,0,(float)m_SwapChain->GetExtent().width,(float)m_SwapChain->GetExtent().height,0.0f,1.0f };
+     m_PipelineDesc.Viewport.x =0;
+     m_PipelineDesc.Viewport.y =0;
+
+     m_PipelineDesc.Viewport.width =m_SwapChain->GetExtent().width;
+     m_PipelineDesc.Viewport.height =m_SwapChain->GetExtent().height;
+     
+     m_PipelineDesc.Viewport.minDepth =0;
+     m_PipelineDesc.Viewport.maxDepth =1.0f;
+     
+     
 
     ReCreatePipeline(m_PipelineDesc);
  }
     void Renderer::ResizeWindow(){
-            vkResetFences(m_Device, 1, &m_DrawFences[m_CurrentFrame]);
-            vkQueueWaitIdle(m_GraphicsQ);
             vkDeviceWaitIdle(m_Device);
-            
-            for(uint32_t i=0 ;i < m_FrameBuffers.size();i++){
-                m_FrameBuffers[i].~FrameBuffer();
+                for(uint32_t i=0;i < m_SwapChain->GetSwapChainImageCount();i++){
+                Core::Log("Image address",(void*)m_SwapChain->GetSwapChainImage(i)->GetImage());
             }
+                m_FrameBuffers.clear();
+
             m_SwapChain->DestroyImageViews();
             vkDestroySwapchainKHR(m_Device,m_SwapChain->GetSwapChain(),nullptr);
             m_SwapChain->CreateSwapChain();
+
+
             ReCreateFrameBuffers();
             m_RendererDesc.Viewport.width = m_SwapChain->GetExtent().width;
             m_RendererDesc.Viewport.height = m_SwapChain->GetExtent().height;
             
             
-            vkDestroyRenderPass(m_Device,m_RenderPass,nullptr);
-            m_RenderPass =  Pipeline::CreateRenderPass(m_Device,m_SwapChain->GetFormat());
+           
             InitRenderDesc(m_RendererDesc);
 
             delete m_PickingImageBuffer;
             CreatePickingImage();
             m_ImageIndex=0;
-            vkResetCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
-
-                VkCommandBufferBeginInfo bufferbegininfo{};
-                bufferbegininfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
             
-            VkResult result = vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),std::numeric_limits<uint32_t>::max(),m_ImageAvailS[m_CurrentFrame],m_DrawFences[m_CurrentFrame],&m_ImageIndex);
-            if(result != VK_SUCCESS)
-                Core::Log(ErrorType::Error,"Failed to acquire next image and resizeWindow. ",(int)result);
-             vkBeginCommandBuffer(m_CurrentCommandBuffer,&bufferbegininfo);
+            for(uint32_t i=0 ;i < m_ImageAvailS.size();i++){
 
-            m_SwapChain->TransitionLayout(m_SwapChain->GetSwapChainImage(m_ImageIndex)->GetImage(),VK_IMAGE_LAYOUT_UNDEFINED);
-
-            vkEndCommandBuffer(m_CurrentCommandBuffer);
-               vkWaitForFences(m_Device, 1, &m_DrawFences[m_CurrentFrame], true, std::numeric_limits<uint64_t>::max());
-            vkResetFences(m_Device, 1, &m_DrawFences[m_CurrentFrame]);
-            VkPipelineStageFlags waitstages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-
-                VkSubmitInfo submitinfo{};
-            submitinfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            submitinfo.waitSemaphoreCount = 0;
-            submitinfo.pWaitSemaphores = nullptr;
-            submitinfo.pWaitDstStageMask = waitstages;
-            submitinfo.commandBufferCount = 1;
-            submitinfo.pCommandBuffers = &m_CurrentCommandBuffer;
-            submitinfo.signalSemaphoreCount = 0;
-            submitinfo.pSignalSemaphores = nullptr;
-
-             result = vkQueueSubmit(m_GraphicsQ, 1, &submitinfo, m_DrawFences[m_CurrentFrame]);
-            vkQueueWaitIdle(m_GraphicsQ);
-
-            VkSwapchainKHR swapChain = m_SwapChain->GetSwapChain();
-            if (result != VK_SUCCESS)
-                Core::Log(ErrorType::Error, "Failed to submit queue ",(int)result);
-             VkPresentInfoKHR presentinfo{};
-            presentinfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-            presentinfo.waitSemaphoreCount = 0;
-            presentinfo.pWaitSemaphores = 0;
-            presentinfo.swapchainCount = 1;
-            presentinfo.pSwapchains = &swapChain;
-            presentinfo.pImageIndices = &m_ImageIndex;
-            
-
-            result = vkQueuePresentKHR(m_PresentationQ, &presentinfo);
-
-            if (result != VK_SUCCESS){
-                Core::Log(ErrorType::Error, "Failed to queue present ",(int)result);
+                vkDestroySemaphore(m_Device,m_ImageAvailS[i],nullptr);
+                vkDestroySemaphore(m_Device,m_RenderFinishedS[i],nullptr);
+                vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
             }
-         
 
+            CreateSamaphore();
+                for(uint32_t i=0 ;i < m_ImageAvailS.size();i++){
+
+            }
+
+
+            vkResetCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+           VkCommandBuffer singleCommandBuffer= CommandBuffer::StartSingleUseCommandBuffer(m_Context,m_GraphicsPool.GetCommandPool());
+            for(uint32_t i=0;i < m_SwapChain->GetSwapChainImageCount();i++){
+                m_SwapChain->TransitionLayout(m_SwapChain->GetSwapChainImage(i)->GetImage(),VK_IMAGE_LAYOUT_UNDEFINED,singleCommandBuffer);
+                m_SwapChain->TransitionLayout(m_SwapChain->GetSwapChainImage(i)->GetImage(),VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,singleCommandBuffer);
+            }
+            
+
+            CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_GraphicsPool.GetCommandPool(),singleCommandBuffer);
 
     }
     void Renderer::BeginFrame(Camera2D* camera,float deltaTime){
@@ -367,8 +351,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
        m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),1000000000ULL,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
        if(m_AcquireImageResult == VK_ERROR_OUT_OF_DATE_KHR){
+
             ResizeWindow();
-           return;
+        m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),1000000000ULL,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
+
+        
+            if(m_AcquireImageResult != VK_SUCCESS)
+              Core::Log(ErrorType::Error,"Failed to acquire imnage after resize.",(int)m_AcquireImageResult);
        }
        else if(m_AcquireImageResult != VK_SUCCESS)
           Core::Log(ErrorType::Error,"Failed to acquire image ",(int)m_AcquireImageResult);
@@ -1188,7 +1177,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
     
     }
-    void Renderer::ReCreateFrameBuffers(){
+    void Renderer::
+    ReCreateFrameBuffers(){
         VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_R32G32_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
         VkFormat DepthStencilFormat = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
@@ -1202,14 +1192,17 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         colorAttachTextureInfo.SharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 
-  
+            VkCommandBuffer singleCommandBuffer = CommandBuffer::StartSingleUseCommandBuffer(m_Context,m_GraphicsPool.GetCommandPool());
             for(uint32_t i =0;i < m_ColorAttachments.size();i++){
                 delete m_ColorAttachments[i];
 
                 m_ColorAttachments[i] = new Texture(m_Context,colorAttachTextureInfo,TextureType::ColorAttachment);
-
-                
+                m_ColorAttachments[i]->TrasitionFormat(true,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,singleCommandBuffer);
             }
+            CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_GraphicsPool.GetCommandPool(),singleCommandBuffer);
+
+
+
              //change creat info for depth buffer
                 colorAttachTextureInfo.ImageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
                 colorAttachTextureInfo.ImageUsageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;

@@ -5,16 +5,13 @@
             m_Surface= surface;
             m_Instance = instance;
 
-            m_Details = SwapChain::GetSwapChainCapabilities(m_Context->PDevice,surface);
         }
 
          void SwapChain::CreateSwapChain(){
-
+              m_Details = SwapChain::GetSwapChainCapabilities(m_Context->PDevice,m_Surface);
               VkExtent2D extent = ChooseSwapExtent();
 
-              VkSurfaceCapabilitiesKHR cap{};
-              vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_Context->PDevice,m_Surface,&cap);
-              extent = cap.currentExtent;
+
 
               VkPresentModeKHR presentation =GetBestPresentationMode();
 
@@ -87,7 +84,7 @@
         }
        
 
-        bool SwapChain::TransitionLayout(VkImage image,VkImageLayout imageLayout){
+        bool SwapChain::TransitionLayout(VkImage image,VkImageLayout imageLayout,VkCommandBuffer commandBuffer){
           VkPipelineStageFlagBits srcFlagBits{},dstFlagBits{};
 
           VkImageMemoryBarrier imagePresentBarrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
@@ -105,17 +102,29 @@
 
           if(imageLayout == VK_IMAGE_LAYOUT_UNDEFINED){
             imagePresentBarrier.oldLayout = imageLayout;
+            imagePresentBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            imagePresentBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+            srcFlagBits = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            dstFlagBits = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+
+          }else if(imageLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+          {
+            imagePresentBarrier.oldLayout = imageLayout;
             imagePresentBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
             srcFlagBits = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             dstFlagBits = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+            imagePresentBarrier.dstAccessMask =VK_ACCESS_MEMORY_READ_BIT;
 
-          }else{
+          }
+          else{
             Core::Log(ErrorType::Error,"Invalid SwapChain TransitionFormat ",(int)imageLayout);
             return false;
           }
 
 
-          vkCmdPipelineBarrier(m_Context->CurrentCommandBuffer,srcFlagBits,dstFlagBits,0,0,0,0,0,1,&imagePresentBarrier);
+          vkCmdPipelineBarrier(commandBuffer,srcFlagBits,dstFlagBits,0,0,0,0,0,1,&imagePresentBarrier);
           return true;
         }
 

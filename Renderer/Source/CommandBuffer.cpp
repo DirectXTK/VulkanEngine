@@ -51,8 +51,9 @@ VkCommandBuffer CommandBuffer::StartSingleUseCommandBuffer(Context context, VkCo
     VkCommandBufferBeginInfo begininfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     begininfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    vkBeginCommandBuffer(outcommandbuffer, &begininfo);
-
+    VkResult result =vkBeginCommandBuffer(outcommandbuffer, &begininfo);
+    if(result != VK_SUCCESS)
+        Core::Log(ErrorType::Error,"StartSingleUseCommandBuffer() Failed to beginCommandBuffer.",(int)result);
     return outcommandbuffer;
 }
 

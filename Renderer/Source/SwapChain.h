@@ -25,13 +25,13 @@ class SwapChain{
          void CreateSwapChain();
 
         void DestroyImageViews();
-        bool TransitionLayout(VkImage image,VkImageLayout imageLayout);
+        bool TransitionLayout(VkImage image,VkImageLayout imageLayout,VkCommandBuffer commandBuffer);
 
          ~SwapChain();
     private:
          VkSurfaceFormatKHR GetBestSurfaceFormat();
          VkPresentModeKHR GetBestPresentationMode();
-         VkExtent2D ChooseSwapExtent();
+         VkExtent2D ChooseSwapExtent(); 
          void CreateSurface();
      VkSwapchainKHR m_SwapChain{};
      SwapChainDetails m_Details{};
