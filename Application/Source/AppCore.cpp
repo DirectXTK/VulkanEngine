@@ -1,5 +1,26 @@
 #include "AppCore.h"
 namespace Core {
+        ScopedTimer::ScopedTimer(){
+			auto now = std::chrono::system_clock::now();
+			m_Start = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+		}
+		ScopedTimer::~ScopedTimer(){
+			auto now = std::chrono::system_clock::now();
+			uint64_t end = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+			Core::Log("This function took:", (end-m_Start)/1000.f," ms");
+		}
+		void Timer::Start(){
+			auto now = std::chrono::system_clock::now();
+			m_Start = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+		}
+		uint64_t Timer::End(){
+			auto now = std::chrono::system_clock::now();
+			uint64_t end = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+			end = end-m_Start;
+			Core::Log("This function took:", end/1000.f," ms");
+			return end;
+		}
+	
 	GUUID GetStringHash(const std::string& Path) {return (uint64_t)std::hash<std::string>{}(Path); }
 
 	std::string GetFileExtension(const std::string& File)

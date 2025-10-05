@@ -5,7 +5,6 @@
 #include "../Examples/Testing/AnimationTestingLayer.h"
 
 #define DEBUG
-
 int main() {
 	ApplicationSpecs specs{};
 	specs.WindowTitle = "Example";
@@ -13,7 +12,8 @@ int main() {
 	specs.WindowWidth = 800;
 	specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
 	specs.RendererDebugging = true;
-
+	specs.IsWindowResizable = true;
+  
 	Application::InitApplication(specs);
 	Application::AddLayer(new AnimationTestingLayer());
 	Application::Run();

@@ -61,7 +61,9 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
      glfwWindowHint(GLFW_RESIZABLE, specs.IsWindowResizable);
 
     m_RendererDebugging = specs.RendererDebugging;
+
      m_Window = new Window(specs.WindowWidth, specs.WindowHeight, specs.WindowTitle);
+
      m_Camera.Init({ 0.0f,0.0f }, { 1.0f,1.0f });
 
      RendererDesc desc{};
@@ -181,6 +183,7 @@ void Application::Shutdown(){
           if(app->m_RendererDebugging){
             app->m_Renderer->Statistics(true,app->m_GUIRenderer);
         }
+
         app->m_Renderer->EndFrame();
     }
 

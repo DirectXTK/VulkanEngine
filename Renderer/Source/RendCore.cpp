@@ -19,6 +19,18 @@ namespace Core{
             Core::Log(ErrorType::Error,"Couldn't find memory type index.");
             return 0;
         }
+        bool ReadPixel(Float2* pixelData,uint64_t width,uint64_t height,uint64_t posx,uint64_t posy,Float2* outReadPixel){
+
+            if(posx < 0  || posy < 0)
+                return false;
+            if(posx > width || posy > height)
+                return false;
+            *outReadPixel = pixelData[(posy*width)+posx];
+
+
+
+            return true;
+        }
         VkFormat ChooseBestFormat(VkPhysicalDevice pdevice,const std::vector<VkFormat>& formats,VkImageTiling tilling,VkFormatFeatureFlags flags){
 
                 for(int i =0;i < formats.size();i++){

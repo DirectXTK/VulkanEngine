@@ -91,7 +91,7 @@ public:
 
 
     void EndFrame();
-
+    void OnWindowResize(uint32_t width,uint32_t height);
 
     void Statistics(bool renderGui = true,void* guirenderer= nullptr);
 
@@ -105,6 +105,7 @@ private:
     void InitRenderDesc(const RendererDesc& desc);
     void ResizeWindow();
 
+    void ResetFrameData();
 
     void ReCreatePipeline(const PipelineDesc& desc);
 
@@ -148,9 +149,8 @@ private:
     GLFWwindow* m_Window{};
     //Swap chain stuff
     SwapChainDetails m_SwapChainDetails{};
-    uint32_t m_NewWindowWidth{};
-    uint32_t m_NewWindowHeight{};
-    bool m_Resize{};
+    bool m_ResizeWindow{};
+    Float2 m_NewWindowSize{};
 
     SwapChain* m_SwapChain{};
     VkResult m_AcquireImageResult{};
@@ -188,7 +188,8 @@ private:
     Buffer* m_UniformBuffer{};
     //Descriptors 
     DescriptorPool m_DescriptorPool{};
-    DescriptorSet m_DescriptorSetCamera{};
+
+    std::array<DescriptorSet,MAX_FRAME_DRAWS> m_DescriptorSetCamera{};
 
     //Debug
     VkDebugUtilsMessengerEXT m_Messenger{};
@@ -264,7 +265,8 @@ private:
     uint32_t m_TextureSlotCount{ 4 };
     Texture* m_BlankWhiteTexture{};
     DescriptorPool m_DescriptorPoolTextures{};
-    DescriptorSet m_DescriptorSetTextures{};
+
+    std::array<DescriptorSet,MAX_FRAME_DRAWS> m_DescriptorSetTextures{};
 
     struct TextureRenderingData {
         Asset<Texture> texture{};

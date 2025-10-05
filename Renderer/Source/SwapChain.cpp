@@ -1,13 +1,14 @@
 #include "SwapChain.h"
 
-        SwapChain::SwapChain(VkInstance instance,Context context,VkSurfaceKHR surface){
+        SwapChain::SwapChain(GLFWwindow* window,VkInstance instance,Context context,VkSurfaceKHR surface){
             m_Context = context;
             m_Surface= surface;
             m_Instance = instance;
+            m_Window = window;
 
         }
 
-         void SwapChain::CreateSwapChain(){
+         void SwapChain::CreateSwapChain(uint32_t imageCount){
               m_Details = SwapChain::GetSwapChainCapabilities(m_Context->PDevice,m_Surface);
               VkExtent2D extent = ChooseSwapExtent();
 
@@ -24,7 +25,7 @@
              createinfo.imageColorSpace = surfaceformat.colorSpace;
              createinfo.presentMode = presentation;
              createinfo.imageExtent = extent;
-             createinfo.minImageCount = m_Details.Capabilities.minImageCount;
+             createinfo.minImageCount = imageCount;
              createinfo.imageArrayLayers =1;
              createinfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
              createinfo.preTransform = m_Details.Capabilities.currentTransform;
@@ -56,6 +57,7 @@
 
             m_SwapChainFormat = surfaceformat.format;
             m_SwapChainExtent = extent;
+            Core::Log("RealSize",m_SwapChainExtent.width," ",m_SwapChainExtent.height);
             //Getting access to swap chain images
 
             uint32_t ImageCount{};

@@ -22,11 +22,19 @@ GUIRenderer::GUIRenderer(Application* app,bool SaveState): m_Application(app),m_
 	PushStyle(GUI::Style::BORDER,&BorderData);
 	PushStyle(GUI::Style::OUTLINE,&OutlineStyle);
 
-
+	Renderer* renderer = Application::GetRenderer();
+	
 }
 void GUIRenderer::BeginGUI()
 {
 	m_CurrentPanel = 0;
+
+	Renderer* renderer =Application::GetRenderer(); 
+	Buffer* buffer = renderer->GetCustomBuffer(0);
+	delete []m_PickBufferData;
+	m_PickBufferData = new Float2[renderer->GetViewPortExtent().width*renderer->GetViewPortExtent().height];
+	buffer->LoadFromBufferToVar(m_PickBufferData,renderer->GetViewPortExtent().width*renderer->GetViewPortExtent().height*sizeof(Float2));
+	//Core::Log("Size",renderer->GetViewPortExtent().height," ", renderer->GetViewPortExtent().width);
 }
 
 
@@ -82,8 +90,9 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 		{
 
 			uint64_t* id{};
-			Buffer* buffer = renderer->GetCustomBuffer(0);
-			Float2 data = buffer->ReadPixel((uint32_t)inputSystem->GetMousePos().x, (uint32_t)inputSystem->GetMousePos().y, renderer->GetViewPortExtent().width, renderer->GetViewPortExtent().height);
+			Float2 data{};
+			bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
+			if(succeded){
 			Float2 Pos = m_Application->GetMousePosNorm();
 			id = (uint64_t*)&data;
 			if (m_PanelIDs[m_CurrentPanel].ID.ID == *id) {
@@ -97,6 +106,7 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 
 
 			}
+		}
 		}
 		if (m_DraggedPanel != -1)
 		{
@@ -159,15 +169,14 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 
 
 	if (inputsystem->IsMouseClicked(mousecode))
-	{
-		Buffer* buffer = renderer->GetCustomBuffer(0);
-		Float2 data = buffer->ReadPixel((uint32_t)inputsystem->GetMousePos().x, (uint32_t)inputsystem->GetMousePos().y, renderer->GetViewPortExtent().width, renderer->GetViewPortExtent().height);
-		Float2 Pos = inputsystem->GetMousePos();
+	{	
+		Float2 data{};
+		bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
+		if(succeded){
 
 		id = (uint64_t*)&data;
 
 		if (CurrentButtonID.ID == *id) {
-		Core::Log("Clicked");
 
 			if (SavesState )
 			{
@@ -186,6 +195,8 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 			CurrentButtonData->IsPressed=false;
 
 		}
+	}
+	
 	}
 	
 
@@ -454,4 +465,7 @@ void GUIRenderer::EndGUI()
 
 	//delete button that hasn't been used.
 }
+	GUIRenderer::~GUIRenderer(){
+		delete[] m_PickBufferData;
+	}
 

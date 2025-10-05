@@ -31,7 +31,7 @@
         }
         void IndexBuffer::UploadToBuffer(VkDevice device,void* data,uint32_t SizeBytes){
                 void *map{};
-                vkMapMemory(device,m_DeviceMemory,0,m_BufferSize,0,&map);
+                VULKANDEBUG(vkMapMemory(device,m_DeviceMemory,0,m_BufferSize,0,&map),"Failed to map memory (IndexBuffer::UploadToBuffer)");
                 memcpy(map,data,SizeBytes);
                 vkUnmapMemory(device,m_DeviceMemory);
 

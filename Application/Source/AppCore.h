@@ -112,6 +112,21 @@ struct GUUID {
 
 };
 namespace Core {
+    class ScopedTimer{
+        public:
+        ScopedTimer();
+        ~ScopedTimer();
+
+        private:
+        uint64_t m_Start{};
+    };
+    class Timer{
+        public:
+            void Start();
+            uint64_t End();
+        private:
+        uint64_t m_Start{};
+    };
     GUUID GetStringHash(const std::string& Path);
     std::string GetFileExtension(const std::string& File);
 

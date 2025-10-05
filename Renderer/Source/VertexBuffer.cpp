@@ -31,7 +31,7 @@
         }
         void VertexBuffer::UploadToBuffer(VkDevice device,void* data,uint32_t Size){
             void * map{};
-            vkMapMemory(device,m_BufferMemory,0,m_BufferSize,0,&map);
+            VULKANDEBUG(vkMapMemory(device,m_BufferMemory,0,m_BufferSize,0,&map),"Failed to map memory (VertexBuffer::UploadToBuffer)");
             memcpy(map,data,Size);
             vkUnmapMemory(device,m_BufferMemory);
         }

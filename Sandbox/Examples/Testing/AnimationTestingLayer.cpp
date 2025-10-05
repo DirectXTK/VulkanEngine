@@ -105,7 +105,7 @@ int ConvertPositionToNodeIndexa(Float2 Position) {
 	return (Y * 50) + X;
 }
 void AnimationTestingLayer::OnGUI()
-{
+{	
 	GUIRenderer* gui = Application::GetGUIRenderer();
 	
 		RendererDesc desc{};
@@ -151,7 +151,6 @@ void AnimationTestingLayer::OnGUI()
 	
 
 
-			
 
 	gui->Panel("UI Bar", {0.0f,-0.8f}, {1.0f,1.0f,1.0f,1.0}, {1.0f,0.2f}, Core::GetStringHash("PANEL"));
 	if (gui->Button("TOWN_HALL", "",{0.0f,0.0f}, {1.0f,1.0f,1.0f,1.0f}, {0.1f,0.1f}, MouseCodes::LEFT,0,true)) {

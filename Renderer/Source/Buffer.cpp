@@ -31,15 +31,18 @@
         void Buffer::UploadToBuffer(VkDevice device, void* data, uint64_t Size,uint64_t Offset)
         {
             void* map{};
-            vkMapMemory(device, m_Memory, Offset, Size, 0, &map);
+            VULKANDEBUG(vkMapMemory(device, m_Memory, Offset, Size, 0, &map),"Failed to map memory(Buffer::UploadToBuffer)");
             memcpy(map, data, Size);
             vkUnmapMemory(device,m_Memory);
         }
-    void Buffer::LoadFromBufferToVar(VkDevice device,void* out_data,uint64_t size,uint64_t Offset){
+    void Buffer::LoadFromBufferToVar(void* out_data,uint64_t size,uint64_t Offset){
          void* map{};
-        vkMapMemory(device, m_Memory, 0, m_BufferSize, 0, &map);
+         if(size ==0)
+            size = m_BufferSize;
+        VULKANDEBUG(vkMapMemory(m_Device, m_Memory, 0, size, 0, &map),"Failed to map memory(Buffer::LoadFromBufferToVar)");
         memcpy(out_data, map, size);
-        vkUnmapMemory(device,m_Memory);
+        vkUnmapMemory(m_Device,m_Memory);
+
     }
         
         Float2 Buffer::ReadPixel(uint32_t x, uint32_t y,uint32_t Width,uint32_t Height){
@@ -51,7 +54,7 @@
 
              VkDeviceSize offset{0};
            
-             vkMapMemory(m_Device,m_Memory,offset,m_BufferSize,0,&map);
+             VULKANDEBUG(vkMapMemory(m_Device,m_Memory,offset,m_BufferSize,0,&map),"Failed to map memory(Buffer::ReadPixel)");
              memcpy(imagedata,map,Width*Height*8);
              vkUnmapMemory(m_Device,m_Memory);
 

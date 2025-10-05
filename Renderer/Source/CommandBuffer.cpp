@@ -78,7 +78,8 @@ void CommandBuffer::EndSingleUseCommandBuffer(Context context,VkCommandPool pool
 
 
     vkEndCommandBuffer(commandBuffer);
-    vkQueueSubmit(context->GraphicsQueue, 1, &SubmitInfo, fence);
+    VULKANDEBUG(vkQueueSubmit(context->GraphicsQueue, 1, &SubmitInfo, fence),"Failed to submit queue(EndSignelCommandBuffer)");
+    
 
    result =vkWaitForFences(context->Device, 1, &fence, true, 1*1000*1000*10);
    if (result != VK_SUCCESS)

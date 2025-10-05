@@ -15,8 +15,8 @@ public:
     VkBuffer* GetBuffer() { return &m_Buffer; }
     void UploadToBuffer(VkDevice device, void* data, uint64_t Size,uint64_t Offset=0);
     Float2 ReadPixel(uint32_t x, uint32_t y, uint32_t Width, uint32_t Height);
-
-    void LoadFromBufferToVar(VkDevice device,void* out_data,uint64_t size,uint64_t Offset=0);
+    //if size =0 when the whole buffer size is used.
+    void LoadFromBufferToVar(void* out_data,uint64_t size=0,uint64_t Offset=0);
     BufferDesc GetBufferDesc() { return m_Desc; }
 
     ~Buffer();

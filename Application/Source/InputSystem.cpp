@@ -182,4 +182,5 @@ void InputSystem::AddCallbacks(InputCallbacks* callbacks)
 }
 
 void DefaultWindowResizeCallback(GLFWwindow* window,int width,int height){
+	Application::GetRenderer()->OnWindowResize(width,height);
 	}

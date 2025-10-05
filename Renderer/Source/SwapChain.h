@@ -2,7 +2,7 @@
 #include "Texture.h"
 class SwapChain{
     public:
-        SwapChain(VkInstance instance ,Context context,VkSurfaceKHR surface);
+        SwapChain(GLFWwindow*window,VkInstance instance ,Context context,VkSurfaceKHR surface);
 
         VkSurfaceKHR GetSurface(){return m_Surface;}
 
@@ -22,7 +22,7 @@ class SwapChain{
         uint32_t GetSwapChainImageCount(){ return (uint32_t)m_SwapChainImages.size();}
         Texture* GetSwapChainImage(uint32_t Index){ return m_SwapChainImages[Index];}
         
-         void CreateSwapChain();
+         void CreateSwapChain(uint32_t imageCount);
 
         void DestroyImageViews();
         bool TransitionLayout(VkImage image,VkImageLayout imageLayout,VkCommandBuffer commandBuffer);

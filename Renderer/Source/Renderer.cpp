@@ -45,10 +45,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     context->QueueFamil = m_QueueFamilies;
     
     m_Context = context;
-    m_SwapChain = new SwapChain(m_Instance,m_Context, m_Surface);
+    m_SwapChain = new SwapChain(m_Window,m_Instance,m_Context, m_Surface);
     m_SwapChainDetails = m_SwapChain->GetSwapChainCapabilities();
 
-    m_SwapChain->CreateSwapChain();
+
+    m_SwapChain->CreateSwapChain(MAX_FRAME_DRAWS);
 
     //One is reserved for white texture
     for(uint32_t i=0;i <MAX_FRAME_DRAWS;i++)
@@ -203,7 +204,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     PickingImageBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
     PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
     PickingImageBufferDesc.Device = m_Device;
-    PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+    PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
 
 
     m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
@@ -219,20 +220,26 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     m_UniformBuffer->UploadToBuffer(m_Device,&m_UniformCameraData,sizeof(UniformCameraBufferData));
 
-    m_DescriptorSetCamera.WriteTo(0,1,*m_UniformBuffer->GetBuffer(),sizeof(UniformCameraBufferData));
+    for(uint32_t i=0;i < m_DescriptorSetCamera.size();i++)
+        m_DescriptorSetCamera[i].WriteTo(0,1,*m_UniformBuffer->GetBuffer(),sizeof(UniformCameraBufferData));
 
 
     //TEMP
     
    //
  }
+    void Renderer::OnWindowResize(uint32_t width,uint32_t height){
+        m_ResizeWindow=true;
+        m_NewWindowSize ={(float)width,(float)height};
+    }
+
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
  {
     
 
     std::array<VkDescriptorSetLayout,2> descriptorLayout;
-    descriptorLayout[0]= m_DescriptorSetCamera.GetDescriptorLayout();
-    descriptorLayout[1]= m_DescriptorSetTextures.GetDescriptorLayout();
+    descriptorLayout[0]= m_DescriptorSetCamera[0].GetDescriptorLayout();
+    descriptorLayout[1]= m_DescriptorSetTextures[0].GetDescriptorLayout();
 
 
      m_PipelineLayout = Pipeline::CreatePipelineLayout(m_Device, descriptorLayout.data(),descriptorLayout.size());
@@ -264,15 +271,17 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     ReCreatePipeline(m_PipelineDesc);
  }
     void Renderer::ResizeWindow(){
-            vkDeviceWaitIdle(m_Device);
+            vkWaitForFences(m_Device,1,&m_DrawFences[m_CurrentFrame],false,1000*1000*1000);
                 for(uint32_t i=0;i < m_SwapChain->GetSwapChainImageCount();i++){
                 Core::Log("Image address",(void*)m_SwapChain->GetSwapChainImage(i)->GetImage());
             }
+                Core::Log("Image address",(void*)m_SwapChain->GetSwapChainImage(0)->GetImage());
+
                 m_FrameBuffers.clear();
 
             m_SwapChain->DestroyImageViews();
             vkDestroySwapchainKHR(m_Device,m_SwapChain->GetSwapChain(),nullptr);
-            m_SwapChain->CreateSwapChain();
+            m_SwapChain->CreateSwapChain(MAX_FRAME_DRAWS);
 
 
             ReCreateFrameBuffers();
@@ -312,17 +321,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_GraphicsPool.GetCommandPool(),singleCommandBuffer);
 
     }
-    void Renderer::BeginFrame(Camera2D* camera,float deltaTime){
-
-        m_CurrentCommandBuffer = m_CommandBuffers[m_CurrentFrame];
-        m_Context->CurrentCommandBuffer = m_CurrentCommandBuffer;
-        //recreate pipeline if needed
-        if(m_RendererDesc.Rendermode != m_RendererDescNext.Rendermode){
-            InitRenderDesc(m_RendererDescNext);
-        }
-
-
-            m_DeltaTime =deltaTime;
+    void Renderer::ResetFrameData(){
             m_DrawCallCountGUI = 0;
             m_DrawCallCountGeometry =0;
             m_DrawCallCountOutlines = 0;
@@ -333,7 +332,25 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_VertexBufferOffsetGUI =0;
             m_VertexGUIRemaining = m_VertexMaxCountGUI;
             m_CurrentVertexBufferIndexGUI =0;
-        m_VertexPointer =0;
+    }
+    void Renderer::BeginFrame(Camera2D* camera,float deltaTime){    
+        ResetFrameData();
+        m_DeltaTime = deltaTime;
+        
+        m_CurrentCommandBuffer = m_CommandBuffers[m_CurrentFrame];
+        m_Context->CurrentCommandBuffer = m_CurrentCommandBuffer;
+        
+        if(m_ResizeWindow){
+            ResizeWindow();
+            m_ResizeWindow=false;
+        }
+        //recreate pipeline if needed
+        if(m_RendererDesc.Rendermode != m_RendererDescNext.Rendermode){
+            InitRenderDesc(m_RendererDescNext);
+        }
+
+
+      
 
             m_Camera = *camera;
 
@@ -341,7 +358,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
               m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
 
             m_UniformBuffer->UploadToBuffer(m_Device, &m_UniformCameraData, sizeof(m_UniformCameraData));
-            m_DescriptorSetCamera.WriteTo(0,1,*m_UniformBuffer->GetBuffer(),sizeof(m_UniformCameraData));
+            m_DescriptorSetCamera[m_CurrentFrame].WriteTo(0,1,*m_UniformBuffer->GetBuffer(),sizeof(m_UniformCameraData));
 
 
             VkSwapchainKHR swapchain = m_SwapChain->GetSwapChain();
@@ -351,13 +368,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
        m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),1000000000ULL,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
        if(m_AcquireImageResult == VK_ERROR_OUT_OF_DATE_KHR){
-
+            printf("dwada");
             ResizeWindow();
-        m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),1000000000ULL,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
-
-        
-            if(m_AcquireImageResult != VK_SUCCESS)
-              Core::Log(ErrorType::Error,"Failed to acquire imnage after resize.",(int)m_AcquireImageResult);
+            return;
        }
        else if(m_AcquireImageResult != VK_SUCCESS)
           Core::Log(ErrorType::Error,"Failed to acquire image ",(int)m_AcquireImageResult);
@@ -406,8 +419,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         PickingImageBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
         PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
         PickingImageBufferDesc.Device = m_Device;
-        PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-
+        PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
 
         m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
     }
@@ -441,7 +453,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     {
         auto& textures = m_Textures[m_CurrentFrame];
         auto& textureIds = m_TextureIDByOrder[m_CurrentFrame];
-        m_DescriptorSetTextures.WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
+        m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
 
 
         for (uint32_t i = 0; i < textureIds.size(); i++) {
@@ -456,7 +468,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (textureData.texture){
                 Texture* texture = (Texture*)textureData.texture.GetData();
 
-                m_DescriptorSetTextures.WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
+                m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
             }
         }
       
@@ -542,7 +554,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         auto& textures = m_Textures[m_CurrentFrame];
     
         //set the first descriptor to white texture for drawing without textures
-        m_DescriptorSetTextures.WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
+        m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
 
 
 
@@ -551,7 +563,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             
             if (textureData.texture){
                 Texture* texture = (Texture*)textureData.texture.GetData();
-                m_DescriptorSetTextures.WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
+                m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
                 debugTextures.push_back(texture);
             }
             else{
@@ -611,7 +623,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         void Renderer::EndFrame()
         {
-           
               VkBufferCopy region{};
             region.size = sizeof(Vertex) * m_VertexCount;
             region.dstOffset = 0;
@@ -663,7 +674,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             submitinfo.pSignalSemaphores = &m_RenderFinishedS[m_CurrentFrame];
 
             VkResult result = vkQueueSubmit(m_GraphicsQ, 1, &submitinfo, m_DrawFences[m_CurrentFrame]);
-            vkQueueWaitIdle(m_GraphicsQ);
+            {
+               // Core::ScopedTimer timer;
+                //vkQueueWaitIdle(m_GraphicsQ);
+
+            }
             if (result != VK_SUCCESS)
                 Core::Log(ErrorType::Error, "Failed to submit queue ",(int)result);
 
@@ -682,12 +697,16 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             result = vkQueuePresentKHR(m_PresentationQ, &presentinfo);
 
-            if (result != VK_SUCCESS){
-                Core::Log(ErrorType::Error, "Failed to queue present ",(int)result);
+            if (result == VK_ERROR_OUT_OF_DATE_KHR|| result == VK_SUBOPTIMAL_KHR){
+                 ResizeWindow();
+            }else if(result !=VK_SUCCESS ){
+                 Core::Log(ErrorType::Error, "Failed to queue present ",(int)result);
             }
 
-        m_Textures[m_CurrentFrame].clear();
-        m_TextureIDByOrder[m_CurrentFrame].clear();
+              m_VertexPointer =0;
+
+               m_Textures[m_CurrentFrame].clear();
+            m_TextureIDByOrder[m_CurrentFrame].clear();
 
             m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAME_DRAWS;
             m_GUIRendering = false;
@@ -1218,7 +1237,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::CreateFrameBuffers(){
 
         m_FrameBuffers.resize(MAX_FRAME_DRAWS);
-        for(int i =0;i < m_FrameBuffers.size();i++){
+        for(int i =0;i < MAX_FRAME_DRAWS;i++){
         Texture* images[3]= {m_SwapChain->GetSwapChainImage(i),m_ColorAttachments[i],m_DepthStencilAttachments[i]};
                 m_FrameBuffers[i].Init(m_Device,m_SwapChain,m_RenderPass,images,3);
         }
@@ -1469,8 +1488,12 @@ Renderer::~Renderer(){
     vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
     m_CurrentFont.~Asset();
     
-    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetCamera.GetDescriptorLayout(),nullptr);
-    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetTextures.GetDescriptorLayout(),nullptr);
+    for(uint32_t i=0; i < m_DescriptorSetCamera.size();i++)
+    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetCamera[i].GetDescriptorLayout(),nullptr);
+
+    for(uint32_t i=0;i < m_DescriptorSetTextures.size();i++)
+    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetTextures[i].GetDescriptorLayout(),nullptr);
+
     m_DescriptorPool.Destroy();
     
     vkDestroyRenderPass(m_Device,m_RenderPass,nullptr);
@@ -1549,8 +1572,8 @@ void Renderer::DrawBatch()
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
         VkDescriptorSet DescriptorSets[2];
-        DescriptorSets[0] = m_DescriptorSetCamera.GetDescriptorSet();
-        DescriptorSets[1] = m_DescriptorSetTextures.GetDescriptorSet();
+        DescriptorSets[0] = m_DescriptorSetCamera[m_CurrentFrame].GetDescriptorSet();
+        DescriptorSets[1] = m_DescriptorSetTextures[m_CurrentFrame].GetDescriptorSet();
  
 
        
@@ -1574,8 +1597,8 @@ void Renderer::DrawBatch()
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
         VkDescriptorSet DescriptorSets[2];
-        DescriptorSets[0] = m_DescriptorSetCamera.GetDescriptorSet();
-        DescriptorSets[1] = m_DescriptorSetTextures.GetDescriptorSet();
+        DescriptorSets[0] = m_DescriptorSetCamera[m_CurrentFrame].GetDescriptorSet();
+        DescriptorSets[1] = m_DescriptorSetTextures[m_CurrentFrame].GetDescriptorSet();
 
 
 
@@ -1599,10 +1622,15 @@ void Renderer::DrawBatch()
     m_VertexCountPerDrawCall = 0;
 }
 void Renderer::CreateDescriptorSets(){
-    uint32_t descriptorTextureCount = 1000;
+    uint32_t descriptorTextureCountPerSet = 1000;
 
    m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-   m_DescriptorPool.AddDescriptorType(descriptorTextureCount, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+   m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+   m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+   m_DescriptorPool.AddDescriptorType(descriptorTextureCountPerSet*m_DescriptorSetTextures.size(), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+   m_DescriptorPool.AddDescriptorType(descriptorTextureCountPerSet*m_DescriptorSetTextures.size(), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+   m_DescriptorPool.AddDescriptorType(descriptorTextureCountPerSet*m_DescriptorSetTextures.size(), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
 
     m_DescriptorPool.CreatePool(m_Context);
 
@@ -1612,23 +1640,28 @@ void Renderer::CreateDescriptorSets(){
     CameraDescriptordesc.StageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     CameraDescriptordesc.Type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
-    m_DescriptorSetCamera.Init(CameraDescriptordesc);
+    for(uint32_t i =0;i < m_DescriptorSetCamera.size();i++)
+        m_DescriptorSetCamera[i].Init(CameraDescriptordesc);
 
 
     DescriptorSetDescription TextureDescriptordesc{ m_Context };
-    TextureDescriptordesc.DescriptorCount = descriptorTextureCount;
+    TextureDescriptordesc.DescriptorCount = descriptorTextureCountPerSet;
     TextureDescriptordesc.DescriptorPool = m_DescriptorPool.GetPool();
     TextureDescriptordesc.StageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     TextureDescriptordesc.Type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 
-    m_DescriptorSetTextures.Init(TextureDescriptordesc);
-
-
-
-
+    
+    
+    
+    for(uint32_t i =0;i < m_DescriptorSetTextures.size();i++){
+    m_DescriptorSetTextures[i].Init(TextureDescriptordesc);
     //overwriting all descriptor to blank white .
-     m_DescriptorSetTextures.WriteToTexture(0,m_DescriptorSetTextures.GetDescriptorCount(), m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
+     m_DescriptorSetTextures[i].WriteToTexture(0,m_DescriptorSetTextures[i].GetDescriptorCount(), m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
+    }
+
+
+
 
     }
 

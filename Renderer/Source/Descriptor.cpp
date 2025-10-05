@@ -31,9 +31,8 @@
         allocinfo.descriptorPool = desc.DescriptorPool;
         allocinfo.pSetLayouts = &m_DescriptorSetLayout;
 
-        result = vkAllocateDescriptorSets(m_Context->Device, &allocinfo, &m_DescriptorSet);
-        if (result != VK_SUCCESS)
-            Core::Log(ErrorType::Error, "Failed to allocate descritor set.");
+        VULKANDEBUG(vkAllocateDescriptorSets(m_Context->Device, &allocinfo, &m_DescriptorSet),"Failed to allocate descriptor sets (DescriptorSet::Init)");
+        
     }
 
     void DescriptorSet::WriteTo(uint32_t Offset, uint32_t Count,VkBuffer uniformBuffer, uint64_t Size)
