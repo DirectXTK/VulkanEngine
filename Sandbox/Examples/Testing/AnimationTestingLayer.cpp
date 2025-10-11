@@ -112,7 +112,7 @@ void AnimationTestingLayer::OnGUI()
 		desc.Rendermode = RenderMode::SOLID;
 		Application::GetRenderer()->SetRenderDesc(desc);
 
-	if (Application::IsMouseClicked(MouseCodes::LEFT, false) ) {
+	if (Application::IsMouseClicked(MouseCodes::LEFT, true) ) {
 		m_CurrentlySelectedUnit = Application::GetCurrentlyHoveredPixelID();
 		if (m_SpawnUnit) {
 			m_Units.push_back(AnimationUnit());

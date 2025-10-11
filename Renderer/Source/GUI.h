@@ -54,6 +54,7 @@ private:
 	struct ButtonData {
 		bool IsPressed{ false };
 		Float2 DragPosition{};
+		float LastClicked{};
 	};
 	struct SliderData {
 		bool IsClicked{false};
@@ -88,6 +89,9 @@ private:
 	//uint32_t m_CurrentButton{};
 	//If true when saves position of the buttons
 	bool m_SaveState{};
+	//consts
+	//in milliseconds
+	const float m_ButtonClickCooldowm{50.f};
 
 	FontSystem* m_FontSystem{};
 };

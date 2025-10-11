@@ -1378,6 +1378,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_RendererDescNext = desc;
     }
     void Renderer::InitRenderDesc(const RendererDesc& Desc){
+        vkDeviceWaitIdle(m_Device);
         m_RendererDesc = Desc;
 
         m_PipelineDesc.RenderPass = m_RenderPass;
@@ -1442,6 +1443,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     }
    void Renderer::ReCreatePipeline(const PipelineDesc& desc){
+
         vkDestroyPipeline(m_Device,m_Pipeline,nullptr);
         m_Pipeline = Pipeline::CreatePipeline(desc,m_Device);
    }

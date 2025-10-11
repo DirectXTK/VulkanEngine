@@ -123,7 +123,7 @@ Float2 InputSystem::GetMousePosChange()
 
 bool InputSystem::IsMouseClicked(MouseCodes codes,bool Hold)
 {
-	return glfwGetMouseButton(m_CurrentWindow,(int)codes);//&& (!m_MouseHold[(int)codes]||Hold);
+	return glfwGetMouseButton(m_CurrentWindow,(int)codes)&& (!m_MouseHold[(int)codes]||Hold);
 }
 
 

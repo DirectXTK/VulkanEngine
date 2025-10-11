@@ -168,13 +168,13 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 	
 
 
-	if (inputsystem->IsMouseClicked(mousecode))
+	if (inputsystem->IsMouseClicked(mousecode)  )
 	{	
 		Float2 data{};
 		bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
 		if(succeded){
-
 		id = (uint64_t*)&data;
+		CurrentButtonData->LastClicked = Time::GetTimeNs();
 
 		if (CurrentButtonID.ID == *id) {
 
@@ -192,7 +192,7 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 				
 		}else{
 			if(!SavesState)
-			CurrentButtonData->IsPressed=false;
+				CurrentButtonData->IsPressed=false;
 
 		}
 	}
