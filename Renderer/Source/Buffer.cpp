@@ -31,6 +31,8 @@
         void Buffer::UploadToBuffer(VkDevice device, void* data, uint64_t Size,uint64_t Offset)
         {
             void* map{};
+               if(Size ==0)
+                     Size = m_BufferSize;
             VULKANDEBUG(vkMapMemory(device, m_Memory, Offset, Size, 0, &map),"Failed to map memory(Buffer::UploadToBuffer)");
             memcpy(map, data, Size);
             vkUnmapMemory(device,m_Memory);
