@@ -63,7 +63,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     UniformBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
     UniformBufferDesc.Usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     UniformBufferDesc.SizeBytes = sizeof(UniformCameraBufferData);  
-    m_UniformBuffer = new Buffer(UniformBufferDesc);
+    for(uint32_t i =0;i < m_UniformBuffer.size();i++)
+         m_UniformBuffer[i] = new Buffer(UniformBufferDesc);
 
   
     CreateCommandBuffers();
@@ -218,10 +219,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     m_UniformCameraData.GeometryCamera = glm::identity<glm::mat4>();
     m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
 
-    m_UniformBuffer->UploadToBuffer(m_Device,&m_UniformCameraData,sizeof(UniformCameraBufferData));
+    for(uint32_t i=0;i < m_UniformBuffer.size();i++){
+        m_UniformBuffer[i]->UploadToBuffer(m_Device,&m_UniformCameraData,sizeof(UniformCameraBufferData));
+        m_DescriptorSetCamera[i].WriteTo(0,1,*m_UniformBuffer[i]->GetBuffer(),sizeof(UniformCameraBufferData));
 
-    for(uint32_t i=0;i < m_DescriptorSetCamera.size();i++)
-        m_DescriptorSetCamera[i].WriteTo(0,1,*m_UniformBuffer->GetBuffer(),sizeof(UniformCameraBufferData));
+    }
+
 
 
     //TEMP
@@ -271,11 +274,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     ReCreatePipeline(m_PipelineDesc);
  }
     void Renderer::ResizeWindow(){
+            vkDeviceWaitIdle(m_Device);
             vkWaitForFences(m_Device,1,&m_DrawFences[m_CurrentFrame],false,1000*1000*1000);
                 for(uint32_t i=0;i < m_SwapChain->GetSwapChainImageCount();i++){
-                Core::Log("Image address",(void*)m_SwapChain->GetSwapChainImage(i)->GetImage());
             }
-                Core::Log("Image address",(void*)m_SwapChain->GetSwapChainImage(0)->GetImage());
 
                 m_FrameBuffers.clear();
 
@@ -294,7 +296,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             delete m_PickingImageBuffer;
             CreatePickingImage();
-            m_ImageIndex=0;
 
             
             for(uint32_t i=0 ;i < m_ImageAvailS.size();i++){
@@ -334,6 +335,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_CurrentVertexBufferIndexGUI =0;
     }
     void Renderer::BeginFrame(Camera2D* camera,float deltaTime){    
+    
         ResetFrameData();
         m_DeltaTime = deltaTime;
         
@@ -357,30 +359,32 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
               m_UniformCameraData.GeometryCamera = m_Camera.GetViewProj();
               m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
 
-            m_UniformBuffer->UploadToBuffer(m_Device, &m_UniformCameraData, sizeof(m_UniformCameraData));
-            m_DescriptorSetCamera[m_CurrentFrame].WriteTo(0,1,*m_UniformBuffer->GetBuffer(),sizeof(m_UniformCameraData));
+            m_UniformBuffer[m_CurrentFrame]->UploadToBuffer(m_Device, &m_UniformCameraData, sizeof(UniformCameraBufferData));
 
 
             VkSwapchainKHR swapchain = m_SwapChain->GetSwapChain();
         
 
              vkWaitForFences(m_Device,1,&m_DrawFences[m_CurrentFrame],true,std::numeric_limits<uint64_t>::max());
+             vkResetFences(m_Device,1,&m_DrawFences[m_CurrentFrame]);
 
-       m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),1000000000ULL,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
+             //vkResetFences(m_Device,1,&m_ImageFreeF[m_CurrentFrame]);
+
+       m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),1000000000,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
        if(m_AcquireImageResult == VK_ERROR_OUT_OF_DATE_KHR){
-            printf("dwada");
             ResizeWindow();
             return;
        }
-       else if(m_AcquireImageResult != VK_SUCCESS)
-          Core::Log(ErrorType::Error,"Failed to acquire image ",(int)m_AcquireImageResult);
-
+       else if(m_AcquireImageResult != VK_SUCCESS){
+           Core::Log(ErrorType::Error,"Failed to acquire image ",(int)m_AcquireImageResult);
+            return;
+       }
         m_Textures[m_CurrentFrame].clear();
 
+        m_DescriptorSetCamera[m_CurrentFrame].WriteTo(0,1,*m_UniformBuffer[m_CurrentFrame]->GetBuffer(),sizeof(UniformCameraBufferData));
 
        
       
-
 
 
 
@@ -652,8 +656,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             StopRecordingCommands();
 
 
-            vkWaitForFences(m_Device, 1, &m_DrawFences[m_CurrentFrame], true, std::numeric_limits<uint64_t>::max());
-            vkResetFences(m_Device, 1, &m_DrawFences[m_CurrentFrame]);
 
 
             VkSwapchainKHR swapchain = m_SwapChain->GetSwapChain();
@@ -672,13 +674,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             submitinfo.pCommandBuffers = commandsbuffers;
             submitinfo.signalSemaphoreCount = 1;
             submitinfo.pSignalSemaphores = &m_RenderFinishedS[m_CurrentFrame];
+            vkResetFences(m_Device,1,&m_DrawFences[m_CurrentFrame]);
 
             VkResult result = vkQueueSubmit(m_GraphicsQ, 1, &submitinfo, m_DrawFences[m_CurrentFrame]);
-            {
-               // Core::ScopedTimer timer;
-                //vkQueueWaitIdle(m_GraphicsQ);
+            
 
-            }
+            
             if (result != VK_SUCCESS)
                 Core::Log(ErrorType::Error, "Failed to submit queue ",(int)result);
 
@@ -693,7 +694,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             presentinfo.swapchainCount = 1;
             presentinfo.pSwapchains = &swapchain;
             presentinfo.pImageIndices = &m_ImageIndex;
-            
 
             result = vkQueuePresentKHR(m_PresentationQ, &presentinfo);
 
@@ -1175,6 +1175,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_ImageAvailS.resize(MAX_FRAME_DRAWS);
             m_RenderFinishedS.resize(MAX_FRAME_DRAWS);
             m_DrawFences.resize(MAX_FRAME_DRAWS);
+            m_ImageFreeF.resize(MAX_FRAME_DRAWS);
         
         VkFenceCreateInfo fenceinfo{};
         fenceinfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -1192,7 +1193,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             result =vkCreateFence(m_Device,&fenceinfo,nullptr,&m_DrawFences[i]);
             if(result != VK_SUCCESS)
                 Core::Log(ErrorType::Error,"Failed to create fence.");
-
+            
+            VULKANDEBUG(vkCreateFence(m_Device,&fenceinfo,nullptr,&m_ImageFreeF[i]),"Failed to create fence (Renderer::CreateSemaphore)");
     }
     
     }
@@ -1284,7 +1286,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         if(result != VK_SUCCESS)
             Core::Log(ErrorType::Error,"Failed to create command buffers.");
 
-
+        for(uint32_t i=0;i < m_CommandBuffers.size();i++){
+            Core::Log("Address ",(void*)m_CommandBuffers[i]);
+        }
 
 
     }
@@ -1468,7 +1472,9 @@ Renderer::~Renderer(){
         delete m_StaggingBufferOutlines[i];
     delete m_BlankWhiteTexture;
 
-    delete m_UniformBuffer;
+    for(uint32_t i =0;i < m_UniformBuffer.size();i++)
+        delete m_UniformBuffer[i];
+
     delete m_PickingImageBuffer;
     
     m_FrameBuffers.clear();
@@ -1481,11 +1487,14 @@ Renderer::~Renderer(){
     for(uint32_t i=0;i < m_ColorAttachments.size();i++)
     delete m_ColorAttachments[i];
     for(uint32_t i=0;i < m_RenderFinishedS.size();i++)
-    vkDestroySemaphore(m_Device,m_RenderFinishedS[i],nullptr);
+        vkDestroySemaphore(m_Device,m_RenderFinishedS[i],nullptr);
     for(uint32_t i=0;i < m_ImageAvailS.size();i++)
-    vkDestroySemaphore(m_Device,m_ImageAvailS[i],nullptr);
+        vkDestroySemaphore(m_Device,m_ImageAvailS[i],nullptr);
     for(uint32_t i=0;i < m_DrawFences.size();i++)
-    vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
+        vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
+    for(uint32_t i =0;i < m_ImageFreeF.size();i++)
+        vkDestroyFence(m_Device,m_ImageFreeF[i],nullptr);
+
     m_CurrentFont.~Asset();
     
     for(uint32_t i=0; i < m_DescriptorSetCamera.size();i++)
@@ -1659,9 +1668,6 @@ void Renderer::CreateDescriptorSets(){
     //overwriting all descriptor to blank white .
      m_DescriptorSetTextures[i].WriteToTexture(0,m_DescriptorSetTextures[i].GetDescriptorCount(), m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
     }
-
-
-
 
     }
 

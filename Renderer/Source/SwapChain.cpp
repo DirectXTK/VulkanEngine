@@ -57,7 +57,6 @@
 
             m_SwapChainFormat = surfaceformat.format;
             m_SwapChainExtent = extent;
-            Core::Log("RealSize",m_SwapChainExtent.width," ",m_SwapChainExtent.height);
             //Getting access to swap chain images
 
             uint32_t ImageCount{};

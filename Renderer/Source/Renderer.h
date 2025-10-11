@@ -20,7 +20,7 @@
 #include "Animator.h"
 #include "AssetManager.h"
 #include "FontSystem.h"
-#define MAX_FRAME_DRAWS 3
+#define MAX_FRAME_DRAWS 2
 
 class InputSystem;
 class AssetManager;
@@ -178,6 +178,7 @@ private:
     std::vector<VkSemaphore> m_ImageAvailS{};
     std::vector<VkSemaphore> m_RenderFinishedS{};
     std::vector<VkFence> m_DrawFences{};
+    std::vector<VkFence> m_ImageFreeF{};
     //Buffers
 
     std::vector<Buffer*> m_IndexBuffers{};
@@ -185,7 +186,7 @@ private:
 
 
 
-    Buffer* m_UniformBuffer{};
+    std::array<Buffer*,MAX_FRAME_DRAWS> m_UniformBuffer{};
     //Descriptors 
     DescriptorPool m_DescriptorPool{};
 

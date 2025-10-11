@@ -8,10 +8,10 @@ double Time::GetTimeNs()
 double Time::GetTimeS()
 {
 	auto now = std::chrono::high_resolution_clock::now();
-	return (double)std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+	return (double)std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count()/1000.f;
 }
 double Time::GetTimeMs()
 {
 	auto now =std::chrono::high_resolution_clock::now();
-	return (double)std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+	return (double)std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count()/1000.f;
 }
