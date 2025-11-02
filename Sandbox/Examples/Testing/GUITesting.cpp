@@ -15,7 +15,9 @@ void GUITestingLayer::OnUpdate(float deltatime)
    
 
 }
+void GUITestingLayer::OnRender(double deltime){
 
+}
 void GUITestingLayer::OnGUI()
 {
 	static float Position{ -0.8f };

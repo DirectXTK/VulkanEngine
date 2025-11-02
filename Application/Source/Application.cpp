@@ -3,9 +3,28 @@
 #include "AssetManager.h"
  Application* Application::m_Application = nullptr;
 void ChechCommands(Application* app,std::string Command){
+    uint64_t argsStart = Command.find(" ");
+    std::string Args{};
+    if(argsStart == (uint64_t)-1){
+        argsStart =0;
+    }else{
+        Args= Command.substr(argsStart,Command.size()-argsStart);
+        Command = Command.substr(0,argsStart);
+    }
+
     if(Command == "prtassets"){
         app->GetAssetManager()->DebugStatistics(false);
-    }else if(Command == "help"){
+    }
+    else if(Command == "find"){
+        Core::Log(Args);
+        uint64_t IdOfAsset = std::stoul(Args);
+        if(Application::HasAsset(IdOfAsset))
+            Core::Log("Has this asset Type:",(uint32_t)Application::GetAssetType(IdOfAsset));
+        else 
+            Core::Log("This asset isn't loaded to asset manager.");
+
+    }
+    else if(Command == "help"){
         Core::Log("prtassets -prints all loaded assets");
         Core::Log("exit -exits the program");
     }else if(Command == "exit"){
@@ -28,6 +47,15 @@ void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning
         return;
     }
 }
+AssetType Application::GetAssetType(GUUID id){
+     Application* app = GetApplication();
+    return app->GetAssetManager()->GetAssetType(id);
+}
+bool Application::HasAsset(GUUID id){
+    Application* app = GetApplication();
+    return app->GetAssetManager()->HasAsset(id);
+}
+
 bool Application::IsMouseClicked(const MouseCodes& codes,bool hold){
     Application* app = GetApplication();
     return app->m_InputSystem.IsMouseClicked(codes,hold);
@@ -50,8 +78,9 @@ bool Application::IsMouseClicked(const MouseCodes& codes,bool hold){
 Application::Application(){}
 
 bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
-    //init glfw
-     //m_ApplicationLayer = (ApplicationLayer*)m_LayerController.CreateLayer(new ApplicationLayer(specs));
+
+    if(specs.OpenTerminal)
+        OpenTerminalAndAttachToStream();
 
     tcgetattr(STDIN_FILENO,&m_DefaultConsoleSett);
 
@@ -174,6 +203,7 @@ void Application::Shutdown(){
         if(app->m_Renderer->GetSwapChainState() == VK_SUCCESS){
 
         app->m_LayerController.UpdateLayers(app->m_DeltaTime);
+        app->m_LayerController.RenderLayers(app->m_DeltaTime);
 
         app->m_GUIRenderer->BeginGUI();
         app->m_Renderer->BeginGUIFrame();
@@ -226,6 +256,10 @@ void Application::Shutdown(){
         delete m_FontSystem;
         delete m_GUIRenderer;
         glfwTerminate();
+    }
+    void Application::OpenTerminalAndAttachToStream(){
+        //linux
+       Core::Log("Not yet implemented");
     }
 
 

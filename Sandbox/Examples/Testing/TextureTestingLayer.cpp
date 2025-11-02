@@ -24,7 +24,9 @@ void TextureTestingLayer::OnCreate()
     Core::Log(ErrorType::Info, "TextureCount: ", Application::GetAssetCount(AssetType::TEXTURE));
 
 }
+void TextureTestingLayer::OnRender(double deltime){
 
+}
 void TextureTestingLayer::OnUpdate(float DeltaTime)
 {
 

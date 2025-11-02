@@ -11,6 +11,7 @@ public:
 	void OnUpdate(float DeltaTime)override;
 	void OnGUI()override;
 	void OnDestroy()override;
+	void OnRender(double deltime)override;
 
 private:
 	FontSystem* m_FontSystem{};

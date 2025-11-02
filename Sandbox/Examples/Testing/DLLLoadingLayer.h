@@ -8,7 +8,7 @@ public:
     void OnUpdate(float deltatime)override;
     void OnGUI()override;
     void OnDestroy()override;
-
+	void OnRender(double deltime)override;
 
 private:
 };

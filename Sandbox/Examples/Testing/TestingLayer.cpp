@@ -15,7 +15,9 @@ void TestingLayer::OnUpdate(float deltatime)
  
 
 }
+void TestingLayer::OnRender(double deltime){
 
+}
 void TestingLayer::OnGUI()
 {
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include "AppCore.h"
 
-enum class AssetType{NONE,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER,AI,ANIMATION,FONT,NUMOFASSETTYPES};
+enum class AssetType{NONE,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER,AI,ANIMATION,FONT,NUMOFASSETTYPES,ASSETTYPECOUNT};
 class Texture;
 class Application;
 class AssetManager;
@@ -62,7 +62,7 @@ public:
         return *this;
 }
 
-    void* GetData(){return m_Data->Data;}
+    T* GetData(){return (T*)m_Data->Data;}
     AssetType GetType(){return m_Data->Type;}
 	uint32_t GetRefCount(){return m_Data->RefCount;}
 	GUUID GetID(){return m_Data->ID;}
@@ -148,13 +148,12 @@ public:
 			m_ResourceCount[type]--;
 		}
 	}
-	template<typename T>
-	Asset<T> HasAsset(GUUID Handle) {
+	bool HasAsset(GUUID Handle) {
 		if (m_Resources.find(Handle) == m_Resources.end()) {
 			
-			return Asset<T>();
+			return false;
 		}
-		return Asset<T>(&m_Resources[Handle]);
+		return true;
 	}
 
 	template<typename T>

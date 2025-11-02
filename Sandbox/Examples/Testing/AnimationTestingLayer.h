@@ -26,6 +26,8 @@ public:
 	void OnUpdate(float DeltaTime)override;
 	void OnDestroy()override;
 	void OnGUI()override;
+	void OnRender(double deltime)override;
+
 private:
 	void MoveUnit(AnimationUnit* unit);
 

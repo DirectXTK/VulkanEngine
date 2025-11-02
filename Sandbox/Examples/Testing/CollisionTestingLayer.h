@@ -15,6 +15,7 @@ public:
 	void OnCreate()override;
 	void OnDestroy()override;
 	void OnGUI()override;
+	void OnRender(double deltime)override;
 private:
 	std::vector<CollisionObjects> m_Colliders{};
 	uint32_t m_ChunkWidth{2};

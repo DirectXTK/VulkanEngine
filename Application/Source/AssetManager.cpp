@@ -16,6 +16,10 @@ void AssetManager::Init(Application* app)
 }
 void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 {
+	if(!std::filesystem::exists(FolderPath)){
+		Core::Log(ErrorType::Warning,"Specified path doesn't exist.{",FolderPath,"}");
+		return;
+	}
 	
 	std::string FilePath{};
 	switch (TypesToLoad) {
@@ -103,31 +107,45 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	
 void AssetManager::DebugStatistics(bool GUI){
 	Core::Log("Resource count",m_Resources.size());
+	std::vector<GUUID> idsSorted{};
+	idsSorted.reserve(m_Resources.size());
+	//Order it first
+	//the 0 is none asset type
+	uint32_t CurrentType{1};
+	while(idsSorted.size() != m_Resources.size()){
 	for(auto it = m_Resources.begin();it != m_Resources.end();it++){
-		
-		switch(it->second.GetType()){
+		if(idsSorted.size() == m_Resources.size())
+			break;
+		if((uint32_t)it->second.GetType() == CurrentType)
+			idsSorted.push_back(it->first);
+	}
+	CurrentType++;
+}
+	for(uint32_t i=0 ;i < idsSorted.size();i++){
+		AssetHandle handle = m_Resources[idsSorted[i]];
+		switch(handle.GetType()){
 			case AssetType::FONT:{
-				Core::Log("Font ID{",it->first.ID,"}");
+				Core::Log("Font ID{",handle.ID.ID,"}");
 
 				break;
 			}
 				case AssetType::TEXTURE:{
-				Core::Log("Texture ID{",it->first.ID,"}");
+				Core::Log("Texture ID{",handle.ID.ID,"}");
 
 				break;
 			}
 				case AssetType::TEXTUREATLAS:{
-				Core::Log("Animation ID{",it->first.ID,"}");
+				Core::Log("Animation ID{",handle.ID.ID,"}");
 
 				break;
 			}
 				case AssetType::ANIMATION:{
-				Core::Log("Animation ID{",it->first.ID,"}");
+				Core::Log("Animation ID{",handle.ID.ID,"}");
 
 				break;
 			}
 			default:{
-				Core::Log("Not implemented or invalid type{",(uint32_t)it->second.GetType(),"}");
+				Core::Log("Not implemented or invalid type{",(uint32_t)handle.GetType(),"}");
 				break;
 			}
 		}

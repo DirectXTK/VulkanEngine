@@ -23,7 +23,9 @@ void CollisionTestingLayer::OnCreate()
 		m_Colors[i] = { Core::RandomFloat(0.0f,1.0f),Core::RandomFloat(0.0f,1.0f) ,Core::RandomFloat(0.0f,1.0f) ,1.0f };
 
 }
+void CollisionTestingLayer::OnRender(double deltime){
 
+}
 void CollisionTestingLayer::OnUpdate(float Deltatime)
 {
 	ChunkSystem system(2,2);

@@ -13,6 +13,7 @@ struct ApplicationSpecs{
     std::string WindowTitle{"Untitled"};
     bool RendererDebugging{false};
     bool IsWindowResizable{true};
+    bool OpenTerminal{false};
 
     //Renderer stuff
     Float4 ClearColor{ 0.5f,0.5f,0.5f,1.0f };
@@ -33,6 +34,10 @@ public:
 
 
     static void LoadAssets(std::string Path,AssetType type);
+    static AssetType GetAssetType(GUUID id);
+    static bool HasAsset(GUUID id);
+    template<typename ASSETTYPE>
+    static Asset<ASSETTYPE> GetAsset(const std::string& strHandle){return GetApplication()->m_AssetManager.GetAsset<ASSETTYPE>(strHandle);}
     static void Run();
 
     static Collider CreateCollider(Float2* Position, Float2 *Size);
@@ -58,6 +63,8 @@ public:
 private:
 //has to be non static
      bool InitApplicationBackEnd(ApplicationSpecs specs);
+    static void OpenTerminalAndAttachToStream();
+
 
     static Application* m_Application;
 
@@ -73,6 +80,7 @@ private:
 public:
     //GUI Renderer
     Renderer* m_Renderer{};
+
     Camera2D m_Camera{};
     InputSystem m_InputSystem{};
     AssetManager m_AssetManager{};

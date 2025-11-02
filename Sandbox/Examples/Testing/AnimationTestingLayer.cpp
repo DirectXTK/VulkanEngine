@@ -7,91 +7,49 @@ AnimationTestingLayer::AnimationTestingLayer():Layer("AnimationTestingLayer")
 
 void AnimationTestingLayer::OnCreate()
 {
-	//m_Animation = Application::GetAssetManager()->GetResource<Animator>(Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.json"));
-	//m_Animation->SetStage("BBZ");
-	Application::LoadAssets("/users/jimy/Repos/VulkanEngine/bin/Debug/linux/x86_64/Sandbox/Resources/Animation/", AssetType::ANIMATION);
-	Application::LoadAssets("/users/jimy/Repos/VulkanEngine/bin/Debug/linux/x86_64/Sandbox/Resources/Textures/", AssetType::TEXTURE);
+	Application::LoadAssets("Resources/Animation/", AssetType::ANIMATION);
+	Application::LoadAssets("Resources/Textures/", AssetType::TEXTURE);
 
 	m_Units.reserve(1000);
 
 
 
 	Application::GetCurrentCamera()->SetPosition({ 0.0f,-0.3f });
-/*
-	m_Units[0].Position = {0.0f,0.0f};
-	m_Units[0].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("WARRIOR")).GetData();
-	m_Units[0].animator.SetStage("WALK");
-	m_Units[0].Collid = m_System.CreateCollider();
-	m_Units[0].Collid.Update(&m_Units[0].Position, &m_Size);
 
-
-	m_Units[1].Position = { 0.04f*5,0.0f };
-	m_Units[1].animator = *(Animator*)m_Assets->GetAsset<Animator>(Core::GetStringHash("TOWN_HALL")).GetData();
-	m_Units[1].animator.SetStage("IDLE");
-	m_Units[1].Collid = m_System.CreateCollider();
-	m_Units[1].Collid.Update(&m_Units[1].Position, &m_Size);
-	*/
 
 for(uint32_t i=0;i < 100;i++){
+	Asset<Animator> animator = Application::GetAsset<Animator>("TOWN_HALL");
+	if(!animator)
+		continue;
 	m_Units.push_back(AnimationUnit());
 
 		m_Units[i].Position = { 0.04f*2.0f*i,0.0f };
-	m_Units[i].animator = *(Animator*)Application::GetAssetManager()->GetAsset<Animator>("TOWN_HALL").GetData();
+	m_Units[i].animator = *animator.GetData();
 	m_Units[i].animator.SetStage("IDLE");
 	m_Units[i].Collid = m_System.CreateCollider();
 	m_Units[i].Collid.Update(&m_Units[i].Position, &m_Size);
 
 }
-	//temp
-	/*m_PathGrid.resize(50 * 50);
-	for (uint32_t x = 0; x < 50; x++) {
-
-		for (uint32_t y = 0; y < 50; y++) {
-
-			m_PathGrid[y + (x * 50)].Position.x = x * (1 / 50.f);
-			m_PathGrid[y + (x * 50)].Position.y = y * (1 / 50.f);
-
-		}
-	}
-	*/
-
+	
+}
+void AnimationTestingLayer::OnRender(double deltime){
 
 }
-
 void AnimationTestingLayer::OnUpdate(float DeltaTime)
 {
 	Renderer* renderer = Application::GetRenderer();
-
-	//Core::Log(ErrorType::Info,Application::GetWorldMousePos().x," ", Application::GetWorldMousePos().y);
-	//GUUID id = Core::GetStringHash("C:\\Repos\\VulkanEngine\\Resources\\Animation\\TEST.png");
 	m_PathGridTime -= DeltaTime;
 
 
 
 	for (uint32_t i = 0; i < m_Units.size(); i++) {
-	//if(m_Units[i].animator);
-	//m_Units[i].Collid.Update(&m_Units[i].Position,&m_Size);
-
-	if (m_Units[i].Collid.IsCollided())
-		renderer->DrawOutline({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f },  m_Size,{0.0f,1.0f,0.0f,1.0f }, 0.003f);
-	else
-		renderer->DrawOutline({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f }, m_Size, {1.0f,1.0f,0.0f,1.0f}, 0.003f);
-
 	renderer->DrawQuad({ m_Units[i].Position.x,m_Units[i].Position.y,0.0f}, {1.0f,1.0f,1.0f,1.0f}, m_Size, m_Units[i].animator, m_Units[i].ID.ID);
 	
 
 	m_Units[i].animator.Update(DeltaTime);
 	}
-	if (m_PathGridTime > 0) {
-		for (uint32_t i = 0; i < m_PathGrid.size(); i++) {
-			renderer->DrawQuad({ m_PathGrid[i].Position.x,m_PathGrid[i].Position.y,1.0f }, { 1.0f,0.0f,0.0f,1.0f }, m_PathGrid[i].Size, 0);
-		}
-	}
 
-	//renderer->DrawQuad({ 0.0f,-0.5f }, { 1.0f,1.0f,1.0f,1.0 }, { 0.3f,0.3f }, Core::GetStringHash("PANEL.png"),0,0);
-	//uint32_t PathCount{};
-	//Float2* loc =  m_Units[0].Collid.GetPathToObj(m_Units[0].Position, m_Units[1].Position,&PathCount);
-	//m_System.CheckCollisions();
+
 
 	DefaultCameraControlls(Application::GetCurrentCamera());
 }
@@ -117,9 +75,9 @@ void AnimationTestingLayer::OnGUI()
 		if (m_SpawnUnit) {
 			m_Units.push_back(AnimationUnit());
 			m_Units[m_Units.size() - 1].Position = { Application::GetWorldMousePos().x, Application::GetWorldMousePos().y };
-			if(!Application::GetAssetManager()->HasAsset<Animator>(Core::GetStringHash(m_SpawnedUnit)))
+			if(!Application::GetAssetManager()->HasAsset(Core::GetStringHash(m_SpawnedUnit)))
 				printf("Doesn't have %s",m_SpawnedUnit.c_str());
-			m_Units[m_Units.size()-1].animator = *(Animator*)Application::GetAssetManager()->GetAsset<Animator>(Core::GetStringHash(m_SpawnedUnit)).GetData();
+			m_Units[m_Units.size()-1].animator = *Application::GetAsset<Animator>(m_SpawnedUnit).GetData();
 			m_Units[m_Units.size() - 1].Collid = m_System.CreateCollider();
 			m_Units[m_Units.size() - 1].Collid.Update(&m_Units[m_Units.size() - 1].Position, &m_Size);
 

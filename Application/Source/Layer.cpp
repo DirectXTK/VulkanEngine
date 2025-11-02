@@ -17,7 +17,11 @@ Layer* LayerController::CreateLayer(Layer* layer)
 	layer->OnCreate();
 	return layer;
 }
-
+void LayerController::RenderLayers(double deltaTime){
+	for(uint64_t i=0;i < m_Layers.size();i++){
+		m_Layers[i]->OnRender(deltaTime);
+	}
+}
 void LayerController::UpdateLayers(double deltatime)
 {
 	for (size_t i = 0; i < m_Layers.size(); i++) {

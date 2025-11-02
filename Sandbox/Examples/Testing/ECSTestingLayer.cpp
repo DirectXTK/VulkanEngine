@@ -11,7 +11,9 @@ void ECSTestingLayer::OnCreate()
 void ECSTestingLayer::OnUpdate(float DeltaTime)
 {
 }
+void ECSTestingLayer::OnRender(double deltime){
 
+}
 void ECSTestingLayer::OnDestroy()
 {
 }

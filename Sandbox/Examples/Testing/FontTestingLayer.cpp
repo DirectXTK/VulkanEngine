@@ -22,7 +22,9 @@ void FontTestingLayer::OnUpdate(float DeltaTime)
 		renderer->DrawQuad({ 0.01f*i,0.0f,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { 0.1f,0.1f }, 0);
 
 }
+void FontTestingLayer::OnRender(double deltime){
 
+}
 void FontTestingLayer::OnGUI()
 {
 	static char Buffer[255];

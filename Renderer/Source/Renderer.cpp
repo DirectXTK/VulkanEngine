@@ -464,10 +464,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             TextureRenderingData textureData = textures[textureIds[i]];
             
             if(!textureData.texture){
-                if(m_AssetManager->HasAsset<Texture>(textureIds[i])){
+                if(m_AssetManager->HasAsset(textureIds[i])){
                     Core::Log(ErrorType::Warning,"Manager has the asset but isn't loaded in renderer");
                 }else
-                    Core::Log(ErrorType::Error,"Texture isn't loaded at all.");
+                    Core::Log(ErrorType::Error,"Texture isn't loaded at all.{",textureIds[i].ID,"}");
             }
             if (textureData.texture){
                 Texture* texture = (Texture*)textureData.texture.GetData();
@@ -571,10 +571,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 debugTextures.push_back(texture);
             }
             else{
-                if(m_AssetManager->HasAsset<Texture>(textureIds[i])){
+                if(m_AssetManager->HasAsset(textureIds[i])){
                     Core::Log(ErrorType::Warning,"Manager has the asset but isn't loaded in renderer");
                 }else
-                    Core::Log(ErrorType::Error,"Texture isn't loaded at all.");
+                    Core::Log(ErrorType::Error,"Texture isn't loaded at all.{",textureIds[i].ID,"}");
             }
         }
 
@@ -1285,12 +1285,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
          result = vkAllocateCommandBuffers(m_Device,&allocinfo2,&m_TransferCommandBuffer);
         if(result != VK_SUCCESS)
             Core::Log(ErrorType::Error,"Failed to create command buffers.");
-
-        for(uint32_t i=0;i < m_CommandBuffers.size();i++){
-            Core::Log("Address ",(void*)m_CommandBuffers[i]);
-        }
-
-
     }
    
   

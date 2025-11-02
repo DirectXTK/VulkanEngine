@@ -6,6 +6,7 @@ class AssetManager;
 class Layer{
 public:
     virtual void OnUpdate(float deltatime)=0;
+    virtual void OnRender(double deltaTime)=0;
     virtual void OnCreate()=0;
     virtual void OnDestroy()=0;
     virtual void OnGUI()=0;
@@ -22,6 +23,7 @@ class LayerController{
        
         Layer* CreateLayer(Layer* layer);
         void UpdateLayers(double deltatime);
+        void RenderLayers(double deltaTime);
         void UpdateGUILayers();
         void DestroyLayers();
     private:

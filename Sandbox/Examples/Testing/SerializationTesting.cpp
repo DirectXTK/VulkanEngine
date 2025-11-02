@@ -146,7 +146,9 @@ void SerializationTestingLayer::OnGUI()
 void SerializationTestingLayer::OnDestroy()
 {
 }
+void SerializationTestingLayer::OnRender(double deltime){
 
+}
 void SerializationTestingLayer::AllocSpaceAndFillData(void** DataPtr,Format format,uint32_t Index)
 {
     switch (format) {

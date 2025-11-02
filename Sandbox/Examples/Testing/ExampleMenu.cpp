@@ -11,7 +11,9 @@ void ExampleMenu::OnCreate()
 void ExampleMenu::OnUpdate(float DeltaTime)
 {
 }
+void ExampleMenu::OnRender(double deltime){
 
+}
 void ExampleMenu::OnDestroy()
 {
 }
