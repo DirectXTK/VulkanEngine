@@ -40,12 +40,16 @@ class ColliderBackEnd{
 
 
 		void Collided(bool isCollided){m_IsCollided = isCollided;}
+		void SetMoving(bool moving){m_IsMoving = moving;}
+
 		bool IsCollided(){return m_IsCollided;}
+		bool IsMoving(){return m_IsMoving;};
 
 	private:
 		Float2 m_Position{};
 		Float2 m_Size{};
 		Float2 m_Acceleration{};
+		bool m_IsMoving{false};
 		bool m_IsCollided{false};
 };
 class Collider{
@@ -67,6 +71,10 @@ class Collider{
 	private:
 		int32_t m_ID{};
 };
+
+
+
+
 class ColliderSystem{
 	public:
 		void RunCollisions();

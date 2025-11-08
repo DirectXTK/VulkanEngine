@@ -109,8 +109,8 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
      m_Renderer->InitializePipeline(500);
 
-
      m_FontSystem = new FontSystem();
+
      m_GUIRenderer = new GUIRenderer(this, false);
      if(specs.IsWindowResizable){
         glfwSetFramebufferSizeCallback(m_Window->GetHandle(),DefaultWindowResizeCallback);

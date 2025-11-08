@@ -433,14 +433,14 @@ void FontSystem::ReRenderFaces()
 	FT_GlyphSlot slot = m_Face->glyph;
 	AssetManager* manager = Application::GetAssetManager();
 	//check if font is already loaded and renderer
-	Asset<Font> asset=manager->GetAsset<Font>(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
-	if(asset){
+	if(manager->HasAsset(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)))){
+		Asset<Font> asset=manager->GetAsset<Font>(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
 		Font* currentFont = (Font*)asset.GetData();
 
-	m_Padding = (m_CharacterSize * 0.1f) / m_Face->max_advance_width;
-	m_PaddingY = (m_CharacterSize * 0.25f) / m_Face->max_advance_width;
+		m_Padding = (m_CharacterSize * 0.1f) / m_Face->max_advance_width;
+		m_PaddingY = (m_CharacterSize * 0.25f) / m_Face->max_advance_width;
 
-	m_Renderer->SetCurrentFont(asset);
+		m_Renderer->SetCurrentFont(asset);
 
 	
 		return;

@@ -26,6 +26,9 @@ public:
 
 	void Save(void* data,uint64_t DataCount, SerializerFormat* format, uint32_t formatCount, SerializerClassDesc* classdesc);
 
+	//the other is text based
+	void SetSerializerFormat(bool binary){m_Binary = binary;}
+
 	 //Load functions
 	void StartLoading(std::string Path);
 	void StopLoading();
@@ -54,5 +57,7 @@ private:
 	uint64_t m_InputDataOffset{};
 	std::string m_InputData{};
 	std::ifstream m_InputFile{};
+	//config
+	bool m_Binary{false};
 
 };
