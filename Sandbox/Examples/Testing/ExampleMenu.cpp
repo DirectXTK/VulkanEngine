@@ -8,7 +8,7 @@ void ExampleMenu::OnCreate()
 {
 }
 
-void ExampleMenu::OnUpdate(float DeltaTime)
+void ExampleMenu::OnUpdate(double DeltaTime)
 {
 }
 void ExampleMenu::OnRender(double deltime){

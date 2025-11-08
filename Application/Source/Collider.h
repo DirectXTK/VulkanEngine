@@ -4,7 +4,6 @@
 #define VULKAN_ENGINE_COLLISION_ON
 
 class Collider;
-class CollisionSystem;
 struct Int2
 {
 	int x{};
@@ -28,6 +27,62 @@ struct Node {
 	}
 };
 
+class ColliderBackEnd{
+	public:
+		ColliderBackEnd(const Float2& position={0.0f,0.0f},const Float2& size={0.0f,0.0f}){m_Position = position;m_Size = size;}
+		void SetPosition(const Float2& position){m_Position = position;}
+		void SetSize(const Float2& size){m_Size =size;}
+		void SetAcceleration(const Float2& acceleration){m_Acceleration = acceleration;}
+
+		Float2 GetPosition(){return m_Position;}
+		Float2 GetSize(){return m_Size;}
+		Float2 GetAcceleration(){return m_Acceleration;}
+
+
+		void Collided(bool isCollided){m_IsCollided = isCollided;}
+		bool IsCollided(){return m_IsCollided;}
+
+	private:
+		Float2 m_Position{};
+		Float2 m_Size{};
+		Float2 m_Acceleration{};
+		bool m_IsCollided{false};
+};
+class Collider{
+	public:
+		Collider(int32_t id){m_ID = id;}
+		Collider(){}
+
+		void SetPosition(const Float2& position);
+		void SetSize(const Float2& size);
+		void SetAcceleration(const Float2& aceeleration);
+
+
+		Float2 GetPosition();
+		Float2 GetSize();
+		Float2 GetAcceleration();
+
+		//returns true if collided.
+		bool IsCollided();
+	private:
+		int32_t m_ID{};
+};
+class ColliderSystem{
+	public:
+		void RunCollisions();
+		Collider CreateCollider(const Float2& position={0.0f,0.0f},const Float2& size={0.0f,0.0f});
+		ColliderBackEnd* GetCollider(int32_t id){return &m_Colliders[id];}
+	private:
+		std::vector<ColliderBackEnd> m_Colliders{};
+};
+namespace Core{
+	//returns true if collided.
+	bool DefaultCollisionFunction(ColliderBackEnd* collider1,ColliderBackEnd* collider2);
+	void DefaultMovementFucntion(ColliderBackEnd* collider1);
+}
+
+
+/*
 class ColliderBackEnd
 {
 public:
@@ -94,3 +149,4 @@ private:
 
 
 
+*/

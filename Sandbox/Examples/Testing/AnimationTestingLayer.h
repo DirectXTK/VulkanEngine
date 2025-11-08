@@ -8,7 +8,6 @@ struct AnimationUnit {
 	Float2* MoveLocation{};
 	float MoveSpeed{0.0003f};
 	Animator animator{};
-	Collider Collid;
 	GUUID ID{};
 	bool Moving{false};
 	uint32_t MoveCellCount{};
@@ -23,7 +22,7 @@ class AnimationTestingLayer :public Layer
 public:
 	AnimationTestingLayer();
 	void OnCreate()override;
-	void OnUpdate(float DeltaTime)override;
+	void OnUpdate(double DeltaTime)override;
 	void OnDestroy()override;
 	void OnGUI()override;
 	void OnRender(double deltime)override;
@@ -35,7 +34,6 @@ private:
 	bool m_SpawnUnit{false};
 	std::string m_SpawnedUnit{};
 
-	CollisionSystem m_System{};
 
 	std::vector<AnimationUnit> m_Units{};
 	std::vector<PathGrid> m_PathGrid{};

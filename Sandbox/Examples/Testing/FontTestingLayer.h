@@ -8,7 +8,7 @@ class FontTestingLayer:public Layer
 public:
 	FontTestingLayer();
 	void OnCreate()override;
-	void OnUpdate(float DeltaTime)override;
+	void OnUpdate(double DeltaTime)override;
 	void OnGUI()override;
 	void OnDestroy()override;
 	void OnRender(double deltime)override;

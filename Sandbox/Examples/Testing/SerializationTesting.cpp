@@ -36,7 +36,7 @@ void SerializationTestingLayer::OnCreate() {
 
 
 }
-void SerializationTestingLayer::OnUpdate(float deltatime)
+void SerializationTestingLayer::OnUpdate(double deltatime)
 {
     Camera2D* camera = Application::GetCurrentCamera();
     Renderer* renderer = Application::GetRenderer();

@@ -15,7 +15,7 @@ void DLLLoadingLayer::OnCreate() {
 void DLLLoadingLayer::OnRender(double deltime){
 
 }
-void DLLLoadingLayer::OnUpdate(float deltatime)
+void DLLLoadingLayer::OnUpdate(double deltatime)
 {
 
 

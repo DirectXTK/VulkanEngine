@@ -5,7 +5,7 @@ class Renderer;
 class AssetManager;
 class Layer{
 public:
-    virtual void OnUpdate(float deltatime)=0;
+    virtual void OnUpdate(double deltatime)=0;
     virtual void OnRender(double deltaTime)=0;
     virtual void OnCreate()=0;
     virtual void OnDestroy()=0;

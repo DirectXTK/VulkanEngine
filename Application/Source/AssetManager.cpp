@@ -209,6 +209,5 @@ void AssetManager::LoadAnimation(const std::string& FolderPath)
 		LoadAssetPerma<Animator>(animator,AssetType::ANIMATION,AnimationPath);
 
 	}
-	Core::Log(ErrorType::Error, "This function isn't implemented yet");
 }
 

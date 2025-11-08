@@ -27,7 +27,7 @@ void TextureTestingLayer::OnCreate()
 void TextureTestingLayer::OnRender(double deltime){
 
 }
-void TextureTestingLayer::OnUpdate(float DeltaTime)
+void TextureTestingLayer::OnUpdate(double DeltaTime)
 {
 
   

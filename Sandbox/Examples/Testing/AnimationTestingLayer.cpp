@@ -26,8 +26,6 @@ for(uint32_t i=0;i < 100;i++){
 		m_Units[i].Position = { 0.04f*2.0f*i,0.0f };
 	m_Units[i].animator = *animator.GetData();
 	m_Units[i].animator.SetStage("IDLE");
-	m_Units[i].Collid = m_System.CreateCollider();
-	m_Units[i].Collid.Update(&m_Units[i].Position, &m_Size);
 
 }
 	
@@ -35,7 +33,7 @@ for(uint32_t i=0;i < 100;i++){
 void AnimationTestingLayer::OnRender(double deltime){
 
 }
-void AnimationTestingLayer::OnUpdate(float DeltaTime)
+void AnimationTestingLayer::OnUpdate(double DeltaTime)
 {
 	Renderer* renderer = Application::GetRenderer();
 	m_PathGridTime -= DeltaTime;
@@ -78,8 +76,6 @@ void AnimationTestingLayer::OnGUI()
 			if(!Application::GetAssetManager()->HasAsset(Core::GetStringHash(m_SpawnedUnit)))
 				printf("Doesn't have %s",m_SpawnedUnit.c_str());
 			m_Units[m_Units.size()-1].animator = *Application::GetAsset<Animator>(m_SpawnedUnit).GetData();
-			m_Units[m_Units.size() - 1].Collid = m_System.CreateCollider();
-			m_Units[m_Units.size() - 1].Collid.Update(&m_Units[m_Units.size() - 1].Position, &m_Size);
 
 
 			m_SpawnUnit = false;
@@ -158,7 +154,6 @@ void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 
 		if (Application::IsMouseClicked(MouseCodes::LEFT, false) ){
 			Float2 Dest = { Application::GetWorldMousePos().x,Application::GetWorldMousePos().y };
-			unit->MoveLocation = unit->Collid.GetPathToObj(unit->Position, Dest, &unit->MoveCellCount);
 
 			if (unit->MoveCellCount != 0) {
 				unit->Moving = true;
@@ -235,6 +230,5 @@ void AnimationTestingLayer::MoveUnit(AnimationUnit* unit)
 
 	}
 	
-	unit->Collid.UpdateMoveAmount(MoveAmount);
 
 }

@@ -1,53 +1,43 @@
 #include "CollisionTestingLayer.h"
-#include "DefaultCameraControlls.h"
-CollisionTestingLayer::CollisionTestingLayer(): Layer("CollisionTestingLayer")
-{
-}
 
-void CollisionTestingLayer::OnCreate()
-{
-	//Application::LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Animation\\", ResourceType::ANIMATION);
-	//Application::LoadAssets("C:\\Repos\\VulkanEngine\\Resources\\Textures\\", ResourceType::TEXTURE);
+	 CollisionLayer::CollisionLayer():Layer("CollisionLayer"){
 
-	Application::GetCurrentCamera()->SetPosition({ 0.0f,0.0f });
+	}	
 
+	void CollisionLayer::OnCreate(){
 
-	m_Colliders.push_back({ {0.0f,0.0f} });
-	m_Colliders.push_back({ {0.7f,0.0f} });
-
-	m_Colliders[0].collider = Application::CreateCollider(&m_Colliders[0].Position,&m_Size);
-	m_Colliders[1].collider = Application::CreateCollider(&m_Colliders[1].Position, &m_Size);
-
-	m_Colors = new Float4[m_ChunkHeight * m_ChunkWidth];
-	for (uint32_t i = 0; i < m_ChunkHeight * m_ChunkWidth; i++)
-		m_Colors[i] = { Core::RandomFloat(0.0f,1.0f),Core::RandomFloat(0.0f,1.0f) ,Core::RandomFloat(0.0f,1.0f) ,1.0f };
-
-}
-void CollisionTestingLayer::OnRender(double deltime){
-
-}
-void CollisionTestingLayer::OnUpdate(float Deltatime)
-{
-	ChunkSystem system(2,2);
-	Renderer* renderer= Application::GetRenderer();
-
-	for (uint32_t i = 0; i < 4; i++) {
-		Chunk* chunk = system.GetChunk(i);
+		m_Units.push_back(Unit());
+		m_Units.push_back(Unit());
 		
-		for (uint32_t y = 0; y < chunk->Size; y++) {
-			for (uint32_t x = 0; x < chunk->Size; x++) {
-				renderer->DrawQuad({ x*0.02f+chunk->ChunkOffset.x,y * 0.02f+ chunk->ChunkOffset.y}, m_Colors[i], {0.02f ,0.02f}, 0);
+		Float2 size = {0.01f,0.01f};
+
+
+		m_Units[0].collider = Application::CreateCollider({0.0f,0.0f},size);
+		m_Units[1].collider = Application::CreateCollider({0.0f,0.5f},size);
+
+	}
+
+		void CollisionLayer::OnUpdate(double deltaTime){
+
+			if(Application::IsKeyPressed(KeyCodes::S)){
+		m_Units[1].collider.SetAcceleration({0.0f,-0.0001f});
 
 			}
 		}
-	}
-	DefaultCameraControlls(Application::GetCurrentCamera());
-}
+		void CollisionLayer::OnRender(double deltaTime){
+			Renderer* renderer = Application::GetRenderer();
+ 
+			for(uint32_t i=0 ;i < m_Units.size();i++){
+				if(m_Units[i].collider.IsCollided())
+				renderer->DrawQuad({m_Units[i].collider.GetPosition().x,m_Units[i].collider.GetPosition().y,0.0f},{1.0f,0.0f,0.0f,1.0f},m_Units[i].collider.GetSize(),0);
+				else
+				renderer->DrawQuad({m_Units[i].collider.GetPosition().x,m_Units[i].collider.GetPosition().y,0.0f},{0.0f,1.0f,0.0f,1.0f},m_Units[i].collider.GetSize(),0);
+				
+			}
+		}
+		void CollisionLayer::OnGUI(){
 
-void CollisionTestingLayer::OnDestroy()
-{
-}
+		}
+		void CollisionLayer::OnDestroy(){
 
-void CollisionTestingLayer::OnGUI()
-{
-}
+		}

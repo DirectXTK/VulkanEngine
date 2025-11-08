@@ -7,6 +7,7 @@
 #include "AssetManager.h"
 #include "Collider.h"
 #include "FontSystem.h"
+#include "Collider.h"
 struct ApplicationSpecs{
     uint32_t WindowHeight{500};
      uint32_t WindowWidth{500};
@@ -40,7 +41,6 @@ public:
     static Asset<ASSETTYPE> GetAsset(const std::string& strHandle){return GetApplication()->m_AssetManager.GetAsset<ASSETTYPE>(strHandle);}
     static void Run();
 
-    static Collider CreateCollider(Float2* Position, Float2 *Size);
     static void AddCallback( InputCallbacks* callbacks);
     static void Shutdown();
     //Input
@@ -55,6 +55,11 @@ public:
     //Assets
     static uint64_t GetAssetCount(const AssetType& type); 
 
+    //Collision
+    static ColliderBackEnd* GetCollider(int32_t id){return Application::GetApplication()->m_CollisionSystem.GetCollider(id);}
+    static Collider CreateCollider(const Float2& position={0.0f,0.0f},const Float2& size={0.0f,0.0f});
+    static void RunCollision();
+    static void RunAStar();
 
 
     static Application* GetApplication(){return m_Application;}
@@ -64,6 +69,7 @@ private:
 //has to be non static
      bool InitApplicationBackEnd(ApplicationSpecs specs);
     static void OpenTerminalAndAttachToStream();
+
 
 
     static Application* m_Application;
@@ -76,7 +82,7 @@ private:
 
     double m_DeltaTime{};
     double m_LastFrameTime{};
-    CollisionSystem m_CollisionSystem{};
+    ColliderSystem m_CollisionSystem{};
 public:
     //GUI Renderer
     Renderer* m_Renderer{};

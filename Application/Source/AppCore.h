@@ -256,6 +256,10 @@ namespace Core {
     bool IsWithinRegionOrg(const Float2& PointPos, Float2 Region[4]);
     uint64_t Align(uint64_t Number,uint64_t Aligment);
 
+    float CalculateDistanceFast(const Float2& pos1,const Float2& pos2);
+    float CalculateDistance(const Float2& pos1,const Float2& pos2);
+
+
 
 #include <string>
 #if defined(_WIN32)

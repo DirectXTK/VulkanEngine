@@ -52,6 +52,12 @@ namespace Core {
     return (Number +Aligment-1)& ~(Aligment - 1);
 }
 
+   float CalculateDistanceFast(const Float2& pos1,const Float2& pos2){
+		return std::fabs(pos1.x-pos2.x)+std::fabs(pos1.y-pos2.y);
+   }
+    float CalculateDistance(const Float2& pos1,const Float2& pos2){
+		return std::sqrt(std::pow(pos1.x-pos2.x,2)+std::pow(pos1.y-pos2.y,2));
+	}
 
 
  std::string GetModuleFileName(){

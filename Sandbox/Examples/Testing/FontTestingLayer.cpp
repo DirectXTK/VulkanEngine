@@ -13,7 +13,7 @@ void FontTestingLayer::OnCreate()
 	//Application::m_Renderer->SetCurrentFont(fontatlas);
 }
 
-void FontTestingLayer::OnUpdate(float DeltaTime)
+void FontTestingLayer::OnUpdate(double DeltaTime)
 {
 	Renderer* renderer = Application::GetRenderer();
 	DefaultCameraControlls(Application::GetCurrentCamera());

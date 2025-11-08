@@ -51,10 +51,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     m_SwapChain->CreateSwapChain(MAX_FRAME_DRAWS);
 
-    //One is reserved for white texture
-    for(uint32_t i=0;i <MAX_FRAME_DRAWS;i++)
-        m_TextureIDByOrder[i].resize(m_TextureSlotCount-1);
-    //Matrices
    
     BufferDesc UniformBufferDesc{};
     UniformBufferDesc.Device = m_Device;
@@ -574,6 +570,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 if(m_AssetManager->HasAsset(textureIds[i])){
                     Core::Log(ErrorType::Warning,"Manager has the asset but isn't loaded in renderer");
                 }else
+                    Core::Log(ErrorType::Error,"Texture rendered count ",textureIds.size());
                     Core::Log(ErrorType::Error,"Texture isn't loaded at all.{",textureIds[i].ID,"}");
             }
         }

@@ -5,7 +5,7 @@ class DLLLoadingLayer:public Layer
 public:
     DLLLoadingLayer();
     void OnCreate()override;
-    void OnUpdate(float deltatime)override;
+    void OnUpdate(double deltatime)override;
     void OnGUI()override;
     void OnDestroy()override;
 	void OnRender(double deltime)override;

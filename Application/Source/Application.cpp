@@ -185,7 +185,19 @@ void Application::Shutdown(){
     Application* app = GetApplication();
      app->m_AssetManager.LoadAllAssets(Path, type);
  }
+     Collider Application::CreateCollider(const Float2& position,const Float2& size){
+        Application* app = Application::GetApplication();
+        return app->m_CollisionSystem.CreateCollider(position,size);
+    }
+void Application::RunCollision(){
+    Application* app= Application::GetApplication();
 
+    app->m_CollisionSystem.RunCollisions();
+  
+}
+void Application::RunAStar(){
+
+}
  void Application::Run(){
     std::atomic<bool> ThreadRunning(true);
     Application* app = GetApplication();
@@ -216,6 +228,8 @@ void Application::Shutdown(){
 
         app->m_Renderer->EndFrame();
     }
+        RunCollision();
+        RunAStar();
 
       
 
@@ -225,7 +239,6 @@ void Application::Shutdown(){
         glfwPollEvents();
         
   
-
     }
     ThreadRunning.store(false);
     app->m_Running = false;
@@ -236,13 +249,6 @@ void Application::Shutdown(){
 
 }
 
- Collider Application::CreateCollider(Float2* Position,Float2* Size)
- {
-    Application* app = GetApplication();
-    Collider collider = app->m_CollisionSystem.CreateCollider();
-    collider.Update(Position,Size);
-     return Collider();
- }
 
  void Application::AddCallback( InputCallbacks* callbacks)
  {
