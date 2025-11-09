@@ -93,7 +93,7 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
      m_Window = new Window(specs.WindowWidth, specs.WindowHeight, specs.WindowTitle);
 
-     m_Camera.Init({ 0.0f,0.0f }, { 1.0f,1.0f });
+     m_Camera.Init({ 0.0f,0.0f }, { 1.0f,1.0f },{(float)specs.WindowWidth,(float)specs.WindowHeight});
 
      RendererDesc desc{};
      desc.VertexCountPerDrawCall = 4*1000;
@@ -122,6 +122,7 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
  }
      bool Application::DeleteApplication(){
         delete Application::GetApplication();
+        return true;
     }
 
 Float2 Application::GetMousePosChange(){
@@ -136,7 +137,7 @@ Float2 Application::GetMousePosChange(){
  }
     uint64_t Application::GetAssetCount(const AssetType& type){
         Application* app = Application::GetApplication();
-        app->m_AssetManager.GetAssetCount(type);
+        return app->m_AssetManager.GetAssetCount(type);
     } 
 
  Float2 Application::GetMousePos()

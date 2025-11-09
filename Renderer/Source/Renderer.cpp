@@ -230,6 +230,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::OnWindowResize(uint32_t width,uint32_t height){
         m_ResizeWindow=true;
         m_NewWindowSize ={(float)width,(float)height};
+        m_Camera.SetViewportSize({(float)width,(float)height});
     }
 
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
@@ -261,6 +262,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
      m_PipelineDesc.Viewport.width =m_SwapChain->GetExtent().width;
      m_PipelineDesc.Viewport.height =m_SwapChain->GetExtent().height;
+    
+    
+
      
      m_PipelineDesc.Viewport.minDepth =0;
      m_PipelineDesc.Viewport.maxDepth =1.0f;
@@ -950,7 +954,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //Char being edited index
         if (m_CurrentFont.GetType() != AssetType::FONT)
         {
-            Core::Log(ErrorType::Error, "Invalid type");
+            Core::Log(ErrorType::Error, "Invalid type must be font{",(uint32_t)m_CurrentFont.GetType(),"}");
             return;
         }
 
@@ -974,7 +978,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
        
 
         if(font->TextureAsset.GetType() != AssetType::TEXTURE){
-            Core::Log(ErrorType::Error, "Invalid type");
+            Core::Log(ErrorType::Error, "Invalid type must be texture{",(uint32_t)font->TextureAsset.GetType(),"}");
             return;
         }
         FontAtlasTexture = (Texture*)font->TextureAsset.GetData();

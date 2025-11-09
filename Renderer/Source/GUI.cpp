@@ -162,7 +162,7 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 
 	//draw text
 	if (Text.size() != 0) {
-		m_FontSystem->Text(CurrentButtonID, Text.c_str(), { LPosition.x - Size.x ,LPosition.y - Size.y }, { Size.x*2,Size.y*2 });
+		m_FontSystem->Text(CurrentButtonID, Text.c_str(), { LPosition.x  ,LPosition.y }, { Size.x,Size.y });
 	}
 
 	

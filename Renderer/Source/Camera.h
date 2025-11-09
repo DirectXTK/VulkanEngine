@@ -3,7 +3,7 @@
 
 class Camera2D{
     public:
-        void Init(Float2 Position,Float2 Scale);
+        void Init(Float2 Position,Float2 Scale,const Float2& viewPortSize);
 
         glm::mat4 GetViewProj(){return m_ViewProj;}
 
@@ -12,11 +12,14 @@ class Camera2D{
        
          void SetScale(Float2 Scale){m_Scale = Scale;RecalculateMatrix();}
           void SetPosition(Float2 Position){ m_Position= Position;RecalculateMatrix();}
+
+        void SetViewportSize(const Float2& viewPortSize){m_ViewPortSize= viewPortSize;RecalculateMatrix();}
     private:
         void RecalculateMatrix();
         glm::mat4 m_View{};
         glm::mat4 m_Proj{};
         glm::mat4 m_ViewProj{};
+        Float2 m_ViewPortSize{};
 
         Float2 m_Position{};
         Float2 m_Scale{};

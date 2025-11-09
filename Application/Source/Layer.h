@@ -12,6 +12,7 @@ public:
     virtual void OnGUI()=0;
 
     void Init();
+    virtual ~Layer() =default;
 protected:
     Layer(std::string name);
 

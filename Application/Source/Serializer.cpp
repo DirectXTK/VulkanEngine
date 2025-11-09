@@ -308,8 +308,7 @@ void Serializer::FillContainerWithData(char* Data, uint64_t*DataOffset, std::str
 	switch (format.format) {
 	case Format::STRING: {
 		std::string* str =(std::string*)(void*)(Data + *DataOffset);
-		memset(str, 0, sizeof(std::string));
-		*str = std::string();
+		memset((void*)str, 0, sizeof(std::string));
 		*str = line;
 	//	*str = std::string();
 	//	*str = line;

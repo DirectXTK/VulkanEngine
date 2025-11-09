@@ -40,7 +40,6 @@
  
 			for(uint32_t i=0 ;i < m_Units.size();i++){
 				renderer->DrawQuad({m_Units[i].collider.GetPosition().x,m_Units[i].collider.GetPosition().y,0.0f},{0.0f,1.0f,0.0f,1.0f},m_Units[i].collider.GetSize(),0);
-				
 			}
 		}
 		void CollisionLayer::OnGUI(){

@@ -1,7 +1,11 @@
 #pragma once
 #include "Application.h"
 #include "Utils.h"
-struct Unit;
+struct UnitEX{
+    std::string Name{};
+    Float2 Position{};
+    int Health{};
+};
 class SerializationTestingLayer :public Layer {
 public:
     SerializationTestingLayer();
@@ -15,15 +19,10 @@ public:
     //Get functions
 
 private:
-    void AllocSpaceAndFillData(void** DataPtr,Format format,uint32_t Index);
-    void MakeUnitRandom(Unit* unit);
-
-    void Save();
-    void Load();
-
-
-    std::vector<Unit> m_Units{};
+    
+    std::vector<UnitEX> m_Units{};
+    Serializer m_Serializer{};
     //Controlls
     float m_Move{ -1.0 };
     float m_Direct{ 0.005f };
-};
+};  

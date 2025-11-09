@@ -1,18 +1,18 @@
 #define DEMO_FEATURES
 #include "../Examples/Testing/CollisionTestingLayer.h"
 #include "../Examples/Testing/AnimationTestingLayer.h"
+#include "../Examples/Testing/SerializationTesting.h"
 
-#define DEBUG
 int main() {
 	ApplicationSpecs specs{};
 	specs.WindowTitle = "Example";
 	specs.WindowHeight = 800;
 	specs.WindowWidth = 800;
 	specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
-	specs.RendererDebugging = false;
+	specs.RendererDebugging = true;
 	specs.IsWindowResizable = true;
 	Application::InitApplication(specs);
-	Application::AddLayer(new CollisionLayer());
+	Application::AddLayer(new SerializationTestingLayer());
 	Application::Run();
    
 
