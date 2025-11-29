@@ -262,6 +262,10 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMes
 
         break;
     }
+    default:{
+        Core::Log(ErrorType::Error,"message severity is invalid{VulkanDebugCallBack}");
+        break;
+    }
     }
 
     return VK_FALSE;

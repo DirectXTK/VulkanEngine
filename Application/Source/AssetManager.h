@@ -37,7 +37,7 @@ public:
         m_Data = std::move(other.m_Data);
 
 		//other = nullptr;
-		memset(&other,0,sizeof(Asset));
+		other.m_Data = nullptr;
 		if(m_Data)
         	m_Data->RefCount+=1;
 	}
@@ -54,11 +54,10 @@ public:
 
 	}
     Asset& operator=( Asset&& other){
-		
-		m_Data = std::move(other.m_Data);
-		//m_Data->RefCount++;
-		//other = nullptr;
-		memset(&other,0,sizeof(Asset));
+		if(this != &other){
+			m_Data = std::move(other.m_Data);
+			other.m_Data = nullptr;
+		}
 
         return *this;
 }

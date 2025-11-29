@@ -336,7 +336,7 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 			Core::Log(ErrorType::Error, "Invalid Style or size is specified incorectly.");
 			return;
 		}
-		Color = new GUI::ColorStyle();
+		Color = (GUI::ColorStyle*)malloc(sizeof(GUI::ColorStyle));
 		*Color = *TransformedData;
 
 
@@ -352,7 +352,7 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 			Core::Log(ErrorType::Error, "Invalid Style or size is specified incorectly.");
 			return;
 		}
-		OutputBorder = new GUI::BorderStyle();
+		OutputBorder = (GUI::BorderStyle*)malloc(sizeof(GUI::BorderStyle));
 		*OutputBorder = *TransformedData;
 
 		m_Styles.push({ style,OutputBorder });
@@ -368,7 +368,7 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 			Core::Log(ErrorType::Error, "Invalid Style or size is specified incorectly.");
 			return;
 		}
-		sliderData = new GUI::SliderStyle();
+		sliderData = (GUI::SliderStyle*)malloc(sizeof(GUI::SliderStyle));
 		*sliderData = *TransformedData;
 
 		m_Styles.push({ style,sliderData });
@@ -384,7 +384,7 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 			Core::Log(ErrorType::Error, "Invalid Style or size is specified incorectly.");
 			return;
 		}
-		sliderData = new GUI::OutlineStyle();
+		sliderData = (GUI::OutlineStyle*)malloc(sizeof(GUI::OutlineStyle));
 		*sliderData = *TransformedData;
 
 		m_Styles.push({ style,sliderData });
@@ -405,7 +405,7 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 }
 void GUIRenderer::PopStyle() {
 	StyleContainer container = m_Styles.top();
-	delete container.StyleData;
+	free(container.StyleData);
 
 	m_CurrentBorderData= nullptr;
 	m_CurrentSliderData= nullptr;

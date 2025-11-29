@@ -602,7 +602,7 @@ void FontSystem::PushStyle(const GUI::Style& style,void* StyleData) {
 	case GUI::Style::BORDER :{
 		
 		//Store style data somehow and transfer it.
-			m_StyleData.push(new GUI::BorderStyle());
+			m_StyleData.push(malloc(sizeof(GUI::BorderStyle)));
 			if (StyleData) {
 				memcpy(m_StyleData.top(), StyleData, sizeof(GUI::BorderStyle));
 			}
@@ -617,7 +617,7 @@ void FontSystem::PushStyle(const GUI::Style& style,void* StyleData) {
 	}
 }
 void FontSystem::PopStyle() {
-	delete m_StyleData.top();
+	free(m_StyleData.top());
 	m_StyleData.pop();
 	m_Style.pop();
 }

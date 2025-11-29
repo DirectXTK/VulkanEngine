@@ -249,7 +249,6 @@ void Application::RemoveLayer(Layer* layer){
 
 }
     Application::~Application(){
-        Shutdown();
         delete m_Window;
         delete m_Renderer;
         delete m_FontSystem;
