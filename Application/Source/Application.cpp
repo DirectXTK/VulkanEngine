@@ -28,7 +28,7 @@ void ChechCommands(Application* app,std::string Command){
         Core::Log("prtassets -prints all loaded assets");
         Core::Log("exit -exits the program");
     }else if(Command == "exit"){
-        app->Shutdown();
+        app->QueueShutDown();
     }else{
         Core::Log("Invalid command");
     }
@@ -162,16 +162,20 @@ Float2 Application::GetMousePosChange(){
 
 void Application::Shutdown(){
     Application* app = GetApplication();
-
-    app->m_LayerController.DestroyLayers();
-    app->m_Running = false;
+    
     //set the  font color of cout to default.
     tcsetattr(STDIN_FILENO,TCSANOW,&app->m_DefaultConsoleSett);
     std::cout << "\033[0m"<<std::flush;
-    std::cout << "Shutting Down...";
+    std::cout << "Shutting Down...\n";
+
+    app->m_LayerController.DestroyLayers();
+    app->m_Running = false;
+
     app->DeleteApplication();
 }
-
+void Application::QueueShutDown(){
+    Application::GetApplication()->m_Running =false;
+}
 
  void Application::LoadAssets(std::string Path, AssetType type)
  {

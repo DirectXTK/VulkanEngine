@@ -51,9 +51,10 @@ public:
     static bool HasAsset(GUUID id);
     template<typename ASSETTYPE>
     static Asset<ASSETTYPE> GetAsset(const std::string& strHandle){return GetApplication()->m_AssetManager.GetAsset<ASSETTYPE>(strHandle);}
-    static void Run();
 
-    static void Shutdown();
+
+    static void Run();
+    static void QueueShutDown();
     //Input
     static void DispatchEvent(Event& event);
     static bool IsMouseClicked(const MouseCodes& codes,bool hold= false);
@@ -82,6 +83,7 @@ private:
      bool InitApplicationBackEnd(ApplicationSpecs specs);
     static void OpenTerminalAndAttachToStream();
 
+    static void Shutdown();
 
 
     static Application* m_Application;
