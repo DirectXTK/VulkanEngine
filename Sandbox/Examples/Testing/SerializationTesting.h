@@ -13,6 +13,7 @@ public:
     void OnUpdate(double deltatime)override;
     void OnGUI()override;
     void OnDestroy()override;
+    void OnEvent(Event& event)override;
 	void OnRender(double deltime)override;
 
 
@@ -20,6 +21,12 @@ public:
 
 private:
     
+    void OnKeyBoardEvent(KeyBoardEvent& event);
+    void OnWindowShutDownEvent(WindowShutDownEvent& event);
+    void OnMouseEvent(MouseEvent& event);
+
+
+
     std::vector<UnitEX> m_Units{};
     Serializer m_Serializer{};
     //Controlls

@@ -21,7 +21,7 @@ void RunExampleMenu() {
 	specs.WindowWidth = 500;
 
 	Application::InitApplication(specs);
-	Application::AddLayer(new ExampleMenu());
+	Application::AddLayer<ExampleMenu>();
 	Application::Run();;
 
 }

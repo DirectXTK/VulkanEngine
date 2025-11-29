@@ -112,10 +112,6 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
      m_FontSystem = new FontSystem();
 
      m_GUIRenderer = new GUIRenderer(this, false);
-     if(specs.IsWindowResizable){
-        glfwSetFramebufferSizeCallback(m_Window->GetHandle(),DefaultWindowResizeCallback);
-        
-     }
 
      return true;
 
@@ -129,12 +125,6 @@ Float2 Application::GetMousePosChange(){
     Application* app = Application::GetApplication();
     return app->m_InputSystem.GetMousePosChange();
 }
- void Application::AddLayer(Layer* layer)
- {
-    Application* app = GetApplication();
-     layer->Init();
-    app->m_LayerController.CreateLayer(layer);
- }
     uint64_t Application::GetAssetCount(const AssetType& type){
         Application* app = Application::GetApplication();
         return app->m_AssetManager.GetAssetCount(type);
@@ -172,12 +162,14 @@ Float2 Application::GetMousePosChange(){
 
 void Application::Shutdown(){
     Application* app = GetApplication();
+
+    app->m_LayerController.DestroyLayers();
     app->m_Running = false;
     //set the  font color of cout to default.
     tcsetattr(STDIN_FILENO,TCSANOW,&app->m_DefaultConsoleSett);
     std::cout << "\033[0m"<<std::flush;
     std::cout << "Shutting Down...";
-
+    app->DeleteApplication();
 }
 
 
@@ -198,6 +190,13 @@ void Application::RunCollision(){
 }
 void Application::RunAStar(){
 
+}
+ void Application::DispatchEvent(Event& event){
+    Application* app = Application::GetApplication();
+    app->m_LayerController.OnEvent(event);
+ }
+void Application::RemoveLayer(Layer* layer){
+    Application::GetApplication()->m_LayerController.RemoveLayer(layer);
 }
  void Application::Run(){
     std::atomic<bool> ThreadRunning(true);
@@ -239,7 +238,7 @@ void Application::RunAStar(){
         glfwSwapBuffers(app->m_Window->GetHandle());
         glfwPollEvents();
         
-  
+        app->m_LayerController.TransitionLayers();
     }
     ThreadRunning.store(false);
     app->m_Running = false;
@@ -249,13 +248,6 @@ void Application::RunAStar(){
     Shutdown();
 
 }
-
-
- void Application::AddCallback( InputCallbacks* callbacks)
- {
-    Application* app = GetApplication();
-     app->m_InputSystem.AddCallbacks(callbacks);
- }
     Application::~Application(){
         Shutdown();
         delete m_Window;

@@ -8,6 +8,7 @@
 #include "Collider.h"
 #include "FontSystem.h"
 #include "Collider.h"
+#include "Event.h"
 struct ApplicationSpecs{
     uint32_t WindowHeight{500};
      uint32_t WindowWidth{500};
@@ -24,7 +25,18 @@ class Application {
 public:
     Application();
     static bool InitApplication(ApplicationSpecs specs){m_Application = new Application();return m_Application->InitApplicationBackEnd(specs);}
-    static void AddLayer(Layer* layer);
+
+    template<typename T>
+    static void AddLayer(){
+         Application* app = GetApplication();
+         Core::Log("Queue this also{AddLayer}");
+         app->m_LayerController.CreateLayer(new T());
+    }
+
+    static void RemoveLayer(Layer* layer);
+    template<typename LAYER>
+    static LAYER* GetLayer(){Application::GetApplication()->m_LayerController.GetLayer<LAYER>();}
+
     static float GetDeltaTime() { return (float)GetApplication()->m_DeltaTime; }
 
     static GUUID GetCurrentlyHoveredPixelID();
@@ -41,9 +53,9 @@ public:
     static Asset<ASSETTYPE> GetAsset(const std::string& strHandle){return GetApplication()->m_AssetManager.GetAsset<ASSETTYPE>(strHandle);}
     static void Run();
 
-    static void AddCallback( InputCallbacks* callbacks);
     static void Shutdown();
     //Input
+    static void DispatchEvent(Event& event);
     static bool IsMouseClicked(const MouseCodes& codes,bool hold= false);
     static bool IsKeyPressed(const KeyCodes& codes);
     static bool IsKeyReleased(const KeyCodes& codes);    

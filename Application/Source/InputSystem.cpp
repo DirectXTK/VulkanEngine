@@ -9,21 +9,32 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	
 }
 void WindowCloseCallback(GLFWwindow* Window) {
-	WindowEvent event{};
-	event.Type = WindowEventType::ShutDown;
-
+	WindowShutDownEvent event{};
 	assert(g_InputSystem!=nullptr);
-	g_InputSystem->DispatchEventW(event);
+	g_InputSystem->DispatchEvent(event);
 }
 void KeyCallBack(GLFWwindow* window,int Key,int ScanCode,int action,int mods){
-
+	KeyBoardEvent event{};
+	event.Key = (KeyCodes)Key;
+	event.State = (EventState)action;
 	assert(g_InputSystem != nullptr);
-	g_InputSystem->DispatchEventK(window, Key, ScanCode, action, mods);
+	g_InputSystem->DispatchEvent(event);
 }
 
 void MouseButtonCallBack(GLFWwindow* window, int Key, int Action, int Mod) {
+	MouseEvent event{};
+	event.Code = (MouseCodes)Key;
+	event.State = (EventState)Action;
 	assert(g_InputSystem != nullptr);
-	g_InputSystem->DispatchEventM(window, Key, Action, Mod);
+	g_InputSystem->DispatchEvent(event);
+}
+void WindowResizeCallback(GLFWwindow* window,int width,int height){
+	WindowResizeEvent event{};
+	event.Width = width;
+	event.Height = height;
+	assert(g_InputSystem!= nullptr);
+	Application::GetRenderer()->OnWindowResize(width,height);
+	g_InputSystem->DispatchEvent(event);
 }
 void InputSystem::Init(GLFWwindow* window){
 			m_CurrentWindow = window;
@@ -33,33 +44,13 @@ void InputSystem::Init(GLFWwindow* window){
 	glfwSetMouseButtonCallback(m_CurrentWindow, MouseButtonCallBack);
 	glfwSetKeyCallback(m_CurrentWindow, KeyCallBack);
 	glfwSetWindowCloseCallback(m_CurrentWindow, WindowCloseCallback);
+	glfwSetWindowSizeCallback(m_CurrentWindow,WindowResizeCallback);
 }
-
-void InputSystem::DispatchEventM(GLFWwindow* window, int Key, int Action, int Mods)
-{
-	MouseEvent Event{};
-	Event.Code = (MouseCodes)Key;
-	Event.State = Action;
-	if (m_Callbacks.MouseButtonCallback)
-		m_Callbacks.MouseButtonCallback(&Event);
-
-}
-void InputSystem::DispatchEventK(GLFWwindow* window, int Key, int ScanCode, int Action, int Mods)
-{
-	KeyBoardEvent Event{};
-	Event.Key = Core::ConvertFromGlfwInt(Key,Mods);
-	Event.State = (KeyState)Action;
-	if(m_Callbacks.KeyBoardCallback)
-		m_Callbacks.KeyBoardCallback(&Event);
+void InputSystem::DispatchEvent(Event& event){
+	Application::DispatchEvent(event);
 }
 float InputSystem::GetScroll(){
 	return (float)scrolly;
-}
-
-void InputSystem::DispatchEventW(WindowEvent& event)
-{
-	if (m_Callbacks.WindowCallback)
-		m_Callbacks.WindowCallback(&event);
 }
 
 bool InputSystem::IsKeyPressed(KeyCodes keycode)
@@ -175,12 +166,3 @@ void InputSystem::ResetInput()
 	
 
 }
-
-void InputSystem::AddCallbacks(InputCallbacks* callbacks)
-{
-	m_Callbacks = *callbacks;
-}
-
-void DefaultWindowResizeCallback(GLFWwindow* window,int width,int height){
-	Application::GetRenderer()->OnWindowResize(width,height);
-	}

@@ -1,7 +1,5 @@
 #define DEMO_FEATURES
-#include "../Examples/Testing/CollisionTestingLayer.h"
-#include "../Examples/Testing/AnimationTestingLayer.h"
-#include "../Examples/Testing/SerializationTesting.h"
+#include  "../Examples/Testing/TestingLayer.h"
 
 int main() {
 	ApplicationSpecs specs{};
@@ -12,7 +10,8 @@ int main() {
 	specs.RendererDebugging = true;
 	specs.IsWindowResizable = true;
 	Application::InitApplication(specs);
-	Application::AddLayer(new SerializationTestingLayer());
+	Application::AddLayer<TestingLayer>();
+
 	Application::Run();
    
 

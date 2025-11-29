@@ -18,6 +18,33 @@ void SerializationTestingLayer::OnCreate() {
     m_Units.push_back(UnitEX{"Kestis",Float2{0.33f,1.33f},5});
 
 }
+void SerializationTestingLayer::OnEvent(Event& event){
+    KeyBoardEvent kEvent{};
+    MouseEvent mEvent{};
+    WindowShutDownEvent wEvent{};
+
+    if(event.GetEventType() == EventType::KEYBOARD){
+        kEvent = (KeyBoardEvent&)event;
+        OnKeyBoardEvent(kEvent);
+
+    }else if(event.GetEventType() == EventType::MOUSE){
+        mEvent = (MouseEvent&)event;
+        OnMouseEvent(mEvent);
+    }else if(event.GetEventType() == EventType::WINDOWSHUTDOWN){
+        wEvent = (WindowShutDownEvent&)event;
+        Core::Log("Shuttingdown...");
+        OnWindowShutDownEvent(wEvent);
+    }
+}
+void SerializationTestingLayer::OnKeyBoardEvent(KeyBoardEvent& event){
+   
+}
+void SerializationTestingLayer::OnWindowShutDownEvent(WindowShutDownEvent& event){
+
+}
+void SerializationTestingLayer::OnMouseEvent(MouseEvent& event){
+
+}
 void SerializationTestingLayer::OnUpdate(double deltatime)
 {
    

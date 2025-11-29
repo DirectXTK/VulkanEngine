@@ -3,9 +3,6 @@
 #include "Application.h"
 #include "freetype/ftglyph.h"
 FontSystem* g_FontSystem{};
-void KeyBoardCallbackFn(KeyBoardEvent* event) {
-	g_FontSystem->KeyBoardCallback(event);
-}
 FontSystem::FontSystem()
 {
 	m_Renderer = Application::GetRenderer();
@@ -26,11 +23,6 @@ FontSystem::FontSystem()
 		Core::Log(ErrorType::Error, "Failed to open/read or the font is broken ");
 	}
 	ReRenderFaces();
-
-	InputCallbacks callbacks{};
-	callbacks.KeyBoardCallback = KeyBoardCallbackFn;
-
-	Application::AddCallback(&callbacks);
 
 }
 
@@ -129,9 +121,9 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	
 	if (m_CharEditedIndex != -1) {
 		for(uint32_t i=0;i < m_KeyStates.size();i++){
-			KeyState State = m_KeyStates.back();
+			EventState State = m_KeyStates.back();
 			KeyCodes Key = m_KeyCodes.back();
-			if (State==KeyState::PRESSED || State == KeyState::HOLD) {
+			if (State==EventState::PRESSED || State == EventState::HOLD) {
 
 				if ((int)Key >= 32 && (int)Key <= 127) {
 					if (strlen(Buffer) + 1 < BufferSize) {
@@ -297,7 +289,7 @@ void FontSystem::KeyBoardCallback(KeyBoardEvent* event)
 {
 	m_KeyStates.push(event->State);
 	m_KeyCodes.push(event->Key);
-	if(event->State == KeyState::RELEASED)
+	if(event->State == EventState::RELEASED)
 		m_KeyAlreadyPressed[(uint32_t)event->Key] = false;
 
 }
@@ -307,7 +299,7 @@ FontSystem::~FontSystem()
 	FT_Done_Face(m_Face);
 	FT_Done_FreeType(m_Library);
 }
-void FontSystem::SpecialCases(KeyCodes& Code, KeyState& State, char* Buffer, uint64_t Size)
+void FontSystem::SpecialCases(KeyCodes& Code, EventState& State, char* Buffer, uint64_t Size)
 {
 	//is num lock is off
 	if ((int)Code >= 320 && (int)Code <= 329)

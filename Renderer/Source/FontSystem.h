@@ -60,7 +60,7 @@ public:
 private:
 	//Character size is used for the pointer size
 
-	void SpecialCases(KeyCodes& Code, KeyState& State,char* Buffer,uint64_t Size);
+	void SpecialCases(KeyCodes& Code, EventState& State,char* Buffer,uint64_t Size);
 	int64_t CalculateCharBeingEditedIndex();
 	void DrawPointer(Float2 Position,float CharacterSize,float SizeY);
 	void DrawBorder(Float2& Position, Float2& Size, GUUID ID);
@@ -88,7 +88,7 @@ private:
 	//Typing
 	float m_TypingCooldown{};
 
-	std::queue<KeyState> m_KeyStates{};
+	std::queue<EventState> m_KeyStates{};
 	std::queue<KeyCodes> m_KeyCodes{};
 	bool m_KeyAlreadyPressed[300];
 	
