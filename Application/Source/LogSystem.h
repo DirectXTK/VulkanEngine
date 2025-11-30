@@ -51,7 +51,7 @@ namespace Core{
 			}
 			case ErrorType::FatalError : {
 				file << "FetalError: ";
-				std::cout << "FetalError: ";
+				std::cout << COUTRED<<"FetalError: ";
 
 
 				break;

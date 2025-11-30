@@ -1,4 +1,6 @@
-make -j12
+CONFIG=${1:-"debug"}
+./premake5 gmake
+make -j12 config=$CONFIG
 status=$?
 exePath=$(cat ExeLocation)
 echo $exePath

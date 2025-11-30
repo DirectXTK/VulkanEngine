@@ -45,10 +45,32 @@ void Serializer::Save(void* data,uint64_t DataCount, SerializerFormat* formats,u
 			Offset = format->Offset + d * classdesc->Stride;
 
 			if (variablecount == -1) {
+				//1 means types are not dynamic 2 means dynamic
+				int8_t dynamic{0};
 				if(format->format == Format::FORMAT)
-					variablecount = *(int64_t*)((char*)data + Offset + formats[j + 2].Offset - format->Offset);
+					dynamic =2;
 				else
-					variablecount = *(int64_t*)((char*)data + Offset + formats[j + 1].Offset-format->Offset);
+					dynamic =1;
+				switch(formats[j+dynamic].format)
+				{
+					case Format::INT16:{
+						variablecount = *(int16_t*)((char*)data + Offset + formats[j + dynamic].Offset-format->Offset);
+						break;
+					}
+					case Format::INT32:{
+						variablecount = *(int32_t*)((char*)data + Offset + formats[j + dynamic].Offset-format->Offset);
+						break;
+					}
+					case Format::INT64:{
+						variablecount = *(int64_t*)((char*)data + Offset + formats[j + dynamic].Offset-format->Offset);
+						break;
+					}
+					default:{
+						Core::Log(ErrorType::Error,"Invalid type use int16 or int32 or int64 otherwise may cause errors{Serializer::Save()}");
+						variablecount = *(int64_t*)((char*)data + Offset + formats[j + dynamic].Offset-format->Offset);
+						break;
+					}
+				}
 			}
 
 				m_OutputFile << classdesc->MemberPrefix << format->keyword;

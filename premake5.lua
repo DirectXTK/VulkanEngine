@@ -15,12 +15,24 @@ workspace "VulkanEngine"
     "-lRenderer",
     "-Wl,--end-group",
     }
+    filter { "system:linux" }
+      defines{"LINUX"}
+    filter { "system:windows"}
+      defines{"WINDOWS"}
     filter{"configurations:Release"}
       defines {"RELEASE"}
+      runtime "Release"
+      optimize "on"
     filter{"configurations:Debug"}
       defines {"DEBUG"}
     filter{"configurations:Distrib"}
       defines {"DISTRIB"}
+      defines { "NDEBUG" }     
+      optimize "Full"          
+      symbols "Off"             
+      runtime "Release"         
+      staticruntime "On"      
+      linktimeoptimization "On"
 
     
     startproject "Application"

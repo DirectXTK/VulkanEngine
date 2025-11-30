@@ -30,7 +30,6 @@ public:
 class LayerController{
     public:
        
-        Layer* CreateLayer(Layer* layer);
 
         void UpdateLayers(double deltatime);
         void RenderLayers(double deltaTime);
@@ -38,7 +37,6 @@ class LayerController{
         void DestroyLayers();
         void OnEvent(Event& event);
 
-        void RemoveLayer(Layer* layer);
         template<typename LAYER>
         LAYER* GetLayer()const{
             for(uint32_t i =0;i < m_Layers.size();i++){
@@ -47,18 +45,32 @@ class LayerController{
                     return ret;
             }
             Core::Log(ErrorType::FatalError,"There is no such type created{GetLayer()}");
+            return nullptr;
         }
+        enum class QueueType{
+            NONE,CREATE,TRANSITION,REMOVE,
+        };
         struct TransitionData{
+            TransitionData(){}
+            TransitionData(Layer* initial,Layer* transitioned,const QueueType& type): Initial(initial),Transitioned(transitioned),Type(type){}
             Layer* Initial{};
             Layer* Transitioned{};
+            QueueType Type{};
         };
-        void QueueTransition(TransitionData transitionData){m_QueuedTransitioningLayers.emplace(transitionData);}
-        void TransitionLayers();
+        void QueueCreateLayer(Layer* layer){m_CommandQueue.emplace(layer,nullptr,QueueType::CREATE);}
+        template<typename REMOVEL>
+        void QueueRemoveLayer(){m_CommandQueue.emplace(GetLayer<REMOVEL>(),nullptr,QueueType::REMOVE);}
+        void QueueTransition(Layer* initial,Layer* transitioned){m_CommandQueue.emplace(initial,transitioned,QueueType::TRANSITION);}
+        void RunQueue();
     private:
-    std::queue<TransitionData> m_QueuedTransitioningLayers{};
+
+    void RemoveLayer(Layer* layer);
+
+
+    std::queue<TransitionData> m_CommandQueue{};
     std::vector<Layer*> m_Layers{};
 };
 template<typename T>
 void Layer::TransitionLayer(){
-    m_Controller->QueueTransition({this,new T()});
+    m_Controller->QueueTransition(this,new T());
 }

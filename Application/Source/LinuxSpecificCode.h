@@ -1,5 +1,4 @@
 #pragma once
-#define LINUX
 #ifdef LINUX
 #include <atomic>
 #include <iostream>

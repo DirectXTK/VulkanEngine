@@ -56,4 +56,12 @@ project "Application"
       runtime "Release"
       optimize "on"
       staticruntime "on"
+    filter{"configurations:Distrib"}
+      defines {"DISTRIB"}
+      defines { "NDEBUG" }     
+      optimize "Full"          
+      symbols "Off"             
+      runtime "Release"         
+      staticruntime "On"      
+      linktimeoptimization "On"
 

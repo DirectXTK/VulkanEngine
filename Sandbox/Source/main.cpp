@@ -9,7 +9,9 @@ int main() {
 	specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
 	specs.RendererDebugging = true;
 	specs.IsWindowResizable = true;
+	specs.AppDebugging = true;
 	Application::InitApplication(specs);
+	Application::AddLayer<MenuLayer>();
 	Application::AddLayer<TestingLayer>();
 
 	Application::Run();

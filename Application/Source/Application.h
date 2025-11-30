@@ -16,6 +16,7 @@ struct ApplicationSpecs{
     bool RendererDebugging{false};
     bool IsWindowResizable{true};
     bool OpenTerminal{false};
+    bool AppDebugging{false};
 
     //Renderer stuff
     Float4 ClearColor{ 0.5f,0.5f,0.5f,1.0f };
@@ -25,16 +26,15 @@ class Application {
 public:
     Application();
     static bool InitApplication(ApplicationSpecs specs){m_Application = new Application();return m_Application->InitApplicationBackEnd(specs);}
-    static bool InitApplication(Application* app){m_Application = app;}
+    static bool InitApplication(Application* app){m_Application = app;return true;}
 
     template<typename T>
     static void AddLayer(){
          Application* app = GetApplication();
-         Core::Log("Queue this also{AddLayer}");
-         app->m_LayerController.CreateLayer(new T());
+         app->m_LayerController.QueueCreateLayer(new T());
     }
-
-    static void RemoveLayer(Layer* layer);
+    template<typename REMOVEL>
+    static void RemoveLayer(){Application::GetApplication()->m_LayerController.QueueRemoveLayer<REMOVEL>();}
     template<typename LAYER>
     static LAYER* GetLayer(){Application::GetApplication()->m_LayerController.GetLayer<LAYER>();}
 
@@ -86,7 +86,8 @@ private:
 
     static void Shutdown();
 
-
+    //Debug
+   static void LogSystemAndAppInformation();
     static Application* m_Application;
 
 

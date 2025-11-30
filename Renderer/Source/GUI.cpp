@@ -296,7 +296,6 @@ void GUIRenderer::Slider(const std::string& strID, int* number, Float2 Position,
 	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - 2)), Position, { Color }, Size, MouseCodes::LEFT,0,false)) {
 		if (!CurrentSlider->IsClicked) {
 			CurrentSlider->IsClicked = true;
-		Core::Log(ErrorType::Error,"Lafa");
 
 		}
 	}

@@ -76,9 +76,35 @@ bool Application::IsMouseClicked(const MouseCodes& codes,bool hold){
  }
 
 Application::Application(){}
+void Application::LogSystemAndAppInformation(){
+    float AppVersion{0.001};
+    Core::Log("App information");
+    std::cout << "  Build "<< Core::GetBuildConfiguration()<<"\n";
+    std::cout << "  App version "<< AppVersion<<"\n";
+    #ifdef LINUX
+    std::cout << "  Platform LINUX\n";
+    #elif WINDOWS
+    std::cout << "  Platform WINDOWS\n";
+    #endif
+    Core::Log("Computer information");
+    std::cout << "  RAM "<<Core::GetTotalAmountOfRam()/1024/1024<<"MB\n";
+    std::cout << "  CPU "<<Core::GetCPUName()<<"\n";
+    std::cout << "  Thread count "<<Core::GetCPUThreadCount()<<"\n";
+    std::cout << "  Core count "<<Core::GetCPUCoreCount()<<"\n";
+    std::cout << "  SSE "<<Core::GetCPUSupportedInscrutionSets().SSE<<"\n";
+    std::cout << "  SSE2 "<<Core::GetCPUSupportedInscrutionSets().SSE2<<"\n";
+    std::cout << "  SSE3 "<<Core::GetCPUSupportedInscrutionSets().SSE3<<"\n";
+    std::cout << "  SSE4.1 "<<Core::GetCPUSupportedInscrutionSets().SSE41<<"\n";
+    std::cout << "  SSE4.2 "<<Core::GetCPUSupportedInscrutionSets().SSE42<<"\n";
+    std::cout << "  GPU "<<Core::GetGPUName()<<"\n";
 
+
+
+}
 bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
+    if(specs.AppDebugging)
+        LogSystemAndAppInformation();
     if(specs.OpenTerminal)
         OpenTerminalAndAttachToStream();
 
@@ -199,9 +225,7 @@ void Application::RunAStar(){
     Application* app = Application::GetApplication();
     app->m_LayerController.OnEvent(event);
  }
-void Application::RemoveLayer(Layer* layer){
-    Application::GetApplication()->m_LayerController.RemoveLayer(layer);
-}
+
  void Application::Run(){
     std::atomic<bool> ThreadRunning(true);
     Application* app = GetApplication();
@@ -242,7 +266,7 @@ void Application::RemoveLayer(Layer* layer){
         glfwSwapBuffers(app->m_Window->GetHandle());
         glfwPollEvents();
         
-        app->m_LayerController.TransitionLayers();
+        app->m_LayerController.RunQueue();
     }
     ThreadRunning.store(false);
     app->m_Running = false;

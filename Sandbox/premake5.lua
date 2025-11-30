@@ -55,5 +55,15 @@ project "Sandbox"
       runtime "Release"
       optimize "on"
 
+    filter{"configurations:Distrib"}
+      defines {"DISTRIB"}
+      defines { "NDEBUG" }     
+      optimize "Full"          
+      symbols "Off"             
+      runtime "Release"         
+      staticruntime "On"      
+      linktimeoptimization "On"
+
+
 
 

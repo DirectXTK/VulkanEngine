@@ -1,7 +1,18 @@
 #pragma once
 //Defines
 
-//#define __STDC_WANT_LIB_EXT1__
+#ifdef __linux__
+
+#elif __win32__
+#include "dxgi1_4.h"
+#pragma comment(lib,"dxgi.lib")
+#endif
+
+#ifdef _MSC_VER
+    #include <intrin.h>
+#else
+    #include <cpuid.h>
+#endif
 
 //Includes
 #include <string>
@@ -37,6 +48,7 @@
 #include <x86intrin.h>
 
 #include "LinuxSpecificCode.h"
+
 
 #ifdef DEBUG
     #define WORKINGDIR ../../../../../
@@ -265,7 +277,7 @@ namespace Core {
     float CalculateDistance(const Float2& pos1,const Float2& pos2);
 
 
-
+//cross plaftoform stuff
 #include <string>
 #if defined(_WIN32)
 #include <windows.h>
@@ -275,6 +287,37 @@ namespace Core {
 #elif defined(__APPLE__)
 #include <mach-o/dyld.h>
 #endif
+
+
+
+struct CPUFeatures{
+    bool SSE = false;
+    bool SSE2 = false;
+    bool SSE3 = false;
+    bool SSSE3 = false;
+    bool SSE41 = false;
+    bool SSE42 = false;
+
+    bool AVX = false;
+    bool AVX2 = false;
+
+    bool AVX512F = false;
+    bool AVX512DQ = false;
+    bool AVX512CD = false;
+    bool AVX512BW = false;
+    bool AVX512VL = false;
+};
+std::string GetCPUName();
+uint32_t GetCPUCoreCount();
+uint32_t GetCPUThreadCount();
+std::string GetGPUName();
+CPUFeatures GetCPUSupportedInscrutionSets();
+//returns in bytes
+uint64_t GetTotalAmountOfRam();
+std::string GetBuildConfiguration();
+
+
+
 
  std::string GetModuleFileName();
 

@@ -28,12 +28,18 @@ void TestingLayer::OnKeyBoardEvent(KeyBoardEvent& event){
         if(event.Key == KeyCodes::N){
             TransitionLayer<MenuLayer>();
         }
+              if(event.Key == KeyCodes::C){
+            Application::AddLayer<MenuLayer>();
+        }
+          if(event.Key == KeyCodes::R){
+            Application::RemoveLayer<MenuLayer>();
+        }
         event.Expend();
     }
 }
 void TestingLayer::OnRender(double deltime){
     Renderer* render =Application::GetRenderer();
-    render->DrawQuad({0.0f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+    render->DrawQuad({0.0f,0.0f,0.0f},{1.0f,0.0f,0.0f,1.0f},{0.1f,0.1f},0);
 }
 void TestingLayer::OnGUI()
 {
@@ -62,12 +68,18 @@ void MenuLayer::OnKeyBoardEvent(KeyBoardEvent& event){
         if(event.Key == KeyCodes::N){
             TransitionLayer<TestingLayer>();
         }
+        if(event.Key == KeyCodes::C){
+            Application::AddLayer<TestingLayer>();
+        }
+          if(event.Key == KeyCodes::R){
+            Application::RemoveLayer<TestingLayer>();
+        }
         event.Expend();
     }
 }
 void MenuLayer::OnRender(double deltaTime){
     Renderer* render =Application::GetRenderer();
-    render->DrawQuad({0.0f,0.0f,0.0f},{1.0f,0.0f,0.0f,1.0f},{0.3f,0.05f},0);
+    render->DrawQuad({0.0f,0.0f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.3f,0.05f},0);
 }
 
 
