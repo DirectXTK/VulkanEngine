@@ -60,7 +60,10 @@ constexpr size_t ARRAYSIZE(T (&)[N]) noexcept {
 //FORMAT means any format
 enum class Format{NULLFORMAT,INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE,CHAR,STRING,FORMAT};
 #define SEC(x) 1000*x
+
+#ifdef WINDOWS
 #define DLLEXPORT __declspec(dllexport)
+#endif
 
 struct GUUID {
     uint64_t ID{};

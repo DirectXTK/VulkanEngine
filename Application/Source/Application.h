@@ -25,6 +25,7 @@ class Application {
 public:
     Application();
     static bool InitApplication(ApplicationSpecs specs){m_Application = new Application();return m_Application->InitApplicationBackEnd(specs);}
+    static bool InitApplication(Application* app){m_Application = app;}
 
     template<typename T>
     static void AddLayer(){
