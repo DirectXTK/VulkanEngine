@@ -63,6 +63,8 @@ enum class Format{NULLFORMAT,INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE
 
 #ifdef WINDOWS
 #define DLLEXPORT __declspec(dllexport)
+#else
+#define DLLEXPORT
 #endif
 
 struct GUUID {
