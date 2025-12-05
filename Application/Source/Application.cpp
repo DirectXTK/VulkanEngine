@@ -81,9 +81,9 @@ void Application::LogSystemAndAppInformation(){
     Core::Log("App information");
     std::cout << "  Build "<< Core::GetBuildConfiguration()<<"\n";
     std::cout << "  App version "<< AppVersion<<"\n";
-    #ifdef LINUX
+    #ifdef __linux__
     std::cout << "  Platform LINUX\n";
-    #elif WINDOWS
+    #elif __win32__
     std::cout << "  Platform WINDOWS\n";
     #endif
     Core::Log("Computer information");

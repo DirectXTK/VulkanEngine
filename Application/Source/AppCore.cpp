@@ -117,7 +117,7 @@ bool os_avx_support()
 #endif
 }
 
-#ifdef LINUX
+#ifdef __linux__
 std::string GetCPUName(){
     std::ifstream input("/proc/cpuinfo");
     std::string line{};
@@ -238,7 +238,7 @@ uint64_t GetTotalAmountOfRam(){
 
     return 0;
 }
-#elif WINDOWS
+#elif __win32__
 std::string GetCPUName(){
     int cpuInfo[4] = {0};
     char cpuBrand[0x40] = {};

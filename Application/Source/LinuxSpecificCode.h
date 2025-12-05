@@ -1,5 +1,5 @@
 #pragma once
-#ifdef LINUX
+#ifdef __linux__
 #include <atomic>
 #include <iostream>
 #include <unistd.h>
