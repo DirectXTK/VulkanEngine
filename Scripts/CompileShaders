@@ -6,7 +6,7 @@ cd $vulkanSDK
 cd bin
 PATH=$(pwd)
 echo $SCRIPT_DIR
-./glslangValidator -V $SCRIPT_DIR/../Shaders/**.frag -o $SCRIPT_DIR/../Shaders/Fragment.spv
-./glslangValidator -V $SCRIPT_DIR/../Shaders/**.vert -o $SCRIPT_DIR/../Shaders/Vertex.spv
+./glslangValidator -V $SCRIPT_DIR/../Shaders/**.fragS -o $SCRIPT_DIR/../Shaders/Fragment.spv
+./glslangValidator -V $SCRIPT_DIR/../Shaders/**.vertS -o $SCRIPT_DIR/../Shaders/Vertex.spv
 
 

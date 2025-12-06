@@ -47,6 +47,7 @@ struct RendererDesc{
     bool Blending{true};
     Camera2D* InitialCamera{nullptr}; //optional
     VkViewport Viewport{};
+    Shader* Shaders{};
 };
 struct UniformCameraBufferData{
     glm::mat4 GeometryCamera{};

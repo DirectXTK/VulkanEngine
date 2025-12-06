@@ -235,7 +235,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
  {
-    
 
     std::array<VkDescriptorSetLayout,2> descriptorLayout;
     descriptorLayout[0]= m_DescriptorSetCamera[0].GetDescriptorLayout();
@@ -269,7 +268,14 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
      m_PipelineDesc.Viewport.minDepth =0;
      m_PipelineDesc.Viewport.maxDepth =1.0f;
      
-     
+    std::vector<Shader> Shaders{};
+    Shaders.emplace_back("/users/jimy/Repos/VulkanEngine/EngineResources/Shaders/Vertex.vertS",m_Device);
+    Shaders.emplace_back("/users/jimy/Repos/VulkanEngine/EngineResources/Shaders/Pixel.fragS",m_Device);
+
+    m_PipelineDesc.ShaderCount =Shaders.size();
+    m_PipelineDesc.Shaders = Shaders.data();
+
+
 
     ReCreatePipeline(m_PipelineDesc);
  }

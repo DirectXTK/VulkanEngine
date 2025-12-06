@@ -68,9 +68,13 @@ private:
 	struct SliderData {
 		bool IsClicked{false};
 	};
+	struct CheckBoxData{
+		bool IsClicked{false};
+	};
 	std::unordered_map<std::string, ButtonData> m_Buttons{};
 	std::unordered_map<std::string, PanelData> m_Panels{};
 	std::unordered_map<std::string, SliderData> m_Sliders{};
+	std::unordered_map<std::string, CheckBoxData> m_CheckBoxes{};
 
 
 	//std::unordered_map<uint32_t, ButtonData> m_ButtonIDs{};

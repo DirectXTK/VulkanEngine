@@ -1,5 +1,6 @@
 #pragma once
 #include "RendCore.h"
+#include "Shader.h"
 struct VertexStageInputAttrib {
 	VkFormat Format{};
 	uint32_t Offset{};
@@ -18,7 +19,8 @@ struct PipelineDesc {
 	VkPrimitiveTopology Topology{VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST};
 	bool Blending{true};
 
-
+	Shader* Shaders{};
+	uint32_t ShaderCount{};
 };
 
 class Pipeline {

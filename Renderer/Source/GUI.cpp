@@ -224,15 +224,21 @@ bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Fl
 	Renderer* renderer = m_Application->m_Renderer;
 	Float2 LPosition{ position };
 	Float2 RSize{size};
-	ButtonData* CurrentButtonData{};
+	CheckBoxData* currentCheckBoxData{};
 	GUUID CurrentButtonID{Core::GetStringHash(id)};
 
-	static bool pressed{false};
+
+	if (m_CheckBoxes.find(id) == m_CheckBoxes.end())
+		m_CheckBoxes[id] = { false };
+
+	currentCheckBoxData = &m_CheckBoxes[id];
+	CurrentButtonID = Core::GetStringHash(id);
+
 	if(m_SelectedObjID == CurrentButtonID){
-		if(pressed)
-			pressed = false;
+		if(currentCheckBoxData->IsClicked)
+			currentCheckBoxData->IsClicked = false;
 		else 
-			pressed = true;
+			currentCheckBoxData->IsClicked = true;
 	}
 
 	if (m_CurrenPanelParent) {
@@ -246,11 +252,11 @@ bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Fl
 		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
 	}
 
-	if(pressed)
+	if(currentCheckBoxData->IsClicked)
 		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,Core::GetStringHash("GUI/CheckBoxTrue"),CurrentButtonID.ID);
 	else
 		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,Core::GetStringHash("GUI/CheckBoxFalse"),CurrentButtonID.ID);
-	return pressed;
+	return currentCheckBoxData->IsClicked;
 }
 void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size) {
 	if (Text.size() != 0) {
