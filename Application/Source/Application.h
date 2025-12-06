@@ -80,7 +80,7 @@ public:
     static bool DeleteApplication();
     ~Application();
 private:
-//has to be non static
+    //has to be non static
      bool InitApplicationBackEnd(ApplicationSpecs specs);
     static void OpenTerminalAndAttachToStream();
 

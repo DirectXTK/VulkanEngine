@@ -113,6 +113,8 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
      m_GUIRenderer = new GUIRenderer(this, false);
 
+     m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::TEXTURE);
+
      return true;
 
  }
@@ -197,6 +199,7 @@ void Application::RunAStar(){
 }
  void Application::DispatchEvent(Event& event){
     Application* app = Application::GetApplication();
+    app->m_GUIRenderer->OnEvent(event);
     app->m_LayerController.OnEvent(event);
  }
 void Application::RemoveLayer(Layer* layer){
@@ -230,6 +233,7 @@ void Application::RemoveLayer(Layer* layer){
             app->m_Renderer->Statistics(true,app->m_GUIRenderer);
         }
 
+        app->m_GUIRenderer->EndGUI();
         app->m_Renderer->EndFrame();
     }
         RunCollision();

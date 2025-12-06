@@ -23,7 +23,10 @@ public:
 	void Slider(const std::string& strID, float* number, Float2 Position,  Float2 Size, float SlideAmount,Float2 MinMax,uint32_t DecimalPlaces=3);
 	void Slider(const std::string& strID, int* number, Float2 Position, Float2 Size, float SlideAmount = 0.01f);
 
+	void Quad(const Float2& position,const Float2& size,const Float4& color,GUUID textureID=0);
 
+	//returns true if checkbox is currently checked
+	bool CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture = 0);
 
 	void InputText(const char* ID, char* Buffer, uint64_t BufferSize, Float2 Position, Float2 Size);
 
@@ -39,9 +42,15 @@ public:
 	void EndGUI();
 
 	~GUIRenderer();
+protected:
+	void OnEvent(Event& event);
+	void OnKeyBoardEvent(KeyBoardEvent& event);
+	void OnMouseEvent(MouseEvent& event);
 private:
 	void DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor, const Float4& BackGroundColor,float BorderWidth);
 	void ReapplyStyles();
+
+	friend Application;
 
 	Application* m_Application{};
 	struct PanelData {
@@ -79,6 +88,7 @@ private:
 	GUI::SliderStyle* m_CurrentSliderData{};
 	GUI::OutlineStyle* m_CurrentOutlineData{};
 
+	GUUID m_SelectedObjID{0};
 	Float2* m_PickBufferData{};
 
 	uint32_t m_PanelDepth{};

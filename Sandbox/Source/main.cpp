@@ -1,5 +1,5 @@
 #define DEMO_FEATURES
-#include  "../Examples/Testing/TestingLayer.h"
+#include  "../Examples/Testing/GUITesting.h"
 
 int main() {
 	ApplicationSpecs specs{};
@@ -10,7 +10,7 @@ int main() {
 	specs.RendererDebugging = true;
 	specs.IsWindowResizable = true;
 	Application::InitApplication(specs);
-	Application::AddLayer<TestingLayer>();
+	Application::AddLayer<GUITestingLayer>();
 
 	Application::Run();
    

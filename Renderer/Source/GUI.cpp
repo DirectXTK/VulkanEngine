@@ -86,16 +86,10 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 
 
 
-		if (inputSystem->IsMouseClicked(MouseCodes::LEFT,true) &&m_DraggedPanel ==-1)
+		if (m_SelectedObjID == m_PanelIDs[m_CurrentPanel].ID.ID  &&m_DraggedPanel ==-1)
 		{
 
-			uint64_t* id{};
-			Float2 data{};
-			bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
-			if(succeded){
-			Float2 Pos = m_Application->GetMousePosNorm();
-			id = (uint64_t*)&data;
-			if (m_PanelIDs[m_CurrentPanel].ID.ID == *id) {
+				Float2 Pos = m_Application->GetMousePosNorm();
 				Float2 Dis = { Pos.x-m_PanelIDs[m_CurrentPanel].Position.x,Pos.y-m_PanelIDs[m_CurrentPanel].Position.y };
 				m_DraggedPanel = m_CurrentPanel;
 				Dis.x += m_PanelIDs[m_CurrentPanel].Offset.x;
@@ -105,9 +99,8 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 				m_DraggedPanelDragAmount.y = Pos.y- m_PanelIDs[m_CurrentPanel].Offset.y;
 
 
-			}
 		}
-		}
+		
 		if (m_DraggedPanel != -1)
 		{
 			Float2 Pos = m_Application->GetMousePosNorm();
@@ -135,7 +128,6 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 	Renderer* renderer = m_Application->m_Renderer;
 	InputSystem* inputsystem = &m_Application->m_InputSystem;
 	Float2 LPosition{ Position };
-	uint64_t* id{};
 	ButtonData* CurrentButtonData{};
 	GUUID CurrentButtonID{};
 
@@ -148,10 +140,24 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 
 	if (m_CurrenPanelParent) {
 		LPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		Size = {Size.x*m_CurrenPanelParent->Size.x,Size.y*m_CurrenPanelParent->Size.y};
+		Size.x = std::clamp(Size.x,0.0f,m_CurrenPanelParent->Size.x);
+		Size.y = std::clamp(Size.y,0.0f,m_CurrenPanelParent->Size.y);
+
+		LPosition.x = std::clamp(LPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x+Size.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-Size.x);
+		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+Size.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-Size.y);
 	}
 	Float2 OutlineSize{Size.x+m_CurrentOutlineData->Width,Size.y+m_CurrentOutlineData->Width};
-	if(CurrentButtonData->IsPressed == true)
-	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},m_CurrentOutlineData->Color,OutlineSize,0);
+	if(CurrentButtonData->IsPressed == true){
+		if(SavesState)
+			renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},m_CurrentOutlineData->Color,OutlineSize,0);
+		else{
+			Color.r -=0.1f;
+			Color.g -=0.1f;
+			Color.b -=0.1f;
+		}
+	}
 
 
 
@@ -167,17 +173,8 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 
 	
 
-
-	if (inputsystem->IsMouseClicked(mousecode)  )
-	{	
-		Float2 data{};
-		bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
-		if(succeded){
-		id = (uint64_t*)&data;
-		CurrentButtonData->LastClicked = Time::GetTimeNs();
-
-		if (CurrentButtonID.ID == *id) {
-
+		if (m_SelectedObjID == CurrentButtonID) {
+			Core::Log("dwadad id",m_SelectedObjID.ID);
 			if (SavesState )
 			{
 				if(CurrentButtonData->IsPressed==true)
@@ -195,13 +192,65 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 				CurrentButtonData->IsPressed=false;
 
 		}
-	}
 	
-	}
+	
+	
 	
 
 
 	return CurrentButtonData->IsPressed;
+}
+void GUIRenderer::Quad(const Float2& position,const Float2& size,const Float4& color,GUUID textureID){
+	Renderer* renderer = m_Application->m_Renderer;
+	Float2 LPosition{ position };
+	Float2 RSize{size};
+	ButtonData* CurrentButtonData{};
+	GUUID CurrentButtonID{};
+
+	if (m_CurrenPanelParent) {
+		LPosition = { (position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		RSize = {RSize.x*m_CurrenPanelParent->Size.x,size.y*m_CurrenPanelParent->Size.y};
+		RSize.x = std::clamp(RSize.x,0.0f,m_CurrenPanelParent->Size.x);
+		RSize.y = std::clamp(RSize.y,0.0f,m_CurrenPanelParent->Size.y);
+
+		LPosition.x = std::clamp(LPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x+RSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-RSize.x);
+		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
+	}
+	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,textureID,0);
+}
+
+bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture){
+	Renderer* renderer = m_Application->m_Renderer;
+	Float2 LPosition{ position };
+	Float2 RSize{size};
+	ButtonData* CurrentButtonData{};
+	GUUID CurrentButtonID{Core::GetStringHash(id)};
+
+	static bool pressed{false};
+	if(m_SelectedObjID == CurrentButtonID){
+		if(pressed)
+			pressed = false;
+		else 
+			pressed = true;
+	}
+
+	if (m_CurrenPanelParent) {
+		LPosition = { (position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		RSize = {RSize.x*m_CurrenPanelParent->Size.x,size.y*m_CurrenPanelParent->Size.y};
+		RSize.x = std::clamp(RSize.x,0.0f,m_CurrenPanelParent->Size.x);
+		RSize.y = std::clamp(RSize.y,0.0f,m_CurrenPanelParent->Size.y);
+
+		LPosition.x = std::clamp(LPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x+RSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-RSize.x);
+		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
+	}
+
+	if(pressed)
+		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,Core::GetStringHash("GUI/CheckBoxTrue"),CurrentButtonID.ID);
+	else
+		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,Core::GetStringHash("GUI/CheckBoxFalse"),CurrentButtonID.ID);
+	return pressed;
 }
 void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size) {
 	if (Text.size() != 0) {
@@ -457,9 +506,35 @@ void GUIRenderer::SetFontSize(uint32_t Size)
 uint32_t GUIRenderer::GetFontSize() {
 	return m_FontSystem->GetFontSize();
 }
+void GUIRenderer::OnEvent(Event& event){
+	if(event.GetEventType() == EventType::KEYBOARD)
+		OnKeyBoardEvent((KeyBoardEvent&)event);
+	else if(event.GetEventType() == EventType::MOUSE)
+		OnMouseEvent((MouseEvent&)event);
+}
+void GUIRenderer::OnKeyBoardEvent(KeyBoardEvent& event){
 
+}
+void GUIRenderer::OnMouseEvent(MouseEvent& event){
+	Renderer* renderer = Application::GetRenderer();
+
+	if(event.Code == MouseCodes::LEFT && event.State == EventState::PRESSED){
+		Float2 data{};
+		bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
+		if(succeded){
+			m_SelectedObjID = *(uint64_t*)&data;
+		}
+
+	}
+	if(event.Code == MouseCodes::LEFT && event.State == EventState::RELEASED){
+		m_SelectedObjID =0;
+	}
+
+
+}
 void GUIRenderer::EndGUI()
 {
+	m_SelectedObjID =0;
 	//Update the dragged panel/button
 
 
