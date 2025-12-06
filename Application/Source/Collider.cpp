@@ -1,87 +1,22 @@
 #include "Collider.h"
 #include "Application.h"
 #define TILESIZE 0.04f
-		void Async(std::vector<ColliderBackEnd>* collid,int offset,int size){
-			std::vector<ColliderBackEnd>& colliders = *collid;
-
-			for(uint32_t i=offset ;i < size;i++){
-					colliders[i].Collided(false);
-					for(uint32_t j=i+1;j < size;j++){
-						bool result = Core::DefaultCollisionFunction(&colliders[i],&colliders[j]);
-						if(result){
-							colliders[i].Collided(result);
-							colliders[j].Collided(result);
-
-						}
-					}
-				}
-		}
-		void ColliderSystem::RunCollisions(){
-
-			Async(&m_Colliders,0,m_Colliders.size());
-
-			for(uint32_t i =0;i < m_Colliders.size();i++)
-				Core::DefaultMovementFucntion(&m_Colliders[i]);
-		}
-	
-
-
-
-
-
-		Collider ColliderSystem::CreateCollider(const Float2& position,const Float2& size){
-			m_Colliders.emplace_back(position,size);
-			return Collider(m_Colliders.size()-1);
-		}
-		bool Collider::IsCollided(){
-			ColliderBackEnd* collider = Application::GetCollider(m_ID);
-			if(!collider)
-				Core::Log(ErrorType::Error,"forgot to create collider or something went wrong.");
-			return collider->IsCollided();
-		}
-
-		void Collider::SetPosition(const Float2& position){
-			ColliderBackEnd* collider = Application::GetCollider(m_ID);
-			collider->SetPosition(position);
-			}
-		void Collider::SetSize(const Float2& size){
-			ColliderBackEnd* collider = Application::GetCollider(m_ID);
-			collider->SetSize(size);
-		}
-		
-		void Collider::SetAcceleration(const Float2& aceeleration){
-			ColliderBackEnd* collider = Application::GetCollider(m_ID);
-			collider->SetAcceleration(aceeleration);
-		}
-
-
-		Float2 Collider::GetPosition(){
-				ColliderBackEnd* collider = Application::GetCollider(m_ID);
-			return collider->GetPosition();
-		}
-		Float2 Collider::GetSize(){
-				ColliderBackEnd* collider = Application::GetCollider(m_ID);
-			return collider->GetSize();
-		}
-		Float2 Collider::GetAcceleration(){
-				ColliderBackEnd* collider = Application::GetCollider(m_ID);	
-			return collider->GetAcceleration();
-		}
-
-namespace Core{
-	bool DefaultCollisionFunction(ColliderBackEnd* collider1,ColliderBackEnd* collider2){
-		//if acceleration is zero then a a bit to move the troops.
-
-		if(collider1->GetPosition().x + (collider1->GetSize().x*2) <collider2->GetPosition().x ||
-			collider1->GetPosition().x > collider2->GetPosition().x + (collider2->GetSize().x*2))
+	bool ColliderSystem::IsCollided(const Float2& fPos,const Float2& fSize,const Float2& sPos,const Float2& sSize){
+		if(fPos.x + (fSize.x*2) <sPos.x ||
+			fPos.x > sPos.x + (sSize.x*2))
 			return false;
-		if(collider1->GetPosition().y + (collider1->GetSize().y*2) <collider2->GetPosition().y ||
-			collider1->GetPosition().y > collider2->GetPosition().y + (collider2->GetSize().y*2))
+		if(fPos.y + (fSize.y*2) <sPos.y ||
+			fPos.y > sPos.y + (sSize.y*2))
 			return false;
-		//calculate acceleration.The smallest obj get pushed.
+		return true;
+	}
+
+	bool ColliderSystem::DefaultCollisionFunction( Float2& fPos, Float2& fSize, Float2& sPos, Float2& sSize){
+		if(!IsCollided(fPos,fSize,sPos,sSize))
+			return false;
 		
-		Float2 pos1 = collider1->GetPosition();
-		Float2 pos2 = collider2->GetPosition();
+		Float2 pos1 = fPos;
+		Float2 pos2 = sPos;
 		
 		Float2 Dis = {pos1.x-pos2.x,pos1.y-pos2.y};
 
@@ -94,22 +29,79 @@ namespace Core{
 		float Dir = (float)Core::RandomInt32(-1,1);
 		float Dir2 = (float)Core::RandomInt32(-1,1);
 
-		pos1.x +=(Dis.x*0.033f);
-		pos1.y +=(Dis.y*0.033f);
+		pos1.x +=(Dis.x*0.366f);
+		pos1.y +=(Dis.y*0.366f);
 
-		pos2.x -=(Dis.x*0.033f);
-		pos2.y -=(Dis.y*0.033f);
+		pos2.x -=(Dis.x*0.366f);
+		pos2.y -=(Dis.y*0.366f);
 		
-
-		collider1->SetPosition(pos1);
-		collider2->SetPosition(pos2);
+		fPos = pos1;
+		sPos = pos2;
 
 		return true;
 	}
-	void DefaultMovementFucntion(ColliderBackEnd* collider1){
-		//how much its deaccelerates when its stops being pushed.
-		
+	void ColliderSystem::RunCollisionsAsync(char* objData,uint32_t posOffset,uint32_t sizeOffset,uint64_t objCount,uint64_t stride,int32_t isCollidedOffset){
+		//uses threads per 200 obj or the max.
+		uint32_t threadCount = std::min((objCount/200)+1,(uint64_t)Core::GetCPUThreadCount());
+		uint64_t perThreadobjCount =  uint64_t(objCount/(uint64_t)threadCount);
+		uint64_t offset{};
+		std::vector<std::thread*> threads{};
+		threads.resize(threadCount);
+		if(isCollidedOffset != -1)
+			for(uint64_t i=0;i < objCount;i++){
+				bool* isCollided = (bool*)&objData[(i*stride)+isCollidedOffset];
+				*isCollided = false;
+			}
+
+		for(uint32_t i =0 ;i < threadCount;i++){
+
+			if(i+1 ==threadCount){
+				perThreadobjCount = objCount-(perThreadobjCount*i);
+				threads[i] = new std::thread(ColliderSystem::CollisionAsync,objData+offset,posOffset,sizeOffset,perThreadobjCount,i,perThreadobjCount,stride,isCollidedOffset);
+			}else
+				threads[i] = new std::thread(ColliderSystem::CollisionAsync,objData+offset,posOffset,sizeOffset,perThreadobjCount,i,objCount-(i*perThreadobjCount),stride,isCollidedOffset);
+			offset +=perThreadobjCount*stride;
+
+		}
+		for(uint32_t i=0 ;i < threadCount;i++){
+			threads[i]->join();
+			delete threads[i];
+		}
+
 	}
+	void ColliderSystem::CollisionAsync(char* objData,uint32_t posOffset,uint32_t sizeOffset,uint64_t thisThreadsObjCount,uint16_t threadIndex,uint64_t objCount,uint64_t stride,int32_t isCollidedOffset){
+		Float2* fPos{};
+		Float2* fSize{};
+		bool* fIsCollided{};
+
+		Float2* sPos{};
+		Float2* sSize{};
+		bool* sIsCollided{};
+		for(uint64_t i=0 ;i < thisThreadsObjCount-1;i++){
+			fPos = (Float2*)&objData[(i*stride)+posOffset];
+			fSize = (Float2*)&objData[(i*stride)+sizeOffset];
+			for(uint64_t j=i+1;j < objCount;j++){
+
+			sPos = (Float2*)&objData[(j*stride)+posOffset];
+			sSize = (Float2*)&objData[(j*stride)+sizeOffset];
+
+			bool ret = ColliderSystem::DefaultCollisionFunction(*fPos,*fSize,*sPos,*sSize);
+
+			if(ret &&isCollidedOffset != -1){
+				fIsCollided = (bool*)&objData[(i*stride)+isCollidedOffset];
+				sIsCollided = (bool*)&objData[(j*stride)+isCollidedOffset];
+
+				*sIsCollided =true;
+				*fIsCollided = true; 
+			}
+
+			}
+		}
+
+	}
+
+namespace Core{
+	
 }
 
 

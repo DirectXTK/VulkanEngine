@@ -1,5 +1,5 @@
 #define DEMO_FEATURES
-#include  "../Examples/Testing/TestingLayer.h"
+#include  "../Examples/Testing/CollisionTestingLayer.h"
 
 int main() {
 	ApplicationSpecs specs{};
@@ -11,8 +11,7 @@ int main() {
 	specs.IsWindowResizable = true;
 	specs.AppDebugging = true;
 	Application::InitApplication(specs);
-	Application::AddLayer<MenuLayer>();
-	Application::AddLayer<TestingLayer>();
+	Application::AddLayer<CollisionLayer>();
 
 	Application::Run();
    

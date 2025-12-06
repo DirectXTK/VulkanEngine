@@ -1,10 +1,10 @@
 #include "CollisionTestingLayer.h"
 
-	 CollisionLayer::CollisionLayer():Layer("CollisionLayer"){
+CollisionLayer::CollisionLayer():Layer("CollisionLayer"){
 
-	}	
+}	
 
-	void CollisionLayer::OnCreate(){
+void CollisionLayer::OnCreate(){
 
 		m_Units.push_back(Unit());
 		m_Units.push_back(Unit());
@@ -12,39 +12,84 @@
 		Float2 size = {0.01f,0.01f};
 
 
-		m_Units[0].collider = Application::CreateCollider({0.0f,0.0f},size);
-		m_Units[1].collider = Application::CreateCollider({0.0f,0.5f},size);
-
-		for(uint32_t i =0 ;i < 32;i++)
-			{
+		for(uint32_t i =0 ;i < 20;i++)
+		{
 				m_Units.push_back(Unit());
-				m_Units[m_Units.size()-1].collider = Application::CreateCollider({0.0f,0.0f},size);
-			}
+				m_Units[i].Size = size;
+				m_Units[i].Pos = {0.5f,0.5f};
+
+		}
+
+}
+void CollisionLayer::OnUpdate(double deltaTime){
+
+	Unit* unit =&m_Units[0];
+	unit->Pos.x +=m_Move.x;
+	unit->Pos.y +=m_Move.y;
+
+	Application::RunCollisionAsync(m_Units.data(),offsetof(Unit,Pos),offsetof(Unit,Size),m_Units.size(),sizeof(Unit),offsetof(Unit,Collided));
+}
+void CollisionLayer::OnEvent(Event& event){
+	if(event.GetEventType()== EventType::KEYBOARD)
+		OnKeyBoardEvent((KeyBoardEvent&)event);
 	}
+void CollisionLayer::OnKeyBoardEvent(KeyBoardEvent& event){
+	float MoveAmount{0.0008f*Application::GetDeltaTime()};
 
-		void CollisionLayer::OnUpdate(double deltaTime){
-			Float2 pos =m_Units[1].collider.GetPosition();
+	if(event.Key == KeyCodes::P && event.State == EventState::HOLD){
+		m_Units.push_back(Unit());
+		Float2 size = {0.01f,0.01f};
+		m_Units[m_Units.size()-1].Size = size;
+		m_Units[m_Units.size()-1].Pos = {0.5f,0.5f};
+	}
+	if(event.Key == KeyCodes::A && event.State == EventState::RELEASED){
+		m_Move.x = 0.0f;
+	}
+	if(event.Key == KeyCodes::D && event.State == EventState::RELEASED){
+		m_Move.x = 0.0f;
 
-			if(Application::IsKeyPressed(KeyCodes::S))
-				pos.y -=0.0001f;
-			if(Application::IsKeyPressed(KeyCodes::W))
-				pos.y +=0.0001f;
-			if(Application::IsKeyPressed(KeyCodes::A))
-				pos.x -=0.0001f;
-			if(Application::IsKeyPressed(KeyCodes::D))
-				pos.x +=0.0001f;
-			m_Units[1].collider.SetPosition(pos);
-		}
-		void CollisionLayer::OnRender(double deltaTime){
-			Renderer* renderer = Application::GetRenderer();
+	}
+	if(event.Key == KeyCodes::W && event.State == EventState::RELEASED){
+		m_Move.y = 0.0f;
+
+	}
+	if(event.Key == KeyCodes::S && event.State == EventState::RELEASED){
+		m_Move.y = 0.0f;
+
+	} 
+
+
+	if(event.Key == KeyCodes::A && event.State == EventState::PRESSED){
+		m_Move.x = -MoveAmount;
+	}
+	if(event.Key == KeyCodes::D && event.State == EventState::PRESSED){
+		m_Move.x = MoveAmount;
+
+	}
+	if(event.Key == KeyCodes::W && event.State == EventState::PRESSED){
+		m_Move.y = MoveAmount;
+
+	}
+	if(event.Key == KeyCodes::S && event.State == EventState::PRESSED){
+		m_Move.y = -MoveAmount;
+
+	} 
+
+}
+void CollisionLayer::OnRender(double deltaTime){
+	Renderer* renderer = Application::GetRenderer();
  
-			for(uint32_t i=0 ;i < m_Units.size();i++){
-				renderer->DrawQuad({m_Units[i].collider.GetPosition().x,m_Units[i].collider.GetPosition().y,0.0f},{0.0f,1.0f,0.0f,1.0f},m_Units[i].collider.GetSize(),0);
-			}
-		}
-		void CollisionLayer::OnGUI(){
+	for(uint32_t i=0 ;i < m_Units.size();i++){
+		if(m_Units[i].Collided)
+		renderer->DrawQuad({m_Units[i].Pos.x,m_Units[i].Pos.y,0.0f},{1.0f,0.0f,0.0f,1.0f},m_Units[i].Size,0);
+		else
+		renderer->DrawQuad({m_Units[i].Pos.x,m_Units[i].Pos.y,0.0f},{0.0f,1.0f,0.0f,1.0f},m_Units[i].Size,0);
 
-		}
-		void CollisionLayer::OnDestroy(){
+	}
+}
+void CollisionLayer::OnGUI(){
 
-		}
+}
+void CollisionLayer::OnDestroy(){
+
+}

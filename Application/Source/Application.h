@@ -70,9 +70,11 @@ public:
     static uint64_t GetAssetCount(const AssetType& type); 
 
     //Collision
-    static ColliderBackEnd* GetCollider(int32_t id){return Application::GetApplication()->m_CollisionSystem.GetCollider(id);}
-    static Collider CreateCollider(const Float2& position={0.0f,0.0f},const Float2& size={0.0f,0.0f});
-    static void RunCollision();
+    //returns true if collided.
+    static bool RunCollision(Float2& fPos,Float2& fSize,Float2& sPos,Float2& sSize);
+    //position needs to be Float2 and size must be Float2.
+    static void RunCollisionAsync(void* objData,uint32_t posOffset,uint32_t sizeOffset,uint64_t objCount,uint64_t stride,int32_t isCollidedOffset=-1);
+
     static void RunAStar();
 
 
@@ -99,6 +101,9 @@ private:
     double m_DeltaTime{};
     double m_LastFrameTime{};
     ColliderSystem m_CollisionSystem{};
+    //multithreading
+    std::vector<std::thread> m_ThreadPool{};
+
 public:
     //GUI Renderer
     Renderer* m_Renderer{};

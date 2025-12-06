@@ -107,6 +107,7 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
         LogSystemAndAppInformation();
     if(specs.OpenTerminal)
         OpenTerminalAndAttachToStream();
+    m_ThreadPool.resize(Core::GetCPUThreadCount());
 
     tcgetattr(STDIN_FILENO,&m_DefaultConsoleSett);
 
@@ -208,15 +209,14 @@ void Application::QueueShutDown(){
     Application* app = GetApplication();
      app->m_AssetManager.LoadAllAssets(Path, type);
  }
-     Collider Application::CreateCollider(const Float2& position,const Float2& size){
-        Application* app = Application::GetApplication();
-        return app->m_CollisionSystem.CreateCollider(position,size);
-    }
-void Application::RunCollision(){
-    Application* app= Application::GetApplication();
 
-    app->m_CollisionSystem.RunCollisions();
-  
+bool Application::RunCollision(Float2& fPos,Float2& fSize,Float2& sPos,Float2& sSize){
+    Application* app= Application::GetApplication();
+   return  app->m_CollisionSystem.DefaultCollisionFunction(fPos,fSize,sPos,sSize);
+}
+void Application::RunCollisionAsync(void* objData,uint32_t posOffset,uint32_t sizeOffset,uint64_t objCount,uint64_t stride,int32_t isCollidedOffset){
+    Application* app= Application::GetApplication();
+    app->m_CollisionSystem.RunCollisionsAsync((char*)objData,posOffset,sizeOffset,objCount,stride,isCollidedOffset);
 }
 void Application::RunAStar(){
 
@@ -256,8 +256,6 @@ void Application::RunAStar(){
 
         app->m_Renderer->EndFrame();
     }
-        RunCollision();
-        RunAStar();
 
       
 

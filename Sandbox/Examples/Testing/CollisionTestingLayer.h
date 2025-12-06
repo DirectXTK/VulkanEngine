@@ -3,7 +3,9 @@
 
 struct Unit{
 	Unit(){}
-	Collider collider;
+	Float2 Pos{};
+	Float2 Size{};
+	bool Collided{false};
 	
 };
 class CollisionLayer : public Layer{
@@ -15,8 +17,12 @@ class CollisionLayer : public Layer{
 		void OnUpdate(double deltaTime)override;
 		void OnRender(double deltaTime)override;
 		void OnGUI()override;
+		void OnEvent(Event& event)override;
 
 		void OnDestroy()override;
 	private:
+		void OnKeyBoardEvent(KeyBoardEvent& event);
+
+		Float2 m_Move{};
 		std::vector<Unit> m_Units{};
 };
