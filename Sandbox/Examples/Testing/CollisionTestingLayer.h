@@ -5,6 +5,7 @@ struct Unit{
 	Unit(){}
 	Float2 Pos{};
 	Float2 Size{};
+	PathAgentHandle Path{};
 	bool Collided{false};
 	
 };

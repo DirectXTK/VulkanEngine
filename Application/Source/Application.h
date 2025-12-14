@@ -9,6 +9,9 @@
 #include "FontSystem.h"
 #include "Collider.h"
 #include "Event.h"
+
+#include "PathAgent.h"
+
 struct ApplicationSpecs{
     uint32_t WindowHeight{500};
      uint32_t WindowWidth{500};
@@ -77,6 +80,7 @@ public:
 
     static void RunAStar();
 
+    static PathAgentHandle CreatePathAgent(const Float2& position,const Float2& size,const AgentType& type);
 
     static Application* GetApplication(){return m_Application;}
     static bool DeleteApplication();
@@ -107,13 +111,13 @@ private:
 public:
     //GUI Renderer
     Renderer* m_Renderer{};
-
     Camera2D m_Camera{};
     InputSystem m_InputSystem{};
     AssetManager m_AssetManager{};
     bool m_Running{};
     //Debugging
     bool m_RendererDebugging{false};
+    ApplicationSpecs m_Specs{};
     //console
     termios m_DefaultConsoleSett{};
 
@@ -121,5 +125,5 @@ public:
     FontSystem* m_FontSystem{};
     GUIRenderer* m_GUIRenderer{};
 #endif
-
+    PathSystem* m_PathFinderSystem{};
 };

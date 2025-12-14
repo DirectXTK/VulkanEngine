@@ -103,6 +103,8 @@ void Application::LogSystemAndAppInformation(){
 }
 bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
+    m_Specs = specs;
+
     if(specs.AppDebugging)
         LogSystemAndAppInformation();
     if(specs.OpenTerminal)
@@ -133,6 +135,8 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
      m_AssetManager.Init(this);
   
+     //Init a* path finding algorith system
+     m_PathFinderSystem = new PathSystem(1000,1000,{0.015f,0.015f});
 
      m_Renderer->InitializePipeline(500);
 
@@ -147,7 +151,10 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
         delete Application::GetApplication();
         return true;
     }
-
+PathAgentHandle Application::CreatePathAgent(const Float2& position,const Float2& size,const AgentType& type){
+    Application* app = Application::GetApplication();
+    return app->m_PathFinderSystem->CreateAgent(position,size,type);
+}
 Float2 Application::GetMousePosChange(){
     Application* app = Application::GetApplication();
     return app->m_InputSystem.GetMousePosChange();
@@ -239,6 +246,9 @@ void Application::RunAStar(){
         app->m_DeltaTime = Time::GetTimeMs() - app->m_LastFrameTime;
         app->m_LastFrameTime = Time::GetTimeMs();
         app->m_Renderer->BeginFrame(&app->m_Camera,app->m_DeltaTime);
+
+        if(app->m_Specs.AppDebugging)
+            app->m_PathFinderSystem->RenderGrid();
 
         if(app->m_Renderer->GetSwapChainState() == VK_SUCCESS){
 

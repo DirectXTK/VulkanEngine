@@ -17,6 +17,7 @@ void CollisionLayer::OnCreate(){
 				m_Units.push_back(Unit());
 				m_Units[i].Size = size;
 				m_Units[i].Pos = {0.5f,0.5f};
+				m_Units[i].Path = Application::CreatePathAgent(m_Units[i].Pos, m_Units[i].Size,AgentType::LAND );
 
 		}
 
@@ -27,6 +28,7 @@ void CollisionLayer::OnUpdate(double deltaTime){
 	unit->Pos.x +=m_Move.x;
 	unit->Pos.y +=m_Move.y;
 
+	unit->Path.Update(unit->Pos,unit->Size);
 	Application::RunCollisionAsync(m_Units.data(),offsetof(Unit,Pos),offsetof(Unit,Size),m_Units.size(),sizeof(Unit),offsetof(Unit,Collided));
 }
 void CollisionLayer::OnEvent(Event& event){
