@@ -10,6 +10,11 @@ void GUITestingLayer::OnCreate() {
 	sliderdata.FillOn = true;
 	sliderdata.StructSize = sizeof(GUI::SliderStyle);
 	sliderdata.FillColor = {0.0f,0.0f,1.0f,1.0f};
+
+	auto asset = Application::GetAsset<Texture>("FontTexture46");
+	if(asset){
+		asset.GetData()->WriteToFile("OutputTexture.png");
+	}
 }
 void GUITestingLayer::OnUpdate(double deltatime)
 {
@@ -56,7 +61,7 @@ void GUITestingLayer::OnGUI()
 {
 	GUIRenderer* guiRenderer = Application::GetGUIRenderer();
 	
-	static float lafa{5.5f};
+	static float lafa{46.0f};
 	guiRenderer->Panel("Panel", {0.0f,-0.9f}, {1.0f,0.5f,0.5f,1.0f}, {1.0f,0.1f}, 0, false);
 
 	//guiRenderer->Button("Start Button","", { 0.0f,0.5f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.5f,0.5f },MouseCodes::LEFT,0,false);
@@ -65,7 +70,12 @@ void GUITestingLayer::OnGUI()
 	//guiRenderer->CheckBox("test2",{-0.4f,0.0f},{0.10f,0.50f},{1.0f,1.0f,1.0f,1.0f});
 	//guiRenderer->Quad({0.0f,0.0f},{0.2f,0.5f},{0.0f,0.0f,1.0f,1.0f});
 	guiRenderer->PushStyle(GUI::Style::SLIDER,&sliderdata);
+	guiRenderer->SetFontSize((uint32_t)lafa);
 	guiRenderer->Slider("SLi",&lafa,{0.0f,0.0f},{0.2f,0.5f},1.0f,{-500.0f,500.0f});
+	guiRenderer->Text("ID","TEXT",{0.9f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
+	guiRenderer->SetFontSize(12);
+	guiRenderer->Text("S","SMALL",{0.9f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
+
 	guiRenderer->PopStyle();
 	guiRenderer->EndPanel();
 

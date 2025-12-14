@@ -62,10 +62,7 @@ public:
     void BeginFrame(Camera2D* camera,float deltaTime);
     void BeginGUIFrame();
 
-    //GUI
-    //void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
-    //void DrawQuadWithAtlasGUI(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
-   // void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, uint64_t TextureIndex);
+
     //
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, int TextureIndex = -1);
     //void DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
@@ -77,9 +74,6 @@ public:
     //PointerIndex = -1 means don't draw it.
     void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
     //GUI 
-
-    void DrawOutline(Float3 Position, Float2 Size,Float4 Color, float OutlineWidth);
-
     //Particles
     void DrawParticle();
 
@@ -127,7 +121,6 @@ private:
     void CreateNewBufferForBatch(std::vector<Buffer*>& VertexBuffers, std::vector<Buffer*>& Stagging);
 
     void FlushGeometry();
-    void FlushOutlines();
     void FlushGUI();
 
     void CreateInstance();
@@ -297,8 +290,6 @@ private:
     
     //Queue changes
     std::vector<Shader> m_QueuedShaders{};
- 
-
 
 
     AssetManager* m_AssetManager{}; 

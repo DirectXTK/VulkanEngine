@@ -87,7 +87,7 @@ private:
 		GUI::Style StyleType{};
 		void* StyleData{};
 	};
-	std::stack<StyleContainer> m_Styles{};
+	std::vector<StyleContainer> m_Styles{};
 	Float4 m_CurrentColor{};
 	GUI::BorderStyle* m_CurrentBorderData{};
 	GUI::SliderStyle* m_CurrentSliderData{};

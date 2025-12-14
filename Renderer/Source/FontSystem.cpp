@@ -439,7 +439,7 @@ void FontSystem::ReRenderFaces()
 	}
 
 
-	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize, 96, 96);
+	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize, 300, 300);
 	error = FT_Set_Pixel_Sizes(m_Face, 0, m_CharacterSize);
 
 
@@ -586,7 +586,7 @@ void FontSystem::ReRenderFaces()
 	Texture* texture = new Texture(Application::GetRenderer()->GetContext(),textureCreateInfo,TextureType::Texture);
 	
 	font->TextureAsset = manager->LoadAsset<Texture>(texture, AssetType::TEXTURE, "FontTexture"+std::to_string(m_CharacterSize));
-		m_Renderer->SetCurrentFont(manager->LoadAsset<Font>(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
+		m_Renderer->SetCurrentFont(manager->LoadAssetPerma<Font>(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
 	delete[] AtlasMapBitmap;
 		
 	

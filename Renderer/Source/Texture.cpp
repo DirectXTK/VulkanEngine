@@ -2,17 +2,47 @@
 #include "Buffer.h"
 #include "CommandBuffer.h"
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb-master/stb_image.h"
+#include "stb-master/stb_image_write.h"
 
-
+uint32_t CalculateBytesPerPixel(VkFormat format){
+		switch(format){
+			case VK_FORMAT_R8G8B8A8_UNORM:
+				return 4;
+			case VK_FORMAT_R8G8B8A8_UINT:
+				return 4;
+			case VK_FORMAT_R8G8B8_UNORM:
+				return 3;
+			case VK_FORMAT_R8G8B8_UINT:
+				return 3;
+			case VK_FORMAT_R8G8_UNORM:
+				return 2;
+			case VK_FORMAT_R8G8_UINT:
+				return 2;
+			case VK_FORMAT_R8_UNORM:
+				return 1;
+			case VK_FORMAT_R8_UINT:
+				return 1;
+			case VK_FORMAT_R32G32_UINT:
+				return 8;
+			case VK_FORMAT_D24_UNORM_S8_UINT: 
+				return 4;
+			default :{
+				Core::Log(ErrorType::Error,"CalculateBytesPerPixel invalid type.Type = ",(uint32_t)format);
+			}
+		}
+		return 0;
+}
 	Texture::Texture(Context context, const TextureCreateInfo& createInfo,const TextureType& type){
 		m_Context = context;
 		m_TextureType = type;
 		m_Width = createInfo.Width;
 		m_Height = createInfo.Height;
+		m_ChannelCount = CalculateBytesPerPixel(createInfo.Format);
 		switch(type){
 			case TextureType::Texture:{
-			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,createInfo.Pixels);
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,createInfo.Pixels);
 				break;
 			}
 			case TextureType::ColorAttachment:{
@@ -76,34 +106,50 @@ Texture::Texture(Context context, const TextureCreateInfo& createInfo ,std::stri
 		}
 	}
 }
-uint32_t CalculateBytesPerPixel(VkFormat format){
-		switch(format){
-			case VK_FORMAT_R8G8B8A8_UNORM:
-				return 4;
-			case VK_FORMAT_R8G8B8A8_UINT:
-				return 4;
-			case VK_FORMAT_R8G8B8_UNORM:
-				return 3;
-			case VK_FORMAT_R8G8B8_UINT:
-				return 3;
-			case VK_FORMAT_R8G8_UNORM:
-				return 2;
-			case VK_FORMAT_R8G8_UINT:
-				return 2;
-			case VK_FORMAT_R8_UNORM:
-				return 1;
-			case VK_FORMAT_R8_UINT:
-				return 1;
-			case VK_FORMAT_R32G32_UINT:
-				return 8;
-			case VK_FORMAT_D24_UNORM_S8_UINT: 
-				return 4;
-			default :{
-				Core::Log(ErrorType::Error,"CalculateBytesPerPixel invalid type.Type = ",(uint32_t)format);
-			}
-		}
-		return 0;
+
+bool Texture::WriteToFile(const std::string& path){
+
+
+	BufferDesc desc{};
+	desc.Device = m_Context->Device;
+	desc.Memoryflags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	desc.Physdevice = m_Context->PDevice;
+	desc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
+	desc.Usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	desc.SizeBytes = m_ChannelCount*m_Width*m_Height;
+
+	Buffer staggingBuffer(desc);
+
+	VkCommandBuffer commandBuffer =  CommandBuffer::StartSingleUseCommandBuffer(m_Context,m_Context->CommandPool);
+
+	VkBufferImageCopy region{};
+	region.bufferOffset = 0;
+	region.imageExtent = {(uint32_t)m_Width,(uint32_t)m_Height,1};
+	region.imageOffset ={0,0,0};
+	region.imageSubresource.aspectMask = m_AspectMask;
+	region.imageSubresource.baseArrayLayer = 0;
+	region.imageSubresource.layerCount = 1;
+	region.imageSubresource.mipLevel = 0;
+
+	VkImageLayout oldLayout= m_Layout;
+
+	TrasitionFormat(true,m_Layout,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,commandBuffer);
+	vkCmdCopyImageToBuffer(commandBuffer,m_Image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,*staggingBuffer.GetBuffer(),1,&region);
+	TrasitionFormat(true,m_Layout,oldLayout,commandBuffer);
+
+
+	CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_Context->CommandPool,commandBuffer);
+
+	char* data = new char[m_ChannelCount*m_Width*m_Height];
+	staggingBuffer.LoadFromBufferToVar(data);
+	int ret = stbi_write_png(path.c_str(),m_Width,m_Height,m_ChannelCount,data,4*m_Width);
+	if(!ret)
+		Core::Log(ErrorType::Error,"Failed to write to file this texture{Texture::WriteToFile} ",m_Width,m_Height,m_ChannelCount,path);
+
+	delete[] data;
+	return true;
 }
+
 
 void Texture::TrasitionFormat(bool Write,VkImageLayout OldLayout, VkImageLayout NewLayout,VkCommandBuffer CommandBuffer)
 {
@@ -142,7 +188,7 @@ void Texture::TrasitionFormat(bool Write,VkImageLayout OldLayout, VkImageLayout 
 	
 
 	vkCmdPipelineBarrier(CommandBuffer, SourceStage, DstStage, 0, 0, 0, 0, 0, 1, &barrier);
-
+	m_Layout = NewLayout;
 
 }
 
@@ -284,6 +330,8 @@ void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTilin
 	bufferdesc.SizeBytes = texturesize;
 	bufferdesc.Usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
+	m_Layout = finalLayout;
+
 
 	if(initData||m_TextureType == TextureType::Texture){
 		Buffer stagging(bufferdesc);
@@ -302,7 +350,6 @@ void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTilin
 	CopyDataFromBuffer(TempCommandBuffer, *stagging.GetBuffer(), m_Image);
 
 	TrasitionFormat(false,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, finalLayout, TempCommandBuffer);
-
 
 	CommandBuffer::EndSingleUseCommandBuffer(m_Context, m_Context->CommandPool, TempCommandBuffer);
 	}

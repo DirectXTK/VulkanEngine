@@ -497,7 +497,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         
         m_DrawCommandsGUI.push_back({ m_VertexPointer-m_VertexBufferOffsetGUI,m_CurrentVertexBufferIndexGUI,m_VertexBufferOffsetGUI,m_DrawCallCountGUI + m_DrawCallCountGeometry });
 
-        //m_VertexCountPerDrawCall += m_VertexPointer;
+        m_VertexCountPerDrawCall += m_VertexPointer;
         if (m_VertexPointer >= m_VertexGUIRemaining) {
            m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
                  CreateNewBufferForBatch(m_VertexBufferGUI, m_StaggingBufferGUI);
@@ -509,11 +509,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         else {
             m_VertexGUIRemaining -= (m_VertexPointer-m_VertexBufferOffsetGUI);
         }
-        
-
-
-
-        
         
 
         VkBufferCopy region{};
@@ -529,39 +524,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         textures.clear();
         textureIds.clear();
-    }
-    void Renderer::FlushOutlines()
-    {
-   
-
-
-        //m_DrawCommandsOutlines.push_back({ m_VertexCountOutlines,0 });
-
-
-        //if (m_DrawCallCountOutlines == m_VertexBufferOutlines.size())
-         //   CreateNewBufferForBatch(m_VertexBufferOutlines, m_StaggingBufferOutlines);
-
-
-        //m_StaggingBufferOutlines[m_DrawCallCountOutlines]->UploadToBuffer(m_Device, m_VertexOutline, sizeof(Vertex) * m_VertexCountOutlines);
-
-
-        VkBufferCopy region{};
-        region.size = sizeof(Vertex) * m_VertexCountOutlines;
-
-        if (m_VertexCountOutlines != 0)
-        {
-            //vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferOutlines[m_DrawCallCountOutlines]->GetBuffer(), *m_VertexBufferOutlines[m_DrawCallCountOutlines]->GetBuffer(), 1, &region);
-        }
-
-
-
-
-
-
-
-
-        m_VertexCountOutlines = 0;
-        m_DrawCallCountOutlines++;
     }
     
     void Renderer::FlushGeometry()
@@ -597,9 +559,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             }
         }
 
-        //Debug
-        //Debug::ValidateDrawBatch(debugTextures);
-
 
         m_DrawCommandsGeometry.push_back({ m_VertexPointer-m_VertexBufferOffset,m_CurrentVertexBufferIndex,m_VertexBufferOffset,m_DrawCallCountGUI + m_DrawCallCountGeometry });
         m_VertexCountPerDrawCall += m_VertexPointer;
@@ -620,18 +579,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_VertexCountRemaining -= (m_VertexPointer-m_VertexBufferOffset);
 
         }
-      
-
-
-
-
-
-
-
-          
-
-
-
 
             m_VertexBufferOffset += (m_VertexPointer-m_VertexBufferOffset);
 
@@ -658,7 +605,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
            m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
 
-            FlushOutlines();
             FlushGUI();
 
 
@@ -1141,49 +1087,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
        // Core::Log(ErrorType::Info, OffsetX / 4);
     }
 
-
-    void Renderer::DrawOutline(Float3 Position, Float2 Size,Float4 Color,float OutlineWidth)
-    {
-
-        if (m_VertexCountOutlines + 4 > m_VertexOutineMaxCountPerDrawCall)
-            FlushOutlines();
-        m_VertexOutline[m_VertexCountOutlines].ID = 0;
-        m_VertexOutline[m_VertexCountOutlines+1].ID = 0;
-        m_VertexOutline[m_VertexCountOutlines+2].ID = 0;
-        m_VertexOutline[m_VertexCountOutlines+3].ID = 0;
-
-       // m_VertexOutline[m_VertexCountOutlines].Position = { Position.x - Size.x,Position.y - Size.y };
-       // m_VertexOutline[m_VertexCountOutlines + 1].Position = { Position.x - Size.x,Position.y + Size.y };
-       // m_VertexOutline[m_VertexCountOutlines + 2].Position = { Position.x + Size.x,Position.y + Size.y };
-       // m_VertexOutline[m_VertexCountOutlines + 3].Position = { Position.x + Size.x,Position.y - Size.y };
-
-       m_VertexOutline[m_VertexCountOutlines].Position = {Position.x-Size.x-OutlineWidth,Position.y-Size.y-OutlineWidth };
-       m_VertexOutline[m_VertexCountOutlines + 1].Position = {Position.x-Size.x-OutlineWidth,Position.y+Size.y+OutlineWidth};
-       m_VertexOutline[m_VertexCountOutlines + 2].Position = {Position.x+Size.x+OutlineWidth,Position.y+Size.y+OutlineWidth};
-       m_VertexOutline[m_VertexCountOutlines + 3].Position = {Position.x+Size.x+OutlineWidth,Position.y-Size.y-OutlineWidth};
-
-        m_VertexOutline[m_VertexCountOutlines].TextureID = 0;
-        m_VertexOutline[m_VertexCountOutlines + 1].TextureID = 0;
-        m_VertexOutline[m_VertexCountOutlines + 2].TextureID = 0;
-        m_VertexOutline[m_VertexCountOutlines + 3].TextureID = 0;
-
-        m_VertexOutline[m_VertexCountOutlines].Color = Color;
-        m_VertexOutline[m_VertexCountOutlines + 1].Color = Color;
-        m_VertexOutline[m_VertexCountOutlines + 2].Color = Color;
-        m_VertexOutline[m_VertexCountOutlines + 3].Color = Color;
-
-
-
-        m_VertexOutline[m_VertexCountOutlines].TexCoords = { 0.0f,1.0f };
-        m_VertexOutline[m_VertexCountOutlines + 1].TexCoords = { 0.0f,0.0f };
-        m_VertexOutline[m_VertexCountOutlines + 2].TexCoords = { 1.0f,0.0f };
-        m_VertexOutline[m_VertexCountOutlines + 3].TexCoords = { 1.0f,1.0f };
-
-
-        m_VertexCountOutlines += 4;
-    }
-
-
     void Renderer::DrawParticle()
     {
     }
@@ -1588,12 +1491,6 @@ void Renderer::DrawBatch()
 
     VkDeviceSize Offset{ 0 };
     vkCmdBeginRenderPass(m_CurrentCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-   // vkCmdSetStencilTestEnable(m_CurrentCommandBuffer, VK_TRUE);
-
-    //vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0xFF);
-    //vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
-    //vkCmdSetStencilReference(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
-    //vkCmdSetStencilCompareMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
 
     for (int i = 0; i < m_DrawCommandsGeometry.size(); i++) {
         DrawCommand DrawCall = m_DrawCommandsGeometry[i];
@@ -1645,11 +1542,6 @@ void Renderer::DrawBatch()
 
     }
 
-    // vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0x00);
-    //vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_NOT_EQUAL);
-    //vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0xFF);
-   // vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
-   
     vkCmdEndRenderPass(m_CurrentCommandBuffer);
 
     m_VertexCountPerDrawCall = 0;
@@ -1729,21 +1621,6 @@ void Renderer::RunRendererChangeQueue(){
 }
 void Renderer::DrawGUIBatch()
 {
-    /*
-    VkDeviceSize Offset{ 0 };
-    for (int i = 0; i < m_DrawGUICommands.size(); i++) {
-
-        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexGUIBuffers[i]->GetBuffer(), &Offset);
-
-        vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
-
-        VkDescriptorSet DescriptorSets[] = { m_GUICameraDescriptor.GetDescriptorSet(),m_DescriptorSetTexturesGUI[i].GetDescriptorSet()};
-
-        vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
-
-
-        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawGUICommands[i].VertexCount * 1.5f), 1, 0, 0, 0);
-
-    }
-    */
+  
+   
 }
