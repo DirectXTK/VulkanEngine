@@ -23,7 +23,7 @@ class Shader{
     bool CompileShader(const std::string& filePath,const std::string& outputPath);
     bool CreateShader();
     
-    VkShaderModule m_Module{};
+    VkShaderModule m_Module{nullptr};
     VkDevice m_Device{};
     ShaderDesc m_Desc{};
 

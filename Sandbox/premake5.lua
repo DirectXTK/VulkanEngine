@@ -37,7 +37,7 @@ project "Sandbox"
       "glfw3",
       "vulkan",
       "Renderer",
-      "Application","glslang",
+      "Application","glslang","SPIRV"  ,"OSDependent",
     }
 
     defines{

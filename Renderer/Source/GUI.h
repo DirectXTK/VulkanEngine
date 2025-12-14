@@ -67,6 +67,7 @@ private:
 	};
 	struct SliderData {
 		bool IsClicked{false};
+		float MousePosChange{};
 	};
 	struct CheckBoxData{
 		bool IsClicked{false};

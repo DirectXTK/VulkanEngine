@@ -84,6 +84,9 @@ public:
     void DrawParticle();
 
     void SetRenderDesc(const RendererDesc& desc);
+    void QueueShaderChange(const std::string& path);
+    void QueueShaderChange(Asset<Shader> shaderAsset);
+
 
     Buffer* GetCustomBuffer(uint32_t index) { return m_PickingImageBuffer; }
     Buffer* GetViewportWithID();
@@ -92,6 +95,9 @@ public:
 
 
     void EndFrame();
+    //Runs alls the shaders changes pipeline changes when rendering is finished.
+    void RunRendererChangeQueue();
+
     void OnWindowResize(uint32_t width,uint32_t height);
 
     void Statistics(bool renderGui = true,void* guirenderer= nullptr);
@@ -105,6 +111,7 @@ public:
 private:
     void InitRenderDesc(const RendererDesc& desc);
     void ResizeWindow();
+    bool CompileShaders();
 
     void ResetFrameData();
 
@@ -184,7 +191,7 @@ private:
 
     std::vector<Buffer*> m_IndexBuffers{};
     uint32_t* m_Indices{};
-
+    
 
 
     std::array<Buffer*,MAX_FRAME_DRAWS> m_UniformBuffer{};
@@ -287,12 +294,18 @@ private:
     std::vector<DescriptorSet> m_DescriptorSetTexturesGUI{};
     bool m_GUIRendering{false};
     //
-
+    
+    //Queue changes
+    std::vector<Shader> m_QueuedShaders{};
  
 
 
 
-    AssetManager* m_AssetManager{};
+    AssetManager* m_AssetManager{}; 
+    //Shaders
+    std::vector<std::string> m_LoadedShaderPaths{};   
+    std::vector<std::string> m_QueuedShaderPaths{};   
+
 
 };
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallBack(VkDebugUtilsMessageSeverityFlagBitsEXT messageseverity,VkDebugUtilsMessageTypeFlagsEXT messagetype,const VkDebugUtilsMessengerCallbackDataEXT* pcallbackdata,void* puserData );

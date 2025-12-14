@@ -12,6 +12,9 @@
 
 #include "Debug.h"
 
+
+#include "glslang/Public/ShaderLang.h"
+
 Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem,AssetManager* assetManager) {
     m_RendererDesc = desc;
 
@@ -235,6 +238,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
  {
+    //reserve size for queued shaders
+    m_QueuedShaders.reserve(20);
 
     std::array<VkDescriptorSetLayout,2> descriptorLayout;
     descriptorLayout[0]= m_DescriptorSetCamera[0].GetDescriptorLayout();
@@ -267,14 +272,21 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
      
      m_PipelineDesc.Viewport.minDepth =0;
      m_PipelineDesc.Viewport.maxDepth =1.0f;
-     
+
+    std::string defaultShaderPaths[] = { {"EngineResources/Shaders/Vertex.vertS"},{"EngineResources/Shaders/Pixel.fragS"}};
+
     std::vector<Shader> Shaders{};
-    Shaders.emplace_back("/users/jimy/Repos/VulkanEngine/EngineResources/Shaders/Vertex.vertS",m_Device);
-    Shaders.emplace_back("/users/jimy/Repos/VulkanEngine/EngineResources/Shaders/Pixel.fragS",m_Device);
+    Shaders.reserve(2);
+
+    Shaders.emplace_back(defaultShaderPaths[0],m_Device);
+    Shaders.emplace_back(defaultShaderPaths[1],m_Device);
+
+    m_LoadedShaderPaths.push_back(defaultShaderPaths[0]);
+    m_LoadedShaderPaths.push_back(defaultShaderPaths[1]);
+
 
     m_PipelineDesc.ShaderCount =Shaders.size();
     m_PipelineDesc.Shaders = Shaders.data();
-
 
 
     ReCreatePipeline(m_PipelineDesc);
@@ -1440,6 +1452,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             }
         }
 
+        std::vector<Shader> shaders{};
+        shaders.reserve(m_LoadedShaderPaths.size());
+        for(uint32_t i=0;i < m_LoadedShaderPaths.size();i++){
+            shaders.emplace_back(m_LoadedShaderPaths[i],m_Device);
+        }
+
+        m_PipelineDesc.ShaderCount = m_LoadedShaderPaths.size();
+        m_PipelineDesc.Shaders = shaders.data();
+
         ReCreatePipeline(m_PipelineDesc);
 
     }
@@ -1673,7 +1694,39 @@ void Renderer::CreateDescriptorSets(){
     }
 
     }
+void Renderer::QueueShaderChange(const std::string& path){
+    if(m_QueuedShaders.capacity() == m_QueuedShaders.size())
+    {
+        Core::Log(ErrorType::Warning,"Reached maximum queued shader.{QueueShader::Change}",m_QueuedShaders.capacity(),m_QueuedShaders.size());
+        return;
+    }
+    m_QueuedShaderPaths.push_back(path);
+    m_QueuedShaders.emplace_back(path,m_Device);
+}
+void Renderer::QueueShaderChange(Asset<Shader> shaderAsset){
 
+
+}
+void Renderer::RunRendererChangeQueue(){
+    if(m_QueuedShaders.size() == 0)
+        return;
+    vkDeviceWaitIdle(m_Device);
+
+    
+    m_PipelineDesc.ShaderCount =m_QueuedShaders.size();
+    m_PipelineDesc.Shaders =m_QueuedShaders.data();
+    ReCreatePipeline(m_PipelineDesc);
+
+    m_LoadedShaderPaths.clear();
+    for(uint32_t i =0;i < m_QueuedShaderPaths.size();i++)
+        m_LoadedShaderPaths.push_back(m_QueuedShaderPaths[i]);
+
+
+    m_QueuedShaders.clear();
+    m_QueuedShaderPaths.clear();
+    m_QueuedShaders.reserve(20);
+    
+}
 void Renderer::DrawGUIBatch()
 {
     /*

@@ -247,6 +247,7 @@ void Application::RemoveLayer(Layer* layer){
         glfwPollEvents();
         
         app->m_LayerController.TransitionLayers();
+        app->m_Renderer->RunRendererChangeQueue();
     }
     ThreadRunning.store(false);
     app->m_Running = false;

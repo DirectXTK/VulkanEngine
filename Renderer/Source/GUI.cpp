@@ -174,7 +174,6 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 	
 
 		if (m_SelectedObjID == CurrentButtonID) {
-			Core::Log("dwadad id",m_SelectedObjID.ID);
 			if (SavesState )
 			{
 				if(CurrentButtonData->IsPressed==true)
@@ -286,6 +285,8 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 	std::string StringNumber = std::to_string(*number);
 	SliderData* CurrentSlider = &m_Sliders[strID];
 	 float sliderClickedColorMin{.2f};
+	Float2 lPosition{Position};
+	Float2 rSize{Size};
 
 	
 	if (CurrentSlider->IsClicked == true)
@@ -295,12 +296,21 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 
 	Color = { Color.r - sliderClickedColorMin,Color.g - sliderClickedColorMin,Color.b - sliderClickedColorMin,m_CurrentColor.a};
 
+	if (m_CurrenPanelParent) {
+		lPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		rSize = {rSize.x*m_CurrenPanelParent->Size.x,Size.y*m_CurrenPanelParent->Size.y};
+		rSize.x = std::clamp(rSize.x,0.0f,m_CurrenPanelParent->Size.x);
+		rSize.y = std::clamp(rSize.y,0.0f,m_CurrenPanelParent->Size.y);
 
+		lPosition.x = std::clamp(lPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x+rSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-rSize.x);
+		lPosition.y = std::clamp(lPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+rSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-rSize.y);
+	}
 
 	if(m_CurrentBorderData){
 		if (m_CurrentBorderData->DrawBorder){
 				Float4 BackGroundColor = {m_CurrentBorderData->BackGroundColor.r-sliderClickedColorMin,m_CurrentBorderData->BackGroundColor.g-sliderClickedColorMin,m_CurrentBorderData->BackGroundColor.b-sliderClickedColorMin,m_CurrentBorderData->BackGroundColor.a};
-			DrawBorder(Position, Size, m_CurrentBorderData->BorderColor,BackGroundColor, m_CurrentBorderData->BorderWidth);
+			DrawBorder(lPosition, rSize, m_CurrentBorderData->BorderColor,BackGroundColor, m_CurrentBorderData->BorderWidth);
 		}
 	}
 
@@ -308,8 +318,8 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 		if(m_CurrentSliderData->FillOn)
 		{
 			Color.a =0;
-			float procent = *number/MinMax.y;
-			renderer->DrawQuad({Position.x-((1-procent)*Size.x),Position.y},m_CurrentSliderData->FillColor,{Size.x*procent,Size.y},Core::GetStringHash(strID).ID);
+			float percent = *number/MinMax.y;
+			renderer->DrawQuad({lPosition.x-((1-percent)*rSize.x),lPosition.y},m_CurrentSliderData->FillColor,{rSize.x*percent,rSize.y},Core::GetStringHash(strID).ID);
 		}
 	}
 
@@ -317,8 +327,9 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - DecimalPlaces)), Position, { Color }, Size, MouseCodes::LEFT, 0, false)) {
 		if (!CurrentSlider->IsClicked) {
 			CurrentSlider->IsClicked = true;
-
+			CurrentSlider->MousePosChange = Application::GetMousePos().x;
 		}
+		Core::Log("Clicked");
 	}
 
 	
@@ -327,7 +338,11 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 	
 	
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
-		*number -= m_Application->m_InputSystem.GetMousePosChange().x * SlideAmount;
+		float deltaPos = Application::GetMousePos().x -CurrentSlider->MousePosChange;
+		CurrentSlider->MousePosChange =  Application::GetMousePos().x ;
+
+		Core::Log("dletapos",SlideAmount);
+		*number += deltaPos * SlideAmount;
 		*number=std::clamp(*number,MinMax.x,MinMax.y);
 	}
 	else {
@@ -355,6 +370,7 @@ void GUIRenderer::Slider(const std::string& strID, int* number, Float2 Position,
 
 		}
 	}
+		Core::Log(ErrorType::Error,"Lafa");
 
 	
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
