@@ -11,8 +11,16 @@ void CollisionLayer::OnCreate(){
 		
 		Float2 size = {0.01f,0.01f};
 
+		m_Units[0].Size = size;
+		m_Units[0].Pos = {0.5f,0.5f};
+		m_Units[0].Path = Application::CreatePathAgent(m_Units[0].Pos, m_Units[0].Size,AgentType::LAND );
 
-		for(uint32_t i =0 ;i < 20;i++)
+		m_Units[1].Size = size;
+		m_Units[1].Pos = {0.1f,0.1f};
+		m_Units[1].Path = Application::CreatePathAgent(m_Units[1].Pos, m_Units[1].Size,AgentType::LAND );
+
+		return;
+		for(uint32_t i =0 ;i < 1;i++)
 		{
 				m_Units.push_back(Unit());
 				m_Units[i].Size = size;
@@ -29,7 +37,17 @@ void CollisionLayer::OnUpdate(double deltaTime){
 	unit->Pos.y +=m_Move.y;
 
 	unit->Path.Update(unit->Pos,unit->Size);
-	Application::RunCollisionAsync(m_Units.data(),offsetof(Unit,Pos),offsetof(Unit,Size),m_Units.size(),sizeof(Unit),offsetof(Unit,Collided));
+	//Application::RunCollisionAsync(m_Units.data(),offsetof(Unit,Pos),offsetof(Unit,Size),m_Units.size(),sizeof(Unit),offsetof(Unit,Collided));
+	std::shared_ptr<std::vector<Float2>> path =  unit->Path.GetPathToObj({0.1f,0.1f});
+	if(path){
+
+	Renderer* renderer = Application::GetRenderer();
+	std::vector<Float2>& pos = *path.get();
+	for(uint32_t i =0;i < pos.size();i++){
+		renderer->DrawQuad({pos[i].x,pos[i].y,0.0f},{0.0f,1.0f,1.0f,1.0f},{0.01f,0.01f},0);
+	}
+	
+}
 }
 void CollisionLayer::OnEvent(Event& event){
 	if(event.GetEventType()== EventType::KEYBOARD)
@@ -80,7 +98,6 @@ void CollisionLayer::OnKeyBoardEvent(KeyBoardEvent& event){
 }
 void CollisionLayer::OnRender(double deltaTime){
 	Renderer* renderer = Application::GetRenderer();
- 
 	for(uint32_t i=0 ;i < m_Units.size();i++){
 		if(m_Units[i].Collided)
 		renderer->DrawQuad({m_Units[i].Pos.x,m_Units[i].Pos.y,0.0f},{1.0f,0.0f,0.0f,1.0f},m_Units[i].Size,0);
@@ -88,6 +105,7 @@ void CollisionLayer::OnRender(double deltaTime){
 		renderer->DrawQuad({m_Units[i].Pos.x,m_Units[i].Pos.y,0.0f},{0.0f,1.0f,0.0f,1.0f},m_Units[i].Size,0);
 
 	}
+	
 }
 void CollisionLayer::OnGUI(){
 

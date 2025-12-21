@@ -1,9 +1,13 @@
 CONFIG=${1:-"debug"}
 ./premake5 gmake
-make -j12 config=$CONFIG
+CORECOUNT=$(getconf _NPROCESSORS_ONLN)
+STARTTIME=$(date +%s)
+make -j$CORECOUNT config=$CONFIG
 status=$?
+ENDTIME=$(date +%s)
+echo "Compilation took : $((ENDTIME-STARTTIME))ms"
 exePath=$(cat ExeLocation)
-echo $exePath
+echo "Executable directory:" $exePath
 if [ $status = 0 ]; then
  ./bin/$exePath/Sandbox
 fi

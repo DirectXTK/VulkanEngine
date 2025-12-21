@@ -136,7 +136,7 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
      m_AssetManager.Init(this);
   
      //Init a* path finding algorith system
-     m_PathFinderSystem = new PathSystem(1000,1000,{0.015f,0.015f});
+     m_PathFinderSystem = new PathSystem(1000,1000,{0.025f,0.025f});
 
      m_Renderer->InitializePipeline(500);
 
@@ -251,7 +251,8 @@ void Application::RunAStar(){
             app->m_PathFinderSystem->RenderGrid();
 
         if(app->m_Renderer->GetSwapChainState() == VK_SUCCESS){
-
+        
+        app->m_PathFinderSystem->ResetGrid();
         app->m_LayerController.UpdateLayers(app->m_DeltaTime);
         app->m_LayerController.RenderLayers(app->m_DeltaTime);
 

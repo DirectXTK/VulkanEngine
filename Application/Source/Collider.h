@@ -4,28 +4,7 @@
 #define VULKAN_ENGINE_COLLISION_ON
 
 class Collider;
-struct Int2
-{
-	int x{};
-	int y{};
-	bool operator==(const Int2& rhs) {
-		return rhs.x == x && rhs.y == y;
-	}
-	bool operator!=(const Int2& rhs) {
-		return !(*this == rhs);
-	}
-};
-struct Node {
-	Float2 Position{};
-	float F{ FLT_MAX };
-	float G{ FLT_MAX };
-	float H{ FLT_MAX };
-	int64_t Index{};
-	int64_t ParentNodeIndex{ -1 };
-	friend bool operator<(const Node& l, const Node& r) {
-		return l.F < r.F;
-	}
-};
+
 class ColliderSystem{
 	public:
 	//returns true if collided.
