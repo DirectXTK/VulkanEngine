@@ -18,6 +18,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <ostream>
 #include <cstdlib>
 #include <stdlib.h>
 #include <wchar.h>
@@ -213,7 +214,10 @@ struct Float2 {
         };
     };
 };
-
+inline std::ostream& operator<<(std::ostream& os, const Float2& obj){
+    os <<"{"<<obj.x<<","<<obj.y<<"}";
+    return os;
+}
 inline bool operator==(const Float2& l, const Float2& r) {
     if (l.x == r.x&& l.y == r.y)
         return true;

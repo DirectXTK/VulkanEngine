@@ -38,13 +38,12 @@ void CollisionLayer::OnUpdate(double deltaTime){
 
 	unit->Path.Update(unit->Pos,unit->Size);
 	//Application::RunCollisionAsync(m_Units.data(),offsetof(Unit,Pos),offsetof(Unit,Size),m_Units.size(),sizeof(Unit),offsetof(Unit,Collided));
-	std::shared_ptr<std::vector<Float2>> path =  unit->Path.GetPathToObj({0.1f,0.1f});
-	if(path){
+	std::vector<Float2> path =  unit->Path.GetPathToObj(m_Units[1].Pos);
+	if(path.size() != 0){
 
 	Renderer* renderer = Application::GetRenderer();
-	std::vector<Float2>& pos = *path.get();
-	for(uint32_t i =0;i < pos.size();i++){
-		renderer->DrawQuad({pos[i].x,pos[i].y,0.0f},{0.0f,1.0f,1.0f,1.0f},{0.01f,0.01f},0);
+	for(uint32_t i =0;i < path.size();i++){
+		renderer->DrawQuad({path[i].x,path[i].y,0.0f},{0.0f,1.0f,1.0f,1.0f},{0.01f,0.01f},0);
 	}
 	
 }

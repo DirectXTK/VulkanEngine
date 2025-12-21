@@ -183,6 +183,7 @@ uint32_t GetCPUThreadCount(){
     }
 	return logical;
 }
+
 std::string GetGPUName(){
 	FILE* pipe = popen("lspci | grep -E 'VGA|3D' | head -n 1", "r");
     if (!pipe) return "Unknown GPU";
