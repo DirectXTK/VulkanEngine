@@ -264,7 +264,9 @@ std::vector<Float2> PathAgentHandle::GetPathToObj(const Float2& goalPos){
     int startPoly= m_System->GetPolygonIndex(agent->GetPosition());
     if(endPoly ==-1|| startPoly == -1)
         return {};
-    return m_System->GetPathToObj(startPoly,endPoly);
+    std::vector<Float2> res = m_System->GetPathToObj(startPoly,endPoly);
+    res.push_back(goalPos);
+    return res;
 }
 void PathSystem::RenderGrid(){
     Renderer* renderer=Application::GetRenderer();
@@ -296,7 +298,7 @@ void PathSystem::ResetGrid(){
 void PathSystem::Update(const Float2& position,const Float2& size,const AgentType& type){
     uint32_t y = position.y/m_TileSize.y;
     uint32_t x = position.x/m_TileSize.x;
-    m_Grid[(y*m_GridWidth)+x] = type;
+    //m_Grid[(y*m_GridWidth)+x] = type;
 }
 PathAgentHandle PathSystem::CreateAgent(const Float2& position,const Float2& size,const AgentType& type){
     m_Agents.emplace_back(position,size,type,this);
@@ -307,6 +309,68 @@ PathAgentHandle PathSystem::CreateAgent(const Float2& position,const Float2& siz
 
     return {(uint32_t)m_Agents.size()-1,this};
 }
+Float2 operator+(Float2 a, Float2 b){ return {a.x+b.x, a.y+b.y}; }
+Float2 operator-(Float2 a, Float2 b){ return {a.x-b.x, a.y-b.y}; }
+Float2 operator*(Float2 a, float s){ return {a.x*s, a.y*s}; }
+
+
+float Dot(Float2 a, Float2 b){ return a.x*b.x + a.y*b.y; }
+float Length(Float2 v){ return std::sqrt(Dot(v,v)); }
+Float2 Normalize(Float2 v){
+    float l = Length(v);
+    return l > 0 ? v * (1.0f / l) : Float2{0,0};
+}
+Float2 DesiredVelocity(const Float2& pos,const Float2& target,float speed)
+{
+    return Normalize(target - pos) * speed;
+}
+Float2 ClampLength(Float2 v, float maxLen) {
+    float len = Length(v);
+    if (len > maxLen)
+        return Normalize(v) * maxLen;
+    return v;
+}
+Float2 Perp(const Float2& v) {
+    return Float2{-v.y, v.x};
+}
+Float2 PathAgentHandle::MoveObject(const Float2& speed,const Float2& target){
+      float lookAhead = 5 * m_System->GetAgent(m_Index)->GetSize().x;
+    Float2 force{0,0};
+    Float2 pos = m_System->GetAgent(m_Index)->GetPosition();
+    Float2 desiredDir = Normalize(target - pos);
+
+    for(uint32_t i=0; i<m_System->GetAgentCount(); i++){
+        if(i == m_Index) continue;
+
+        PathAgent& o = *m_System->GetAgent(i);
+        Float2 toObs = o.GetPosition() - pos;
+        float dist = Length(toObs);
+        float radius = o.GetSize().x;
+
+        if(dist > lookAhead + radius) continue;
+        if(Dot(desiredDir, Normalize(toObs)) < 0) continue;
+
+        float strength = std::min((lookAhead + radius - dist)/lookAhead, 1.0f);
+        Float2 dir = Normalize(pos - o.GetPosition());
+
+        float forwardComp = Dot(dir, desiredDir);
+        float sideComp = Dot(dir, Perp(desiredDir));
+
+        // Slow down forward if obstacle very close
+        float forwardMultiplier = 1.0f;
+        if(forwardComp > 0 && dist < radius + 0.5f*lookAhead){
+            forwardMultiplier = dist / (radius + 0.5f*lookAhead);
+        }
+
+        Float2 avoidVec = desiredDir * forwardComp * forwardMultiplier + Perp(desiredDir) * sideComp;
+        force += avoidVec * strength;
+    }
+
+    force = ClampLength(force, 1.0f);
+    Float2 finalDir = Normalize(desiredDir + force);
+    return finalDir * speed.x;
+}
+
 
 std::vector<Float2> PathSystem::GetPathToObj(int startPoly,int endPoly){
 

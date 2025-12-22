@@ -59,9 +59,14 @@ class PathAgentHandle{
     public:
     PathAgentHandle(){}
     PathAgentHandle(uint32_t index,PathSystem* system): m_Index(index),m_System(system){}
-
+    //Returns empty array if no path is found.
     std::vector<Float2> GetPathToObj(const Float2& goalPos);
+    //instantly change pos
+    void ChangePos(const Float2& position);
+    //insta
+    void ChangeSize(const Float2& position,const Float2& size);
     void Update(const Float2& position,const Float2& size);
+    Float2 MoveObject(const Float2& speed,const Float2& target);
 
     private:
     uint32_t m_Index{};
@@ -73,6 +78,7 @@ public:
     PathAgentHandle CreateAgent(const Float2& position,const Float2& size,const AgentType& type);
     void Update(const Float2& position,const Float2& size,const AgentType& type);
 
+
     void RenderGrid();
 
     void ResetGrid();
@@ -81,6 +87,7 @@ public:
      friend PathAgentHandle;
      int GetPolygonIndex(const Float2& pos);
      PathAgent* GetAgent(uint32_t index){return &m_Agents[index];}
+     uint32_t GetAgentCount(){return m_Agents.size();}
      std::vector<Float2> GetPathToObj(int startPoly,int endPoly);
     private:
 

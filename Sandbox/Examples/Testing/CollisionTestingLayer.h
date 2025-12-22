@@ -7,7 +7,8 @@ struct Unit{
 	Float2 Size{};
 	PathAgentHandle Path{};
 	bool Collided{false};
-	
+	std::vector<Float2> PathToGoal{};
+	uint32_t CurrentPath{0};
 };
 class CollisionLayer : public Layer{
 	public:
@@ -23,6 +24,7 @@ class CollisionLayer : public Layer{
 		void OnDestroy()override;
 	private:
 		void OnKeyBoardEvent(KeyBoardEvent& event);
+		void MoveUnit( Unit& unit);
 
 		Float2 m_Move{};
 		std::vector<Unit> m_Units{};

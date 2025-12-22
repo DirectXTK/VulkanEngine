@@ -12,19 +12,18 @@ void CollisionLayer::OnCreate(){
 		Float2 size = {0.01f,0.01f};
 
 		m_Units[0].Size = size;
-		m_Units[0].Pos = {0.5f,0.5f};
+		m_Units[0].Pos = {0.2f,0.0f};
 		m_Units[0].Path = Application::CreatePathAgent(m_Units[0].Pos, m_Units[0].Size,AgentType::LAND );
 
 		m_Units[1].Size = size;
-		m_Units[1].Pos = {0.1f,0.1f};
+		m_Units[1].Pos = {0.8f,0.1f};
 		m_Units[1].Path = Application::CreatePathAgent(m_Units[1].Pos, m_Units[1].Size,AgentType::LAND );
 
-		return;
-		for(uint32_t i =0 ;i < 1;i++)
+		for(uint32_t i =m_Units.size() ;i < 10;i++)
 		{
 				m_Units.push_back(Unit());
 				m_Units[i].Size = size;
-				m_Units[i].Pos = {0.5f,0.5f};
+				m_Units[i].Pos = {0.7f,0.01f*i};
 				m_Units[i].Path = Application::CreatePathAgent(m_Units[i].Pos, m_Units[i].Size,AgentType::LAND );
 
 		}
@@ -33,21 +32,52 @@ void CollisionLayer::OnCreate(){
 void CollisionLayer::OnUpdate(double deltaTime){
 
 	Unit* unit =&m_Units[0];
-	unit->Pos.x +=m_Move.x;
-	unit->Pos.y +=m_Move.y;
+	Unit* goal =&m_Units[1];
+	
 
+	goal->Pos.x +=m_Move.x;
+	goal->Pos.y +=m_Move.y;
+
+	MoveUnit(*unit);
 	unit->Path.Update(unit->Pos,unit->Size);
+	goal->Path.Update(goal->Pos,goal->Size);
 	//Application::RunCollisionAsync(m_Units.data(),offsetof(Unit,Pos),offsetof(Unit,Size),m_Units.size(),sizeof(Unit),offsetof(Unit,Collided));
-	std::vector<Float2> path =  unit->Path.GetPathToObj(m_Units[1].Pos);
+
+	if(unit->PathToGoal.empty()){
+	std::vector<Float2> path =  unit->Path.GetPathToObj(goal->Pos);
+	Core::Log("FoundPath");
 	if(path.size() != 0){
 
-	Renderer* renderer = Application::GetRenderer();
-	for(uint32_t i =0;i < path.size();i++){
-		renderer->DrawQuad({path[i].x,path[i].y,0.0f},{0.0f,1.0f,1.0f,1.0f},{0.01f,0.01f},0);
+		unit->PathToGoal = path;
+
+	}
+	}
+}
+void CollisionLayer::MoveUnit( Unit& unit){
+
+	if(unit.PathToGoal.empty())
+		return;
+
+	float MoveAmount{0.0025f};
+	Float2 path = unit.PathToGoal[unit.CurrentPath];
+	Float2 diff{};
+
+	if(std::fabs(unit.Pos.x - path.x) <=MoveAmount&&std::fabs(unit.Pos.y - path.y) <=MoveAmount){
+		unit.CurrentPath++;
+		Core::Log("Same",path,unit.Pos);
+		if(unit.CurrentPath == unit.PathToGoal.size())
+		{
+			unit.CurrentPath =0;
+			unit.PathToGoal.clear();
+		}
 	}
 	
+Core::Log("PAth",path);
+	//Core::Log("Force",unit.Path.MoveObject({MoveAmount,MoveAmount},path));
+	unit.Pos += unit.Path.MoveObject({MoveAmount,MoveAmount},path);
+	
 }
-}
+
 void CollisionLayer::OnEvent(Event& event){
 	if(event.GetEventType()== EventType::KEYBOARD)
 		OnKeyBoardEvent((KeyBoardEvent&)event);
