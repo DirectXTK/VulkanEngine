@@ -16,14 +16,14 @@ void CollisionLayer::OnCreate(){
 		m_Units[0].Path = Application::CreatePathAgent(m_Units[0].Pos, m_Units[0].Size,AgentType::LAND );
 
 		m_Units[1].Size = size;
-		m_Units[1].Pos = {0.8f,0.1f};
+		m_Units[1].Pos = {0.8f,0.4f};
 		m_Units[1].Path = Application::CreatePathAgent(m_Units[1].Pos, m_Units[1].Size,AgentType::LAND );
 
 		for(uint32_t i =m_Units.size() ;i < 10;i++)
 		{
 				m_Units.push_back(Unit());
 				m_Units[i].Size = size;
-				m_Units[i].Pos = {0.7f,0.01f*i};
+				m_Units[i].Pos = {0.7f,0.080f*i};
 				m_Units[i].Path = Application::CreatePathAgent(m_Units[i].Pos, m_Units[i].Size,AgentType::LAND );
 
 		}
@@ -41,7 +41,7 @@ void CollisionLayer::OnUpdate(double deltaTime){
 	MoveUnit(*unit);
 	unit->Path.Update(unit->Pos,unit->Size);
 	goal->Path.Update(goal->Pos,goal->Size);
-	//Application::RunCollisionAsync(m_Units.data(),offsetof(Unit,Pos),offsetof(Unit,Size),m_Units.size(),sizeof(Unit),offsetof(Unit,Collided));
+	Application::RunCollisionAsync(m_Units.data(),offsetof(Unit,Pos),offsetof(Unit,Size),m_Units.size(),sizeof(Unit),offsetof(Unit,Collided));
 
 	if(unit->PathToGoal.empty()){
 	std::vector<Float2> path =  unit->Path.GetPathToObj(goal->Pos);
