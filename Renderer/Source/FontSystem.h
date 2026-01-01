@@ -11,8 +11,11 @@ class Renderer;
 
 struct Font {
 	Asset<Texture> TextureAsset{};
+	//the first uint32_t is the char code in unicode the second is the fonts index to texture.
+	std::unordered_map<uint32_t,uint32_t> CharMap{};
 	GUUID TextureID{};
 	uint32_t FontSize{};
+	Float2* Advance{};
 	TextureCoords* Coords{};
 	Float2* MinCord{};
 	Float2* MaxCord{};
@@ -21,6 +24,8 @@ struct Font {
 		delete[] Coords;
 		delete[] MinCord;
 		delete[] MaxCord;
+		delete[] Advance;
+		Core::Log("Font data freed");
 	}
 };
 
@@ -80,7 +85,7 @@ private:
 	Texture* m_Texture1{};
 	float m_Padding{ 0.1f };
 	float m_PaddingY{0.1f};
-	uint32_t m_CharacterSize{46};
+	uint32_t m_CharacterSize{2};
 
 	uint32_t m_FontAtlasSize{};
 	Texture* m_FontTexture{};

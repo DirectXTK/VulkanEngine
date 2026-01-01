@@ -10,10 +10,12 @@
 #include "GUI.h"
 #include "CommandBuffer.h"
 
+
 #include "Debug.h"
 
 
 #include "glslang/Public/ShaderLang.h"
+
 
 Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem,AssetManager* assetManager) {
     m_RendererDesc = desc;
@@ -908,13 +910,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
    
     }
-
+    float Renderer::GetFONTDPI(){
+        return 200;
+    }
     void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
     {
-        //Remember to check if all the font widths are the same !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        //
-        //temp
-       
         //Char being edited index
         if (m_CurrentFont.GetType() != AssetType::FONT)
         {
@@ -937,9 +937,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         Float2 MinCord{}, MaxCord{};
         GUUID TextureHandle = font->TextureID;
         float Space{ 0.06f };
+        Float2 advance{};
+        float penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
+        float penPosY = (0.5f - Position.y * 0.5f) * GetViewPortExtent().height;
 
-
-       
 
         if(font->TextureAsset.GetType() != AssetType::TEXTURE){
             Core::Log(ErrorType::Error, "Invalid type must be texture{",(uint32_t)font->TextureAsset.GetType(),"}");
@@ -961,16 +962,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_CurrentTextureDescriptorSetOffset++;
  
         }
-
         //Do this for every letter
         float Max{};
         float Min{};
         for (uint32_t i = 0; i < strlen(Message); i++) {
             Float2 SubTextureSize{};
             Float2 Size{};
-            int32_t LetterIndex = Message[i]-33;
-
-            //make the pointer rendered same size for some reason it's different size.
+            int32_t LetterIndex = Message[i];
 
             //draw pointer
             if(PointerIndex ==i)
@@ -1020,15 +1018,17 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 m_Vertices[m_VertexPointer + 3].TexCoords = { 0.0f,0.0f };
             }
 
+
+
             float RemainingOffset{};
 
             RemainingOffset = CharSizePixels - font->Coords[LetterIndex].Width;
             if (RemainingOffset > 0)
                 OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
-       
 
             MaxCord = font->MaxCord[LetterIndex];
             MinCord = font->MinCord[LetterIndex];
+            advance = font->Advance[LetterIndex];
 
             //Stop drawing if text is going out of bounds.
             if (BoundingBox[0].x + CharSizeNorm + OffsetX > BoundingBox[3].x) {
@@ -1039,19 +1039,25 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             }
             if (BoundingBox[1].y - CharSizeNorm - OffsetY < BoundingBox[0].y)
                 break;
+        
+            MinCord.x+= penPosX;
+            MaxCord.x+= penPosX;
+
+            MinCord.y+= penPosY;
+            MaxCord.y+= penPosY;
+
+            Float2 glyphPosPixelMin = Core::ToNDC(MinCord);
+            Float2 glyphPosPixelMax =Core::ToNDC(MaxCord);
 
 
+          m_Vertices[m_VertexPointer + 0].Position = {  glyphPosPixelMin.x,  glyphPosPixelMin.y, 0.0f }; // bottom-left
+          m_Vertices[m_VertexPointer + 1].Position = {  glyphPosPixelMin.x,  glyphPosPixelMax.y, 0.0f }; // top-left
+          m_Vertices[m_VertexPointer + 2].Position = {  glyphPosPixelMax.x,  glyphPosPixelMax.y, 0.0f }; // top-right
+          m_Vertices[m_VertexPointer + 3].Position = {  glyphPosPixelMax.x,  glyphPosPixelMin.y, 0.0f }; // bottom-right
 
-            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x + OffsetX + MinCord.x,BoundingBox[1].y - OffsetY + MinCord.y,0.0f };
-            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x + OffsetX + MinCord.x,BoundingBox[1].y - OffsetY + MaxCord.y,0.0f };
-            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x + OffsetX + MaxCord.x,BoundingBox[1].y - OffsetY + MaxCord.y,0.0f };
-            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x + OffsetX + MaxCord.x,BoundingBox[1].y - OffsetY + MinCord.y,0.0f };
+          penPosX += advance.x;
+          penPosY -= advance.y;
 
-
-
-
-            //OffsetX = std::round(OffsetX * GetViewPortExtent().width * 0.5f) / (GetViewPortExtent().width*0.5f);
-           
             if (RemainingOffset > 0)
                 OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
     
@@ -1078,13 +1084,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
             m_VertexPointer += 4;
-            //Draw the pointer
           
 
-            OffsetX += std::abs(MinCord.x)+MaxCord.x+ FixedPadding;
         }
-       // OffsetX = -FixedPadding;
-       // Core::Log(ErrorType::Info, OffsetX / 4);
     }
 
     void Renderer::DrawParticle()
@@ -1245,7 +1247,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void  Renderer::CreateSurface(GLFWwindow* window,VkSurfaceKHR* surface){
              VkResult result= glfwCreateWindowSurface(m_Instance,window,nullptr,surface);
             if(result != VK_SUCCESS)
-            Core::Log(ErrorType::Error,"Failed to create surface.");
+            Core::Log(ErrorType::Error,"Failed to create surface.{Renderer::CreateSurface} ",(int)result);
     }
  
     void Renderer::Statistics(bool renderGui,void* guiRenderer){

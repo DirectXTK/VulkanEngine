@@ -8,7 +8,10 @@ FontSystem::FontSystem()
 	m_Renderer = Application::GetRenderer();
 	g_FontSystem = this;
 
+	//const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Sacrifice.ttf";
 	const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Daydream.ttf";
+
+	
 
 	FT_Error error = FT_Init_FreeType(&m_Library);
 	if (error) {
@@ -166,7 +169,7 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 	Renderer* renderer = Application::GetRenderer();
 
 	GUUID SelectID = Core::GetStringHash(StrId);
-	Float2 CharacterSizeNorm = { float(m_CharacterSize   / renderer->GetViewPortExtent().width),float(m_CharacterSize/ renderer->GetViewPortExtent().height) };
+	Float2 CharacterSizeNorm = { float(m_CharacterSize   / renderer->GetViewPortExtent().width*0.5f),float(m_CharacterSize/ renderer->GetViewPortExtent().height*0.5f) };
 
 	Float2 Size{};
 
@@ -412,38 +415,22 @@ void FontSystem::SpecialCases(KeyCodes& Code, EventState& State, char* Buffer, u
 void FontSystem::DrawPointer(Float2 Position, float CharacterSize,float SizeY)
 {
 	Renderer* renderer = Application::GetRenderer();
-
 	//renderer->DrawQuad({ Position.x,Position.y }, { 1.0f,1.0f,1.0f,1.0f }, { m_Padding * CharacterSize ,SizeY},0);
 }
 void FontSystem::ReRenderFaces()
 {
-
-	//Artifcats when resizing same over and over
-
-
-
 	FT_GlyphSlot slot = m_Face->glyph;
 	AssetManager* manager = Application::GetAssetManager();
+	float dpi = Application::GetRenderer()->GetFONTDPI();
 	//check if font is already loaded and renderer
 	if(manager->HasAsset(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)))){
 		Asset<Font> asset=manager->GetAsset<Font>(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
 		Font* currentFont = (Font*)asset.GetData();
-
-		m_Padding = (m_CharacterSize * 0.1f) / m_Face->max_advance_width;
-		m_PaddingY = (m_CharacterSize * 0.25f) / m_Face->max_advance_width;
-
 		m_Renderer->SetCurrentFont(asset);
-
-	
 		return;
 	}
 
-
-	FT_Error error = FT_Set_Char_Size(m_Face, 0, m_CharacterSize, 300, 300);
-	error = FT_Set_Pixel_Sizes(m_Face, 0, m_CharacterSize);
-
-
-	
+	FT_Error error = FT_Set_Char_Size(m_Face, 0, (m_CharacterSize*dpi/72)*64, (uint32_t)dpi, (uint32_t)dpi);
 	if (error) {
 		Core::Log(ErrorType::Error, "Failed to set the font char size");
 	}
@@ -455,16 +442,25 @@ void FontSystem::ReRenderFaces()
 	float OffsetY{0};
 	TextureCoords* AtlasCoords{};
 	Float2* MinCord{}, *MaxCord{};
+	Float2* advance{};
 	float SizeX{16};
 	float SizeY{ 16 };
 	int64_t MaxY{};
 
-	FontAtlasWidth = m_Face->max_advance_width;
-	FontAtlasHeight = m_Face->max_advance_height;
+	FontAtlasWidth = 2048;
+	FontAtlasHeight = 2048;
 
 	AtlasCoords = new TextureCoords[m_Face->num_glyphs];
 	MinCord = new Float2[m_Face->num_glyphs];
 	MaxCord = new Float2[m_Face->num_glyphs];
+	advance = new Float2[m_Face->num_glyphs];
+
+	memset(AtlasCoords,0x00000000, m_Face->num_glyphs*sizeof(TextureCoords));
+	for(uint32_t i =0 ;i < m_Face->num_glyphs;i++){
+		MinCord[i] = {0.0f,0.0f};
+		MaxCord[i] = {0.0f,0.0f};
+		advance[i] = {0.0f,0.0f};
+	}
 
 
 	error = FT_Select_Charmap(m_Face, FT_ENCODING_UNICODE);
@@ -474,28 +470,33 @@ void FontSystem::ReRenderFaces()
 	uint32_t* AtlasMapBitmap = new uint32_t[(uint32_t)FontAtlasWidth * (uint32_t)FontAtlasHeight];
 	memset(AtlasMapBitmap,0x00000000, FontAtlasWidth * FontAtlasHeight*sizeof(uint32_t));
 
-
-	for (uint32_t i = 0; i <= m_Face->num_glyphs; i++) {
+	for (uint32_t i = 0x20; i <= std::min((uint32_t)0x7E,(uint32_t)m_Face->num_glyphs); i++) {
 		uint32_t GlyphIndex = FT_Get_Char_Index(m_Face, i);
+		SubTextureIndex = i;
 
-		if (GlyphIndex == 0)
+		if (GlyphIndex == 0){
+			MinCord[SubTextureIndex] = {0.0f,0.0f};
+			MaxCord[SubTextureIndex] = {0.0f,0.0f};
 			continue;
+		}
 		FT_Error error = FT_Load_Glyph(m_Face, GlyphIndex, FT_LOAD_DEFAULT);
 		if (error) {
 			Core::Log(ErrorType::Error, "Failed to load glyph");
 			continue;
 		}
 
-		if (error)
-			Core::Log(ErrorType::Error, "Failed to set pixel sizes.");
+		slot = m_Face->glyph;
 
 		error = FT_Render_Glyph(slot, FT_RENDER_MODE_NORMAL);
 		if (error) {
 			Core::Log(ErrorType::Error, "Failed to render glyph");
 			continue;
 		}
-		if (slot->bitmap.rows == 0 || slot->bitmap.width == 0)
+		if (slot->bitmap.rows == 0 || slot->bitmap.width == 0){
+			MinCord[SubTextureIndex] = {0.0f,0.0f};
+			MaxCord[SubTextureIndex] = {0.0f,0.0f};
 			continue;
+		}
 		
 		
 
@@ -513,25 +514,11 @@ void FontSystem::ReRenderFaces()
 		MaxY = std::max(MaxY, (int64_t)slot->bitmap.rows);
 
 		//add offest but reduce the size if the size is lower add padding to seem
-
 		AtlasCoords[SubTextureIndex].Coords[0] = { float(OffsetX / (float)FontAtlasWidth),float((SizeY+OffsetY) / (float)FontAtlasHeight) };
 		AtlasCoords[SubTextureIndex].Coords[1] = { float(OffsetX / (float)FontAtlasWidth),float(OffsetY / (float)FontAtlasHeight) };
 		AtlasCoords[SubTextureIndex].Coords[2] = { float((SizeX+OffsetX) / (float)FontAtlasWidth),float(OffsetY / (float)FontAtlasHeight) };
 		AtlasCoords[SubTextureIndex].Coords[3] = { float((SizeX+OffsetX) / (float)FontAtlasWidth) ,float((SizeY+OffsetY) / (float)FontAtlasHeight)  };
 
-		//round coords for no artifacts
-		AtlasCoords[SubTextureIndex].Coords[0].x = std::roundf(AtlasCoords[SubTextureIndex].Coords[0].x * 1000.f) / 1000.f;
-		AtlasCoords[SubTextureIndex].Coords[1].x = std::roundf(AtlasCoords[SubTextureIndex].Coords[1].x * 1000.f) / 1000.f;
-		AtlasCoords[SubTextureIndex].Coords[2].x = std::roundf(AtlasCoords[SubTextureIndex].Coords[2].x * 1000.f) / 1000.f;
-		AtlasCoords[SubTextureIndex].Coords[3].x = std::roundf(AtlasCoords[SubTextureIndex].Coords[3].x * 1000.f) / 1000.f;
-
-		AtlasCoords[SubTextureIndex].Coords[0].y = std::roundf(AtlasCoords[SubTextureIndex].Coords[0].y * 1000.f) / 1000.f;
-		AtlasCoords[SubTextureIndex].Coords[1].y = std::roundf(AtlasCoords[SubTextureIndex].Coords[1].y * 1000.f) / 1000.f;
-		AtlasCoords[SubTextureIndex].Coords[2].y = std::roundf(AtlasCoords[SubTextureIndex].Coords[2].y * 1000.f) / 1000.f;
-		AtlasCoords[SubTextureIndex].Coords[3].y = std::roundf(AtlasCoords[SubTextureIndex].Coords[3].y * 1000.f) / 1000.f;
-
-
-		
 		FT_Glyph glyph{};
 		FT_BBox box{};
 
@@ -540,32 +527,24 @@ void FontSystem::ReRenderFaces()
 			Core::Log(ErrorType::Error, "Failed to get glyph from slot.");
 		}
 
-		FT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &box);
-
-
-		MinCord[SubTextureIndex] = {box.xMin/FontAtlasWidth,(float)box.yMin/FontAtlasHeight};
-		MaxCord[SubTextureIndex] = {box.xMax/FontAtlasWidth,(float)box.yMax/ FontAtlasHeight };
-
-
-
-
-		
+		MinCord[SubTextureIndex].x = slot->bitmap_left;
+		MinCord[SubTextureIndex].y = slot->bitmap_top;
+			
+		MaxCord[SubTextureIndex].x = (float)slot->bitmap_left + (float)slot->bitmap.width;
+		MaxCord[SubTextureIndex].y = (float)slot->bitmap_top - (float)slot->bitmap.rows;
+			
+		advance[SubTextureIndex].x = (slot->advance.x>>6);
+		advance[SubTextureIndex].y = (slot->advance.y>>6);
 
 		for (uint32_t x = 0; x < slot->bitmap.width; x++) {	
 			for (uint32_t y = 0; y < slot->bitmap.rows; y++) {
 				AtlasMapBitmap[(uint32_t)OffsetX+x + ((y + (uint32_t)OffsetY)* (uint32_t)FontAtlasWidth )] |= uint32_t(slot->bitmap.buffer[(y * slot->bitmap.width+x)]<<24);
 			}
 		}
-		//if (SubTextureIndex  == '.'-33)
-		//	Core::Log(ErrorType::Error, "Maktyra");
 		OffsetX += AtlasCoords[SubTextureIndex].Width+1;
-		SubTextureIndex++;
-
-		//Core::Log(ErrorType::Info,(char)i, "Left:", slot->bitmap_left, " Top:", slot->bitmap_top, " Diff:", -1*int((slot->metrics.height -slot->metrics.horiBearingY)/26));
-
-	 FT_Done_Glyph(glyph);
+		FT_Done_Glyph(glyph);
 	}
-	//Core::Log(ErrorType::Error, "dwadad");
+	
 	Font* font = new Font();
 	font->Coords = AtlasCoords;
 	font->MinCord = MinCord;
@@ -573,6 +552,7 @@ void FontSystem::ReRenderFaces()
 	font->FontSize = m_CharacterSize;
 	font->GlyphCount = m_Face->num_glyphs;
 	font->TextureID = Core::GetStringHash("FontTexture"+std::to_string(m_CharacterSize));
+	font->Advance = advance;
 
 	m_TextureSize = { FontAtlasWidth,FontAtlasHeight };
 
@@ -586,15 +566,8 @@ void FontSystem::ReRenderFaces()
 	Texture* texture = new Texture(Application::GetRenderer()->GetContext(),textureCreateInfo,TextureType::Texture);
 	
 	font->TextureAsset = manager->LoadAsset<Texture>(texture, AssetType::TEXTURE, "FontTexture"+std::to_string(m_CharacterSize));
-		m_Renderer->SetCurrentFont(manager->LoadAssetPerma<Font>(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
+	m_Renderer->SetCurrentFont(manager->LoadAssetPerma<Font>(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
 	delete[] AtlasMapBitmap;
-		
-	
-
-	m_Padding = (m_CharacterSize * 0.1f) / FontAtlasWidth;
-	m_PaddingY = (m_CharacterSize * 0.25f) / FontAtlasHeight;
-
-
 }
 void FontSystem::PushStyle(const GUI::Style& style,void* StyleData) {
 	m_Style.push(style);

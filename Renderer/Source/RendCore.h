@@ -39,7 +39,7 @@ struct SwapChainDetails{
         uint32_t FindMemoryTypeIndex(VkPhysicalDevice physicaldevice,uint32_t Allowedtypes,VkMemoryPropertyFlags flags);
         VkFormat ChooseBestFormat(VkPhysicalDevice pdevice,const std::vector<VkFormat>& formats,VkImageTiling tilling,VkFormatFeatureFlags flags);
         void CopyImageToImage(VkDevice device,VkPhysicalDevice pdevice,Image* src,Image* dst);
-
+        Float2 ToNDC(const Float2& pos);
         
     }
 

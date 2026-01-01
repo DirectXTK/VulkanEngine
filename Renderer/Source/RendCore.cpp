@@ -1,4 +1,5 @@
 #include "RendCore.h"
+#include "Application.h"
 namespace Core{
         uint32_t FindMemoryTypeIndex(VkPhysicalDevice physicaldevice,uint32_t Allowedtypes,VkMemoryPropertyFlags flags){
             VkPhysicalDeviceMemoryProperties memprops{};
@@ -30,6 +31,12 @@ namespace Core{
 
 
             return true;
+        }
+        Float2 ToNDC(const Float2& pos){
+            return {
+                (pos.x/Application::GetRenderer()->GetViewPortExtent().width)*2.0f -1.0f,
+                -(pos.y/Application::GetRenderer()->GetViewPortExtent().height)*2.0f +1.0f
+            };
         }
         VkFormat ChooseBestFormat(VkPhysicalDevice pdevice,const std::vector<VkFormat>& formats,VkImageTiling tilling,VkFormatFeatureFlags flags){
 

@@ -20,7 +20,7 @@
 #include "Animator.h"
 #include "AssetManager.h"
 #include "FontSystem.h"
-#define MAX_FRAME_DRAWS 2
+#define MAX_FRAME_DRAWS 3
 
 class InputSystem;
 class AssetManager;
@@ -100,6 +100,8 @@ public:
 
     Context GetContext() { return m_Context; }
     VkResult GetSwapChainState(){return m_AcquireImageResult;}
+
+    float GetFONTDPI();
 
     ~Renderer();
 private:

@@ -85,6 +85,14 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
     tcgetattr(STDIN_FILENO,&m_DefaultConsoleSett);
 
      Core::EmptyLogFile();
+
+#ifdef LINUXX11
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+#elifdef LINUXWAYLAND
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
+#endif
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+
      glfwInit();
      glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
      glfwWindowHint(GLFW_RESIZABLE, specs.IsWindowResizable);
