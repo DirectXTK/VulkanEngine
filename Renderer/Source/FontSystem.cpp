@@ -10,7 +10,7 @@ FontSystem::FontSystem()
 
 	//const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Sacrifice.ttf";
 	const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Daydream.ttf";
-
+	//Day dream causes crashes.
 	
 
 	FT_Error error = FT_Init_FreeType(&m_Library);
