@@ -52,6 +52,8 @@ public:
     static bool HasAsset(GUUID id);
     template<typename ASSETTYPE>
     static Asset<ASSETTYPE> GetAsset(const std::string& strHandle){return GetApplication()->m_AssetManager.GetAsset<ASSETTYPE>(strHandle);}
+    template<typename ASSETTYPE>
+    static Asset<ASSETTYPE> GetAsset(GUUID id){return GetApplication()->m_AssetManager.GetAsset<ASSETTYPE>(id);}
 
 
     static void Run();

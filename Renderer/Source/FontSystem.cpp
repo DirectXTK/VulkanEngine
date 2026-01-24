@@ -1,6 +1,7 @@
 #include "FontSystem.h"
 #include <Renderer.h>
 #include "Application.h"
+#include "CommandBuffer.h"
 #include "freetype/ftglyph.h"
 FontSystem* g_FontSystem{};
 FontSystem::FontSystem()
@@ -8,25 +9,30 @@ FontSystem::FontSystem()
 	m_Renderer = Application::GetRenderer();
 	g_FontSystem = this;
 
+
+	//try to load any font or a default one
 	//const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Sacrifice.ttf";
 	const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Daydream.ttf";
 	//Day dream causes crashes.
-	
-
+	m_FontAssets.push(LoadFont(FontPath));
+	m_Renderer->SetCurrentFont(m_FontAssets.top());
+}
+Asset<Font> FontSystem::LoadFont(const std::string& filePath){
 	FT_Error error = FT_Init_FreeType(&m_Library);
 	if (error) {
 		Core::Log(ErrorType::Error, "Failed to initialize FreeType.");
+		return Asset<Font>();
 	}
 	//loads the font
-	error = FT_New_Face(m_Library, FontPath, 0, &m_Face);
+	error = FT_New_Face(m_Library, filePath.c_str(), 0, &m_Face);
 	if (error == FT_Err_Unknown_File_Format) {
 		Core::Log(ErrorType::Error, "Unknown file format of font");
 	}
 	else if (error) {
 		Core::Log(ErrorType::Error, "Failed to open/read or the font is broken ");
+		return Asset<Font>();
 	}
-	ReRenderFaces();
-
+	return ReRenderFaces(Core::GetStringHash(filePath),Core::GetFileName(filePath));
 }
 
 void FontSystem::Run(void* app,void* iRenderer)
@@ -41,8 +47,13 @@ void FontSystem::SetCharcterSize(uint32_t CharSize)
 
 	m_CharacterSize = CharSize;
 
+	Asset<Font> asset = m_FontAssets.top();
+	if(asset){
+		ReRenderFaces(asset.GetID(),asset.GetData()->FontName);
 
-	ReRenderFaces();
+	}else{
+		Core::Log(m_FontAssets.size(),",","Size");
+	}
 }
 
 uint32_t FontSystem::GetWidthOfChar()
@@ -60,8 +71,15 @@ Texture* FontSystem::GetFontAtlas()
 	return m_FontAtlas;
 }
 
-void FontSystem::PushFont()
+void FontSystem::PushFont(GUUID ID)
 {
+	Asset<Font> font = Application::GetAsset<Font>(ID);
+	if(font){
+		m_FontAssets.push(font);
+		return;
+	}
+	Core::Log(ErrorType::Error,"Failed to PushFont ID{",ID.ID,"]");
+	return;
 }
 
 void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Float2 Position, Float2 Size)
@@ -283,9 +301,9 @@ void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 	}
 
 }
-
 void FontSystem::PopFont()
 {
+	m_FontAssets.pop();	
 }
 
 void FontSystem::KeyBoardCallback(KeyBoardEvent* event)
@@ -417,18 +435,18 @@ void FontSystem::DrawPointer(Float2 Position, float CharacterSize,float SizeY)
 	Renderer* renderer = Application::GetRenderer();
 	//renderer->DrawQuad({ Position.x,Position.y }, { 1.0f,1.0f,1.0f,1.0f }, { m_Padding * CharacterSize ,SizeY},0);
 }
-void FontSystem::ReRenderFaces()
+Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 {
 	FT_GlyphSlot slot = m_Face->glyph;
 	AssetManager* manager = Application::GetAssetManager();
 	float dpi = Application::GetRenderer()->GetFONTDPI();
 	//check if font is already loaded and renderer
-	if(manager->HasAsset(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)))){
-		Asset<Font> asset=manager->GetAsset<Font>(Core::GetStringHash("Font"+std::to_string(m_CharacterSize)));
-		Font* currentFont = (Font*)asset.GetData();
-		m_Renderer->SetCurrentFont(asset);
-		return;
+	Asset<Font> asset = manager->GetAsset<Font>(fontID);
+	if(asset){
+		if(asset.GetData()->FontSize == m_CharacterSize)
+			return asset;
 	}
+
 
 	FT_Error error = FT_Set_Char_Size(m_Face, 0, (m_CharacterSize*dpi/72)*64, (uint32_t)dpi, (uint32_t)dpi);
 	if (error) {
@@ -449,11 +467,13 @@ void FontSystem::ReRenderFaces()
 
 	FontAtlasWidth = 2048;
 	FontAtlasHeight = 2048;
-
+	//if asset isint loaded create new one else just update the values
+	if(!asset){
 	AtlasCoords = new TextureCoords[m_Face->num_glyphs];
 	MinCord = new Float2[m_Face->num_glyphs];
 	MaxCord = new Float2[m_Face->num_glyphs];
 	advance = new Float2[m_Face->num_glyphs];
+	
 
 	memset(AtlasCoords,0x00000000, m_Face->num_glyphs*sizeof(TextureCoords));
 	for(uint32_t i =0 ;i < m_Face->num_glyphs;i++){
@@ -461,7 +481,17 @@ void FontSystem::ReRenderFaces()
 		MaxCord[i] = {0.0f,0.0f};
 		advance[i] = {0.0f,0.0f};
 	}
+	}else{
+		Font* font = asset.GetData();
+		AtlasCoords = font->Coords;
 
+		MinCord = font->MinCord;
+		MaxCord = font->MaxCord;
+		advance = font->Advance;
+		font->FontSize = m_CharacterSize;
+
+
+	}
 
 	error = FT_Select_Charmap(m_Face, FT_ENCODING_UNICODE);
 	if (error)
@@ -530,11 +560,25 @@ void FontSystem::ReRenderFaces()
 		MinCord[SubTextureIndex].x = slot->bitmap_left;
 		MinCord[SubTextureIndex].y = slot->bitmap_top;
 			
-		MaxCord[SubTextureIndex].x = (float)slot->bitmap_left + (float)slot->bitmap.width;
-		MaxCord[SubTextureIndex].y = (float)slot->bitmap_top - (float)slot->bitmap.rows;
+		MaxCord[SubTextureIndex].x = (float)slot->bitmap.width;
+		MaxCord[SubTextureIndex].y =  (float)slot->bitmap.rows;
+	
+		float glyphLeft  =  slot->bitmap_left;
+		float glyphRight = glyphLeft + slot->bitmap.width;
+
+		// 3. Vertical positions using metrics
+		float glyphTop    = (slot->metrics.horiBearingY >> 6); // top relative to baseline
+		float glyphBottom = glyphTop - (slot->metrics.height >> 6);  
+
+			MinCord[SubTextureIndex].x = glyphLeft;
+		MinCord[SubTextureIndex].y = glyphTop;
 			
+		MaxCord[SubTextureIndex].x = (float)glyphRight ;
+		MaxCord[SubTextureIndex].y =  glyphBottom;
+
 		advance[SubTextureIndex].x = (slot->advance.x>>6);
 		advance[SubTextureIndex].y = (slot->advance.y>>6);
+
 
 		for (uint32_t x = 0; x < slot->bitmap.width; x++) {	
 			for (uint32_t y = 0; y < slot->bitmap.rows; y++) {
@@ -545,6 +589,7 @@ void FontSystem::ReRenderFaces()
 		FT_Done_Glyph(glyph);
 	}
 	
+	if(!asset){
 	Font* font = new Font();
 	font->Coords = AtlasCoords;
 	font->MinCord = MinCord;
@@ -553,21 +598,44 @@ void FontSystem::ReRenderFaces()
 	font->GlyphCount = m_Face->num_glyphs;
 	font->TextureID = Core::GetStringHash("FontTexture"+std::to_string(m_CharacterSize));
 	font->Advance = advance;
+	font->FontName = fontName;
 
 	m_TextureSize = { FontAtlasWidth,FontAtlasHeight };
 
 	TextureCreateInfo textureCreateInfo{};
-	textureCreateInfo.ImageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT;
+	textureCreateInfo.ImageUsageFlags = VkImageUsageFlagBits(VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 	textureCreateInfo.Format = VK_FORMAT_R8G8B8A8_UNORM;
 	textureCreateInfo.Width = FontAtlasWidth;
 	textureCreateInfo.Height = FontAtlasHeight;
 	textureCreateInfo.Pixels = AtlasMapBitmap;
+	textureCreateInfo.ImageLayout =VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	Texture* texture = new Texture(Application::GetRenderer()->GetContext(),textureCreateInfo,TextureType::Texture);
-	
-	font->TextureAsset = manager->LoadAsset<Texture>(texture, AssetType::TEXTURE, "FontTexture"+std::to_string(m_CharacterSize));
-	m_Renderer->SetCurrentFont(manager->LoadAssetPerma<Font>(font, AssetType::FONT, "Font"+std::to_string(m_CharacterSize)));
+	font->TextureAsset = manager->LoadAsset<Texture>(texture, AssetType::TEXTURE, "FontTexture:"+std::to_string(m_CharacterSize)+":"+fontName);
+	asset = manager->LoadAssetPerma<Font>(font, AssetType::FONT, fontID);
+	}else{
+		Texture* texture = asset.GetData()->TextureAsset.GetData();
+		Context context = m_Renderer->GetContext();
+
+		BufferDesc desc{};
+		desc.Device = context->Device;
+		desc.Memoryflags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		desc.Physdevice = context->PDevice;
+		desc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
+		desc.SizeBytes = 4*FontAtlasWidth*FontAtlasHeight;
+		desc.Usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT|VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+
+		Buffer* buffer = new Buffer(desc);
+		buffer->UploadToBuffer(context->Device,AtlasMapBitmap,0);
+		context->m_TempBuffers->push_back(buffer);
+		Core::Log("REsiuze");
+		texture->TrasitionFormat(true,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,context->TransferCommandBuffer);
+		texture->CopyFromBuffer(context->Device,buffer,context->TransferCommandBuffer);
+		texture->TrasitionFormat(false,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,context->TransferCommandBuffer);
+		
+	}
 	delete[] AtlasMapBitmap;
+	return asset;
 }
 void FontSystem::PushStyle(const GUI::Style& style,void* StyleData) {
 	m_Style.push(style);

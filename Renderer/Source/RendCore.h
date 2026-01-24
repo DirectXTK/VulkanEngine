@@ -17,6 +17,7 @@
 #include <set>
 
 #define VULKANDEBUG(x,y) x== VK_SUCCESS? (void)0: Core::Log(ErrorType::Error,y,": ",(int)x) 
+#define MAX_FRAME_DRAWS 3
 
 
 class Image;

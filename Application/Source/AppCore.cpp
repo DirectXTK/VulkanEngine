@@ -22,6 +22,12 @@ namespace Core {
 		}
 	
 	GUUID GetStringHash(const std::string& Path) {return (uint64_t)std::hash<std::string>{}(Path); }
+    std::string GetFileName(const std::string& path){
+		uint64_t offset = path.find_last_of("/");
+		if(offset ==(uint64_t)-1)
+			return "NULL";
+		return path.substr(offset+1,path.find('.')-offset-1);
+	}
 
 	std::string GetFileExtension(const std::string& File)
 	{

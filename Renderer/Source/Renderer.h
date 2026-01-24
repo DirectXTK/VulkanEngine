@@ -20,7 +20,6 @@
 #include "Animator.h"
 #include "AssetManager.h"
 #include "FontSystem.h"
-#define MAX_FRAME_DRAWS 3
 
 class InputSystem;
 class AssetManager;
@@ -160,8 +159,11 @@ private:
 
     uint32_t m_ImageIndex{};
     std::vector<VkCommandBuffer> m_CommandBuffers{};
+    std::vector<VkCommandBuffer>  m_TransferCommandBuffers{};
+    //Used for transfering files
+    std::array<std::vector<Buffer*>,MAX_FRAME_DRAWS> m_TempBuffers{};
     VkCommandBuffer m_CurrentCommandBuffer{};
-    VkCommandBuffer m_TransferCommandBuffer{};
+
     std::vector<FrameBuffer> m_FrameBuffers{};
     std::vector<Texture*> m_ColorAttachments{};
     //

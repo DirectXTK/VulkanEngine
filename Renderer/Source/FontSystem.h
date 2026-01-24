@@ -13,6 +13,7 @@ struct Font {
 	Asset<Texture> TextureAsset{};
 	//the first uint32_t is the char code in unicode the second is the fonts index to texture.
 	std::unordered_map<uint32_t,uint32_t> CharMap{};
+	std::string FontName{"NONE"};
 	GUUID TextureID{};
 	uint32_t FontSize{};
 	Float2* Advance{};
@@ -46,7 +47,7 @@ public:
 	void PopStyle();
 
 
-	void PushFont();
+	void PushFont(GUUID fontAsset);
 	//Renders simple text.
 	// MaxCharacters 0 means unlimited.
 	//Returns true then max characters has been reached.
@@ -60,6 +61,7 @@ public:
 	void PopFont();
 
 	void KeyBoardCallback(KeyBoardEvent* event);
+	Asset<Font> LoadFont(const std::string& filePath);
 
 	~FontSystem();
 private:
@@ -70,12 +72,13 @@ private:
 	void DrawPointer(Float2 Position,float CharacterSize,float SizeY);
 	void DrawBorder(Float2& Position, Float2& Size, GUUID ID);
 
+
 	//coeficient used for normalizing char size.
 	const float m_CharSizeNormCoe{ 0.000043f };
 
 	Renderer* m_Renderer{};
 	Float2 m_TextureSize{};
-	void ReRenderFaces();
+	Asset<Font> ReRenderFaces(GUUID fontID,const std::string& fontName);
 	FT_Library m_Library{};
 
 	uint32_t m_FaceCount{};
@@ -85,7 +88,7 @@ private:
 	Texture* m_Texture1{};
 	float m_Padding{ 0.1f };
 	float m_PaddingY{0.1f};
-	uint32_t m_CharacterSize{2};
+	uint32_t m_CharacterSize{1};
 
 	uint32_t m_FontAtlasSize{};
 	Texture* m_FontTexture{};
@@ -118,6 +121,7 @@ private:
 		const char* Message{};
 	};
 	//Stored data
+	std::stack<Asset<Font>> m_FontAssets;
 	std::unordered_map<GUUID, TextData> m_StoredData{};
 	//float m_FixedPadding{ 0.1018f  };
 

@@ -133,6 +133,16 @@ public:
 		 m_ResourceCount[type]++;
          return Asset<T>(&m_Resources[ID]);
 	}
+	template<typename T>
+	Asset<T> LoadAssetPerma(void* Resource, AssetType type,GUUID ID){
+	 	auto Index = m_Resources.find(ID);
+        if(Index != m_Resources.end())
+            return Asset<T>(&m_Resources[ID]);
+         m_Resources[ID] = AssetHandle(ID,this,type,Resource);
+		 m_Resources[ID].MakeItPermaHandle();
+		 m_ResourceCount[type]++;
+         return Asset<T>(&m_Resources[ID]);
+	}
 	
 
 

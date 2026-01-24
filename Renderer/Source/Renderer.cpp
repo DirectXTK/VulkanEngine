@@ -360,7 +360,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_DeltaTime = deltaTime;
         
         m_CurrentCommandBuffer = m_CommandBuffers[m_CurrentFrame];
+        m_Context->TransferCommandBuffer = m_TransferCommandBuffers[m_CurrentFrame];
         m_Context->CurrentCommandBuffer = m_CurrentCommandBuffer;
+        m_Context->m_TempBuffers = &m_TempBuffers[m_CurrentFrame];
         
         if(m_ResizeWindow){
             ResizeWindow();
@@ -595,6 +597,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         void Renderer::EndFrame()
         {
+             
+
+
               VkBufferCopy region{};
             region.size = sizeof(Vertex) * m_VertexCount;
             region.dstOffset = 0;
@@ -629,7 +634,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             VkPipelineStageFlags waitstages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
-            VkCommandBuffer commandsbuffers[] = { m_CommandBuffers[m_CurrentFrame],m_TransferCommandBuffer };
+            VkCommandBuffer commandsbuffers[] = { m_CommandBuffers[m_CurrentFrame] ,m_TransferCommandBuffers[m_CurrentFrame]};
 
 
             VkSubmitInfo submitinfo{};
@@ -637,12 +642,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             submitinfo.waitSemaphoreCount = 1;
             submitinfo.pWaitSemaphores = &m_ImageAvailS[m_CurrentFrame];
             submitinfo.pWaitDstStageMask = waitstages;
-            submitinfo.commandBufferCount = 1;
+            submitinfo.commandBufferCount = 2;
             submitinfo.pCommandBuffers = commandsbuffers;
             submitinfo.signalSemaphoreCount = 1;
             submitinfo.pSignalSemaphores = &m_RenderFinishedS[m_CurrentFrame];
             vkResetFences(m_Device,1,&m_DrawFences[m_CurrentFrame]);
-
             VkResult result = vkQueueSubmit(m_GraphicsQ, 1, &submitinfo, m_DrawFences[m_CurrentFrame]);
             
 
@@ -688,6 +692,16 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_VertexPointer = 0;
             m_CurrentVertexBufferIndexGUI=0;;
             m_VertexGUIRemaining=m_VertexMaxCountGUI;
+
+            //delete the next upcoming rendered frame temps buffs
+            if(vkGetFenceStatus(m_Device,m_DrawFences[m_CurrentFrame]) == VK_FALSE){
+            auto temp = m_TempBuffers[m_CurrentFrame];
+           for(uint32_t i=0;i < m_TempBuffers[m_CurrentFrame].size();i++){
+               delete temp[i];
+            }
+            m_TempBuffers[m_CurrentFrame].clear();
+             }
+
         }
     
 
@@ -911,7 +925,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
    
     }
     float Renderer::GetFONTDPI(){
-        return 200;
+        return 100;
     }
     void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
     {
@@ -939,7 +953,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         float Space{ 0.06f };
         Float2 advance{};
         float penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
-        float penPosY = (0.5f - Position.y * 0.5f) * GetViewPortExtent().height;
+        float penPosY = (0.5f - Position.y * 0.5f) * GetViewPortExtent().height+CharSizePixels*16;
 
 
         if(font->TextureAsset.GetType() != AssetType::TEXTURE){
@@ -979,7 +993,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             switch (Message[i]) {
             case ' ': {
                 //skip this letter
-                OffsetX += FixedPadding+ CharSizeNorm;
+                penPosX += advance.x;
                 continue;
             }
             case '\n': {
@@ -1040,11 +1054,17 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (BoundingBox[1].y - CharSizeNorm - OffsetY < BoundingBox[0].y)
                 break;
         
-            MinCord.x+= penPosX;
-            MaxCord.x+= penPosX;
+            
 
-            MinCord.y+= penPosY;
-            MaxCord.y+= penPosY;
+            float baselineY = penPosY; // in pixels
+
+            baselineY -= MinCord.y;
+            baselineY -= MaxCord.y;
+            MinCord.y = baselineY+MinCord.y;
+            MaxCord.y = baselineY+MaxCord.y;
+
+            MinCord.x += penPosX;
+            MaxCord.x += penPosX;
 
             Float2 glyphPosPixelMin = Core::ToNDC(MinCord);
             Float2 glyphPosPixelMax =Core::ToNDC(MaxCord);
@@ -1056,7 +1076,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
           m_Vertices[m_VertexPointer + 3].Position = {  glyphPosPixelMax.x,  glyphPosPixelMin.y, 0.0f }; // bottom-right
 
           penPosX += advance.x;
-          penPosY -= advance.y;
+          //penPosY -= advance.y;
 
             if (RemainingOffset > 0)
                 OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
@@ -1186,6 +1206,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
         m_CommandBuffers.resize(MAX_FRAME_DRAWS);
+        m_TransferCommandBuffers.resize(MAX_FRAME_DRAWS);
         
 
         VkCommandBufferAllocateInfo allocinfo{};
@@ -1204,11 +1225,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         allocinfo2.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocinfo2.commandPool = m_GraphicsPool.GetCommandPool();
         allocinfo2.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocinfo2.commandBufferCount =1;
+        allocinfo2.commandBufferCount =MAX_FRAME_DRAWS;
 
-         result = vkAllocateCommandBuffers(m_Device,&allocinfo2,&m_TransferCommandBuffer);
+         result = vkAllocateCommandBuffers(m_Device,&allocinfo2,m_TransferCommandBuffers.data());
         if(result != VK_SUCCESS)
             Core::Log(ErrorType::Error,"Failed to create command buffers.");
+
     }
    
   
@@ -1459,15 +1481,17 @@ void Renderer::StartRecordingCommands()
     bufferbegininfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
 
-
     vkResetCommandBuffer(m_CurrentCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
     vkBeginCommandBuffer(m_CurrentCommandBuffer, &bufferbegininfo);
     vkCmdBindPipeline(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
 
+    vkResetCommandBuffer(m_Context->TransferCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+    vkBeginCommandBuffer(m_Context->TransferCommandBuffer,&bufferbegininfo);
 }
 
 void Renderer::StopRecordingCommands()
 {
+    vkEndCommandBuffer(m_Context->TransferCommandBuffer);
     
     vkEndCommandBuffer(m_CurrentCommandBuffer);
     m_DrawCommandsGeometry.resize(0);

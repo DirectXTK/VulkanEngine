@@ -264,6 +264,8 @@ namespace Core {
     float CalculateDistanceFast(const Float2& pos1,const Float2& pos2);
     float CalculateDistance(const Float2& pos1,const Float2& pos2);
 
+    std::string GetFileName(const std::string& path);
+
 
 
 #include <string>

@@ -11,9 +11,10 @@ void GUITestingLayer::OnCreate() {
 	sliderdata.StructSize = sizeof(GUI::SliderStyle);
 	sliderdata.FillColor = {0.0f,0.0f,1.0f,1.0f};
 
+
 	auto asset = Application::GetAsset<Texture>("FontTexture"+std::to_string(Application::GetGUIRenderer()->GetFontSize()));
 	if(asset){
-		//asset.GetData()->WriteToFile("OutputTexture.png");
+		asset.GetData()->WriteToFile("OutputTexture.png");
 	}
 }
 void GUITestingLayer::OnUpdate(double deltatime)
@@ -61,9 +62,9 @@ void GUITestingLayer::OnGUI()
 {
 	GUIRenderer* guiRenderer = Application::GetGUIRenderer();
 	
-	static float lafa{2.0f};
-	static float sep{2.0f};
-	//guiRenderer->SetFontSize((uint32_t)lafa);
+	static float lafa{5.0f};
+	static float sep{4.0f};
+	guiRenderer->SetFontSize((uint32_t)lafa);
 	//guiRenderer->Panel("Panel", {0.0f,-0.9f}, {1.0f,0.5f,0.5f,1.0f}, {1.0f,0.1f}, 0, false);
 
 	//guiRenderer->Button("Start Button","", { 0.0f,0.5f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.5f,0.5f },MouseCodes::LEFT,0,false);
@@ -72,10 +73,10 @@ void GUITestingLayer::OnGUI()
 	//guiRenderer->CheckBox("test2",{-0.4f,0.0f},{0.10f,0.50f},{1.0f,1.0f,1.0f,1.0f});
 	//guiRenderer->Quad({0.0f,0.0f},{0.2f,0.5f},{0.0f,0.0f,1.0f,1.0f});
 	//guiRenderer->PushStyle(GUI::Style::SLIDER,&sliderdata);
-	//guiRenderer->Slider("!!!SLi",&lafa,{0.0f,0.0f},{0.2f,0.5f},1.0f,{1.0f,16.0f});
+	guiRenderer->Slider("!!!SLi",&lafa,{0.0f,0.0f},{0.2f,0.5f},1.0f,{1.0f,16.0f});
 	guiRenderer->Slider("!!!SLi2",&sep,{-0.7f,0.0f},{0.2f,0.5f},1.0f,{-16.0f,16.0f});
 	//guiRenderer->Text("ID","TEXTlafaLAFA123!",{-0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
-	//guiRenderer->Text("S","ABCDa",{0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
+	guiRenderer->Text("S","\"TES TING.\"",{0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
 	//guiRenderer->PopStyle();
 	//guiRenderer->EndPanel();
 
