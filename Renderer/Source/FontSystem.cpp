@@ -106,7 +106,7 @@ void FontSystem::OnMouseEvent(MouseEvent& event){
 }
 
 void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
-	if(event.State == EventState::PRESSED&& m_CurrentlySelectedInputData != 0){
+	if(event.State == EventState::PRESSED||event.State == EventState::HOLD&& m_CurrentlySelectedInputData != 0){
 		auto it =m_InputTextData.find(m_CurrentlySelectedInputData);
 		if(it != m_InputTextData.end()){
 		InputTextData data = it->second;

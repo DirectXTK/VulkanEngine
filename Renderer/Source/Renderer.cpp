@@ -394,7 +394,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
              //vkResetFences(m_Device,1,&m_ImageFreeF[m_CurrentFrame]);
         m_Textures[m_CurrentFrame].clear();
-       m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),100000000,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
+       m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),1000000000,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
        if(m_AcquireImageResult == VK_ERROR_OUT_OF_DATE_KHR){
             ResizeWindow();
             return;

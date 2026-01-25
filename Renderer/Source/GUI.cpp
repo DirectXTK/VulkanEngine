@@ -387,7 +387,20 @@ void GUIRenderer::Slider(const std::string& strID, int* number, Float2 Position,
 
 }
 void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size) {
-	m_FontSystem->InputText(ID, Buffer, BufferSize, Position, Size);
+	Float2 rSize{Size};
+	Float2 lPosition{};
+
+	if (m_CurrenPanelParent) {
+		lPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		rSize = {rSize.x*m_CurrenPanelParent->Size.x,Size.y*m_CurrenPanelParent->Size.y};
+		rSize.x = std::clamp(rSize.x,0.0f,m_CurrenPanelParent->Size.x);
+		rSize.y = std::clamp(rSize.y,0.0f,m_CurrenPanelParent->Size.y);
+
+		lPosition.x = std::clamp(lPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x-rSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x+rSize.x);
+		lPosition.y = std::clamp(lPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y-rSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y+rSize.y);
+	}
+	m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize);
 }
 void GUIRenderer::EndPanel()
 {
