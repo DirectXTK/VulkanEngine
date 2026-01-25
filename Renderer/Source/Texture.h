@@ -21,7 +21,7 @@ enum class TextureCreateFlagBits {
 };
 struct TextureCoords {
 	Float2 Coords[4];
-	uint64_t Width, Height{};
+	uint32_t Width, Height{};
 
 };
 struct TextureAtlasData {

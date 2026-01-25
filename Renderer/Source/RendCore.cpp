@@ -58,11 +58,6 @@ namespace Core{
             Core::Log(ErrorType::Error,"Failed to find supported format.");
             return VK_FORMAT_UNDEFINED;
         }
-        void CopyImageToImage(VkDevice device,VkPhysicalDevice pdevice,Image* src,Image* dst){
-
-
-
-            
-        }
+      
 
 }

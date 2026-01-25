@@ -226,11 +226,14 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     }
 
+    //Make swapchain image layout present
+    VkCommandBuffer commandBuffer =CommandBuffer::StartSingleUseCommandBuffer(m_Context,m_Context->CommandPool);
+    for(uint32_t i=0;i < m_SwapChain->GetSwapChainImageCount();i++){
+        m_SwapChain->GetSwapChainImage(i)->TrasitionFormat(false,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,commandBuffer);
+    }
+    CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_Context->CommandPool,commandBuffer);
 
 
-    //TEMP
-    
-   //
  }
     void Renderer::OnWindowResize(uint32_t width,uint32_t height){
         m_ResizeWindow=true;
@@ -374,7 +377,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         }
 
 
-      
 
             m_Camera = *camera;
 
@@ -391,8 +393,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
              vkResetFences(m_Device,1,&m_DrawFences[m_CurrentFrame]);
 
              //vkResetFences(m_Device,1,&m_ImageFreeF[m_CurrentFrame]);
-
-       m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),1000000000,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
+        m_Textures[m_CurrentFrame].clear();
+       m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),100000000,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
        if(m_AcquireImageResult == VK_ERROR_OUT_OF_DATE_KHR){
             ResizeWindow();
             return;
@@ -401,7 +403,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
            Core::Log(ErrorType::Error,"Failed to acquire image ",(int)m_AcquireImageResult);
             return;
        }
-        m_Textures[m_CurrentFrame].clear();
+
 
         m_DescriptorSetCamera[m_CurrentFrame].WriteTo(0,1,*m_UniformBuffer[m_CurrentFrame]->GetBuffer(),sizeof(UniformCameraBufferData));
 
@@ -433,7 +435,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             if (m_CurrentFrame ==1)
                 vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0]->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer->GetBuffer(), 1, &copyregion);
-            
           
 
 
@@ -477,6 +478,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
     void Renderer::FlushGUI()
     {
+
         auto& textures = m_Textures[m_CurrentFrame];
         auto& textureIds = m_TextureIDByOrder[m_CurrentFrame];
         m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
@@ -532,6 +534,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     
     void Renderer::FlushGeometry()
     {
+
         if (m_GUIRendering) {
             
             FlushGUI();
@@ -598,7 +601,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         void Renderer::EndFrame()
         {
              
-
 
               VkBufferCopy region{};
             region.size = sizeof(Vertex) * m_VertexCount;
@@ -713,9 +715,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //texture map gets current container
         auto& textures = m_Textures[m_CurrentFrame];
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
-
         if (m_VertexPointer + 4 > m_VertexCount )
             FlushGeometry();
+
         if (TextureHandle != 0) {
             AssetType type = m_AssetManager->GetAssetType(TextureHandle);
 
@@ -786,9 +788,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
         m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
         m_Vertices[m_VertexPointer + 3].Position = { Position.x + Size.x,Position.y - Size.y };
-
-      
-
 
         m_Vertices[m_VertexPointer].Color = Color;
         m_Vertices[m_VertexPointer + 1].Color = Color;
@@ -925,7 +924,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
    
     }
     float Renderer::GetFONTDPI(){
-        return 100;
+        return 96;
     }
     void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
     {
@@ -953,7 +952,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         float Space{ 0.06f };
         Float2 advance{};
         float penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
-        float penPosY = (0.5f - Position.y * 0.5f) * GetViewPortExtent().height+CharSizePixels*16;
+        float penPosY = (0.5f - Position.y * 0.5f) * GetViewPortExtent().height+CharSizePixels+CharSizePixels;
 
 
         if(font->TextureAsset.GetType() != AssetType::TEXTURE){
@@ -985,8 +984,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             int32_t LetterIndex = Message[i];
 
             //draw pointer
-            if(PointerIndex ==i)
-                DrawQuad({ BoundingBox[0].x + OffsetX -(FixedPadding*0.5f) ,BoundingBox[1].y- OffsetY + (CharSizeNorm * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding * 0.5f ,CharSizeNorm * 0.75f }, 0);
+            if(PointerIndex ==i){
+                Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY});
+                DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, { 1.0f,0.0f,0.0f,1.0f }, { m_CurrentFont.GetData()->FontSize*0.0007f,m_CurrentFont.GetData()->FontSize*0.004f }, 0);
+            }
+
 
             //edge cases
             //Special cases
@@ -997,8 +999,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 continue;
             }
             case '\n': {
-                OffsetY += SpaceBetweenLines+CharSizeNorm ;
-                OffsetX = FixedPadding;
+                penPosY += 3.0f*+m_CurrentFont.GetData()->FontSize;
+                penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
                 continue;
             }
             }
@@ -1068,6 +1070,32 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             Float2 glyphPosPixelMin = Core::ToNDC(MinCord);
             Float2 glyphPosPixelMax =Core::ToNDC(MaxCord);
+
+            //stop Rendering if it hits bottom boundrie
+            if(glyphPosPixelMin.y < BoundingBox[0].y){
+                return;
+            }
+            //put on new line if exeeceds boundries
+            if(glyphPosPixelMax.x > BoundingBox[3].x){
+                MaxCord = font->MaxCord[LetterIndex];
+                MinCord = font->MinCord[LetterIndex];
+
+                penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
+                penPosY += 3.0f*+m_CurrentFont.GetData()->FontSize;
+
+                baselineY = penPosY;
+
+                baselineY -= MinCord.y;
+                baselineY -= MaxCord.y;
+                MinCord.y = baselineY+MinCord.y;
+                MaxCord.y = baselineY+MaxCord.y;
+
+                MinCord.x += penPosX;
+                MaxCord.x += penPosX;
+
+                glyphPosPixelMin = Core::ToNDC(MinCord);
+                glyphPosPixelMax =Core::ToNDC(MaxCord);
+            }
 
 
           m_Vertices[m_VertexPointer + 0].Position = {  glyphPosPixelMin.x,  glyphPosPixelMin.y, 0.0f }; // bottom-left
@@ -1142,8 +1170,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
     
     }
-    void Renderer::
-    ReCreateFrameBuffers(){
+    void Renderer::ReCreateFrameBuffers(){
         VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_R32G32_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
         VkFormat DepthStencilFormat = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 

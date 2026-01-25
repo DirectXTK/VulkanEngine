@@ -200,6 +200,7 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 	return CurrentButtonData->IsPressed;
 }
 void GUIRenderer::Quad(const Float2& position,const Float2& size,const Float4& color,GUUID textureID){
+
 	Renderer* renderer = m_Application->m_Renderer;
 	Float2 LPosition{ position };
 	Float2 RSize{size};

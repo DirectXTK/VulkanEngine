@@ -63,6 +63,8 @@ public:
 	void KeyBoardCallback(KeyBoardEvent* event);
 	Asset<Font> LoadFont(const std::string& filePath);
 
+	void OnEvent(Event& event);
+
 	~FontSystem();
 private:
 	//Character size is used for the pointer size
@@ -71,6 +73,14 @@ private:
 	int64_t CalculateCharBeingEditedIndex();
 	void DrawPointer(Float2 Position,float CharacterSize,float SizeY);
 	void DrawBorder(Float2& Position, Float2& Size, GUUID ID);
+
+	void OnMouseEvent(MouseEvent& event);
+	void OnKeyBoardEvent(KeyBoardEvent& event);
+
+	struct InputTextData{
+		uint64_t bufferSize{};
+		char* buffer{};
+	};
 
 
 	//coeficient used for normalizing char size.
@@ -88,10 +98,13 @@ private:
 	Texture* m_Texture1{};
 	float m_Padding{ 0.1f };
 	float m_PaddingY{0.1f};
-	uint32_t m_CharacterSize{1};
+	uint32_t m_CharacterSize{4};
 
 	uint32_t m_FontAtlasSize{};
 	Texture* m_FontTexture{};
+
+	std::unordered_map<GUUID,InputTextData> m_InputTextData{};
+
 	//Pointer
 	//Typing
 	float m_TypingCooldown{};
@@ -112,10 +125,13 @@ private:
 	float m_DeleteCharCooldown{};
 
 	Float2 m_PointerLocation{};
-	bool m_IsPointerActive{false};
 	int64_t m_CharEditedIndex{-1};
 	float m_PointerCooldown{0.0f};
-
+	
+	
+	bool m_IsArrowActive{false};
+	uint64_t m_ArrowPosition{}; 
+	GUUID m_CurrentlySelectedInputData{0};
 
 	struct TextData {
 		const char* Message{};

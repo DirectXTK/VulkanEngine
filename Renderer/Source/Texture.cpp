@@ -66,7 +66,8 @@ uint32_t CalculateBytesPerPixel(VkFormat format){
 		m_Context = context;
 		m_Image = image;
 		m_TextureType = TextureType::SwapChainImage;
-		CreateView(format,VK_IMAGE_ASPECT_COLOR_BIT,m_Context->Device);
+		m_AspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		CreateView(format,m_AspectMask,m_Context->Device);
 	}
 	Texture::Texture(Texture* texture, uint32_t TextureIndex){
 		*this = *texture;
@@ -89,7 +90,7 @@ Texture::Texture(Context context, const TextureCreateInfo& createInfo ,std::stri
 
 			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,createInfo.ImageUsageFlags,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,InitData);
 
-			delete[] InitData;
+			free(InitData);
 		}
 		
 	}//Loads texture as an atlas
@@ -102,7 +103,7 @@ Texture::Texture(Context context, const TextureCreateInfo& createInfo ,std::stri
 			//creates the parent and child textures.
 			CreateTextureAtlasAndParent(Path,Width,Height);
 		
-			delete[] InitData;
+			free(InitData);
 		}
 	}
 }

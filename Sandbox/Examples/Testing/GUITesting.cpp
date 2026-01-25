@@ -64,21 +64,24 @@ void GUITestingLayer::OnGUI()
 	
 	static float lafa{5.0f};
 	static float sep{4.0f};
+	static char username[50];
+	username[0] = 'L';
+	guiRenderer->InputText("USERNAME",username,ARRAYSIZE(username),{0.0f,0.0f},{0.5f,0.2f});
 	guiRenderer->SetFontSize((uint32_t)lafa);
-	//guiRenderer->Panel("Panel", {0.0f,-0.9f}, {1.0f,0.5f,0.5f,1.0f}, {1.0f,0.1f}, 0, false);
+	guiRenderer->Panel("Panel", {0.0f,-0.9f}, {0.0f,0.5f,0.5f,1.0f}, {1.0f,0.1f}, 0, true);
+	guiRenderer->Quad({0.0f,0.7f},{0.2f,0.5f},{0.5f,0.5f,1.0f,1.0f});
 
 	//guiRenderer->Button("Start Button","", { 0.0f,0.5f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.5f,0.5f },MouseCodes::LEFT,0,false);
 	//guiRenderer->CheckBox("test",{-0.8f,0.0f},{0.10f,0.50f},{1.0f,1.0f,1.0f,1.0f});
 	//guiRenderer->CheckBox("test1",{-0.6f,0.0f},{0.10f,0.50f},{1.0f,1.0f,1.0f,1.0f});
 	//guiRenderer->CheckBox("test2",{-0.4f,0.0f},{0.10f,0.50f},{1.0f,1.0f,1.0f,1.0f});
-	//guiRenderer->Quad({0.0f,0.0f},{0.2f,0.5f},{0.0f,0.0f,1.0f,1.0f});
 	//guiRenderer->PushStyle(GUI::Style::SLIDER,&sliderdata);
-	guiRenderer->Slider("!!!SLi",&lafa,{0.0f,0.0f},{0.2f,0.5f},1.0f,{1.0f,16.0f});
+	guiRenderer->Slider("!!!SLi",&lafa,{0.0f,0.0f},{0.2f,0.5f},0.2f,{1.0f,16.0f});
 	guiRenderer->Slider("!!!SLi2",&sep,{-0.7f,0.0f},{0.2f,0.5f},1.0f,{-16.0f,16.0f});
 	//guiRenderer->Text("ID","TEXTlafaLAFA123!",{-0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
-	guiRenderer->Text("S","\"TES TING.\"",{0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
+	//guiRenderer->Text("S","\"TES TING.\"",{0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
 	//guiRenderer->PopStyle();
-	//guiRenderer->EndPanel();
+	guiRenderer->EndPanel();
 
 
 }

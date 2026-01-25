@@ -100,6 +100,10 @@ private:
     double m_DeltaTime{};
     double m_LastFrameTime{};
     ColliderSystem m_CollisionSystem{};
+
+    //selection
+    Float2* m_PickBuffer{};
+    uint64_t m_PickBufferSize{};
 public:
     //GUI Renderer
     Renderer* m_Renderer{};

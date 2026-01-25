@@ -81,12 +81,73 @@ void FontSystem::PushFont(GUUID ID)
 	Core::Log(ErrorType::Error,"Failed to PushFont ID{",ID.ID,"]");
 	return;
 }
+void FontSystem::OnEvent(Event& event){
+	if(event.GetEventType() == EventType::KEYBOARD)
+		OnKeyBoardEvent((KeyBoardEvent&)event);
+	if(event.GetEventType() == EventType::MOUSE)
+		OnMouseEvent((MouseEvent&)event);
+}
+void FontSystem::OnMouseEvent(MouseEvent& event){
+	if(event.State == EventState::PRESSED && event.Code == MouseCodes::LEFT){
 
+		GUUID selectedID = Application::GetCurrentlyHoveredPixelID();
+
+		auto it = m_InputTextData.find(selectedID);
+
+		if(it != m_InputTextData.end()){
+			m_CurrentlySelectedInputData = selectedID;
+			m_IsArrowActive = true;
+
+		}else{
+			m_CurrentlySelectedInputData = 0;
+			m_IsArrowActive = false;
+		}
+	}
+}
+
+void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
+	if(event.State == EventState::PRESSED&& m_CurrentlySelectedInputData != 0){
+		auto it =m_InputTextData.find(m_CurrentlySelectedInputData);
+		if(it != m_InputTextData.end()){
+		InputTextData data = it->second;
+
+		if(event.Key == KeyCodes::ARROWLEFT){
+			if(m_ArrowPosition != 0)
+				m_ArrowPosition--;
+		}
+		else if(event.Key == KeyCodes::ARROWRIGHT){
+			if(m_ArrowPosition != data.bufferSize-1)
+				m_ArrowPosition++;
+		}
+		else if(event.Key == KeyCodes::ARROWUP){
+
+		}
+		else if(event.Key == KeyCodes::ARROWDOWN){
+			
+		}else{
+			char insertedChar= (char)event.Key;
+			if(event.Key == KeyCodes::ENTER)
+				insertedChar = '\n';
+
+
+			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition-1);
+			data.buffer[m_ArrowPosition] = insertedChar;
+			if(m_ArrowPosition != data.bufferSize-1)
+				m_ArrowPosition++;
+		}
+	}
+
+
+
+
+	}
+}
 void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Float2 Position, Float2 Size)
 {
 	GUUID SelectID = Core::GetStringHash(ID);
 	bool ScrollableBoundBox{};
 
+	Buffer[BufferSize-1] = '\0';
 	m_PointerCooldown -= Application::GetDeltaTime();
 
 	Float2 BoundingBox[4];
@@ -96,89 +157,18 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	BoundingBox[3] = { Position.x + Size.x,Position.y };
 	
 
-	//letter selecting
-	if (Application::IsMouseClicked(MouseCodes::LEFT)) {
-		if (Application::GetCurrentlyHoveredPixelID() == Core::GetStringHash(ID)){
-			Float2 MousePos = Application::GetMousePosNorm();
-			float PosXInBox = std::fabs(MousePos.x- BoundingBox[0].x);
-			m_CharEditedIndex = PosXInBox / ((m_CharacterSize/m_TextureSize.x)+m_Padding);
-
-			//if its one of the special symbols make it not editable and if its the first char make it editable
- 			if (Buffer[m_CharEditedIndex] <= 32) {
-
-				if (m_CharEditedIndex == 0) {
-					//do nothing
-				}
-				else if (Buffer[m_CharEditedIndex-1] <= 32)
-				{
-					m_CharEditedIndex = strlen(Buffer);
-				}
-				
-				
-			}
-			else if (strlen(Buffer) == 0) {
-				m_CharEditedIndex = 0;
-			}
-		}
-		else {
-			m_CharEditedIndex = -1;
-		}
-	}
-	
+	m_InputTextData[SelectID] = {BufferSize,Buffer};
 	//Draw the invisible barrier that  provides the selecting 
 	DrawBorder(Position, Size, SelectID);
 
-	if (m_PointerCooldown <= 0.0f) {
+	if (m_IsArrowActive &&m_PointerCooldown <= 0.0f) {
 		if (m_PointerCooldown <= -m_PointerBlinkCooldownConst)
 			m_PointerCooldown = m_PointerBlinkCooldownConst;
-		m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - m_CharacterSize }, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_CharEditedIndex);
+		m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition);
 	}
 	else {
-		m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y - m_CharacterSize }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+		m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
 	}
-		//the spaces beetween letters are uneaven and the pointers sometimes isn't drawn.
-		//draws in the center
-		//renderer->DrawQuad({ BoundingBox[0].x + (m_CharEditedIndex * (CharacterSizeNorm + m_FixedPadding)) + (m_FixedPadding * 0.5f),BoundingBox[1].y - (CharacterSizeNorm * 1.0f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { m_FixedPadding * 0.5f ,CharacterSizeNorm }, 0);
-	
-	if (m_CharEditedIndex != -1) {
-		for(uint32_t i=0;i < m_KeyStates.size();i++){
-			EventState State = m_KeyStates.back();
-			KeyCodes Key = m_KeyCodes.back();
-			if (State==EventState::PRESSED || State == EventState::HOLD) {
-
-				if ((int)Key >= 32 && (int)Key <= 127) {
-					if (strlen(Buffer) + 1 < BufferSize) {
-						memcpy(Buffer + m_CharEditedIndex + 1, Buffer + m_CharEditedIndex, strlen(Buffer)- m_CharEditedIndex);
-						Buffer[m_CharEditedIndex] = (char)Key;
-
-						m_CharEditedIndex++;
-						m_TypingCooldown = m_CharEditCooldownConst;
-					}
-				}
-				else {
-					SpecialCases(Key, State, Buffer, BufferSize);
-				}
-				m_KeyAlreadyPressed[(uint32_t)Key] = true;
-
-			
-			}
-			m_KeyCodes.pop();
-			m_KeyStates.pop();
-		}
-			
-		//pointer
-		
-		
-	}
-
-
-
-	
-
-	//if (m_CharEditedIndex == -1)
-		//Core::Log(ErrorType::Error, "Failed to find the char index.");
-	//DrawPointer()
-	// 
 	
 }
 void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Float2 MaxSize)
@@ -276,7 +266,6 @@ void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 	
 	Float4 DefBackGroundColor{ 0.2f,0.2f,0.2f,1.0f };
 
-	Core::Log("Size",m_Style.size());
 	if (m_Style.empty()) {
 		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
 		return;
@@ -455,7 +444,6 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 
 	float FontAtlasWidth{}, FontAtlasHeight{};
 	uint32_t SubTextureIndex{};
-	uint32_t ChannelCount{};
 	float OffsetX{0};
 	float OffsetY{0};
 	TextureCoords* AtlasCoords{};
@@ -500,7 +488,7 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 	uint32_t* AtlasMapBitmap = new uint32_t[(uint32_t)FontAtlasWidth * (uint32_t)FontAtlasHeight];
 	memset(AtlasMapBitmap,0x00000000, FontAtlasWidth * FontAtlasHeight*sizeof(uint32_t));
 
-	for (uint32_t i = 0x20; i <= std::min((uint32_t)0x7E,(uint32_t)m_Face->num_glyphs); i++) {
+	for (uint32_t i = 0x20; i < std::min((uint32_t)0x7E,(uint32_t)m_Face->num_glyphs); i++) {
 		uint32_t GlyphIndex = FT_Get_Char_Index(m_Face, i);
 		SubTextureIndex = i;
 
@@ -529,11 +517,10 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 		}
 		
 		
-
 		AtlasCoords[SubTextureIndex].Width = slot->bitmap.width;
 		AtlasCoords[SubTextureIndex].Height = slot->bitmap.rows;
-		SizeX = slot->bitmap.width;
-		SizeY = slot->bitmap.rows;
+		SizeX = (float)slot->bitmap.width;
+		SizeY = (float)slot->bitmap.rows;
 		
 
 		if (OffsetX + AtlasCoords[SubTextureIndex].Width > FontAtlasWidth) {
@@ -557,12 +544,6 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 			Core::Log(ErrorType::Error, "Failed to get glyph from slot.");
 		}
 
-		MinCord[SubTextureIndex].x = slot->bitmap_left;
-		MinCord[SubTextureIndex].y = slot->bitmap_top;
-			
-		MaxCord[SubTextureIndex].x = (float)slot->bitmap.width;
-		MaxCord[SubTextureIndex].y =  (float)slot->bitmap.rows;
-	
 		float glyphLeft  =  slot->bitmap_left;
 		float glyphRight = glyphLeft + slot->bitmap.width;
 
@@ -585,7 +566,7 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 				AtlasMapBitmap[(uint32_t)OffsetX+x + ((y + (uint32_t)OffsetY)* (uint32_t)FontAtlasWidth )] |= uint32_t(slot->bitmap.buffer[(y * slot->bitmap.width+x)]<<24);
 			}
 		}
-		OffsetX += AtlasCoords[SubTextureIndex].Width+1;
+		OffsetX += (float)AtlasCoords[SubTextureIndex].Width;
 		FT_Done_Glyph(glyph);
 	}
 	
@@ -628,7 +609,6 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 		Buffer* buffer = new Buffer(desc);
 		buffer->UploadToBuffer(context->Device,AtlasMapBitmap,0);
 		context->m_TempBuffers->push_back(buffer);
-		Core::Log("REsiuze");
 		texture->TrasitionFormat(true,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,context->TransferCommandBuffer);
 		texture->CopyFromBuffer(context->Device,buffer,context->TransferCommandBuffer);
 		texture->TrasitionFormat(false,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,context->TransferCommandBuffer);
