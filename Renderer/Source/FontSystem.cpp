@@ -14,8 +14,8 @@ FontSystem::FontSystem()
 	//const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Sacrifice.ttf";
 	const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Daydream.ttf";
 	//Day dream causes crashes.
-	m_FontAssets.push(LoadFont(FontPath));
-	m_Renderer->SetCurrentFont(m_FontAssets.top());
+	m_CurrentFont = LoadFont(FontPath);
+	m_Renderer->SetCurrentFont(m_CurrentFont);
 }
 Asset<Font> FontSystem::LoadFont(const std::string& filePath){
 	FT_Error error = FT_Init_FreeType(&m_Library);
@@ -32,7 +32,9 @@ Asset<Font> FontSystem::LoadFont(const std::string& filePath){
 		Core::Log(ErrorType::Error, "Failed to open/read or the font is broken ");
 		return Asset<Font>();
 	}
-	return ReRenderFaces(Core::GetStringHash(filePath),Core::GetFileName(filePath));
+
+	std::string Name = Core::GetFileName(filePath);
+	return ReRenderFaces("FONT"+Name+std::to_string(m_CharacterSize),Core::GetFileName(filePath));
 }
 
 void FontSystem::Run(void* app,void* iRenderer)
@@ -47,12 +49,9 @@ void FontSystem::SetCharcterSize(uint32_t CharSize)
 
 	m_CharacterSize = CharSize;
 
-	Asset<Font> asset = m_FontAssets.top();
-	if(asset){
-		ReRenderFaces(asset.GetID(),asset.GetData()->FontName);
+	if(m_CurrentFont){
+		m_Renderer->SetCurrentFont(ReRenderFaces("FONT"+m_CurrentFont.GetData()->FontName+std::to_string(m_CharacterSize),m_CurrentFont.GetData()->FontName));
 
-	}else{
-		Core::Log(m_FontAssets.size(),",","Size");
 	}
 }
 
@@ -71,11 +70,11 @@ Texture* FontSystem::GetFontAtlas()
 	return m_FontAtlas;
 }
 
-void FontSystem::PushFont(GUUID ID)
+void FontSystem::SetFont(GUUID ID)
 {
 	Asset<Font> font = Application::GetAsset<Font>(ID);
 	if(font){
-		m_FontAssets.push(font);
+		m_CurrentFont = font;
 		return;
 	}
 	Core::Log(ErrorType::Error,"Failed to PushFont ID{",ID.ID,"]");
@@ -97,10 +96,12 @@ void FontSystem::OnMouseEvent(MouseEvent& event){
 		if(it != m_InputTextData.end()){
 			m_CurrentlySelectedInputData = selectedID;
 			m_IsArrowActive = true;
+			m_ArrowPosition=0;
 
 		}else{
 			m_CurrentlySelectedInputData = 0;
 			m_IsArrowActive = false;
+			m_ArrowPosition=0;
 		}
 	}
 }
@@ -124,13 +125,20 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 		}
 		else if(event.Key == KeyCodes::ARROWDOWN){
 			
-		}else{
+		}else if(event.Key == KeyCodes::BACKSPACE){
+			if(m_ArrowPosition != 0)
+			{
+				memccpy(data.buffer+m_ArrowPosition-1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
+				m_ArrowPosition--;
+			}
+		}
+		else{
 			char insertedChar= (char)event.Key;
 			if(event.Key == KeyCodes::ENTER)
 				insertedChar = '\n';
 
 
-			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition-1);
+			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
 			data.buffer[m_ArrowPosition] = insertedChar;
 			if(m_ArrowPosition != data.bufferSize-1)
 				m_ArrowPosition++;
@@ -161,7 +169,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	//Draw the invisible barrier that  provides the selecting 
 	DrawBorder(Position, Size, SelectID);
 
-	if (m_IsArrowActive &&m_PointerCooldown <= 0.0f) {
+	if (m_IsArrowActive &&m_PointerCooldown <= 0.0f&& m_CurrentlySelectedInputData == SelectID) {
 		if (m_PointerCooldown <= -m_PointerBlinkCooldownConst)
 			m_PointerCooldown = m_PointerBlinkCooldownConst;
 		m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition);
@@ -290,10 +298,7 @@ void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 	}
 
 }
-void FontSystem::PopFont()
-{
-	m_FontAssets.pop();	
-}
+
 
 void FontSystem::KeyBoardCallback(KeyBoardEvent* event)
 {

@@ -268,7 +268,7 @@ private:
 
     Camera2D m_Camera{};
     //Texturing
-    uint32_t m_TextureSlotCount{ 4 };
+    uint32_t m_TextureSlotCount{ 2 };
     Texture* m_BlankWhiteTexture{};
     DescriptorPool m_DescriptorPoolTextures{};
 
@@ -282,7 +282,7 @@ private:
     std::vector<GUUID> m_TextureIDByOrder[MAX_FRAME_DRAWS];
     //GUI stuff
     Vertex* m_VerticesGUI{};
-    uint64_t m_VertexMaxCountGUI{ 100 * 4 };
+    uint64_t m_VertexMaxCountGUI{ 40 };
     uint64_t m_VertexCountGUI{};
     uint64_t m_VertexGUIRemaining{};
     uint64_t m_VertexPointerGUI{};

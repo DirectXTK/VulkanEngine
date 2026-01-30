@@ -356,6 +356,14 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_VertexBufferOffsetGUI =0;
             m_VertexGUIRemaining = m_VertexMaxCountGUI;
             m_CurrentVertexBufferIndexGUI =0;
+
+            m_VertexCount = m_RendererDesc.VertexCountPerDrawCall;
+
+            //Swap back to normal
+            Vertex* temp = m_Vertices;
+            m_Vertices = m_VerticesGUI;
+            m_VerticesGUI = temp;
+
     }
     void Renderer::BeginFrame(Camera2D* camera,float deltaTime){    
     
@@ -461,7 +469,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
          
         
         m_VertexPointer =0;
+        m_VertexCount = m_VertexMaxCountGUI;
 
+        //Swap the buffers to allow normal rendering;
+        Vertex* temp = m_Vertices;
+        m_Vertices = m_VerticesGUI;
+        m_VerticesGUI = temp;
     }
 
 
@@ -478,7 +491,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
     void Renderer::FlushGUI()
     {
-
+    
         auto& textures = m_Textures[m_CurrentFrame];
         auto& textureIds = m_TextureIDByOrder[m_CurrentFrame];
         m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
@@ -487,25 +500,25 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         for (uint32_t i = 0; i < textureIds.size(); i++) {
             TextureRenderingData textureData = textures[textureIds[i]];
             
-            if(!textureData.texture){
+          if (textureData.texture){
+                Texture* texture = (Texture*)textureData.texture.GetData();
+                m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
+            }
+            else{
                 if(m_AssetManager->HasAsset(textureIds[i])){
                     Core::Log(ErrorType::Warning,"Manager has the asset but isn't loaded in renderer");
                 }else
+                    Core::Log(ErrorType::Error,"Texture rendered count ",textureIds.size());
                     Core::Log(ErrorType::Error,"Texture isn't loaded at all.{",textureIds[i].ID,"}");
             }
-            if (textureData.texture){
-                Texture* texture = (Texture*)textureData.texture.GetData();
-
-                m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
-            }
         }
-      
-        
+
         m_DrawCommandsGUI.push_back({ m_VertexPointer-m_VertexBufferOffsetGUI,m_CurrentVertexBufferIndexGUI,m_VertexBufferOffsetGUI,m_DrawCallCountGUI + m_DrawCallCountGeometry });
 
         m_VertexCountPerDrawCall += m_VertexPointer;
         if (m_VertexPointer >= m_VertexGUIRemaining) {
            m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
+            if(m_VertexCountPerDrawCall >=m_VertexBufferGUI.size()*m_VertexMaxCountGUI )
                  CreateNewBufferForBatch(m_VertexBufferGUI, m_StaggingBufferGUI);
             m_CurrentVertexBufferIndexGUI++;
             m_VertexGUIRemaining = m_VertexMaxCountGUI;
@@ -515,20 +528,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         else {
             m_VertexGUIRemaining -= (m_VertexPointer-m_VertexBufferOffsetGUI);
         }
-        
+       
 
-        VkBufferCopy region{};
-        region.size = sizeof(Vertex) * m_VertexPointer;
-        region.srcOffset = m_VertexBufferOffsetGUI;
-        region.dstOffset = m_VertexBufferOffsetGUI;
-
-
-      
         m_VertexBufferOffsetGUI+=(m_VertexPointer-m_VertexBufferOffsetGUI);
+        m_VertexCount = m_VertexGUIRemaining;
 
         m_DrawCallCountGUI++;
 
-        textures.clear();
         textureIds.clear();
     }
     
@@ -591,7 +597,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
             m_DrawCallCountGeometry++;
-           textures.clear();
            textureIds.clear();
         }
     
@@ -612,13 +617,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                         vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGeometry[i]->GetBuffer(), *m_VertexBufferGeometry[i]->GetBuffer(), 1, &region);
 
 
-           m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
 
             FlushGUI();
 
 
-         
-            region.size = sizeof(Vertex)*m_VertexMaxCountGUI;
+           m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
+           region.size = sizeof(Vertex)*m_VertexMaxCountGUI;
 
             for(uint32_t i=0 ;i < m_StaggingBufferGUI.size();i++)
               vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGUI[i]->GetBuffer(), *m_VertexBufferGUI[i]->GetBuffer(), 1, &region);
@@ -681,6 +685,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                m_Textures[m_CurrentFrame].clear();
             m_TextureIDByOrder[m_CurrentFrame].clear();
 
+
+
+            m_Textures[m_CurrentFrame].clear();
+            m_TextureIDByOrder[m_CurrentFrame].clear();
+
             m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAME_DRAWS;
             m_GUIRendering = false;
 
@@ -703,6 +712,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             }
             m_TempBuffers[m_CurrentFrame].clear();
              }
+
+            
 
         }
     
@@ -939,6 +950,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
         Font* font = (Font*)m_CurrentFont.GetData();
         Texture* FontAtlasTexture{};
+        uint64_t stringLen{strlen(Message)};
 
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
         float CharSizeNorm{};
@@ -975,20 +987,26 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_CurrentTextureDescriptorSetOffset++;
  
         }
+
+        if(stringLen == 0 && PointerIndex != -1){
+              Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY});
+            DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, { 1.0f,0.0f,0.0f,1.0f }, { m_CurrentFont.GetData()->FontSize*0.0007f,m_CurrentFont.GetData()->FontSize*0.004f }, 0);
+        }
+
         //Do this for every letter
         float Max{};
         float Min{};
-        for (uint32_t i = 0; i < strlen(Message); i++) {
+        for (uint32_t i = 0; i <= stringLen; i++) {
             Float2 SubTextureSize{};
             Float2 Size{};
             int32_t LetterIndex = Message[i];
 
-            //draw pointer
-            if(PointerIndex ==i){
+          
+               //draw pointer
+            if(PointerIndex ==i  ){
                 Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY});
                 DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, { 1.0f,0.0f,0.0f,1.0f }, { m_CurrentFont.GetData()->FontSize*0.0007f,m_CurrentFont.GetData()->FontSize*0.004f }, 0);
             }
-
 
             //edge cases
             //Special cases
@@ -1003,10 +1021,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
                 continue;
             }
+            case '\0':{
+                return;
+            }
             }
             //space letter index ==-1
 
-            if (m_VertexPointer + 8 > m_VertexCount)
+            if (m_VertexPointer>= m_VertexMaxCountGUI)
                 FlushGeometry();
           
             TextureRenderingData texture = textures[TextureHandle];
@@ -1046,17 +1067,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             MinCord = font->MinCord[LetterIndex];
             advance = font->Advance[LetterIndex];
 
-            //Stop drawing if text is going out of bounds.
-            if (BoundingBox[0].x + CharSizeNorm + OffsetX > BoundingBox[3].x) {
-
-                OffsetY += SpaceBetweenLines + CharSizeNorm;
-                OffsetX = FixedPadding;
-
-            }
-            if (BoundingBox[1].y - CharSizeNorm - OffsetY < BoundingBox[0].y)
-                break;
-        
-            
+          
 
             float baselineY = penPosY; // in pixels
 
@@ -1095,7 +1106,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
                 glyphPosPixelMin = Core::ToNDC(MinCord);
                 glyphPosPixelMax =Core::ToNDC(MaxCord);
+                if(glyphPosPixelMin.y < BoundingBox[0].y){
+                         return;
+                 }
             }
+           
+            
 
 
           m_Vertices[m_VertexPointer + 0].Position = {  glyphPosPixelMin.x,  glyphPosPixelMin.y, 0.0f }; // bottom-left
@@ -1133,7 +1149,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             m_VertexPointer += 4;
           
-
+           
         }
     }
 
@@ -1312,6 +1328,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
             gui->PushStyle(GUI::Style::BORDER,&style);
             gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(m_DrawCallCountGeometry+m_DrawCallCountGUI),{0.0f,0.75f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
+
             gui->Text("TriangleCount","TRIANGLE: "+std::to_string(m_VertexCountPerFrame/3),{0.0f,0.25f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
             gui->Text("VertexCount","VERTEX: "+std::to_string(m_VertexCountPerFrame),{0.0f,-0.25f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
 

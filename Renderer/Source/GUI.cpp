@@ -307,8 +307,8 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 		rSize.x = std::clamp(rSize.x,0.0f,m_CurrenPanelParent->Size.x);
 		rSize.y = std::clamp(rSize.y,0.0f,m_CurrenPanelParent->Size.y);
 
-		lPosition.x = std::clamp(lPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x+rSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-rSize.x);
-		lPosition.y = std::clamp(lPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+rSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-rSize.y);
+		lPosition.x = std::clamp(lPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x-rSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x+rSize.x);
+		lPosition.y = std::clamp(lPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y-rSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y+rSize.y);
 	}
 
 	if(m_CurrentBorderData){
@@ -345,7 +345,6 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 		float deltaPos = Application::GetMousePos().x -CurrentSlider->MousePosChange;
 		CurrentSlider->MousePosChange =  Application::GetMousePos().x ;
 
-		Core::Log("dletapos",SlideAmount);
 		*number += deltaPos * SlideAmount;
 		*number=std::clamp(*number,MinMax.x,MinMax.y);
 	}

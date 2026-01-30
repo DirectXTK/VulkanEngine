@@ -47,7 +47,7 @@ public:
 	void PopStyle();
 
 
-	void PushFont(GUUID fontAsset);
+	void SetFont(GUUID fontAsset);
 	//Renders simple text.
 	// MaxCharacters 0 means unlimited.
 	//Returns true then max characters has been reached.
@@ -58,7 +58,6 @@ public:
 	void Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize = { 0.f,0.f });
 
 	uint32_t GetFontSize() { return m_CharacterSize;}
-	void PopFont();
 
 	void KeyBoardCallback(KeyBoardEvent* event);
 	Asset<Font> LoadFont(const std::string& filePath);
@@ -137,7 +136,7 @@ private:
 		const char* Message{};
 	};
 	//Stored data
-	std::stack<Asset<Font>> m_FontAssets;
+	Asset<Font> m_CurrentFont;
 	std::unordered_map<GUUID, TextData> m_StoredData{};
 	//float m_FixedPadding{ 0.1018f  };
 
