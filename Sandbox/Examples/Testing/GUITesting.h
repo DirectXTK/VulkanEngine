@@ -15,7 +15,7 @@ public:
 private:
 
 
-
+    Animator* m_Anim{};
     //Controlls
     float m_Move{ -1.0 };
     float m_Direct{ 0.005f };

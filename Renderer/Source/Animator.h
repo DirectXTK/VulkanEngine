@@ -21,7 +21,7 @@ public:
 	uint32_t GetTextureIndex(){return m_CurrentStageInfo.TextureIndex;}
 	GUUID GetAnimationID();
 
-
+	operator bool(){if(m_AnimationID == 0)return false; return true;}
 private:
 	struct Stage {
 		uint32_t From{};
@@ -41,6 +41,6 @@ private:
 	StageInfo m_CurrentStageInfo{  };
 
 	float m_CurrentDuration{};
-	GUUID m_AnimationID{};
+	GUUID m_AnimationID{0};
 };
 

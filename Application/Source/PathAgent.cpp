@@ -100,8 +100,7 @@ std::vector<std::array<int,3>> Triangulate(const std::vector<Float2>& verts)
     tris.push_back({idx[0], idx[1], idx[2]});
     return tris;
 }
-std::vector<NavPoly> BuildNavMesh2D(
-    const std::vector<Float2>& boundary)
+std::vector<NavPoly> BuildNavMesh2D(const std::vector<Float2>& boundary)
 {
     auto tris = Triangulate(boundary);
 
@@ -283,9 +282,7 @@ void PathSystem::RenderGrid(){
     }
 }
 int PathSystem::GetPolygonIndex(const Float2& pos){
-    Core::Log("NavMeshCount", m_NavMesh.size());
     for(uint32_t i =0 ;i  < m_NavMesh.size();i++){
-        Core::Log("Mesh",m_NavMesh[i].verts[0],",",m_NavMesh[i].verts[1],",",m_NavMesh[i].verts[2]);
         if(PointInTri(pos,m_NavMesh[i].verts[0],m_NavMesh[i].verts[1],m_NavMesh[i].verts[2])){
             return i;
         }

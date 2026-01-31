@@ -50,6 +50,8 @@ void CollisionLayer::OnUpdate(double deltaTime){
 
 		unit->PathToGoal = path;
 
+	}else{
+		Core::Log("Not here");
 	}
 	}
 }
@@ -64,7 +66,6 @@ void CollisionLayer::MoveUnit( Unit& unit){
 
 	if(std::fabs(unit.Pos.x - path.x) <=MoveAmount&&std::fabs(unit.Pos.y - path.y) <=MoveAmount){
 		unit.CurrentPath++;
-		Core::Log("Same",path,unit.Pos);
 		if(unit.CurrentPath == unit.PathToGoal.size())
 		{
 			unit.CurrentPath =0;
@@ -72,7 +73,6 @@ void CollisionLayer::MoveUnit( Unit& unit){
 		}
 	}
 	
-Core::Log("PAth",path);
 	//Core::Log("Force",unit.Path.MoveObject({MoveAmount,MoveAmount},path));
 	unit.Pos += unit.Path.MoveObject({MoveAmount,MoveAmount},path);
 	

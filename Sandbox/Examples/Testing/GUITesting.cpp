@@ -1,20 +1,30 @@
 #include "GUITesting.h"
 #include "Serializer.h"
 
+Animator animator{};
 GUITestingLayer::GUITestingLayer() : Layer("GUITestingLayer")
 {
 
 }
 void GUITestingLayer::OnCreate() {
 
-	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources",AssetType::NONE);
+	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/Animation/",AssetType::ANIMATION);
 
+	  Asset<Animator> asset= Application::GetAsset<Animator>("PEASawdaawdANT");
+		if(asset){
+			animator = *asset.GetData();
+			animator.SetStage("WALK");
+		}
 }
 void GUITestingLayer::OnUpdate(double deltatime)
 {
    Renderer* renderer = Application::GetRenderer();
 
-   renderer->DrawQuad({0.0f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},Core::GetStringHash("/Animation/SUN"),0,0);
+   if(animator)
+   {
+   		renderer->DrawQuad({0.0f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},animator,0);
+   		animator.Update(deltatime);
+   }
 
 }
 void GUITestingLayer::OnRender(double deltime){

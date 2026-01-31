@@ -741,7 +741,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-                Core::Log("Typ[e]",Core::GetAssetTypeString(TexutreAsset.GetType()));
                 switch (TexutreAsset.GetType()) {
                 case AssetType::TEXTURE: {
                     CurrentTextureHandle = TextureHandle;
@@ -844,6 +843,14 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //texture map gets current container
         auto& textures = m_Textures[m_CurrentFrame];
         Asset<Texture> textureAsset = Animation.GetCurrentTexture();
+
+            #ifdef DEBUG
+                if(!textureAsset){
+                   Core::Log(ErrorType::Error,"Animation texture is invalid{DrawQuad} AnimationID:",Animation.GetAnimationID().ID);
+                   return;
+                 }
+            #endif
+
         GUUID textureID = textureAsset.GetID();
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
 

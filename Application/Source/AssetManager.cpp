@@ -21,66 +21,28 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		return;
 	}
 	
-	std::string FilePath{};
 	switch (TypesToLoad) {
 	case AssetType::TEXTURE: {
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
-			FilePath = dir_entry.path().string();
-			
-			if (Core::GetFileExtension(FilePath) != "png")
-				continue;
+			std::string currentFile = dir_entry.path().string();
+			std::string fileExtension = Core::GetFileExtension(currentFile);	
+			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
 
-			Texture* texture = m_APP->m_Renderer->LoadTexture(FilePath);
-			//name of the file
-			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size()-4);
+			if(fileExtension == "png"){
+				LoadTexture(currentFile,fileName);		}
 
-			size_t t = std::hash<std::string>{}(FilePath);
-			
-
-			LoadAssetPerma<Texture>(texture,AssetType::TEXTURE,FilePath);
 		}
 		break;
 	}
 	case AssetType::TEXTUREATLAS: {
-		std::string TexturePath{};
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 
-			Texture* texture{};
-			uint32_t AtlasCount{};
+			std::string currentFile = dir_entry.path().string();
+			std::string fileExtension = Core::GetFileExtension(currentFile);	
+			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
 
-			FilePath = dir_entry.path().string();
-
-			if (Core::GetFileExtension(FilePath) != "json")
-				continue;
-
-			size_t LocOfPng = FilePath.find("json", 0);
-			if (LocOfPng == (uint64_t)-1)
-				continue;
-
-			TexturePath = FilePath;
-			texture = m_APP->m_Renderer->LoadTexture(TexturePath);
-			TexturePath = FilePath.substr(0, FilePath.size() - 5);
-
-			TexturePath = TexturePath.substr(FolderPath.size(), TexturePath.find(".png")- FolderPath.size());
-
-					
-
-			//Get texture info 
-			//texture= m_APP->m_Renderer->LoadTexture(FilePath);
-			//LoadAssetPerma<TextureAtlasData>(texture,AssetType::TEXTURE,TexturePath );
-			
-
-			texture->CreateTextureAtlasData(FilePath);
-
-
-
-			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
-
-			
-			m_ResourceCount[TypesToLoad]++;
-					
-					LoadAssetPerma<Texture>(texture,AssetType::TEXTURE,TexturePath );
-				
+			 if(fileExtension == "json"){
+				LoadTextureAtlas(currentFile,fileName);
 
 		
 		}
@@ -91,10 +53,12 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 				std::string currentFile = dir_entry.path().string();
-				std::string fileExtension = Core::GetFileExtension(FilePath);
-				std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size());
+
+				std::string fileExtension = Core::GetFileExtension(currentFile);
+				std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+				
 				if (fileExtension != "json")
-					break;
+					continue;
 				LoadAnimation(currentFile,fileName);
 		}
 	
@@ -127,6 +91,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	
 
 
+}
 }
 	
 void AssetManager::DebugStatistics(bool GUI){
@@ -224,12 +189,11 @@ void AssetManager::LoadTextureAtlas(const std::string& filePath,const std::strin
 void AssetManager::LoadAnimation(const std::string& filePath,const std::string& fileName)
 {
 	auto it = m_Resources.find(fileName);
-	if(it != m_Resources.end())
-		return;
+	if(it != m_Resources.end()){
+			return;
+	}
 	std::string TexturePath{};
-	std::string AnimationPath{};
 	uint32_t AtlasCount{};
-
 
 		//Load texture only works if it uses atlases
 		//TODO: CHange so it support seperate textures also.
@@ -253,8 +217,9 @@ void AssetManager::LoadAnimation(const std::string& filePath,const std::string& 
 	
 	
 
-
-		Animator* animator= new Animator(AnimationPath,atlasGUUID, TextureID,&m_APP->m_AssetManager);
+		Animator* animator= new Animator(filePath,atlasGUUID, TextureID,&m_APP->m_AssetManager);
+		if(!animator)
+			return;
 		animator->SetStage("IDLE");
 	
 		LoadAssetPerma<Animator>(animator,AssetType::ANIMATION,fileName);

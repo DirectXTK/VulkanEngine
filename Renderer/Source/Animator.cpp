@@ -94,7 +94,7 @@ void Animator::Update(float DeltaTime)
 }
 
 void Animator::SetStage(const std::string& StageTag)
-{	
+{		
 	auto Index =m_Stages.find(StageTag); 
 	if(Index != m_Stages.end()){
 	m_CurrentStage = m_Stages[StageTag];
