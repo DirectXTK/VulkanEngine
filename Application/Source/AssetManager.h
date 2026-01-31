@@ -8,8 +8,12 @@ class AssetManager;
 
 struct AssetHandle{
 
-	AssetHandle(GUUID id,AssetManager* manager,const AssetType& type,void* Data): ID(id),Manager(manager),Type(type),Data(Data){
-	}
+	#ifdef DEBUG
+		AssetHandle(GUUID id,AssetManager* manager,const AssetType& type,void* Data,const std::string& assetFullPath ): ID(id),Manager(manager),Type(type),Data(Data),AssetPath(assetFullPath){}
+	#else
+		AssetHandle(GUUID id,AssetManager* manager,const AssetType& type,void* Data): ID(id),Manager(manager),Type(type),Data(Data){}
+	#endif
+
 	AssetHandle(){}
 
 	void MakeItPermaHandle(){RefCount++;}
@@ -19,7 +23,15 @@ struct AssetHandle{
 	AssetManager* Manager{};
 	AssetType Type{};
 	void* Data{};
+	#ifdef DEBUG
+	std::string AssetPath{"NONE"};
+	#endif
+
 };
+namespace Core{
+     std::string  GetAssetTypeString(const AssetType& assetType);
+
+}
 
 void ASSETLOADASSET(AssetHandle* data);
 
@@ -66,13 +78,18 @@ public:
     AssetType GetType(){return m_Data->Type;}
 	uint32_t GetRefCount(){return m_Data->RefCount;}
 	GUUID GetID(){return m_Data->ID;}
+	#ifdef DEBUG
+	std::string& GetAssetPath(){return m_Data->AssetPath;}
+	#endif
 
     bool operator==(const Asset& other){return m_Data->ID == other.m_Data->ID? true:false;}
     operator bool(){return m_Data==nullptr? false:true&&m_Data->Type == AssetType::NONE? false:true;}
 
 
     ~Asset(){Release();}
+
 private:
+
 	Asset(AssetHandle* handle){m_Data = handle;m_Data->RefCount++;}
  
     void CreateAsset(GUUID id,void* resource,const AssetType& type,AssetManager* manager){
@@ -97,6 +114,7 @@ private:
 			T* ConvertedData = (T*)m_Data->Data;
 			delete ConvertedData;
 			ASSETLOADASSET(m_Data);
+			m_Data = nullptr;
           	 
         }
 	}
@@ -118,7 +136,11 @@ public:
 	  auto Index = m_Resources.find(ID);
         if(Index != m_Resources.end())
             return Asset<T>(&m_Resources[ID]);
-         m_Resources[ID] = AssetHandle(ID,this,type,Resource);
+		#ifdef DEBUG
+      	   m_Resources[ID] = AssetHandle(ID,this,type,Resource,Name);
+		#else
+      	   m_Resources[ID] = AssetHandle(ID,this,type,Resource);
+		#endif
 		 m_ResourceCount[type]++;
          return Asset<T>(&m_Resources[ID]);
 	}
@@ -128,7 +150,11 @@ public:
 	  auto Index = m_Resources.find(ID);
         if(Index != m_Resources.end())
             return Asset<T>(&m_Resources[ID]);
-         m_Resources[ID] = AssetHandle(ID,this,type,Resource);
+        #ifdef DEBUG
+      	   m_Resources[ID] = AssetHandle(ID,this,type,Resource,Name);
+		#else
+      	   m_Resources[ID] = AssetHandle(ID,this,type,Resource);
+		#endif
 		 m_Resources[ID].MakeItPermaHandle();
 		 m_ResourceCount[type]++;
          return Asset<T>(&m_Resources[ID]);
@@ -189,9 +215,14 @@ public:
 	
 	//void Save();
 	void FreeAssetsPerma();
+
+	void Shutdown();
+	~AssetManager();
 private:
-	void LoadFont(const std::string& FilePath);
-	void LoadAnimation(const std::string& FolderPath);
+	void LoadFont(const std::string& FilePath,const std::string& fileName);
+	void LoadAnimation(const std::string& FolderPath,const std::string& fileName);
+	void LoadTexture(const std::string& filePath,const std::string& fileName);
+	void LoadTextureAtlas(const std::string& filePath,const std::string& fileName);
 
 	std::unordered_map<GUUID, AssetHandle> m_Resources{};
 	std::unordered_map<AssetType, uint64_t> m_ResourceCount;

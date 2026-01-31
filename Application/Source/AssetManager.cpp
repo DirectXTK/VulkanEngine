@@ -24,10 +24,6 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	std::string FilePath{};
 	switch (TypesToLoad) {
 	case AssetType::TEXTURE: {
-		std::string str{};
-		str.resize(200);
-		str = Core::GetModuleFileName();
-
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 			FilePath = dir_entry.path().string();
 			
@@ -39,7 +35,8 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 			FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size()-4);
 
 			size_t t = std::hash<std::string>{}(FilePath);
-		
+			
+
 			LoadAssetPerma<Texture>(texture,AssetType::TEXTURE,FilePath);
 		}
 		break;
@@ -53,10 +50,10 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 
 			FilePath = dir_entry.path().string();
 
-			if (Core::GetFileExtension(FilePath) == ".json")
+			if (Core::GetFileExtension(FilePath) != "json")
 				continue;
 
-			size_t LocOfPng = FilePath.find(".json", 0);
+			size_t LocOfPng = FilePath.find("json", 0);
 			if (LocOfPng == (uint64_t)-1)
 				continue;
 
@@ -91,7 +88,34 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 
 	}
 	case AssetType::ANIMATION: {
-		LoadAnimation(FolderPath);
+
+		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
+				std::string currentFile = dir_entry.path().string();
+				std::string fileExtension = Core::GetFileExtension(FilePath);
+				std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size());
+				if (fileExtension != "json")
+					break;
+				LoadAnimation(currentFile,fileName);
+		}
+	
+		break;
+	}
+	case AssetType::NONE:{
+		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
+			std::string currentFile = dir_entry.path().string();
+			std::string fileExtension = Core::GetFileExtension(currentFile);	
+			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+
+			if(fileExtension == "png"){
+				LoadTexture(currentFile,fileName);
+			}else if(fileExtension == "json"){
+				LoadTextureAtlas(currentFile,fileName);
+			}
+			else if(fileExtension == "ttf"){
+				LoadFont(currentFile,fileName);
+			}
+
+		}
 		break;
 	}
 
@@ -114,7 +138,7 @@ void AssetManager::DebugStatistics(bool GUI){
 	uint32_t CurrentType{1};
 	while(idsSorted.size() != m_Resources.size()){
 	for(auto it = m_Resources.begin();it != m_Resources.end();it++){
-		if(idsSorted.size() == m_Resources.size())
+		if(idsSorted.size() == m_Resources.size())	
 			break;
 		if((uint32_t)it->second.GetType() == CurrentType)
 			idsSorted.push_back(it->first);
@@ -123,91 +147,151 @@ void AssetManager::DebugStatistics(bool GUI){
 }
 	for(uint32_t i=0 ;i < idsSorted.size();i++){
 		AssetHandle handle = m_Resources[idsSorted[i]];
+		std::string debugStuff{};
+		#ifdef DEBUG
+			debugStuff = " Path:"+handle.AssetPath;
+		#endif
+
 		switch(handle.GetType()){
 			case AssetType::FONT:{
-				Core::Log("Font ID{",handle.ID.ID,"}");
+				Core::Log("Font ID{",handle.ID.ID,"}"+debugStuff);
 
 				break;
 			}
 				case AssetType::TEXTURE:{
-				Core::Log("Texture ID{",handle.ID.ID,"}");
+				Core::Log("Texture ID{",handle.ID.ID,"}"+debugStuff);
 
 				break;
 			}
 				case AssetType::TEXTUREATLAS:{
-				Core::Log("Animation ID{",handle.ID.ID,"}");
+				Core::Log("Animation ID{",handle.ID.ID,"}"+debugStuff);
 
 				break;
 			}
 				case AssetType::ANIMATION:{
-				Core::Log("Animation ID{",handle.ID.ID,"}");
+				Core::Log("Animation ID{",handle.ID.ID,"}"+debugStuff);
 
 				break;
 			}
 			default:{
-				Core::Log("Not implemented or invalid type{",(uint32_t)handle.GetType(),"}");
+				Core::Log("Not implemented or invalid type{",(uint32_t)handle.GetType(),"}"+debugStuff);
 				break;
 			}
 		}
+		
 	}
 
 }
+void AssetManager::LoadFont(const std::string& FilePath,const std::string& fileName){
+	//Application::GetApplication()->m_FontSystem.LoadFont();
+		auto it = m_Resources.find(fileName);
+			if(it != m_Resources.end())
+				return;
+}
+void AssetManager::LoadTexture(const std::string& filePath,const std::string& fileName)
+{	
+			auto it = m_Resources.find(fileName);
+			if(it != m_Resources.end())
+				return;
+			Texture* texture = m_APP->m_Renderer->LoadTexture(filePath);
+			LoadAssetPerma<Texture>(texture,AssetType::TEXTURE,fileName);
+}
+void AssetManager::LoadTextureAtlas(const std::string& filePath,const std::string& fileName){
+			auto it = m_Resources.find(fileName);
+			if(it != m_Resources.end()){
+				Texture* texture =(Texture*)it->second.Data;
+				if(it->second.GetType() != AssetType::TEXTUREATLAS){
+					it->second.Type = AssetType::TEXTUREATLAS;
+					texture->CreateTextureAtlasData(filePath);
+				}
+				return;
+			}
+
+			std::string TexturePath{filePath.substr(0,filePath.size()-5)};
+			TexturePath +=".png";
+
+			Texture* texture{};
+			uint32_t AtlasCount{};
+
+			//load the texture of the atlas
+			texture = Application::GetRenderer()->LoadTexture(TexturePath,TextureType::TextureAtlas);
+			texture->CreateTextureAtlasData(filePath);
 
 
-void AssetManager::LoadAnimation(const std::string& FolderPath)
+			m_ResourceCount[AssetType::TEXTUREATLAS]++;
+			LoadAssetPerma<Texture>(texture,AssetType::TEXTUREATLAS,fileName );
+}
+void AssetManager::LoadAnimation(const std::string& filePath,const std::string& fileName)
 {
-	
+	auto it = m_Resources.find(fileName);
+	if(it != m_Resources.end())
+		return;
 	std::string TexturePath{};
 	std::string AnimationPath{};
-	std::string FilePath{};
 	uint32_t AtlasCount{};
-	for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 
 
-		FilePath = dir_entry.path().string();
-		if (Core::GetFileExtension(FilePath).size() == 0)
-			continue;
-
-		size_t MetaDataPath = FilePath.find(".json", 0);
-		if (MetaDataPath == (uint64_t)-1)
-			continue;
-
-		//FilePath = FilePath.substr(FolderPath.size(), FilePath.size() - FolderPath.size());
 		//Load texture only works if it uses atlases
 		//TODO: CHange so it support seperate textures also.
 
-		TexturePath = FilePath;
+		TexturePath = filePath;
 		TexturePath = TexturePath.substr(0,TexturePath.size()-5);
 		TexturePath +=".png";
 
 		Texture* baseTexture = m_APP->m_Renderer->LoadTexture(TexturePath);
 
-		auto index =TexturePath.find("Resources");
 
-		TexturePath = TexturePath.substr(FolderPath.size(),TexturePath.size()-FolderPath.size()-4);
-		TexturePath +="Texture";
+		Asset<Texture> asset=LoadAssetPerma<Texture>(baseTexture,AssetType::TEXTURE,fileName+"Texture");
 
-		Asset<Texture> asset=LoadAssetPerma<Texture>(baseTexture,AssetType::TEXTURE,TexturePath);
+		GUUID TextureID =asset.GetID();
 
-		GUUID TextureID =Core::GetStringHash(TexturePath);
-
-		baseTexture->CreateTextureAtlasData(FilePath);
+		baseTexture->CreateTextureAtlasData(filePath);
 
 
-		AnimationPath = FilePath;
 		//Load animation
-		size_t atlasGUUID = std::hash<std::string>{}(AnimationPath.substr(FolderPath.size(),AnimationPath.size()-FolderPath.size()-5));
+		size_t atlasGUUID = std::hash<std::string>{}(fileName);
 	
 	
 
 
 		Animator* animator= new Animator(AnimationPath,atlasGUUID, TextureID,&m_APP->m_AssetManager);
-		AnimationPath =AnimationPath.substr(FolderPath.size(),AnimationPath.size()-FolderPath.size()-5);
 		animator->SetStage("IDLE");
-		
 	
-		LoadAssetPerma<Animator>(animator,AssetType::ANIMATION,AnimationPath);
-
-	}
+		LoadAssetPerma<Animator>(animator,AssetType::ANIMATION,fileName);
 }
+void AssetManager::Shutdown(){
+	for(auto it = m_Resources.begin();it != m_Resources.end();it++){
+		#ifdef DEBUG
+			Core::Log("Deleted:",it->second.AssetPath);
+		#endif
+		switch(it->second.Type){
+			case AssetType::TEXTURE : {delete (Texture*)it->second.Data; break;}
+			case AssetType::FONT : {delete (Font*)it->second.Data; break;}
+			case AssetType::TEXTUREATLAS : {delete (Texture*)it->second.Data; break;}
+			case AssetType::ANIMATION : {delete (Animator*)it->second.Data; break;}
+		}
+	}
+	m_Resources.clear();
+}
+AssetManager::~AssetManager(){
+	Shutdown();
+}
+
+namespace Core{
+     std::string  GetAssetTypeString(const AssetType& assetType){
+		switch(assetType){
+			case AssetType::NONE: return "NONE";
+			case AssetType::ANIMATION: return "ANIMATION";
+			case AssetType::ASSETTYPECOUNT: return "ASSETTYPECOUNT";
+			case AssetType::FONT: return "FONT";
+			case AssetType::SHADER: return "SHADER";
+			case AssetType::TEXTURE: return "TEXTURE";
+			case AssetType::TEXTUREATLAS: return "TEXTUREATLAS";
+			case AssetType::TEXTUREMETADATA: return "TEXTUREMETADATA";
+			default: return "INVALID TYPE";
+		}
+	 }
+
+}
+
 

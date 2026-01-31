@@ -737,12 +737,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         if (m_VertexPointer + 4 > m_VertexCount )
             FlushGeometry();
         if (TextureHandle != 0) {
-            AssetType type = m_AssetManager->GetAssetType(TextureHandle);
+            TexutreAsset = m_AssetManager->GetAsset<Texture>(TextureHandle);
 
 
 
-
-                switch (type) {
+                Core::Log("Typ[e]",Core::GetAssetTypeString(TexutreAsset.GetType()));
+                switch (TexutreAsset.GetType()) {
                 case AssetType::TEXTURE: {
                     CurrentTextureHandle = TextureHandle;
 
@@ -756,11 +756,18 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     Texture* texture = (Texture*)TexutreAsset.GetData();
 
                     CurrentTextureHandle = TextureHandle;
+                    if(TextureIndex < texture->GetTextureCount()){
 
-                    m_Vertices[m_VertexPointer].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[0];
-                    m_Vertices[m_VertexPointer + 1].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[1];
-                    m_Vertices[m_VertexPointer + 2].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[2];
-                    m_Vertices[m_VertexPointer + 3].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[3];
+                         m_Vertices[m_VertexPointer].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[0];
+                         m_Vertices[m_VertexPointer + 1].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[1];
+                         m_Vertices[m_VertexPointer + 2].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[2];
+                         m_Vertices[m_VertexPointer + 3].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[3];
+                    }else{
+                          m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
+                          m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
+                          m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,0.0f };
+                          m_Vertices[m_VertexPointer + 3].TexCoords = { 1.0f,1.0f };
+                    }
                      break;
                 }
                 case AssetType::ANIMATION: {
@@ -1446,78 +1453,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 Renderer::~Renderer(){
-    vkDeviceWaitIdle(m_Device);
-
-    //deleting all buffers.
-    for(uint32_t i =0;i < m_VertexBufferGeometry.size();i++)
-        delete m_VertexBufferGeometry[i];
-    
-    for(uint32_t i=0;i < m_IndexBuffers.size();i++)
-        delete m_IndexBuffers[i];
-    
-    for(uint32_t i=0;i < m_StaggingBufferGeometry.size();i++)
-        delete m_StaggingBufferGeometry[i];
-
-    for(uint32_t i=0;i < m_VertexBufferGUI.size();i++)
-        delete m_VertexBufferGUI[i];
-    for(uint32_t i=0;i < m_StaggingBufferGUI.size();i++)
-        delete m_StaggingBufferGUI[i];
-
-    for(uint32_t i=0;i < m_VertexBufferOutlines.size();i++)
-        delete m_VertexBufferOutlines[i];
-    for(uint32_t i=0;i < m_StaggingBufferOutlines.size();i++)
-        delete m_StaggingBufferOutlines[i];
-    delete m_BlankWhiteTexture;
-
-    for(uint32_t i =0;i < m_UniformBuffer.size();i++)
-        delete m_UniformBuffer[i];
-
-    delete m_PickingImageBuffer;
-    
-    m_FrameBuffers.clear();
-    
-    for(uint32_t i =0;i < MAX_FRAME_DRAWS;i++)
-    m_Textures[i].clear();
-    
-    for(uint32_t i=0;i < m_DepthStencilAttachments.size();i++)
-    delete m_DepthStencilAttachments[i];
-    for(uint32_t i=0;i < m_ColorAttachments.size();i++)
-    delete m_ColorAttachments[i];
-    for(uint32_t i=0;i < m_RenderFinishedS.size();i++)
-        vkDestroySemaphore(m_Device,m_RenderFinishedS[i],nullptr);
-    for(uint32_t i=0;i < m_ImageAvailS.size();i++)
-        vkDestroySemaphore(m_Device,m_ImageAvailS[i],nullptr);
-    for(uint32_t i=0;i < m_DrawFences.size();i++)
-        vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
-    for(uint32_t i =0;i < m_ImageFreeF.size();i++)
-        vkDestroyFence(m_Device,m_ImageFreeF[i],nullptr);
-
-    m_CurrentFont.~Asset();
-    
-    for(uint32_t i=0; i < m_DescriptorSetCamera.size();i++)
-    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetCamera[i].GetDescriptorLayout(),nullptr);
-
-    for(uint32_t i=0;i < m_DescriptorSetTextures.size();i++)
-    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetTextures[i].GetDescriptorLayout(),nullptr);
-
-    m_DescriptorPool.Destroy();
-    
-    vkDestroyRenderPass(m_Device,m_RenderPass,nullptr);
-    vkDestroyPipelineLayout(m_Device,m_PipelineLayout,nullptr);
-    vkDestroyPipeline(m_Device,m_Pipeline,nullptr);
-    vkFreeCommandBuffers(m_Device,m_GraphicsPool.GetCommandPool(),m_CommandBuffers.size(),m_CommandBuffers.data());
-    vkDestroyCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),nullptr);
-    
-    delete m_SwapChain;
-    
-    vkDestroySurfaceKHR(m_Instance,m_Surface,nullptr);
-    vkDestroyDevice(m_Device,nullptr);
-
-    auto destroyDebugMessenger = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_Instance,"vkDestroyDebugUtilsMessengerEXT");
-    destroyDebugMessenger(m_Instance,m_Messenger,nullptr);
-    
-    vkDestroyInstance(m_Instance,nullptr);
-
+    Shutdown();
 }
 
 void Renderer::StartRecordingCommands()
@@ -1688,3 +1624,84 @@ void Renderer::DrawGUIBatch()
     }
     */
 }
+void Renderer::Shutdown(){
+    if(m_ShutDown)
+        return;
+    m_ShutDown = true;
+    vkDeviceWaitIdle(m_Device);
+
+    //deleting all buffers.
+    for(uint32_t i =0;i < m_VertexBufferGeometry.size();i++)
+        delete m_VertexBufferGeometry[i];
+    
+    for(uint32_t i=0;i < m_IndexBuffers.size();i++)
+        delete m_IndexBuffers[i];
+    
+    for(uint32_t i=0;i < m_StaggingBufferGeometry.size();i++)
+        delete m_StaggingBufferGeometry[i];
+
+    for(uint32_t i=0;i < m_VertexBufferGUI.size();i++)
+        delete m_VertexBufferGUI[i];
+    for(uint32_t i=0;i < m_StaggingBufferGUI.size();i++)
+        delete m_StaggingBufferGUI[i];
+
+    for(uint32_t i=0;i < m_VertexBufferOutlines.size();i++)
+        delete m_VertexBufferOutlines[i];
+    for(uint32_t i=0;i < m_StaggingBufferOutlines.size();i++)
+        delete m_StaggingBufferOutlines[i];
+    delete m_BlankWhiteTexture;
+
+    for(uint32_t i =0;i < m_UniformBuffer.size();i++)
+        delete m_UniformBuffer[i];
+
+    delete m_PickingImageBuffer;
+    
+    m_FrameBuffers.clear();
+    
+    for(uint32_t i =0;i < MAX_FRAME_DRAWS;i++)
+    m_Textures[i].clear();
+    
+    for(uint32_t i=0;i < m_DepthStencilAttachments.size();i++)
+    delete m_DepthStencilAttachments[i];
+    for(uint32_t i=0;i < m_ColorAttachments.size();i++)
+    delete m_ColorAttachments[i];
+    for(uint32_t i=0;i < m_RenderFinishedS.size();i++)
+        vkDestroySemaphore(m_Device,m_RenderFinishedS[i],nullptr);
+    for(uint32_t i=0;i < m_ImageAvailS.size();i++)
+        vkDestroySemaphore(m_Device,m_ImageAvailS[i],nullptr);
+    for(uint32_t i=0;i < m_DrawFences.size();i++)
+        vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
+    for(uint32_t i =0;i < m_ImageFreeF.size();i++)
+        vkDestroyFence(m_Device,m_ImageFreeF[i],nullptr);
+
+    
+    for(uint32_t i=0; i < m_DescriptorSetCamera.size();i++)
+    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetCamera[i].GetDescriptorLayout(),nullptr);
+
+    for(uint32_t i=0;i < m_DescriptorSetTextures.size();i++)
+    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetTextures[i].GetDescriptorLayout(),nullptr);
+
+    m_DescriptorPool.Destroy();
+    
+    vkDestroyRenderPass(m_Device,m_RenderPass,nullptr);
+    vkDestroyPipelineLayout(m_Device,m_PipelineLayout,nullptr);
+    vkDestroyPipeline(m_Device,m_Pipeline,nullptr);
+    vkFreeCommandBuffers(m_Device,m_GraphicsPool.GetCommandPool(),m_CommandBuffers.size(),m_CommandBuffers.data());
+    vkDestroyCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),nullptr);
+    
+    delete m_SwapChain;
+    
+    vkDestroySurfaceKHR(m_Instance,m_Surface,nullptr);
+    vkDestroyDevice(m_Device,nullptr);
+
+    auto destroyDebugMessenger = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_Instance,"vkDestroyDebugUtilsMessengerEXT");
+    destroyDebugMessenger(m_Instance,m_Messenger,nullptr);
+    
+    vkDestroyInstance(m_Instance,nullptr);
+}
+void Renderer::FinishExecution(){
+    vkDeviceWaitIdle(m_Device);
+    //release assets
+    m_CurrentFont.~Asset();
+}
+

@@ -20,7 +20,12 @@ enum class TextureCreateFlagBits {
 	DEFAULT=0,CREATEATLAS=2,
 };
 struct TextureCoords {
-	Float2 Coords[4];
+	Float2 Coords[4] = {
+		{0.0f,1.0f},
+		{0.0f,0.0f},
+		{1.0f,0.0f},
+		{1.0f,1.0f}
+	};
 	uint64_t Width, Height{};
 
 };
@@ -54,12 +59,13 @@ public:
 	uint32_t GetWidth() { return m_Width; }
 	uint32_t GetHeight() { return m_Height; }
 
-	TextureCoords* GetTextureCoords(uint32_t Index){return &m_TextureAtlasData->Data[Index];}
+	TextureCoords* GetTextureCoords(uint32_t Index){if(Index >= m_TextureCount) return nullptr;return &m_TextureAtlasData->Data[Index];}
 	//texture atlas
 	//returns 4 points
 
 	//TextureAtlasCoords* GetSubTextureData(uint32_t TextureIndex) { return &m_TextureData->m_TextureAtlasData[TextureIndex]; }
 	uint64_t GetByteSize(){return (uint64_t)m_DeviceSize;}
+	uint32_t GetTextureCount()const {return m_TextureCount;}
 
 	//Small texture inside this bigger texture.
 	void CreateTextureAtlas(uint32_t WidthOfOneTexture, uint32_t HeightOfOneTexture, uint32_t NumOfTexture);
@@ -71,6 +77,8 @@ public:
 	//Removes vkImage makes it nullptr.
 	void RemoveImage(){m_Image = nullptr;}
 	void DestroyView();
+
+	bool IsAtlas(){ if(m_TextureAtlasData)return true; return false;}
 
 	~Texture();
 private:

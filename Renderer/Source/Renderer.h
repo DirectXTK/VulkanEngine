@@ -100,6 +100,8 @@ public:
     Context GetContext() { return m_Context; }
     VkResult GetSwapChainState(){return m_AcquireImageResult;}
 
+    void FinishExecution();
+    void Shutdown();
     ~Renderer();
 private:
     void InitRenderDesc(const RendererDesc& desc);
@@ -287,10 +289,12 @@ private:
     bool m_GUIRendering{false};
     //
 
+    //Shutdown
+    bool m_ShutDown{false};
  
 
 
-
+    
     AssetManager* m_AssetManager{};
 
 };

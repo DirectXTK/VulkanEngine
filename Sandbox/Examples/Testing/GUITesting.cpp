@@ -7,12 +7,14 @@ GUITestingLayer::GUITestingLayer() : Layer("GUITestingLayer")
 }
 void GUITestingLayer::OnCreate() {
 
-   
+	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources",AssetType::NONE);
 
 }
 void GUITestingLayer::OnUpdate(double deltatime)
 {
-   
+   Renderer* renderer = Application::GetRenderer();
+
+   renderer->DrawQuad({0.0f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},Core::GetStringHash("/Animation/SUN"),0,0);
 
 }
 void GUITestingLayer::OnRender(double deltime){

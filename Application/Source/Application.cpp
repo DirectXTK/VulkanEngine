@@ -19,7 +19,8 @@ void ChechCommands(Application* app,std::string Command){
         Core::Log(Args);
         uint64_t IdOfAsset = std::stoul(Args);
         if(Application::HasAsset(IdOfAsset))
-            Core::Log("Has this asset Type:",(uint32_t)Application::GetAssetType(IdOfAsset));
+            Core::Log("Has this asset Type:",Core::GetAssetTypeString(Application::GetAssetType(IdOfAsset)));
+
         else 
             Core::Log("This asset isn't loaded to asset manager.");
 
@@ -32,6 +33,10 @@ void ChechCommands(Application* app,std::string Command){
     }else{
         Core::Log("Invalid command");
     }
+}
+void Application::LoadAllAssets(const std::string& path,const AssetType& typeToLoad){
+    Application* app = Application::GetApplication();
+    app->m_AssetManager.LoadAllAssets(path,typeToLoad);
 }
 
 void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning){
@@ -77,10 +82,9 @@ bool Application::IsMouseClicked(const MouseCodes& codes,bool hold){
 
 Application::Application(){}
 void Application::LogSystemAndAppInformation(){
-    float AppVersion{0.001};
     Core::Log("App information");
     std::cout << "  Build "<< Core::GetBuildConfiguration()<<"\n";
-    std::cout << "  App version "<< AppVersion<<"\n";
+    std::cout << "  App version "<< GetApplicationSpecs().ApplicationVersion<<"\n";
     #ifdef __linux__
     std::cout << "  Platform LINUX\n";
     #elif __win32__
@@ -204,6 +208,7 @@ void Application::Shutdown(){
 
     app->m_LayerController.DestroyLayers();
     app->m_Running = false;
+    app->m_Renderer->FinishExecution();
 
     app->DeleteApplication();
 }
@@ -287,9 +292,11 @@ void Application::RunAStar(){
 }
     Application::~Application(){
         delete m_Window;
-        delete m_Renderer;
+
         delete m_FontSystem;
         delete m_GUIRenderer;
+        m_AssetManager.Shutdown();
+        delete m_Renderer;
         glfwTerminate();
     }
     void Application::OpenTerminalAndAttachToStream(){

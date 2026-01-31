@@ -128,6 +128,7 @@ struct GUUID {
         return *this;
     }
 
+
 };
 namespace Core {
     class ScopedTimer{
@@ -281,6 +282,7 @@ namespace Core {
     float CalculateDistance(const Float2& pos1,const Float2& pos2);
 
 
+
 //cross plaftoform stuff
 #include <string>
 #if defined(_WIN32)
@@ -323,6 +325,6 @@ std::string GetBuildConfiguration();
 
 
 
- std::string GetModuleFileName();
+ std::string GetCurrentExecutablePath();
 
 }

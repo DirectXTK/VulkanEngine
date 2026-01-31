@@ -21,6 +21,7 @@ struct ApplicationSpecs{
     bool OpenTerminal{false};
     bool AppDebugging{false};
 
+    float ApplicationVersion{0.0f};
     //Renderer stuff
     Float4 ClearColor{ 0.5f,0.5f,0.5f,1.0f };
 };
@@ -49,7 +50,10 @@ public:
     static Renderer* GetRenderer(){return GetApplication()->m_Renderer;}
     static GUIRenderer* GetGUIRenderer(){return GetApplication()->m_GUIRenderer;}
 
+    static ApplicationSpecs& GetApplicationSpecs(){ return Application::GetApplication()->m_Specs;}
 
+    //If asset type is provided NONE all the types are loaded.
+    static void LoadAllAssets(const std::string& path,const AssetType& typeToLoad);
     static void LoadAssets(std::string Path,AssetType type);
     static AssetType GetAssetType(GUUID id);
     static bool HasAsset(GUUID id);
