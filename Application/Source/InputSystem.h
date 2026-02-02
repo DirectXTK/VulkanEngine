@@ -23,6 +23,7 @@ public:
 	void ResetMouseChange();
 	void ResetInput();
 	//Call back adding
+	~InputSystem();
 private:
 	bool m_KeyCodes[256];
 

@@ -252,7 +252,7 @@ PathSystem::PathSystem(uint32_t gridWidth,uint32_t gridHeight,const Float2& oneT
     m_GridHeight = gridHeight;
     m_Grid = new AgentType[m_GridWidth*m_GridHeight];
 
-    std::vector<Float2> walkable{{0.0f,0.0f},{0.5f,0.0f},{1.0f,0.0},{1.0f,0.5f},{1.0f,1.0f},{0.5f,1.0f},{0.0f,1.0f},{0.0f,0.5f}};
+    std::vector<Float2> walkable{{0.0f,0.0f},{0.5f,0.0f},{1.0f,0.0},{1.0f,0.5f},{1.0f,1.0f},{0.5f,1.0f},{0.0f,1.0f},{0.0f,0.5f},{0.0f,0.4f},{0.0f,0.1f}};
 
     m_NavMesh =BuildNavMesh2D(walkable);
 

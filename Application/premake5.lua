@@ -34,6 +34,7 @@ project "Application"
       "glfw3",
       "freetype" ,"z","png16",
       "Renderer",
+      "xkbcommon",
     }
 
     defines{

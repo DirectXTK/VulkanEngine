@@ -14,6 +14,8 @@ public:
 
 private:
     void OnKeyBoardEvent(KeyBoardEvent& event);
+    void OnTextEvent(TextEvent& event);
+    bool m_Shift{false};
 };
 
 class MenuLayer: public Layer{
@@ -29,5 +31,4 @@ class MenuLayer: public Layer{
 
     private:
         void OnKeyBoardEvent(KeyBoardEvent& event);
-    
 };

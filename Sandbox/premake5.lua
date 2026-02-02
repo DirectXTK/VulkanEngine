@@ -38,6 +38,8 @@ project "Sandbox"
       "vulkan",
       "Renderer",
       "Application",
+      "xkbcommon",
+
     }
 
     defines{

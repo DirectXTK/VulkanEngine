@@ -1,8 +1,9 @@
 #define DEMO_FEATURES
 #include  "../Examples/Testing/CollisionTestingLayer.h"
 #include  "../Examples/Testing/GUITesting.h"
-
+#include "../Examples/Testing/TestingLayer.h"
 int main() {
+	
 	ApplicationSpecs specs{};
 	specs.WindowTitle = "Example";
 	specs.WindowHeight = 800;
@@ -17,6 +18,7 @@ int main() {
 
 	Application::Run();
 	
+
 
     return 0;
 }

@@ -137,7 +137,20 @@ void CollisionLayer::OnRender(double deltaTime){
 	
 }
 void CollisionLayer::OnGUI(){
+	GUIRenderer* gui = Application::GetGUIRenderer();
+	Unit* unit =&m_Units[0];
 
+	GUI::BorderStyle style{sizeof(GUI::BorderStyle)};
+            style.BorderWidth = 0.01f;
+            style.DrawBorder = true;
+            style.BorderColor = {1.0f,0.0f,0.0f,1.0f};
+            style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
+            gui->PushStyle(GUI::Style::BORDER,&style);
+
+	if(unit->PathToGoal.size() != 0&& unit->CurrentPath < unit->PathToGoal.size()){
+		gui->Text("PATH",std::to_string(unit->PathToGoal[unit->CurrentPath].x)+","+std::to_string(unit->PathToGoal[unit->CurrentPath].y),{0.0f,-0.5f},{1.0f,1.0f,1.0f,1.0f},{0.5f,0.2f});
+	}
+	gui->PopStyle();
 }
 void CollisionLayer::OnDestroy(){
 

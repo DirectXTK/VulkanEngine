@@ -1,5 +1,31 @@
 #include "InputSystem.h"
 #include "Application.h"
+
+#ifdef WINDOWS
+#include <Window.h>
+#endif
+#ifdef LINUX
+#include <xkbcommon/xkbcommon.h>
+struct Keyboard {
+    xkb_context* ctx;
+    xkb_keymap* keymap;
+    xkb_state* state;
+};
+void HandleKey();
+#endif
+
+Keyboard g_Keyboard{};
+void InitKeyboard(){
+
+    g_Keyboard.ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    g_Keyboard.keymap = xkb_keymap_new_from_names(
+        g_Keyboard.ctx,
+        nullptr,  // use system layout
+        XKB_KEYMAP_COMPILE_NO_FLAGS
+    );
+    g_Keyboard.state = xkb_state_new(g_Keyboard.keymap);
+
+}
 double scrollx,scrolly;
 InputSystem* g_InputSystem{};
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
@@ -19,6 +45,29 @@ void KeyCallBack(GLFWwindow* window,int Key,int ScanCode,int action,int mods){
 	event.State = (EventState)action;
 	assert(g_InputSystem != nullptr);
 	g_InputSystem->DispatchEvent(event);
+
+	TextEvent textEvent{};
+	textEvent.KeyUint = ScanCode+8;
+	textEvent.State = (EventState)action;
+
+	xkb_state_update_key(
+        g_Keyboard.state,
+        textEvent.KeyUint,
+        action != GLFW_RELEASE
+            ? XKB_KEY_DOWN
+            : XKB_KEY_UP
+    );
+
+    if (action != GLFW_PRESS)
+        return;
+
+    char buf[2];
+    int len = xkb_state_key_get_utf8(
+    g_Keyboard.state, (xkb_keycode_t)textEvent.KeyUint, buf, ARRAYSIZE(buf));
+	if(len > 0){
+		textEvent.KeyUint = buf[0];
+		g_InputSystem->DispatchEvent(textEvent);
+	}
 }
 
 void MouseButtonCallBack(GLFWwindow* window, int Key, int Action, int Mod) {
@@ -45,6 +94,8 @@ void InputSystem::Init(GLFWwindow* window){
 	glfwSetKeyCallback(m_CurrentWindow, KeyCallBack);
 	glfwSetWindowCloseCallback(m_CurrentWindow, WindowCloseCallback);
 	glfwSetWindowSizeCallback(m_CurrentWindow,WindowResizeCallback);
+
+	InitKeyboard();
 }
 void InputSystem::DispatchEvent(Event& event){
 	Application::DispatchEvent(event);
@@ -165,4 +216,17 @@ void InputSystem::ResetInput()
 
 	
 
+}
+InputSystem::~InputSystem(){
+	if(g_Keyboard.state)
+		xkb_state_unref(g_Keyboard.state);
+	if(g_Keyboard.keymap)
+		xkb_keymap_unref(g_Keyboard.keymap);
+	if(g_Keyboard.ctx)
+	 	xkb_context_unref(g_Keyboard.ctx);
+
+
+	g_Keyboard.state = nullptr;
+	g_Keyboard.keymap = nullptr;
+	g_Keyboard.ctx = nullptr;
 }

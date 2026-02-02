@@ -22,7 +22,7 @@ namespace Core {
 		}
 	
 	GUUID GetStringHash(const std::string& Path) {return (uint64_t)std::hash<std::string>{}(Path); }
-   
+
 	std::string GetFileExtension(const std::string& File)
 	{
 		uint64_t LocOfDot = File.find(".");
