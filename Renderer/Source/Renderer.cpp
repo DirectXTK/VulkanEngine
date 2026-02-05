@@ -935,10 +935,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
    
     }
     float Renderer::GetFONTDPI(){
-        return 96;
+        return 72;
     }
     void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
     {
+
         //Char being edited index
         if (m_CurrentFont.GetType() != AssetType::FONT)
         {
@@ -964,9 +965,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         float Space{ 0.06f };
         Float2 advance{};
         float penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
-        float penPosY = (0.5f - Position.y * 0.5f) * GetViewPortExtent().height+CharSizePixels+CharSizePixels;
-
-
+        float penPosY = (0.5f - Position.y * 0.5f) * GetViewPortExtent().height+(CharSizePixels*1.25f);
         if(font->TextureAsset.GetType() != AssetType::TEXTURE){
             Core::Log(ErrorType::Error, "Invalid type must be texture{",(uint32_t)font->TextureAsset.GetType(),"}");
             return;
@@ -1004,8 +1003,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
           
                //draw pointer
             if(PointerIndex ==i  ){
-                Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY});
-                DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, { 1.0f,0.0f,0.0f,1.0f }, { m_CurrentFont.GetData()->FontSize*0.0007f,m_CurrentFont.GetData()->FontSize*0.004f }, 0);
+                Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY-(CharSizePixels*0.25f)});
+                Float2 sizeNDC = {(float)m_CurrentFont.GetData()->FontSize/(float)GetViewPortExtent().width*0.15f,(float)m_CurrentFont.GetData()->FontSize/GetViewPortExtent().height*1.25f};
+                DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, { 1.0f,0.0f,0.0f,1.0f }, sizeNDC, 0);
             }
 
             //edge cases
@@ -1013,11 +1013,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             switch (Message[i]) {
             case ' ': {
                 //skip this letter
-                penPosX += advance.x;
+                penPosX += font->Advance[LetterIndex].x;
                 continue;
             }
             case '\n': {
-                penPosY += 3.0f*+m_CurrentFont.GetData()->FontSize;
+                penPosY += 1.25f*+m_CurrentFont.GetData()->FontSize;
                 penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
                 continue;
             }
@@ -1076,8 +1076,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             MinCord.y = baselineY+MinCord.y;
             MaxCord.y = baselineY+MaxCord.y;
 
-            MinCord.x += penPosX;
-            MaxCord.x += penPosX;
+            MinCord.x = penPosX;
+            MaxCord.x = penPosX+advance.x;
 
             Float2 glyphPosPixelMin = Core::ToNDC(MinCord);
             Float2 glyphPosPixelMax =Core::ToNDC(MaxCord);
@@ -1092,7 +1092,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 MinCord = font->MinCord[LetterIndex];
 
                 penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
-                penPosY += 3.0f*+m_CurrentFont.GetData()->FontSize;
+                penPosY += 1.0f*+m_CurrentFont.GetData()->FontSize;
 
                 baselineY = penPosY;
 

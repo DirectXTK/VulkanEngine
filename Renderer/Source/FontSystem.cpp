@@ -11,8 +11,8 @@ FontSystem::FontSystem()
 
 
 	//try to load any font or a default one
-	//const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Sacrifice.ttf";
-	const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Daydream.ttf";
+	const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Sacrifice.ttf";
+	//const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Daydream.ttf";
 	//Day dream causes crashes.
 	m_CurrentFont = LoadFont(FontPath);
 	m_Renderer->SetCurrentFont(m_CurrentFont);
@@ -50,7 +50,8 @@ void FontSystem::SetCharcterSize(uint32_t CharSize)
 	m_CharacterSize = CharSize;
 
 	if(m_CurrentFont){
-		m_Renderer->SetCurrentFont(ReRenderFaces("FONT"+m_CurrentFont.GetData()->FontName+std::to_string(m_CharacterSize),m_CurrentFont.GetData()->FontName));
+		m_CurrentFont = ReRenderFaces("FONT"+m_CurrentFont.GetData()->FontName+std::to_string(m_CharacterSize),m_CurrentFont.GetData()->FontName);
+		m_Renderer->SetCurrentFont(m_CurrentFont);
 
 	}
 }
@@ -86,6 +87,42 @@ void FontSystem::OnEvent(Event& event){
 	if(event.GetEventType() == EventType::MOUSE)
 		OnMouseEvent((MouseEvent&)event);
 }
+uint64_t FontSystem::FindMousePosInText(const Float2& mousePos,char* Buffer,uint64_t BufferSize,const Float2& Position,const Float2& size){
+	Float2 arrowPos{Core::ToScreenPixels(Position)};
+	float arrowPixelY = Core::ToScreenPixels(mousePos).y;
+	float smallestDist{std::numeric_limits<float>::max()};
+	uint32_t currentLine{0};
+	
+
+	arrowPixelY = std::fabs(arrowPixelY-arrowPos.y);
+	arrowPixelY = size.y*Application::GetRenderer()->GetViewPortExtent().height*0.5f/m_CurrentFont.GetData()->NewLineSize;
+	
+	arrowPixelY -=(uint32_t)((arrowPos.y-Core::ToScreenPixels(mousePos).y)/m_CurrentFont.GetData()->NewLineSize); 
+	arrowPixelY = std::floor(arrowPixelY);
+	Core::Log("Line index",arrowPixelY," ",m_CurrentFont.GetData()->NewLineSize);
+
+	for(uint32_t i =0;i < BufferSize;i++){
+
+		if(Buffer[i] == '\0'){
+			return i;
+		}
+		if(Buffer[i] == '\n')
+			currentLine++;
+
+		//arrowPos.y +=m_CurrentFont.GetData()->Advance[Buffer[i]].y;
+		arrowPos.x += m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
+
+		Float2 normArrowPos = Core::ToNDC(arrowPos);
+		float temp = std::fabs(normArrowPos.x-mousePos.x);
+		if(mousePos.x < normArrowPos.x){
+			return i;
+		}
+		arrowPos.x += m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
+
+		
+	}
+	return 0;
+}
 void FontSystem::OnMouseEvent(MouseEvent& event){
 	if(event.State == EventState::PRESSED && event.Code == MouseCodes::LEFT){
 
@@ -96,7 +133,8 @@ void FontSystem::OnMouseEvent(MouseEvent& event){
 		if(it != m_InputTextData.end()){
 			m_CurrentlySelectedInputData = selectedID;
 			m_IsArrowActive = true;
-			m_ArrowPosition=0;
+			//indicate to find the position.
+			m_ArrowPosition=std::numeric_limits<uint64_t>::max();
 
 		}else{
 			m_CurrentlySelectedInputData = 0;
@@ -156,7 +194,6 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	bool ScrollableBoundBox{};
 
 	Buffer[BufferSize-1] = '\0';
-	m_PointerCooldown -= Application::GetDeltaTime();
 
 	Float2 BoundingBox[4];
 	BoundingBox[0] = { Position.x ,Position.y  };
@@ -169,15 +206,31 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	//Draw the invisible barrier that  provides the selecting 
 	DrawBorder(Position, Size, SelectID);
 
-	if (m_IsArrowActive &&m_PointerCooldown <= 0.0f&& m_CurrentlySelectedInputData == SelectID) {
-		if (m_PointerCooldown <= -m_PointerBlinkCooldownConst)
-			m_PointerCooldown = m_PointerBlinkCooldownConst;
-		m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition);
+	if(m_CurrentlySelectedInputData == SelectID){
+		m_PointerCooldown -= Application::GetDeltaTime();
+		if(!m_IsArrowActive){
+			if(m_PointerCooldown <=0.0f)
+				m_IsArrowActive = true;
+		}
+		//fins the pos according to mouse pos
+		if(m_ArrowPosition == std::numeric_limits<uint64_t>::max()){
+
+			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,Position,Size);
+			Core::Log("Arrow pos",m_ArrowPosition);
+		}
+
+
+		if (m_IsArrowActive ) {
+			if(m_PointerCooldown <= -m_PointerBlinkCooldownConst){			
+				m_PointerCooldown = m_PointerBlinkCooldownConst;
+				m_IsArrowActive = false;
+				
+			}
+			m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition);
+			return;
+		}
 	}
-	else {
-		m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
-	}
-	
+	m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
 }
 void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Float2 MaxSize)
 {
@@ -225,9 +278,8 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 }
 void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
 {
-
 	Renderer* renderer = Application::GetRenderer();
-
+	
 	GUUID SelectID =id;
 	Float2 CharacterSizeNorm = { float(m_CharacterSize / renderer->GetViewPortExtent().width),float(m_CharacterSize / renderer->GetViewPortExtent().height) };
 
@@ -442,7 +494,7 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 	}
 
 
-	FT_Error error = FT_Set_Char_Size(m_Face, 0, (m_CharacterSize*dpi/72)*64, (uint32_t)dpi, (uint32_t)dpi);
+	FT_Error error = FT_Set_Char_Size(m_Face, 0, (m_CharacterSize)*64, (uint32_t)dpi, (uint32_t)dpi);
 	if (error) {
 		Core::Log(ErrorType::Error, "Failed to set the font char size");
 	}
@@ -502,6 +554,7 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 			MaxCord[SubTextureIndex] = {0.0f,0.0f};
 			continue;
 		}
+		
 		FT_Error error = FT_Load_Glyph(m_Face, GlyphIndex, FT_LOAD_DEFAULT);
 		if (error) {
 			Core::Log(ErrorType::Error, "Failed to load glyph");
@@ -515,6 +568,9 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 			Core::Log(ErrorType::Error, "Failed to render glyph");
 			continue;
 		}
+		
+		advance[SubTextureIndex].x = (slot->advance.x>>6);
+		advance[SubTextureIndex].y = (slot->advance.y>>6);
 		if (slot->bitmap.rows == 0 || slot->bitmap.width == 0){
 			MinCord[SubTextureIndex] = {0.0f,0.0f};
 			MaxCord[SubTextureIndex] = {0.0f,0.0f};
@@ -526,7 +582,7 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 		AtlasCoords[SubTextureIndex].Height = slot->bitmap.rows;
 		SizeX = (float)slot->bitmap.width;
 		SizeY = (float)slot->bitmap.rows;
-		
+			
 
 		if (OffsetX + AtlasCoords[SubTextureIndex].Width > FontAtlasWidth) {
 			OffsetY += MaxY;
@@ -585,6 +641,7 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 	font->TextureID = Core::GetStringHash("FontTexture"+std::to_string(m_CharacterSize));
 	font->Advance = advance;
 	font->FontName = fontName;
+	font->NewLineSize = 1.25f*m_CharacterSize;
 
 	m_TextureSize = { FontAtlasWidth,FontAtlasHeight };
 

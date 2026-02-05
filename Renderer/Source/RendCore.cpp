@@ -32,6 +32,10 @@ namespace Core{
 
             return true;
         }
+        Float2 ToScreenPixels(const Float2& pos){
+           return{(pos.x * 0.5f + 0.5f) * Application::GetRenderer()->GetViewPortExtent().width,
+            (0.5f - pos.y * 0.5f) * Application::GetRenderer()->GetViewPortExtent().height};
+        }
         Float2 ToNDC(const Float2& pos){
             return {
                 (pos.x/Application::GetRenderer()->GetViewPortExtent().width)*2.0f -1.0f,

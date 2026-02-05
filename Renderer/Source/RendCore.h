@@ -41,6 +41,7 @@ struct SwapChainDetails{
         VkFormat ChooseBestFormat(VkPhysicalDevice pdevice,const std::vector<VkFormat>& formats,VkImageTiling tilling,VkFormatFeatureFlags flags);
         void CopyImageToImage(VkDevice device,VkPhysicalDevice pdevice,Image* src,Image* dst);
         Float2 ToNDC(const Float2& pos);
+        Float2 ToScreenPixels(const Float2& pos);
         
     }
 

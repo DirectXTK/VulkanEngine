@@ -20,6 +20,7 @@ struct Font {
 	TextureCoords* Coords{};
 	Float2* MinCord{};
 	Float2* MaxCord{};
+	float NewLineSize{};
 	uint32_t GlyphCount{};
 	~Font(){
 		delete[] Coords;
@@ -75,6 +76,8 @@ private:
 
 	void OnMouseEvent(MouseEvent& event);
 	void OnKeyBoardEvent(KeyBoardEvent& event);
+
+	uint64_t FindMousePosInText(const Float2& mousePos,char* Buffer,uint64_t BufferSize,const Float2& Position,const Float2& size);
 
 	struct InputTextData{
 		uint64_t bufferSize{};

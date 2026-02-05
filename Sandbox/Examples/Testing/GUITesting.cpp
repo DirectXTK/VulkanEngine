@@ -62,12 +62,12 @@ void GUITestingLayer::OnGUI()
 {
 	GUIRenderer* guiRenderer = Application::GetGUIRenderer();
 	
-	static float FontSize{8.0f};
+	static float FontSize{16.0f};
 	static char username[50];
 	static char pass[50];
 guiRenderer->SetFontSize((uint32_t)FontSize);
 	guiRenderer->Panel("Panel", {0.0f,-0.9f}, {0.0f,0.5f,0.5f,1.0f}, {1.0f,0.1f}, 0, true);
-	guiRenderer->Slider("FONTSIZE",&FontSize,{-0.5f,-0.5f},{0.5f,0.2f},{0.1f},{0.0f,16.f});
+	guiRenderer->Slider("FONTSIZE",&FontSize,{-0.5f,-0.5f},{0.5f,0.2f},{0.1f},{0.0f,64.f});
 	guiRenderer->InputText("USERNAME",username,ARRAYSIZE(username),{0.0f,0.0f},{1.0f,1.0f});
 
 
@@ -79,11 +79,15 @@ guiRenderer->SetFontSize((uint32_t)FontSize);
 	guiRenderer->CheckBox("test1",{-0.6f,0.0f},{0.10f,0.50f},{1.0f,1.0f,1.0f,1.0f});
 	guiRenderer->CheckBox("test2",{-0.4f,0.0f},{0.10f,0.50f},{1.0f,1.0f,1.0f,1.0f});
 	//guiRenderer->PushStyle(GUI::Style::SLIDER,&sliderdata);
-	guiRenderer->Text("ID","TEXTlafaLAFA123!",{-0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
-	guiRenderer->SetFontSize((uint32_t)4);
+	guiRenderer->Text("ID","ATlafatafa!",{-0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
+	//guiRenderer->SetFontSize((uint32_t)4);
 
 	guiRenderer->Text("S","\"TES TING.\"",{0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
 	//guiRenderer->PopStyle();
+	guiRenderer->EndPanel();
+
+	guiRenderer->Panel("P2s",{0.0f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.5f,0.2f},0,true);
+	guiRenderer->InputText("USERNA2ME",username,ARRAYSIZE(username),{0.0f,0.0f},{1.0f,1.0f});
 	guiRenderer->EndPanel();
 
 
