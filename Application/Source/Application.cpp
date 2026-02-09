@@ -214,6 +214,12 @@ void Application::RunAStar(){
 }
  void Application::DispatchEvent(Event& event){
     Application* app = Application::GetApplication();
+
+    if(event.GetEventType() == EventType::WINDOWRESIZE){
+        app->m_PickBufferSize = app->m_Renderer->GetViewPortExtent().width*app->m_Renderer->GetViewPortExtent().height*sizeof(Float2);
+        app->m_PickBuffer = new Float2[app->m_PickBufferSize];
+    }
+
     app->m_GUIRenderer->OnEvent(event);
     app->m_FontSystem->OnEvent(event);
     app->m_LayerController.OnEvent(event);

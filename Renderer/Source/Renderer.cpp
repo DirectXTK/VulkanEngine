@@ -213,7 +213,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
  
 
-
    
     context->CommandPool = m_GraphicsPool.GetCommandPool();
     //Init CameraUniformBuffer and descriptors.
@@ -455,7 +454,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
         PickingImageBufferDesc.Device = m_Device;
         PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-
         m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
     }
     void Renderer::BeginGUIFrame()
@@ -984,12 +982,14 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             textures[TextureHandle] = { font->TextureAsset ,m_CurrentTextureDescriptorSetOffset };
             textureIds.push_back(TextureHandle);
             m_CurrentTextureDescriptorSetOffset++;
+            Core::Log("m_CurrentTextureDescriptorSetOffset",m_CurrentTextureDescriptorSetOffset);
  
         }
 
         if(stringLen == 0 && PointerIndex != -1){
-              Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY});
-            DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, { 1.0f,0.0f,0.0f,1.0f }, { m_CurrentFont.GetData()->FontSize*0.0007f,m_CurrentFont.GetData()->FontSize*0.004f }, 0);
+                   Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY-(CharSizePixels*0.25f)});
+                Float2 sizeNDC = {(float)m_CurrentFont.GetData()->FontSize/(float)GetViewPortExtent().width*0.15f,(float)m_CurrentFont.GetData()->FontSize/GetViewPortExtent().height*1.25f};
+                DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, m_ArrowColor, sizeNDC, 0);
         }
 
         //Do this for every letter
@@ -1005,7 +1005,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if(PointerIndex ==i  ){
                 Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY-(CharSizePixels*0.25f)});
                 Float2 sizeNDC = {(float)m_CurrentFont.GetData()->FontSize/(float)GetViewPortExtent().width*0.15f,(float)m_CurrentFont.GetData()->FontSize/GetViewPortExtent().height*1.25f};
-                DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, { 1.0f,0.0f,0.0f,1.0f }, sizeNDC, 0);
+                DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, m_ArrowColor, sizeNDC, 0);
             }
 
             //edge cases
@@ -1031,8 +1031,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 FlushGeometry();
           
             TextureRenderingData texture = textures[TextureHandle];
-                Size.x = (float)font->Coords[LetterIndex].Width;
-                Size.y = (float)font->Coords[LetterIndex].Height/1440;
                 //its the size of the bitmap not the character itself.
 
 
@@ -1049,13 +1047,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             }
             else {
-                m_Vertices[m_VertexPointer].TexCoords = { 0.0f,0.0f };
-                m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
-                m_Vertices[m_VertexPointer + 2].TexCoords = { 0.0f,0.0f };
-                m_Vertices[m_VertexPointer + 3].TexCoords = { 0.0f,0.0f };
+                m_Vertices[m_VertexPointer].TexCoords = {0.0f,0.0f };
+                m_Vertices[m_VertexPointer + 1].TexCoords = { 1.0f,0.0f };
+                m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,1.0f };
+                m_Vertices[m_VertexPointer + 3].TexCoords = { 0.0f,1.0f };
             }
-
-
+ 
 
             float RemainingOffset{};
 

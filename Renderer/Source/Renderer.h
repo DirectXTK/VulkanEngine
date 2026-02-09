@@ -70,6 +70,7 @@ public:
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
     void SetCurrentFont(Asset<Font> CurrentAsset);
+    Asset<Font> GetCurrentFont(){return m_CurrentFont;}
     //PointerIndex = -1 means don't draw it.
     void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
     //GUI 
@@ -101,6 +102,7 @@ public:
     VkResult GetSwapChainState(){return m_AcquireImageResult;}
 
     float GetFONTDPI();
+    void ChangeArrowColor(const Float4& color){m_ArrowColor = color;}
 
     ~Renderer();
 private:
@@ -268,7 +270,7 @@ private:
 
     Camera2D m_Camera{};
     //Texturing
-    uint32_t m_TextureSlotCount{ 2 };
+    uint32_t m_TextureSlotCount{ 4};
     Texture* m_BlankWhiteTexture{};
     DescriptorPool m_DescriptorPoolTextures{};
 
@@ -290,6 +292,7 @@ private:
     uint32_t m_CurrentVertexBufferIndexGUI{};
     std::vector<DescriptorSet> m_DescriptorSetTexturesGUI{};
     bool m_GUIRendering{false};
+    Float4 m_ArrowColor{1.0f,1.0f,1.0f,1.0f};
     //
     
     //Queue changes

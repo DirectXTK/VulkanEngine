@@ -37,6 +37,9 @@ public:
 	void PopStyle();
 
 	void SetFontSize(uint32_t Size);
+	void SetFont(const std::string& strID);
+	void SetFont(GUUID id);
+
 	uint32_t GetFontSize();
 
 	void EndGUI();

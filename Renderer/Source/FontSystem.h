@@ -49,6 +49,7 @@ public:
 
 
 	void SetFont(GUUID fontAsset);
+	void SetFont(const std::string& fontPath);
 	//Renders simple text.
 	// MaxCharacters 0 means unlimited.
 	//Returns true then max characters has been reached.
@@ -82,6 +83,8 @@ private:
 	struct InputTextData{
 		uint64_t bufferSize{};
 		char* buffer{};
+		//Drawable window size
+		Float2 Size{};
 	};
 
 

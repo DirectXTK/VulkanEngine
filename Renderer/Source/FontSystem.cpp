@@ -70,12 +70,22 @@ Texture* FontSystem::GetFontAtlas()
 {
 	return m_FontAtlas;
 }
-
+void FontSystem::SetFont(const std::string& fontPath){
+	std::string absPath = std::filesystem::absolute(fontPath);
+	Asset<Font> asset = LoadFont(absPath);
+	if(asset){
+		m_CurrentFont = asset;
+		Application::GetRenderer()->SetCurrentFont(m_CurrentFont);
+		return;
+	}
+	Core::Log("Failed to FontSystem::SetFont(){path=",absPath,"}");
+}
 void FontSystem::SetFont(GUUID ID)
 {
 	Asset<Font> font = Application::GetAsset<Font>(ID);
 	if(font){
 		m_CurrentFont = font;
+		Application::GetRenderer()->SetCurrentFont(m_CurrentFont);
 		return;
 	}
 	Core::Log(ErrorType::Error,"Failed to PushFont ID{",ID.ID,"]");
@@ -92,32 +102,43 @@ uint64_t FontSystem::FindMousePosInText(const Float2& mousePos,char* Buffer,uint
 	float arrowPixelY = Core::ToScreenPixels(mousePos).y;
 	float smallestDist{std::numeric_limits<float>::max()};
 	uint32_t currentLine{0};
+	Float2 sizeInPixels = Core::ToScreenPixels(size);
 	
 
 	arrowPixelY = std::fabs(arrowPixelY-arrowPos.y);
 	arrowPixelY = size.y*Application::GetRenderer()->GetViewPortExtent().height*0.5f/m_CurrentFont.GetData()->NewLineSize;
 	
-	arrowPixelY -=(uint32_t)((arrowPos.y-Core::ToScreenPixels(mousePos).y)/m_CurrentFont.GetData()->NewLineSize); 
-	arrowPixelY = std::floor(arrowPixelY);
-	Core::Log("Line index",arrowPixelY," ",m_CurrentFont.GetData()->NewLineSize);
+	arrowPixelY -=(((arrowPos.y-Core::ToScreenPixels(mousePos).y))/m_CurrentFont.GetData()->NewLineSize); 
 
+	arrowPixelY = std::floor(arrowPixelY);
 	for(uint32_t i =0;i < BufferSize;i++){
 
 		if(Buffer[i] == '\0'){
 			return i;
 		}
-		if(Buffer[i] == '\n')
+		if(Buffer[i] == '\n'||arrowPos.x+m_CurrentFont.GetData()->Advance[Buffer[i]].x >= sizeInPixels.x){
+			if(currentLine == arrowPixelY){
+				return i;
+			}
+			arrowPos = Core::ToScreenPixels(Position);
 			currentLine++;
+		}
+		arrowPos.x += m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
+		
+		if(currentLine == arrowPixelY){
+			
+		
 
 		//arrowPos.y +=m_CurrentFont.GetData()->Advance[Buffer[i]].y;
-		arrowPos.x += m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
 
 		Float2 normArrowPos = Core::ToNDC(arrowPos);
 		float temp = std::fabs(normArrowPos.x-mousePos.x);
 		if(mousePos.x < normArrowPos.x){
 			return i;
 		}
+		}
 		arrowPos.x += m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
+
 
 		
 	}
@@ -174,7 +195,7 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 			char insertedChar= (char)event.Key;
 			if(event.Key == KeyCodes::ENTER)
 				insertedChar = '\n';
-
+			
 
 			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
 			data.buffer[m_ArrowPosition] = insertedChar;
@@ -202,7 +223,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	BoundingBox[3] = { Position.x + Size.x,Position.y };
 	
 
-	m_InputTextData[SelectID] = {BufferSize,Buffer};
+	m_InputTextData[SelectID] = {BufferSize,Buffer,Size};
 	//Draw the invisible barrier that  provides the selecting 
 	DrawBorder(Position, Size, SelectID);
 
@@ -518,7 +539,7 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 	MinCord = new Float2[m_Face->num_glyphs];
 	MaxCord = new Float2[m_Face->num_glyphs];
 	advance = new Float2[m_Face->num_glyphs];
-	
+	Core::Log("Assetname ",fontName);
 
 	memset(AtlasCoords,0x00000000, m_Face->num_glyphs*sizeof(TextureCoords));
 	for(uint32_t i =0 ;i < m_Face->num_glyphs;i++){
@@ -638,7 +659,7 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 	font->MaxCord = MaxCord;
 	font->FontSize = m_CharacterSize;
 	font->GlyphCount = m_Face->num_glyphs;
-	font->TextureID = Core::GetStringHash("FontTexture"+std::to_string(m_CharacterSize));
+	font->TextureID = Core::GetStringHash("FontTexture:"+std::to_string(m_CharacterSize)+":"+fontName);
 	font->Advance = advance;
 	font->FontName = fontName;
 	font->NewLineSize = 1.25f*m_CharacterSize;

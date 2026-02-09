@@ -401,6 +401,12 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 	}
 	m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize);
 }
+void GUIRenderer::SetFont(const std::string& strID){
+	m_FontSystem->SetFont(strID);
+}
+void GUIRenderer::SetFont(GUUID id){
+	m_FontSystem->SetFont(id);
+}
 void GUIRenderer::EndPanel()
 {
 	
