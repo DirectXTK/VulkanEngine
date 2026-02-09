@@ -732,7 +732,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-
                 switch (type) {
                 case AssetType::TEXTURE: {
                     CurrentTextureHandle = TextureHandle;
@@ -782,17 +781,20 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     TextureID = index->second.Index;
                 }
                 uint32_t RendererTextureIndex = textures[CurrentTextureHandle].Index;
-
+                m_Vertices[m_VertexPointer].TextureID = TextureID;
+                m_Vertices[m_VertexPointer + 1].TextureID = TextureID;
+                m_Vertices[m_VertexPointer + 2].TextureID = TextureID;
+                m_Vertices[m_VertexPointer + 3].TextureID = TextureID;  
+        }else{
                 m_Vertices[m_VertexPointer].TextureID = TextureID;
                 m_Vertices[m_VertexPointer + 1].TextureID = TextureID;
                 m_Vertices[m_VertexPointer + 2].TextureID = TextureID;
                 m_Vertices[m_VertexPointer + 3].TextureID = TextureID;
+        }
+              
          
        
 
-          
-         
-        }
         m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
         m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
         m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
@@ -982,8 +984,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             textures[TextureHandle] = { font->TextureAsset ,m_CurrentTextureDescriptorSetOffset };
             textureIds.push_back(TextureHandle);
             m_CurrentTextureDescriptorSetOffset++;
-            Core::Log("m_CurrentTextureDescriptorSetOffset",m_CurrentTextureDescriptorSetOffset);
- 
         }
 
         if(stringLen == 0 && PointerIndex != -1){

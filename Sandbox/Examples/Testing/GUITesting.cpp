@@ -66,6 +66,8 @@ void GUITestingLayer::OnGUI()
 	static float FontSize{16.0f};
 	static char username[50];
 	static char pass[50];
+
+
 	guiRenderer->SetFontSize((uint32_t)16);
 	guiRenderer->SetFont("EngineResources/Fonts/Daydream.ttf");
 
@@ -99,6 +101,9 @@ void GUITestingLayer::OnGUI()
 	guiRenderer->EndPanel();
 	guiRenderer->SetFont("EngineResources/Fonts/Daydream.ttf");
 
+	guiRenderer->Panel("TEST",{0.0f,0.0f},{0.0f,1.0f,0.0f,1.0f},{0.6f,0.2f},0,true);
+	guiRenderer->Quad({0.0f,0.0f},{0.1f,1.5f},{1.0f,1.0f,1.0f,1.0f},0);
+	guiRenderer->EndPanel();
 
 
 }
