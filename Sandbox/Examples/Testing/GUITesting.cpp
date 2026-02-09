@@ -77,7 +77,7 @@ void GUITestingLayer::OnGUI()
 	guiRenderer->InputText("USERNAME",username,ARRAYSIZE(username),{0.0f,0.0f},{1.0f,1.0f});
 
 	guiRenderer->InputText("PASS",pass,ARRAYSIZE(pass),{-0.5f,0.0f},{0.2f,1.0f});
-	guiRenderer->Quad({0.0f,0.7f},{0.2f,0.5f},{0.5f,0.5f,1.0f,1.0f});
+	guiRenderer->Quad({0.0f,0.7f},{0.2f,0.9f},{0.5f,0.5f,1.0f,1.0f});
 	guiRenderer->SetFontSize((uint32_t)FontSize);
 
 	guiRenderer->Button("Start Button","", { 0.0f,0.5f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.5f,0.5f },MouseCodes::LEFT,0,false);
@@ -102,7 +102,7 @@ void GUITestingLayer::OnGUI()
 	guiRenderer->SetFont("EngineResources/Fonts/Daydream.ttf");
 
 	guiRenderer->Panel("TEST",{0.0f,0.0f},{0.0f,1.0f,0.0f,1.0f},{0.6f,0.2f},0,true);
-	guiRenderer->Quad({0.0f,0.0f},{0.1f,1.5f},{1.0f,1.0f,1.0f,1.0f},0);
+	guiRenderer->Quad({0.5f,0.0f},{1.1f,0.9f},{1.0f,1.0f,1.0f,1.0f},0);
 	guiRenderer->EndPanel();
 
 

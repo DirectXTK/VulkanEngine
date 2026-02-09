@@ -214,8 +214,8 @@ void GUIRenderer::Quad(const Float2& position,const Float2& size,const Float4& c
 		RSize.x = std::clamp(RSize.x,0.0f,m_CurrenPanelParent->Size.x);
 		RSize.y = std::clamp(RSize.y,0.0f,m_CurrenPanelParent->Size.y);
 
-		LPosition.x = std::clamp(LPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x+RSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-RSize.x);
-		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
+		LPosition.x = std::clamp(LPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x-RSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-RSize.x);
+		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y-RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
 	}
 	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,textureID,0);
 }
@@ -618,6 +618,8 @@ void GUIRenderer::EndGUI()
 	//delete button that hasn't been used.
 }
 	GUIRenderer::~GUIRenderer(){
+
+
 		delete[] m_PickBufferData;
 	}
 

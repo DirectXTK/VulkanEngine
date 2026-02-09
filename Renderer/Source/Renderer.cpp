@@ -125,6 +125,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
     m_VertexCount = desc.VertexCountPerDrawCall;
+    m_VertexMaxCountGUI = desc.VertexCountPerDrawCall;
+
     BufferDesc VertexBufferDesc{};
     VertexBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex);
     VertexBufferDesc.Usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -147,7 +149,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
      //Buffer* vertexdwadad = new Buffer(VertexBufferDesc);
     m_VerticesGUI = new Vertex[m_VertexMaxCountGUI];
     m_Vertices = new Vertex[m_VertexCount];
-    m_VertexOutline = new Vertex[m_VertexOutineMaxCountPerDrawCall];
 
     BufferDesc StaggingBufferDesc{};
     StaggingBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex);
@@ -604,7 +605,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         void Renderer::EndFrame()
         {
              
-
               VkBufferCopy region{};
             region.size = sizeof(Vertex) * m_VertexCount;
             region.dstOffset = 0;

@@ -258,10 +258,6 @@ private:
     //Camera
     UniformCameraBufferData m_UniformCameraData{};
 
-    //Outlines
-    uint32_t m_VertexCountOutlines{};
-    uint64_t m_VertexOutineMaxCountPerDrawCall{ 4 * 100 };
-    Vertex* m_VertexOutline{};
     //Text
     Asset<Font> m_CurrentFont{};
 
