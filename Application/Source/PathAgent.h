@@ -4,6 +4,8 @@ enum class AgentType{NONE,WALKABLE,LAND,FLYING,BURROWED};
 class PathSystem;
 
 
+
+
 struct Node{
     int32_t PosX{};
     int32_t PosY{};
