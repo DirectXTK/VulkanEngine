@@ -8,12 +8,13 @@ public:
     void OnGUI()override;
     void OnDestroy()override;
 	void OnRender(double deltime)override;
-
+    void OnEvent(Event& event)override;
 
     //Get functions
 
 private:
-
+    void OnKeyBoardEvent(KeyBoardEvent& event);
+    void OnMouseEvent(MouseEvent& event);
 
     Animator* m_Anim{};
     //Controlls

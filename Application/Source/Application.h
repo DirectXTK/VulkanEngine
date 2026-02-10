@@ -59,6 +59,8 @@ public:
     static bool HasAsset(GUUID id);
     template<typename ASSETTYPE>
     static Asset<ASSETTYPE> GetAsset(const std::string& strHandle){return GetApplication()->m_AssetManager.GetAsset<ASSETTYPE>(strHandle);}
+    template<typename ASSETTYPE>
+    static Asset<ASSETTYPE> GetAsset(GUUID id){return GetApplication()->m_AssetManager.GetAsset<ASSETTYPE>(id);}
 
 
     static void Run();
@@ -90,7 +92,7 @@ public:
     static bool DeleteApplication();
     ~Application();
 private:
-//has to be non static
+    //has to be non static
      bool InitApplicationBackEnd(ApplicationSpecs specs);
     static void OpenTerminalAndAttachToStream();
 
@@ -112,6 +114,10 @@ private:
     //multithreading
     std::vector<std::thread> m_ThreadPool{};
 
+
+    //selection
+    Float2* m_PickBuffer{};
+    uint64_t m_PickBufferSize{};
 public:
     //GUI Renderer
     Renderer* m_Renderer{};

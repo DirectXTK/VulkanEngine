@@ -12,7 +12,7 @@ GUIRenderer::GUIRenderer(Application* app,bool SaveState): m_Application(app),m_
 	ColorData.Color = { 1.0f,1.0f,1.0f,1.0f };
 
 	GUI::BorderStyle BorderData{ sizeof(GUI::BorderStyle) };
-	BorderData.DrawBorder = false;
+	BorderData.DrawBorder = true;
 
 	GUI::OutlineStyle OutlineStyle{sizeof(GUI::OutlineStyle)};
 	OutlineStyle.Color = {1.0f,1.0f,0.0f,1.0f};
@@ -86,16 +86,10 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 
 
 
-		if (inputSystem->IsMouseClicked(MouseCodes::LEFT,true) &&m_DraggedPanel ==-1)
+		if (m_SelectedObjID == m_PanelIDs[m_CurrentPanel].ID.ID  &&m_DraggedPanel ==-1)
 		{
 
-			uint64_t* id{};
-			Float2 data{};
-			bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
-			if(succeded){
-			Float2 Pos = m_Application->GetMousePosNorm();
-			id = (uint64_t*)&data;
-			if (m_PanelIDs[m_CurrentPanel].ID.ID == *id) {
+				Float2 Pos = m_Application->GetMousePosNorm();
 				Float2 Dis = { Pos.x-m_PanelIDs[m_CurrentPanel].Position.x,Pos.y-m_PanelIDs[m_CurrentPanel].Position.y };
 				m_DraggedPanel = m_CurrentPanel;
 				Dis.x += m_PanelIDs[m_CurrentPanel].Offset.x;
@@ -105,9 +99,8 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 				m_DraggedPanelDragAmount.y = Pos.y- m_PanelIDs[m_CurrentPanel].Offset.y;
 
 
-			}
 		}
-		}
+		
 		if (m_DraggedPanel != -1)
 		{
 			Float2 Pos = m_Application->GetMousePosNorm();
@@ -135,7 +128,6 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 	Renderer* renderer = m_Application->m_Renderer;
 	InputSystem* inputsystem = &m_Application->m_InputSystem;
 	Float2 LPosition{ Position };
-	uint64_t* id{};
 	ButtonData* CurrentButtonData{};
 	GUUID CurrentButtonID{};
 
@@ -148,10 +140,24 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 
 	if (m_CurrenPanelParent) {
 		LPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		Size = {Size.x*m_CurrenPanelParent->Size.x,Size.y*m_CurrenPanelParent->Size.y};
+		Size.x = std::clamp(Size.x,0.0f,m_CurrenPanelParent->Size.x);
+		Size.y = std::clamp(Size.y,0.0f,m_CurrenPanelParent->Size.y);
+
+		LPosition.x = std::clamp(LPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x+Size.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-Size.x);
+		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+Size.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-Size.y);
 	}
 	Float2 OutlineSize{Size.x+m_CurrentOutlineData->Width,Size.y+m_CurrentOutlineData->Width};
-	if(CurrentButtonData->IsPressed == true)
-	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},m_CurrentOutlineData->Color,OutlineSize,0);
+	if(CurrentButtonData->IsPressed == true){
+		if(SavesState)
+			renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},m_CurrentOutlineData->Color,OutlineSize,0);
+		else{
+			Color.r -=0.1f;
+			Color.g -=0.1f;
+			Color.b -=0.1f;
+		}
+	}
 
 
 
@@ -167,17 +173,7 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 
 	
 
-
-	if (inputsystem->IsMouseClicked(mousecode)  )
-	{	
-		Float2 data{};
-		bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
-		if(succeded){
-		id = (uint64_t*)&data;
-		CurrentButtonData->LastClicked = Time::GetTimeNs();
-
-		if (CurrentButtonID.ID == *id) {
-
+		if (m_SelectedObjID == CurrentButtonID) {
 			if (SavesState )
 			{
 				if(CurrentButtonData->IsPressed==true)
@@ -195,13 +191,72 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 				CurrentButtonData->IsPressed=false;
 
 		}
-	}
 	
-	}
+	
+	
 	
 
 
 	return CurrentButtonData->IsPressed;
+}
+void GUIRenderer::Quad(const Float2& position,const Float2& size,const Float4& color,GUUID textureID){
+
+	Renderer* renderer = m_Application->m_Renderer;
+	Float2 LPosition{ position };
+	Float2 RSize{size};
+	ButtonData* CurrentButtonData{};
+	GUUID CurrentButtonID{};
+
+	if (m_CurrenPanelParent) {
+		LPosition = { (position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		RSize = {RSize.x*m_CurrenPanelParent->Size.x,size.y*m_CurrenPanelParent->Size.y};
+		RSize.x = std::clamp(RSize.x,0.0f,m_CurrenPanelParent->Size.x);
+		RSize.y = std::clamp(RSize.y,0.0f,m_CurrenPanelParent->Size.y);
+
+		LPosition.x = std::clamp(LPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x-RSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-RSize.x);
+		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y-RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
+	}
+	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,textureID,0);
+}
+
+bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture){
+	Renderer* renderer = m_Application->m_Renderer;
+	Float2 LPosition{ position };
+	Float2 RSize{size};
+	CheckBoxData* currentCheckBoxData{};
+	GUUID CurrentButtonID{Core::GetStringHash(id)};
+
+
+	if (m_CheckBoxes.find(id) == m_CheckBoxes.end())
+		m_CheckBoxes[id] = { false };
+
+	currentCheckBoxData = &m_CheckBoxes[id];
+	CurrentButtonID = Core::GetStringHash(id);
+
+	if(m_SelectedObjID == CurrentButtonID){
+		if(currentCheckBoxData->IsClicked)
+			currentCheckBoxData->IsClicked = false;
+		else 
+			currentCheckBoxData->IsClicked = true;
+	}
+
+	if (m_CurrenPanelParent) {
+		LPosition = { (position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		RSize = {RSize.x*m_CurrenPanelParent->Size.x,size.y*m_CurrenPanelParent->Size.y};
+		RSize.x = std::clamp(RSize.x,0.0f,m_CurrenPanelParent->Size.x);
+		RSize.y = std::clamp(RSize.y,0.0f,m_CurrenPanelParent->Size.y);
+
+		LPosition.x = std::clamp(LPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x+RSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-RSize.x);
+		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
+	}
+
+	if(currentCheckBoxData->IsClicked)
+		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,Core::GetStringHash("GUI/CheckBoxTrue"),CurrentButtonID.ID);
+	else
+		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,Core::GetStringHash("GUI/CheckBoxFalse"),CurrentButtonID.ID);
+	return currentCheckBoxData->IsClicked;
 }
 void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size) {
 	if (Text.size() != 0) {
@@ -212,7 +267,10 @@ void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2
 			Size = {Size.x*m_CurrenPanelParent->Size.x,Size.y*m_CurrenPanelParent->Size.y};
 		Position = {m_CurrenPanelParent->Size.x*Position.x+m_CurrenPanelParent->Position.x,m_CurrenPanelParent->Size.y*Position.y+m_CurrenPanelParent->Position.y};
 		}
-		DrawBorder(Position,Size,m_CurrentBorderData->BorderColor,m_CurrentBorderData->BackGroundColor,m_CurrentBorderData->BorderWidth);
+		if(m_CurrentBorderData){
+
+			DrawBorder(Position,Size,m_CurrentBorderData->BorderColor,m_CurrentBorderData->BackGroundColor,m_CurrentBorderData->BorderWidth);
+		}
 		m_FontSystem->Text(Core::GetStringHash(strID), Text.c_str(), Position, { Size.x ,Size.y  });
 	}
 }
@@ -231,6 +289,8 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 	std::string StringNumber = std::to_string(*number);
 	SliderData* CurrentSlider = &m_Sliders[strID];
 	 float sliderClickedColorMin{.2f};
+	Float2 lPosition{Position};
+	Float2 rSize{Size};
 
 	
 	if (CurrentSlider->IsClicked == true)
@@ -240,12 +300,21 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 
 	Color = { Color.r - sliderClickedColorMin,Color.g - sliderClickedColorMin,Color.b - sliderClickedColorMin,m_CurrentColor.a};
 
+	if (m_CurrenPanelParent) {
+		lPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		rSize = {rSize.x*m_CurrenPanelParent->Size.x,Size.y*m_CurrenPanelParent->Size.y};
+		rSize.x = std::clamp(rSize.x,0.0f,m_CurrenPanelParent->Size.x);
+		rSize.y = std::clamp(rSize.y,0.0f,m_CurrenPanelParent->Size.y);
 
+		lPosition.x = std::clamp(lPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x-rSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x+rSize.x);
+		lPosition.y = std::clamp(lPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y-rSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y+rSize.y);
+	}
 
 	if(m_CurrentBorderData){
 		if (m_CurrentBorderData->DrawBorder){
 				Float4 BackGroundColor = {m_CurrentBorderData->BackGroundColor.r-sliderClickedColorMin,m_CurrentBorderData->BackGroundColor.g-sliderClickedColorMin,m_CurrentBorderData->BackGroundColor.b-sliderClickedColorMin,m_CurrentBorderData->BackGroundColor.a};
-			DrawBorder(Position, Size, m_CurrentBorderData->BorderColor,BackGroundColor, m_CurrentBorderData->BorderWidth);
+			DrawBorder(lPosition, rSize, m_CurrentBorderData->BorderColor,BackGroundColor, m_CurrentBorderData->BorderWidth);
 		}
 	}
 
@@ -253,8 +322,8 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 		if(m_CurrentSliderData->FillOn)
 		{
 			Color.a =0;
-			float procent = *number/MinMax.y;
-			renderer->DrawQuad({Position.x-((1-procent)*Size.x),Position.y},m_CurrentSliderData->FillColor,{Size.x*procent,Size.y},Core::GetStringHash(strID).ID);
+			float percent = *number/MinMax.y;
+			renderer->DrawQuad({lPosition.x-((1-percent)*rSize.x),lPosition.y},m_CurrentSliderData->FillColor,{rSize.x*percent,rSize.y},Core::GetStringHash(strID).ID);
 		}
 	}
 
@@ -262,8 +331,9 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 	if (Button(strID, StringNumber.substr(0, StringNumber.size() - (6 - DecimalPlaces)), Position, { Color }, Size, MouseCodes::LEFT, 0, false)) {
 		if (!CurrentSlider->IsClicked) {
 			CurrentSlider->IsClicked = true;
-
+			CurrentSlider->MousePosChange = Application::GetMousePos().x;
 		}
+		Core::Log("Clicked");
 	}
 
 	
@@ -272,7 +342,10 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 	
 	
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
-		*number -= m_Application->m_InputSystem.GetMousePosChange().x * SlideAmount;
+		float deltaPos = Application::GetMousePos().x -CurrentSlider->MousePosChange;
+		CurrentSlider->MousePosChange =  Application::GetMousePos().x ;
+
+		*number += deltaPos * SlideAmount;
 		*number=std::clamp(*number,MinMax.x,MinMax.y);
 	}
 	else {
@@ -299,6 +372,7 @@ void GUIRenderer::Slider(const std::string& strID, int* number, Float2 Position,
 
 		}
 	}
+		Core::Log(ErrorType::Error,"Lafa");
 
 	
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
@@ -311,7 +385,26 @@ void GUIRenderer::Slider(const std::string& strID, int* number, Float2 Position,
 
 }
 void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size) {
-	m_FontSystem->InputText(ID, Buffer, BufferSize, Position, Size);
+	Float2 rSize{Size};
+	Float2 lPosition{};
+
+	if (m_CurrenPanelParent) {
+		lPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		rSize = {rSize.x*m_CurrenPanelParent->Size.x,Size.y*m_CurrenPanelParent->Size.y};
+		rSize.x = std::clamp(rSize.x,0.0f,m_CurrenPanelParent->Size.x);
+		rSize.y = std::clamp(rSize.y,0.0f,m_CurrenPanelParent->Size.y);
+
+		lPosition.x = std::clamp(lPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x-rSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x+rSize.x);
+		lPosition.y = std::clamp(lPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y-rSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y+rSize.y);
+	}
+	m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize);
+}
+void GUIRenderer::SetFont(const std::string& strID){
+	m_FontSystem->SetFont(strID);
+}
+void GUIRenderer::SetFont(GUUID id){
+	m_FontSystem->SetFont(id);
 }
 void GUIRenderer::EndPanel()
 {
@@ -339,7 +432,7 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 		*Color = *TransformedData;
 
 
-		m_Styles.push({ style,Color });
+		m_Styles.push_back({ style,Color });
 		break;
 	}
 	case GUI::Style::BORDER: {
@@ -354,7 +447,7 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 		OutputBorder = (GUI::BorderStyle*)malloc(sizeof(GUI::BorderStyle));
 		*OutputBorder = *TransformedData;
 
-		m_Styles.push({ style,OutputBorder });
+		m_Styles.push_back({ style,OutputBorder });
 
 		break;
 	}
@@ -370,7 +463,7 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 		sliderData = (GUI::SliderStyle*)malloc(sizeof(GUI::SliderStyle));
 		*sliderData = *TransformedData;
 
-		m_Styles.push({ style,sliderData });
+		m_Styles.push_back({ style,sliderData });
 
 		break;
 	}
@@ -386,7 +479,7 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 		sliderData = (GUI::OutlineStyle*)malloc(sizeof(GUI::OutlineStyle));
 		*sliderData = *TransformedData;
 
-		m_Styles.push({ style,sliderData });
+		m_Styles.push_back({ style,sliderData });
 
 		break;
 	}
@@ -403,18 +496,38 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 	ReapplyStyles();
 }
 void GUIRenderer::PopStyle() {
-	StyleContainer container = m_Styles.top();
+	StyleContainer container = m_Styles[m_Styles.size()-1];;
+	
+	switch(container.StyleType){
+		case GUI::Style::BORDER:{
+			m_CurrentBorderData = nullptr;
+			break;
+		}
+		case GUI::Style::SLIDER:{
+			m_CurrentSliderData = nullptr;
+			break;
+		}
+		case GUI::Style::OUTLINE:{
+			m_CurrentOutlineData = nullptr;
+			break;
+		}
+		case GUI::Style::COLOR:{
+			m_CurrentColor = {1.0f,1.0f,1.0f,1.0f};
+			break;
+		}
+		default:{
+			Core::Log("That was invalid style {PopStyle} ",(int)container.StyleType);
+			break;
+		}
+	}
+	
 	free(container.StyleData);
-
-	m_CurrentBorderData= nullptr;
-	m_CurrentSliderData= nullptr;
-
-	m_Styles.pop();
+	m_Styles.pop_back();
 	ReapplyStyles();
 
 }
 void GUIRenderer::ReapplyStyles() {
-	StyleContainer Container = m_Styles.top();
+	StyleContainer Container = m_Styles[m_Styles.size()-1];
 
 	switch (Container.StyleType) {
 	case GUI::Style::COLOR: {
@@ -426,7 +539,6 @@ void GUIRenderer::ReapplyStyles() {
 	}
 	case GUI::Style::BORDER: {
 		GUI::BorderStyle* Border = (GUI::BorderStyle*)Container.StyleData;
-
 		m_CurrentBorderData = Border;
 		break;
 	}
@@ -447,24 +559,66 @@ void GUIRenderer::ReapplyStyles() {
 		Core::Log(ErrorType::Error,"Reapply styles style in invalid ",(uint32_t)Container.StyleType);
 	}
 	}
+
+	if(!m_CurrentBorderData){
+		for(uint32_t i =0;i < m_Styles.size();i++)
+			if(m_Styles[i].StyleType == GUI::Style::BORDER) m_CurrentBorderData = (GUI::BorderStyle*)m_Styles[i].StyleData;
+	}
+	if(!m_CurrentSliderData){
+		for(uint32_t i =0;i < m_Styles.size();i++)
+			if(m_Styles[i].StyleType == GUI::Style::SLIDER) m_CurrentSliderData = (GUI::SliderStyle*)m_Styles[i].StyleData;
+	}
+	if(!m_CurrentOutlineData){
+		for(uint32_t i =0;i < m_Styles.size();i++)
+			if(m_Styles[i].StyleType == GUI::Style::OUTLINE) m_CurrentOutlineData = (GUI::OutlineStyle*)m_Styles[i].StyleData;
+	}
+
 }
 void GUIRenderer::SetFontSize(uint32_t Size)
 {	
-	if(Size >0)
+		Size = std::clamp((int)Size,1,96);
 		m_FontSystem->SetCharcterSize(Size);
 }
 uint32_t GUIRenderer::GetFontSize() {
 	return m_FontSystem->GetFontSize();
 }
+void GUIRenderer::OnEvent(Event& event){
+	if(event.GetEventType() == EventType::KEYBOARD)
+		OnKeyBoardEvent((KeyBoardEvent&)event);
+	else if(event.GetEventType() == EventType::MOUSE)
+		OnMouseEvent((MouseEvent&)event);
+}
+void GUIRenderer::OnKeyBoardEvent(KeyBoardEvent& event){
 
+}
+void GUIRenderer::OnMouseEvent(MouseEvent& event){
+	Renderer* renderer = Application::GetRenderer();
+
+	if(event.Code == MouseCodes::LEFT && event.State == EventState::PRESSED){
+		Float2 data{};
+		bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
+		if(succeded){
+			m_SelectedObjID = *(uint64_t*)&data;
+		}
+
+	}
+	if(event.Code == MouseCodes::LEFT && event.State == EventState::RELEASED){
+		m_SelectedObjID =0;
+	}
+
+
+}
 void GUIRenderer::EndGUI()
 {
+	m_SelectedObjID =0;
 	//Update the dragged panel/button
 
 
 	//delete button that hasn't been used.
 }
 	GUIRenderer::~GUIRenderer(){
+
+
 		delete[] m_PickBufferData;
 	}
 

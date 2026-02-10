@@ -123,23 +123,17 @@ VkPipelineLayout Pipeline::CreatePipelineLayout(VkDevice device,VkDescriptorSetL
 VkPipeline Pipeline::CreatePipeline(const PipelineDesc& desc,VkDevice device)
 {
     VkPipeline outputPipeline{};
-    VkShaderModule Vertex= ShaderDesc::CreateShader({ ShaderType::VertexShader,"Shaders/Vertex.spv" },device);
-    VkShaderModule Pixel= ShaderDesc::CreateShader({ ShaderType::PixelShader,"Shaders/Fragment.spv" },device);
+    VkPipelineShaderStageCreateInfo* shaderStages{};
+    shaderStages = new VkPipelineShaderStageCreateInfo[desc.ShaderCount];
 
+    for(uint32_t i=0 ;i < desc.ShaderCount;i++){
+        shaderStages[i]= {};
+        shaderStages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shaderStages[i].pName = "main";
+        shaderStages[i].module = desc.Shaders[i].GetShaderModule();
+        shaderStages[i].stage = desc.Shaders[i].GetShaderStage();
 
-    VkPipelineShaderStageCreateInfo vertexstage{};
-    vertexstage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertexstage.module = Vertex;
-    vertexstage.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertexstage.pName = "main";
-
-    VkPipelineShaderStageCreateInfo fragmentstage{};
-    fragmentstage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragmentstage.module = Pixel;
-    fragmentstage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragmentstage.pName = "main";
-
-    VkPipelineShaderStageCreateInfo stages[] = { vertexstage,fragmentstage };
+    }
 
     VkVertexInputBindingDescription vertexinputdesc{};
     vertexinputdesc.stride = desc.VertexInputStride;
@@ -278,8 +272,8 @@ VkPipeline Pipeline::CreatePipeline(const PipelineDesc& desc,VkDevice device)
 
 VkGraphicsPipelineCreateInfo pipeline{};
     pipeline.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipeline.stageCount = 2;
-    pipeline.pStages = stages;
+    pipeline.stageCount = desc.ShaderCount;
+    pipeline.pStages = shaderStages;
     pipeline.pVertexInputState = &vertexinputstate;
     pipeline.pInputAssemblyState = &inputassassembly;
     pipeline.pViewportState = &viewportinfo;
@@ -299,9 +293,7 @@ VkGraphicsPipelineCreateInfo pipeline{};
         Core::Log(ErrorType::Error, "Failed to create pipeline.");
     
     delete[] vertexinputattr;
-    vkDestroyShaderModule(device,Vertex,nullptr);
-    vkDestroyShaderModule(device,Pixel,nullptr);
 
-
+    delete[] shaderStages;
     return outputPipeline;
 }

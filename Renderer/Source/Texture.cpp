@@ -2,80 +2,10 @@
 #include "Buffer.h"
 #include "CommandBuffer.h"
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb-master/stb_image.h"
+#include "stb-master/stb_image_write.h"
 
-
-	Texture::Texture(Context context, const TextureCreateInfo& createInfo,const TextureType& type){
-		m_Context = context;
-		m_TextureType = type;
-		m_Width = createInfo.Width;
-		m_Height = createInfo.Height;
-		switch(type){
-			case TextureType::Texture:{
-			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,createInfo.Pixels);
-				break;
-			}
-			case TextureType::ColorAttachment:{
-			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|createInfo.ImageUsageFlags,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_UNDEFINED);
-				break;
-			}
-			case TextureType::DepthStencilAttachment :{
-			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_UNDEFINED,nullptr,VkImageAspectFlagBits(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT));
-				break;
-			}
-			default :{
-				Core::Log(ErrorType::Error,"Texture type doesn't exist.");
-				break;
-			}
-		}
-		
-
-	}
-
-	Texture::Texture(Context context,VkFormat format,VkImage image){
-		m_Context = context;
-		m_Image = image;
-		m_TextureType = TextureType::SwapChainImage;
-		CreateView(format,VK_IMAGE_ASPECT_COLOR_BIT,m_Context->Device);
-	}
-	Texture::Texture(Texture* texture, uint32_t TextureIndex){
-		*this = *texture;
-		m_TextureIndex= TextureIndex;
-
-	}
-Texture::Texture(Context context, const TextureCreateInfo& createInfo ,std::string Path,TextureType type)
-{
-	std::string Extension= Core::GetFileExtension(Path);
-	m_TextureType = type;
-	uint64_t Width{}, Height{};
-	m_Context = context;
-	//Loads texture normaly
-	if (Extension == "png") {
-		unsigned char* InitData = LoadTextureDataFromFile(Path,&Width,&Height);
-		if (InitData) {
-			m_Width = Width;
-			m_Height =Height;
-
-
-			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,createInfo.ImageUsageFlags,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,InitData);
-
-			delete[] InitData;
-		}
-		
-	}//Loads texture as an atlas
-	else if (Extension == "json") {
-		
-		std::string TexturePath = Path.substr(0, Path.find("."));
-		TexturePath += ".png";
-		unsigned char* InitData = LoadTextureDataFromFile(TexturePath,&Width,&Height);
-		if (InitData) {
-			//creates the parent and child textures.
-			CreateTextureAtlasAndParent(Path,Width,Height);
-		
-			delete[] InitData;
-		}
-	}
-}
 uint32_t CalculateBytesPerPixel(VkFormat format){
 		switch(format){
 			case VK_FORMAT_R8G8B8A8_UNORM:
@@ -104,6 +34,123 @@ uint32_t CalculateBytesPerPixel(VkFormat format){
 		}
 		return 0;
 }
+	Texture::Texture(Context context, const TextureCreateInfo& createInfo,const TextureType& type){
+		m_Context = context;
+		m_TextureType = type;
+		m_Width = createInfo.Width;
+		m_Height = createInfo.Height;
+		m_ChannelCount = CalculateBytesPerPixel(createInfo.Format);
+		switch(type){
+			case TextureType::Texture:{
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,createInfo.Pixels);
+				break;
+			}
+			case TextureType::ColorAttachment:{
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|createInfo.ImageUsageFlags,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_UNDEFINED);
+				break;
+			}
+			case TextureType::DepthStencilAttachment :{
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_UNDEFINED,nullptr,VkImageAspectFlagBits(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT));
+				break;
+			}
+			default :{
+				Core::Log(ErrorType::Error,"Texture type doesn't exist.");
+				break;
+			}
+		}
+		
+
+	}
+
+	Texture::Texture(Context context,VkFormat format,VkImage image){
+		m_Context = context;
+		m_Image = image;
+		m_TextureType = TextureType::SwapChainImage;
+		m_AspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		CreateView(format,m_AspectMask,m_Context->Device);
+	}
+	Texture::Texture(Texture* texture, uint32_t TextureIndex){
+		*this = *texture;
+		m_TextureIndex= TextureIndex;
+
+	}
+Texture::Texture(Context context, const TextureCreateInfo& createInfo ,std::string Path,TextureType type)
+{
+	std::string Extension= Core::GetFileExtension(Path);
+	m_TextureType = type;
+	uint64_t Width{}, Height{};
+	m_Context = context;
+	//Loads texture normaly
+	if (Extension == "png") {
+		unsigned char* InitData = LoadTextureDataFromFile(Path,&Width,&Height);
+		if (InitData) {
+			m_Width = Width;
+			m_Height =Height;
+
+
+			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,createInfo.ImageUsageFlags,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,InitData);
+
+			free(InitData);
+		}
+		
+	}//Loads texture as an atlas
+	else if (Extension == "json") {
+		
+		std::string TexturePath = Path.substr(0, Path.find("."));
+		TexturePath += ".png";
+		unsigned char* InitData = LoadTextureDataFromFile(TexturePath,&Width,&Height);
+		if (InitData) {
+			//creates the parent and child textures.
+			CreateTextureAtlasAndParent(Path,Width,Height);
+		
+			free(InitData);
+		}
+	}
+}
+
+bool Texture::WriteToFile(const std::string& path){
+
+
+	BufferDesc desc{};
+	desc.Device = m_Context->Device;
+	desc.Memoryflags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	desc.Physdevice = m_Context->PDevice;
+	desc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
+	desc.Usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	desc.SizeBytes = m_ChannelCount*m_Width*m_Height;
+
+	Buffer staggingBuffer(desc);
+
+	VkCommandBuffer commandBuffer =  CommandBuffer::StartSingleUseCommandBuffer(m_Context,m_Context->CommandPool);
+
+	VkBufferImageCopy region{};
+	region.bufferOffset = 0;
+	region.imageExtent = {(uint32_t)m_Width,(uint32_t)m_Height,1};
+	region.imageOffset ={0,0,0};
+	region.imageSubresource.aspectMask = m_AspectMask;
+	region.imageSubresource.baseArrayLayer = 0;
+	region.imageSubresource.layerCount = 1;
+	region.imageSubresource.mipLevel = 0;
+
+	VkImageLayout oldLayout= m_Layout;
+
+	TrasitionFormat(true,m_Layout,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,commandBuffer);
+	vkCmdCopyImageToBuffer(commandBuffer,m_Image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,*staggingBuffer.GetBuffer(),1,&region);
+	TrasitionFormat(true,m_Layout,oldLayout,commandBuffer);
+
+
+	CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_Context->CommandPool,commandBuffer);
+
+	char* data = new char[m_ChannelCount*m_Width*m_Height];
+	staggingBuffer.LoadFromBufferToVar(data);
+	int ret = stbi_write_png(path.c_str(),m_Width,m_Height,m_ChannelCount,data,4*m_Width);
+	if(!ret)
+		Core::Log(ErrorType::Error,"Failed to write to file this texture{Texture::WriteToFile} ",m_Width,m_Height,m_ChannelCount,path);
+
+	delete[] data;
+	return true;
+}
+
 
 void Texture::TrasitionFormat(bool Write,VkImageLayout OldLayout, VkImageLayout NewLayout,VkCommandBuffer CommandBuffer)
 {
@@ -142,7 +189,7 @@ void Texture::TrasitionFormat(bool Write,VkImageLayout OldLayout, VkImageLayout 
 	
 
 	vkCmdPipelineBarrier(CommandBuffer, SourceStage, DstStage, 0, 0, 0, 0, 0, 1, &barrier);
-
+	m_Layout = NewLayout;
 
 }
 
@@ -284,6 +331,8 @@ void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTilin
 	bufferdesc.SizeBytes = texturesize;
 	bufferdesc.Usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
+	m_Layout = finalLayout;
+
 
 	if(initData||m_TextureType == TextureType::Texture){
 		Buffer stagging(bufferdesc);
@@ -302,7 +351,6 @@ void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTilin
 	CopyDataFromBuffer(TempCommandBuffer, *stagging.GetBuffer(), m_Image);
 
 	TrasitionFormat(false,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, finalLayout, TempCommandBuffer);
-
 
 	CommandBuffer::EndSingleUseCommandBuffer(m_Context, m_Context->CommandPool, TempCommandBuffer);
 	}

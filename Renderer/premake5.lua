@@ -33,7 +33,7 @@ project "Renderer"
     links{
       "vulkan",
       "glfw3",
-      "freetype","z","png16",
+      "freetype","z","png16","glslang","SPIRV","OGLCompiler"
     }
     postbuildcommands { 
       "{COPY} %{cfg.targetdir}/libRenderer.a "..LibLocation..""

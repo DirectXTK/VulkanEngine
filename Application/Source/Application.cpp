@@ -118,6 +118,14 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
     tcgetattr(STDIN_FILENO,&m_DefaultConsoleSett);
 
      Core::EmptyLogFile();
+
+#ifdef LINUXX11
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+#elifdef LINUXWAYLAND
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
+#endif
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+
      glfwInit();
      glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
      glfwWindowHint(GLFW_RESIZABLE, specs.IsWindowResizable);
@@ -147,6 +155,11 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
      m_FontSystem = new FontSystem();
 
      m_GUIRenderer = new GUIRenderer(this, false);
+
+     m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::TEXTURE);
+
+     m_PickBuffer = new Float2[m_Renderer->GetViewPortExtent().width*m_Renderer->GetViewPortExtent().height];
+     m_PickBufferSize = m_Renderer->GetViewPortExtent().width*m_Renderer->GetViewPortExtent().height*sizeof(Float2);
 
      return true;
 
@@ -189,11 +202,15 @@ Float2 Application::GetMousePosChange(){
  GUUID Application::GetCurrentlyHoveredPixelID()
  {
     Application* app = GetApplication();
-    Buffer* buffer =  app->m_Renderer->GetCustomBuffer(0);
     Float2 MousePos = GetMousePos();
+    Float2 rawID{};
 
-    Float2 RawID = buffer->ReadPixel((uint32_t)MousePos.x, (uint32_t)MousePos.y,app->m_Renderer->GetViewPortExtent().width, app->m_Renderer->GetViewPortExtent().height);
-    uint64_t* ID = (uint64_t*)&RawID;
+    if(!Core::ReadPixel(app->m_PickBuffer,app->m_Renderer->GetViewPortExtent().width,app->m_Renderer->GetViewPortExtent().height,MousePos.x,MousePos.y,&rawID)){
+        Core::Log(ErrorType::Error,"Failed to read pixel Application::GetCurrentlyHoveredPixelID","MouseX:",MousePos.x," MouseY:",MousePos.y," Width:",app->m_Renderer->GetViewPortExtent().width," Height:" ,app->m_Renderer->GetViewPortExtent().height);
+        return GUUID(0);
+    }
+    uint64_t* ID = (uint64_t*)&rawID;
+    Core::Log(*ID);
      return GUUID(*ID);
  }
 
@@ -235,6 +252,14 @@ void Application::RunAStar(){
 }
  void Application::DispatchEvent(Event& event){
     Application* app = Application::GetApplication();
+
+    if(event.GetEventType() == EventType::WINDOWRESIZE){
+        app->m_PickBufferSize = app->m_Renderer->GetViewPortExtent().width*app->m_Renderer->GetViewPortExtent().height*sizeof(Float2);
+        app->m_PickBuffer = new Float2[app->m_PickBufferSize];
+    }
+
+    app->m_GUIRenderer->OnEvent(event);
+    app->m_FontSystem->OnEvent(event);
     app->m_LayerController.OnEvent(event);
  }
 
@@ -246,6 +271,9 @@ void Application::RunAStar(){
     std::thread InputThread(RunCommandLineInputTemp,app,std::ref(ThreadRunning));
 
     while(!glfwWindowShouldClose(app->m_Window->GetHandle())&& app->m_Running){
+
+        app->m_Renderer->GetCustomBuffer(0)->LoadFromBufferToVar(app->m_PickBuffer,app->m_PickBufferSize,0);
+
         app->m_InputSystem.ResetMouseChange();
 
         app->m_DeltaTime = Time::GetTimeMs() - app->m_LastFrameTime;
@@ -270,6 +298,7 @@ void Application::RunAStar(){
             app->m_Renderer->Statistics(true,app->m_GUIRenderer);
         }
 
+        app->m_GUIRenderer->EndGUI();
         app->m_Renderer->EndFrame();
     }
 
@@ -281,6 +310,8 @@ void Application::RunAStar(){
         glfwPollEvents();
         
         app->m_LayerController.RunQueue();
+        //app->m_LayerController.TransitionLayers();
+        app->m_Renderer->RunRendererChangeQueue();
     }
     ThreadRunning.store(false);
     app->m_Running = false;

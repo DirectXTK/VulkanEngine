@@ -17,6 +17,7 @@
 #include <set>
 
 #define VULKANDEBUG(x,y) x== VK_SUCCESS? (void)0: Core::Log(ErrorType::Error,y,": ",(int)x) 
+#define MAX_FRAME_DRAWS 3
 
 
 class Image;
@@ -39,5 +40,8 @@ struct SwapChainDetails{
         uint32_t FindMemoryTypeIndex(VkPhysicalDevice physicaldevice,uint32_t Allowedtypes,VkMemoryPropertyFlags flags);
         VkFormat ChooseBestFormat(VkPhysicalDevice pdevice,const std::vector<VkFormat>& formats,VkImageTiling tilling,VkFormatFeatureFlags flags);
         void CopyImageToImage(VkDevice device,VkPhysicalDevice pdevice,Image* src,Image* dst);
+        Float2 ToNDC(const Float2& pos);
+        Float2 ToScreenPixels(const Float2& pos);
+        
     }
 

@@ -1,4 +1,5 @@
 #include "RendCore.h"
+#include "Application.h"
 namespace Core{
         uint32_t FindMemoryTypeIndex(VkPhysicalDevice physicaldevice,uint32_t Allowedtypes,VkMemoryPropertyFlags flags){
             VkPhysicalDeviceMemoryProperties memprops{};
@@ -31,6 +32,16 @@ namespace Core{
 
             return true;
         }
+        Float2 ToScreenPixels(const Float2& pos){
+           return{(pos.x * 0.5f + 0.5f) * Application::GetRenderer()->GetViewPortExtent().width,
+            (0.5f - pos.y * 0.5f) * Application::GetRenderer()->GetViewPortExtent().height};
+        }
+        Float2 ToNDC(const Float2& pos){
+            return {
+                (pos.x/Application::GetRenderer()->GetViewPortExtent().width)*2.0f -1.0f,
+                -(pos.y/Application::GetRenderer()->GetViewPortExtent().height)*2.0f +1.0f
+            };
+        }
         VkFormat ChooseBestFormat(VkPhysicalDevice pdevice,const std::vector<VkFormat>& formats,VkImageTiling tilling,VkFormatFeatureFlags flags){
 
                 for(int i =0;i < formats.size();i++){
@@ -51,11 +62,6 @@ namespace Core{
             Core::Log(ErrorType::Error,"Failed to find supported format.");
             return VK_FORMAT_UNDEFINED;
         }
-        void CopyImageToImage(VkDevice device,VkPhysicalDevice pdevice,Image* src,Image* dst){
-
-
-
-            
-        }
+      
 
 }

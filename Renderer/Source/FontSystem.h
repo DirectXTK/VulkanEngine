@@ -11,16 +11,23 @@ class Renderer;
 
 struct Font {
 	Asset<Texture> TextureAsset{};
+	//the first uint32_t is the char code in unicode the second is the fonts index to texture.
+	std::unordered_map<uint32_t,uint32_t> CharMap{};
+	std::string FontName{"NONE"};
 	GUUID TextureID{};
 	uint32_t FontSize{};
+	Float2* Advance{};
 	TextureCoords* Coords{};
 	Float2* MinCord{};
 	Float2* MaxCord{};
+	float NewLineSize{};
 	uint32_t GlyphCount{};
 	~Font(){
 		delete[] Coords;
 		delete[] MinCord;
 		delete[] MaxCord;
+		delete[] Advance;
+		Core::Log("Font data freed");
 	}
 };
 
@@ -41,7 +48,8 @@ public:
 	void PopStyle();
 
 
-	void PushFont();
+	void SetFont(GUUID fontAsset);
+	void SetFont(const std::string& fontPath);
 	//Renders simple text.
 	// MaxCharacters 0 means unlimited.
 	//Returns true then max characters has been reached.
@@ -52,9 +60,11 @@ public:
 	void Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize = { 0.f,0.f });
 
 	uint32_t GetFontSize() { return m_CharacterSize;}
-	void PopFont();
 
 	void KeyBoardCallback(KeyBoardEvent* event);
+	Asset<Font> LoadFont(const std::string& filePath);
+
+	void OnEvent(Event& event);
 
 	~FontSystem();
 private:
@@ -65,12 +75,25 @@ private:
 	void DrawPointer(Float2 Position,float CharacterSize,float SizeY);
 	void DrawBorder(Float2& Position, Float2& Size, GUUID ID);
 
+	void OnMouseEvent(MouseEvent& event);
+	void OnKeyBoardEvent(KeyBoardEvent& event);
+
+	uint64_t FindMousePosInText(const Float2& mousePos,char* Buffer,uint64_t BufferSize,const Float2& Position,const Float2& size);
+
+	struct InputTextData{
+		uint64_t bufferSize{};
+		char* buffer{};
+		//Drawable window size
+		Float2 Size{};
+	};
+
+
 	//coeficient used for normalizing char size.
 	const float m_CharSizeNormCoe{ 0.000043f };
 
 	Renderer* m_Renderer{};
 	Float2 m_TextureSize{};
-	void ReRenderFaces();
+	Asset<Font> ReRenderFaces(GUUID fontID,const std::string& fontName);
 	FT_Library m_Library{};
 
 	uint32_t m_FaceCount{};
@@ -80,10 +103,13 @@ private:
 	Texture* m_Texture1{};
 	float m_Padding{ 0.1f };
 	float m_PaddingY{0.1f};
-	uint32_t m_CharacterSize{46};
+	uint32_t m_CharacterSize{4};
 
 	uint32_t m_FontAtlasSize{};
 	Texture* m_FontTexture{};
+
+	std::unordered_map<GUUID,InputTextData> m_InputTextData{};
+
 	//Pointer
 	//Typing
 	float m_TypingCooldown{};
@@ -104,15 +130,19 @@ private:
 	float m_DeleteCharCooldown{};
 
 	Float2 m_PointerLocation{};
-	bool m_IsPointerActive{false};
 	int64_t m_CharEditedIndex{-1};
 	float m_PointerCooldown{0.0f};
-
+	
+	
+	bool m_IsArrowActive{false};
+	uint64_t m_ArrowPosition{}; 
+	GUUID m_CurrentlySelectedInputData{0};
 
 	struct TextData {
 		const char* Message{};
 	};
 	//Stored data
+	Asset<Font> m_CurrentFont;
 	std::unordered_map<GUUID, TextData> m_StoredData{};
 	//float m_FixedPadding{ 0.1018f  };
 

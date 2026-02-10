@@ -14,7 +14,7 @@ int main() {
 	specs.ApplicationVersion = 0.001f;
 	specs.AppDebugging = true;
 	Application::InitApplication(specs);
-	Application::AddLayer<CollisionLayer>();
+	Application::AddLayer<GUITestingLayer>();
 
 	Application::Run();
 	

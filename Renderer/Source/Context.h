@@ -1,5 +1,6 @@
 #pragma once
 #include "RendCore.h"
+#include "Buffer.h"
 struct ContextData
 {
 	VkDevice Device{};
@@ -9,8 +10,8 @@ struct ContextData
 	VkQueue GraphicsQueue{};
 	VkCommandPool CommandPool{};
 	
+	std::vector<Buffer*>* m_TempBuffers;
 
-	//Temp
 	VkCommandBuffer CurrentCommandBuffer{};
 	VkCommandBuffer TransferCommandBuffer{};
 

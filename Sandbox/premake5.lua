@@ -40,6 +40,7 @@ project "Sandbox"
       "Application",
       "xkbcommon",
 
+      "Application","glslang","SPIRV"  ,"OSDependent",
     }
 
     defines{

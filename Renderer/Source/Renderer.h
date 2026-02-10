@@ -20,7 +20,6 @@
 #include "Animator.h"
 #include "AssetManager.h"
 #include "FontSystem.h"
-#define MAX_FRAME_DRAWS 2
 
 class InputSystem;
 class AssetManager;
@@ -47,6 +46,7 @@ struct RendererDesc{
     bool Blending{true};
     Camera2D* InitialCamera{nullptr}; //optional
     VkViewport Viewport{};
+    Shader* Shaders{};
 };
 struct UniformCameraBufferData{
     glm::mat4 GeometryCamera{};
@@ -61,10 +61,7 @@ public:
     void BeginFrame(Camera2D* camera,float deltaTime);
     void BeginGUIFrame();
 
-    //GUI
-    //void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
-    //void DrawQuadWithAtlasGUI(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
-   // void DrawQuadGUI(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, uint64_t TextureIndex);
+
     //
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID, int TextureIndex = -1);
     //void DrawQuadWithAtlas(Float3 Position, Float4 Color, Float2 Size, GUUID textureatlas, uint64_t ID, uint64_t TextureIndex);
@@ -73,16 +70,17 @@ public:
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
     void SetCurrentFont(Asset<Font> CurrentAsset);
+    Asset<Font> GetCurrentFont(){return m_CurrentFont;}
     //PointerIndex = -1 means don't draw it.
     void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
     //GUI 
-
-    void DrawOutline(Float3 Position, Float2 Size,Float4 Color, float OutlineWidth);
-
     //Particles
     void DrawParticle();
 
     void SetRenderDesc(const RendererDesc& desc);
+    void QueueShaderChange(const std::string& path);
+    void QueueShaderChange(Asset<Shader> shaderAsset);
+
 
     Buffer* GetCustomBuffer(uint32_t index) { return m_PickingImageBuffer; }
     Buffer* GetViewportWithID();
@@ -91,6 +89,9 @@ public:
 
 
     void EndFrame();
+    //Runs alls the shaders changes pipeline changes when rendering is finished.
+    void RunRendererChangeQueue();
+
     void OnWindowResize(uint32_t width,uint32_t height);
 
     void Statistics(bool renderGui = true,void* guirenderer= nullptr);
@@ -102,10 +103,14 @@ public:
 
     void FinishExecution();
     void Shutdown();
+    float GetFONTDPI();
+    void ChangeArrowColor(const Float4& color){m_ArrowColor = color;}
+
     ~Renderer();
 private:
     void InitRenderDesc(const RendererDesc& desc);
     void ResizeWindow();
+    bool CompileShaders();
 
     void ResetFrameData();
 
@@ -121,7 +126,6 @@ private:
     void CreateNewBufferForBatch(std::vector<Buffer*>& VertexBuffers, std::vector<Buffer*>& Stagging);
 
     void FlushGeometry();
-    void FlushOutlines();
     void FlushGUI();
 
     void CreateInstance();
@@ -159,8 +163,11 @@ private:
 
     uint32_t m_ImageIndex{};
     std::vector<VkCommandBuffer> m_CommandBuffers{};
+    std::vector<VkCommandBuffer>  m_TransferCommandBuffers{};
+    //Used for transfering files
+    std::array<std::vector<Buffer*>,MAX_FRAME_DRAWS> m_TempBuffers{};
     VkCommandBuffer m_CurrentCommandBuffer{};
-    VkCommandBuffer m_TransferCommandBuffer{};
+
     std::vector<FrameBuffer> m_FrameBuffers{};
     std::vector<Texture*> m_ColorAttachments{};
     //
@@ -185,7 +192,7 @@ private:
 
     std::vector<Buffer*> m_IndexBuffers{};
     uint32_t* m_Indices{};
-
+    
 
 
     std::array<Buffer*,MAX_FRAME_DRAWS> m_UniformBuffer{};
@@ -253,10 +260,6 @@ private:
     //Camera
     UniformCameraBufferData m_UniformCameraData{};
 
-    //Outlines
-    uint32_t m_VertexCountOutlines{};
-    uint64_t m_VertexOutineMaxCountPerDrawCall{ 4 * 100 };
-    Vertex* m_VertexOutline{};
     //Text
     Asset<Font> m_CurrentFont{};
 
@@ -265,7 +268,7 @@ private:
 
     Camera2D m_Camera{};
     //Texturing
-    uint32_t m_TextureSlotCount{ 4 };
+    uint32_t m_TextureSlotCount{ 4};
     Texture* m_BlankWhiteTexture{};
     DescriptorPool m_DescriptorPoolTextures{};
 
@@ -279,7 +282,7 @@ private:
     std::vector<GUUID> m_TextureIDByOrder[MAX_FRAME_DRAWS];
     //GUI stuff
     Vertex* m_VerticesGUI{};
-    uint64_t m_VertexMaxCountGUI{ 100 * 4 };
+    uint64_t m_VertexMaxCountGUI{ 40 };
     uint64_t m_VertexCountGUI{};
     uint64_t m_VertexGUIRemaining{};
     uint64_t m_VertexPointerGUI{};
@@ -287,15 +290,20 @@ private:
     uint32_t m_CurrentVertexBufferIndexGUI{};
     std::vector<DescriptorSet> m_DescriptorSetTexturesGUI{};
     bool m_GUIRendering{false};
+    Float4 m_ArrowColor{1.0f,1.0f,1.0f,1.0f};
     //
 
     //Shutdown
     bool m_ShutDown{false};
- 
+    //Queue changes
+    std::vector<Shader> m_QueuedShaders{};
 
 
-    
-    AssetManager* m_AssetManager{};
+    AssetManager* m_AssetManager{}; 
+    //Shaders
+    std::vector<std::string> m_LoadedShaderPaths{};   
+    std::vector<std::string> m_QueuedShaderPaths{};   
+
 
 };
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallBack(VkDebugUtilsMessageSeverityFlagBitsEXT messageseverity,VkDebugUtilsMessageTypeFlagsEXT messagetype,const VkDebugUtilsMessengerCallbackDataEXT* pcallbackdata,void* puserData );

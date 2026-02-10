@@ -1,5 +1,4 @@
 #include "SwapChain.h"
-
         SwapChain::SwapChain(GLFWwindow* window,VkInstance instance,Context context,VkSurfaceKHR surface){
             m_Context = context;
             m_Surface= surface;
@@ -63,7 +62,7 @@
             std::vector<VkImage> Images{};
             TextureCreateInfo swapChainTextureInfo{};
 
-
+              
 
             vkGetSwapchainImagesKHR(m_Context->Device,m_SwapChain,&ImageCount,nullptr);
             m_SwapChainImages.resize(ImageCount);
@@ -75,7 +74,6 @@
                 m_SwapChainImages[i]= new Texture(m_Context,surfaceformat.format,Images[i]);
             
             }
-
             
            }
         void SwapChain::DestroyImageViews(){

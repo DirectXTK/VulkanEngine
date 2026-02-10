@@ -74,6 +74,8 @@ public:
 
 	 TextureAtlasData* CreateTextureAtlasData(const std::string& MetaDataPath);
 
+	bool WriteToFile(const std::string& path);
+
 	//Removes vkImage makes it nullptr.
 	void RemoveImage(){m_Image = nullptr;}
 	void DestroyView();
@@ -107,7 +109,8 @@ private:
 	VkDeviceMemory m_DeviceMemory{};
 	VkDeviceSize m_DeviceSize{};
 
-	uint64_t m_Width{}, m_Height{};
+	uint32_t m_Width{}, m_Height{};
+	VkImageLayout m_Layout{};
 
 	VkImageAspectFlagBits m_AspectMask{};
 	uint32_t m_TextureIndex{};

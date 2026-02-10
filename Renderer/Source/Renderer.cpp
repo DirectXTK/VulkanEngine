@@ -10,7 +10,12 @@
 #include "GUI.h"
 #include "CommandBuffer.h"
 
+
 #include "Debug.h"
+
+
+#include "glslang/Public/ShaderLang.h"
+
 
 Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem,AssetManager* assetManager) {
     m_RendererDesc = desc;
@@ -120,6 +125,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
     m_VertexCount = desc.VertexCountPerDrawCall;
+    m_VertexMaxCountGUI = desc.VertexCountPerDrawCall;
+
     BufferDesc VertexBufferDesc{};
     VertexBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex);
     VertexBufferDesc.Usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -142,7 +149,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
      //Buffer* vertexdwadad = new Buffer(VertexBufferDesc);
     m_VerticesGUI = new Vertex[m_VertexMaxCountGUI];
     m_Vertices = new Vertex[m_VertexCount];
-    m_VertexOutline = new Vertex[m_VertexOutineMaxCountPerDrawCall];
 
     BufferDesc StaggingBufferDesc{};
     StaggingBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex);
@@ -208,7 +214,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
  
 
-
    
     context->CommandPool = m_GraphicsPool.GetCommandPool();
     //Init CameraUniformBuffer and descriptors.
@@ -221,11 +226,14 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     }
 
+    //Make swapchain image layout present
+    VkCommandBuffer commandBuffer =CommandBuffer::StartSingleUseCommandBuffer(m_Context,m_Context->CommandPool);
+    for(uint32_t i=0;i < m_SwapChain->GetSwapChainImageCount();i++){
+        m_SwapChain->GetSwapChainImage(i)->TrasitionFormat(false,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,commandBuffer);
+    }
+    CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_Context->CommandPool,commandBuffer);
 
 
-    //TEMP
-    
-   //
  }
     void Renderer::OnWindowResize(uint32_t width,uint32_t height){
         m_ResizeWindow=true;
@@ -235,7 +243,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
  {
-    
+    //reserve size for queued shaders
+    m_QueuedShaders.reserve(20);
 
     std::array<VkDescriptorSetLayout,2> descriptorLayout;
     descriptorLayout[0]= m_DescriptorSetCamera[0].GetDescriptorLayout();
@@ -268,8 +277,22 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
      
      m_PipelineDesc.Viewport.minDepth =0;
      m_PipelineDesc.Viewport.maxDepth =1.0f;
-     
-     
+
+    std::string defaultShaderPaths[] = { {"EngineResources/Shaders/Vertex.vertS"},{"EngineResources/Shaders/Pixel.fragS"}};
+
+    std::vector<Shader> Shaders{};
+    Shaders.reserve(2);
+
+    Shaders.emplace_back(defaultShaderPaths[0],m_Device);
+    Shaders.emplace_back(defaultShaderPaths[1],m_Device);
+
+    m_LoadedShaderPaths.push_back(defaultShaderPaths[0]);
+    m_LoadedShaderPaths.push_back(defaultShaderPaths[1]);
+
+
+    m_PipelineDesc.ShaderCount =Shaders.size();
+    m_PipelineDesc.Shaders = Shaders.data();
+
 
     ReCreatePipeline(m_PipelineDesc);
  }
@@ -333,6 +356,14 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_VertexBufferOffsetGUI =0;
             m_VertexGUIRemaining = m_VertexMaxCountGUI;
             m_CurrentVertexBufferIndexGUI =0;
+
+            m_VertexCount = m_RendererDesc.VertexCountPerDrawCall;
+
+            //Swap back to normal
+            Vertex* temp = m_Vertices;
+            m_Vertices = m_VerticesGUI;
+            m_VerticesGUI = temp;
+
     }
     void Renderer::BeginFrame(Camera2D* camera,float deltaTime){    
     
@@ -340,7 +371,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_DeltaTime = deltaTime;
         
         m_CurrentCommandBuffer = m_CommandBuffers[m_CurrentFrame];
+        m_Context->TransferCommandBuffer = m_TransferCommandBuffers[m_CurrentFrame];
         m_Context->CurrentCommandBuffer = m_CurrentCommandBuffer;
+        m_Context->m_TempBuffers = &m_TempBuffers[m_CurrentFrame];
         
         if(m_ResizeWindow){
             ResizeWindow();
@@ -352,7 +385,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         }
 
 
-      
 
             m_Camera = *camera;
 
@@ -369,7 +401,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
              vkResetFences(m_Device,1,&m_DrawFences[m_CurrentFrame]);
 
              //vkResetFences(m_Device,1,&m_ImageFreeF[m_CurrentFrame]);
-
+        m_Textures[m_CurrentFrame].clear();
        m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),1000000000,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
        if(m_AcquireImageResult == VK_ERROR_OUT_OF_DATE_KHR){
             ResizeWindow();
@@ -379,7 +411,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
            Core::Log(ErrorType::Error,"Failed to acquire image ",(int)m_AcquireImageResult);
             return;
        }
-        m_Textures[m_CurrentFrame].clear();
+
 
         m_DescriptorSetCamera[m_CurrentFrame].WriteTo(0,1,*m_UniformBuffer[m_CurrentFrame]->GetBuffer(),sizeof(UniformCameraBufferData));
 
@@ -411,7 +443,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             if (m_CurrentFrame ==1)
                 vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0]->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer->GetBuffer(), 1, &copyregion);
-            
           
 
 
@@ -424,7 +455,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
         PickingImageBufferDesc.Device = m_Device;
         PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-
         m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
     }
     void Renderer::BeginGUIFrame()
@@ -438,7 +468,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
          
         
         m_VertexPointer =0;
+        m_VertexCount = m_VertexMaxCountGUI;
 
+        //Swap the buffers to allow normal rendering;
+        Vertex* temp = m_Vertices;
+        m_Vertices = m_VerticesGUI;
+        m_VerticesGUI = temp;
     }
 
 
@@ -455,6 +490,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
     void Renderer::FlushGUI()
     {
+    
         auto& textures = m_Textures[m_CurrentFrame];
         auto& textureIds = m_TextureIDByOrder[m_CurrentFrame];
         m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
@@ -463,25 +499,25 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         for (uint32_t i = 0; i < textureIds.size(); i++) {
             TextureRenderingData textureData = textures[textureIds[i]];
             
-            if(!textureData.texture){
+          if (textureData.texture){
+                Texture* texture = (Texture*)textureData.texture.GetData();
+                m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
+            }
+            else{
                 if(m_AssetManager->HasAsset(textureIds[i])){
                     Core::Log(ErrorType::Warning,"Manager has the asset but isn't loaded in renderer");
                 }else
+                    Core::Log(ErrorType::Error,"Texture rendered count ",textureIds.size());
                     Core::Log(ErrorType::Error,"Texture isn't loaded at all.{",textureIds[i].ID,"}");
             }
-            if (textureData.texture){
-                Texture* texture = (Texture*)textureData.texture.GetData();
-
-                m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
-            }
         }
-      
-        
+
         m_DrawCommandsGUI.push_back({ m_VertexPointer-m_VertexBufferOffsetGUI,m_CurrentVertexBufferIndexGUI,m_VertexBufferOffsetGUI,m_DrawCallCountGUI + m_DrawCallCountGeometry });
 
-        //m_VertexCountPerDrawCall += m_VertexPointer;
+        m_VertexCountPerDrawCall += m_VertexPointer;
         if (m_VertexPointer >= m_VertexGUIRemaining) {
            m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
+            if(m_VertexCountPerDrawCall >=m_VertexBufferGUI.size()*m_VertexMaxCountGUI )
                  CreateNewBufferForBatch(m_VertexBufferGUI, m_StaggingBufferGUI);
             m_CurrentVertexBufferIndexGUI++;
             m_VertexGUIRemaining = m_VertexMaxCountGUI;
@@ -491,63 +527,19 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         else {
             m_VertexGUIRemaining -= (m_VertexPointer-m_VertexBufferOffsetGUI);
         }
-        
+       
 
-
-
-        
-        
-
-        VkBufferCopy region{};
-        region.size = sizeof(Vertex) * m_VertexPointer;
-        region.srcOffset = m_VertexBufferOffsetGUI;
-        region.dstOffset = m_VertexBufferOffsetGUI;
-
-
-      
         m_VertexBufferOffsetGUI+=(m_VertexPointer-m_VertexBufferOffsetGUI);
+        m_VertexCount = m_VertexGUIRemaining;
 
         m_DrawCallCountGUI++;
 
-        textures.clear();
         textureIds.clear();
-    }
-    void Renderer::FlushOutlines()
-    {
-   
-
-
-        //m_DrawCommandsOutlines.push_back({ m_VertexCountOutlines,0 });
-
-
-        //if (m_DrawCallCountOutlines == m_VertexBufferOutlines.size())
-         //   CreateNewBufferForBatch(m_VertexBufferOutlines, m_StaggingBufferOutlines);
-
-
-        //m_StaggingBufferOutlines[m_DrawCallCountOutlines]->UploadToBuffer(m_Device, m_VertexOutline, sizeof(Vertex) * m_VertexCountOutlines);
-
-
-        VkBufferCopy region{};
-        region.size = sizeof(Vertex) * m_VertexCountOutlines;
-
-        if (m_VertexCountOutlines != 0)
-        {
-            //vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferOutlines[m_DrawCallCountOutlines]->GetBuffer(), *m_VertexBufferOutlines[m_DrawCallCountOutlines]->GetBuffer(), 1, &region);
-        }
-
-
-
-
-
-
-
-
-        m_VertexCountOutlines = 0;
-        m_DrawCallCountOutlines++;
     }
     
     void Renderer::FlushGeometry()
     {
+
         if (m_GUIRendering) {
             
             FlushGUI();
@@ -579,9 +571,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             }
         }
 
-        //Debug
-        //Debug::ValidateDrawBatch(debugTextures);
-
 
         m_DrawCommandsGeometry.push_back({ m_VertexPointer-m_VertexBufferOffset,m_CurrentVertexBufferIndex,m_VertexBufferOffset,m_DrawCallCountGUI + m_DrawCallCountGeometry });
         m_VertexCountPerDrawCall += m_VertexPointer;
@@ -602,24 +591,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_VertexCountRemaining -= (m_VertexPointer-m_VertexBufferOffset);
 
         }
-      
-
-
-
-
-
-
-
-          
-
-
-
 
             m_VertexBufferOffset += (m_VertexPointer-m_VertexBufferOffset);
 
 
             m_DrawCallCountGeometry++;
-           textures.clear();
            textureIds.clear();
         }
     
@@ -628,6 +604,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         void Renderer::EndFrame()
         {
+             
               VkBufferCopy region{};
             region.size = sizeof(Vertex) * m_VertexCount;
             region.dstOffset = 0;
@@ -638,14 +615,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                         vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGeometry[i]->GetBuffer(), *m_VertexBufferGeometry[i]->GetBuffer(), 1, &region);
 
 
-           m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
 
-            FlushOutlines();
             FlushGUI();
 
 
-         
-            region.size = sizeof(Vertex)*m_VertexMaxCountGUI;
+           m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
+           region.size = sizeof(Vertex)*m_VertexMaxCountGUI;
 
             for(uint32_t i=0 ;i < m_StaggingBufferGUI.size();i++)
               vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGUI[i]->GetBuffer(), *m_VertexBufferGUI[i]->GetBuffer(), 1, &region);
@@ -663,7 +638,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             VkPipelineStageFlags waitstages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
-            VkCommandBuffer commandsbuffers[] = { m_CommandBuffers[m_CurrentFrame],m_TransferCommandBuffer };
+            VkCommandBuffer commandsbuffers[] = { m_CommandBuffers[m_CurrentFrame] ,m_TransferCommandBuffers[m_CurrentFrame]};
 
 
             VkSubmitInfo submitinfo{};
@@ -671,12 +646,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             submitinfo.waitSemaphoreCount = 1;
             submitinfo.pWaitSemaphores = &m_ImageAvailS[m_CurrentFrame];
             submitinfo.pWaitDstStageMask = waitstages;
-            submitinfo.commandBufferCount = 1;
+            submitinfo.commandBufferCount = 2;
             submitinfo.pCommandBuffers = commandsbuffers;
             submitinfo.signalSemaphoreCount = 1;
             submitinfo.pSignalSemaphores = &m_RenderFinishedS[m_CurrentFrame];
             vkResetFences(m_Device,1,&m_DrawFences[m_CurrentFrame]);
-
             VkResult result = vkQueueSubmit(m_GraphicsQ, 1, &submitinfo, m_DrawFences[m_CurrentFrame]);
             
 
@@ -709,6 +683,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                m_Textures[m_CurrentFrame].clear();
             m_TextureIDByOrder[m_CurrentFrame].clear();
 
+
+
+            m_Textures[m_CurrentFrame].clear();
+            m_TextureIDByOrder[m_CurrentFrame].clear();
+
             m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAME_DRAWS;
             m_GUIRendering = false;
 
@@ -722,6 +701,18 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_VertexPointer = 0;
             m_CurrentVertexBufferIndexGUI=0;;
             m_VertexGUIRemaining=m_VertexMaxCountGUI;
+
+            //delete the next upcoming rendered frame temps buffs
+            if(vkGetFenceStatus(m_Device,m_DrawFences[m_CurrentFrame]) == VK_FALSE){
+            auto temp = m_TempBuffers[m_CurrentFrame];
+           for(uint32_t i=0;i < m_TempBuffers[m_CurrentFrame].size();i++){
+               delete temp[i];
+            }
+            m_TempBuffers[m_CurrentFrame].clear();
+             }
+
+            
+
         }
     
 
@@ -733,9 +724,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //texture map gets current container
         auto& textures = m_Textures[m_CurrentFrame];
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
-
         if (m_VertexPointer + 4 > m_VertexCount )
             FlushGeometry();
+
         if (TextureHandle != 0) {
             TexutreAsset = m_AssetManager->GetAsset<Texture>(TextureHandle);
 
@@ -797,24 +788,24 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     TextureID = index->second.Index;
                 }
                 uint32_t RendererTextureIndex = textures[CurrentTextureHandle].Index;
-
+                m_Vertices[m_VertexPointer].TextureID = TextureID;
+                m_Vertices[m_VertexPointer + 1].TextureID = TextureID;
+                m_Vertices[m_VertexPointer + 2].TextureID = TextureID;
+                m_Vertices[m_VertexPointer + 3].TextureID = TextureID;  
+        }else{
                 m_Vertices[m_VertexPointer].TextureID = TextureID;
                 m_Vertices[m_VertexPointer + 1].TextureID = TextureID;
                 m_Vertices[m_VertexPointer + 2].TextureID = TextureID;
                 m_Vertices[m_VertexPointer + 3].TextureID = TextureID;
+        }
+              
          
        
 
-          
-         
-        }
         m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
         m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
         m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
         m_Vertices[m_VertexPointer + 3].Position = { Position.x + Size.x,Position.y - Size.y };
-
-      
-
 
         m_Vertices[m_VertexPointer].Color = Color;
         m_Vertices[m_VertexPointer + 1].Color = Color;
@@ -958,13 +949,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
    
     }
-
+    float Renderer::GetFONTDPI(){
+        return 72;
+    }
     void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
     {
-        //Remember to check if all the font widths are the same !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        //
-        //temp
-       
+
         //Char being edited index
         if (m_CurrentFont.GetType() != AssetType::FONT)
         {
@@ -976,6 +966,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
         Font* font = (Font*)m_CurrentFont.GetData();
         Texture* FontAtlasTexture{};
+        uint64_t stringLen{strlen(Message)};
 
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
         float CharSizeNorm{};
@@ -987,10 +978,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         Float2 MinCord{}, MaxCord{};
         GUUID TextureHandle = font->TextureID;
         float Space{ 0.06f };
-
-
-       
-
+        Float2 advance{};
+        float penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
+        float penPosY = (0.5f - Position.y * 0.5f) * GetViewPortExtent().height+(CharSizePixels*1.25f);
         if(font->TextureAsset.GetType() != AssetType::TEXTURE){
             Core::Log(ErrorType::Error, "Invalid type must be texture{",(uint32_t)font->TextureAsset.GetType(),"}");
             return;
@@ -1009,45 +999,53 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             textures[TextureHandle] = { font->TextureAsset ,m_CurrentTextureDescriptorSetOffset };
             textureIds.push_back(TextureHandle);
             m_CurrentTextureDescriptorSetOffset++;
- 
+        }
+
+        if(stringLen == 0 && PointerIndex != -1){
+                   Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY-(CharSizePixels*0.25f)});
+                Float2 sizeNDC = {(float)m_CurrentFont.GetData()->FontSize/(float)GetViewPortExtent().width*0.15f,(float)m_CurrentFont.GetData()->FontSize/GetViewPortExtent().height*1.25f};
+                DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, m_ArrowColor, sizeNDC, 0);
         }
 
         //Do this for every letter
         float Max{};
         float Min{};
-        for (uint32_t i = 0; i < strlen(Message); i++) {
+        for (uint32_t i = 0; i <= stringLen; i++) {
             Float2 SubTextureSize{};
             Float2 Size{};
-            int32_t LetterIndex = Message[i]-33;
+            int32_t LetterIndex = Message[i];
 
-            //make the pointer rendered same size for some reason it's different size.
-
-            //draw pointer
-            if(PointerIndex ==i)
-                DrawQuad({ BoundingBox[0].x + OffsetX -(FixedPadding*0.5f) ,BoundingBox[1].y- OffsetY + (CharSizeNorm * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { FixedPadding * 0.5f ,CharSizeNorm * 0.75f }, 0);
+          
+               //draw pointer
+            if(PointerIndex ==i  ){
+                Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY-(CharSizePixels*0.25f)});
+                Float2 sizeNDC = {(float)m_CurrentFont.GetData()->FontSize/(float)GetViewPortExtent().width*0.15f,(float)m_CurrentFont.GetData()->FontSize/GetViewPortExtent().height*1.25f};
+                DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, m_ArrowColor, sizeNDC, 0);
+            }
 
             //edge cases
             //Special cases
             switch (Message[i]) {
             case ' ': {
                 //skip this letter
-                OffsetX += FixedPadding+ CharSizeNorm;
+                penPosX += font->Advance[LetterIndex].x;
                 continue;
             }
             case '\n': {
-                OffsetY += SpaceBetweenLines+CharSizeNorm ;
-                OffsetX = FixedPadding;
+                penPosY += 1.25f*+m_CurrentFont.GetData()->FontSize;
+                penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
                 continue;
+            }
+            case '\0':{
+                return;
             }
             }
             //space letter index ==-1
 
-            if (m_VertexPointer + 8 > m_VertexCount)
+            if (m_VertexPointer>= m_VertexMaxCountGUI)
                 FlushGeometry();
           
             TextureRenderingData texture = textures[TextureHandle];
-                Size.x = (float)font->Coords[LetterIndex].Width;
-                Size.y = (float)font->Coords[LetterIndex].Height/1440;
                 //its the size of the bitmap not the character itself.
 
 
@@ -1064,44 +1062,78 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
             }
             else {
-                m_Vertices[m_VertexPointer].TexCoords = { 0.0f,0.0f };
-                m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
-                m_Vertices[m_VertexPointer + 2].TexCoords = { 0.0f,0.0f };
-                m_Vertices[m_VertexPointer + 3].TexCoords = { 0.0f,0.0f };
+                m_Vertices[m_VertexPointer].TexCoords = {0.0f,0.0f };
+                m_Vertices[m_VertexPointer + 1].TexCoords = { 1.0f,0.0f };
+                m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,1.0f };
+                m_Vertices[m_VertexPointer + 3].TexCoords = { 0.0f,1.0f };
             }
+ 
 
             float RemainingOffset{};
 
             RemainingOffset = CharSizePixels - font->Coords[LetterIndex].Width;
             if (RemainingOffset > 0)
                 OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
-       
 
             MaxCord = font->MaxCord[LetterIndex];
             MinCord = font->MinCord[LetterIndex];
+            advance = font->Advance[LetterIndex];
 
-            //Stop drawing if text is going out of bounds.
-            if (BoundingBox[0].x + CharSizeNorm + OffsetX > BoundingBox[3].x) {
+          
 
-                OffsetY += SpaceBetweenLines + CharSizeNorm;
-                OffsetX = FixedPadding;
+            float baselineY = penPosY; // in pixels
 
+            baselineY -= MinCord.y;
+            baselineY -= MaxCord.y;
+            MinCord.y = baselineY+MinCord.y;
+            MaxCord.y = baselineY+MaxCord.y;
+
+            MinCord.x = penPosX;
+            MaxCord.x = penPosX+advance.x;
+
+            Float2 glyphPosPixelMin = Core::ToNDC(MinCord);
+            Float2 glyphPosPixelMax =Core::ToNDC(MaxCord);
+
+            //stop Rendering if it hits bottom boundrie
+            if(glyphPosPixelMin.y < BoundingBox[0].y){
+                return;
             }
-            if (BoundingBox[1].y - CharSizeNorm - OffsetY < BoundingBox[0].y)
-                break;
+            //put on new line if exeeceds boundries
+            if(glyphPosPixelMax.x > BoundingBox[3].x){
+                MaxCord = font->MaxCord[LetterIndex];
+                MinCord = font->MinCord[LetterIndex];
 
+                penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
+                penPosY += 1.0f*+m_CurrentFont.GetData()->FontSize;
 
+                baselineY = penPosY;
 
-            m_Vertices[m_VertexPointer].Position = { BoundingBox[0].x + OffsetX + MinCord.x,BoundingBox[1].y - OffsetY + MinCord.y,0.0f };
-            m_Vertices[m_VertexPointer + 1].Position = { BoundingBox[0].x + OffsetX + MinCord.x,BoundingBox[1].y - OffsetY + MaxCord.y,0.0f };
-            m_Vertices[m_VertexPointer + 2].Position = { BoundingBox[0].x + OffsetX + MaxCord.x,BoundingBox[1].y - OffsetY + MaxCord.y,0.0f };
-            m_Vertices[m_VertexPointer + 3].Position = { BoundingBox[0].x + OffsetX + MaxCord.x,BoundingBox[1].y - OffsetY + MinCord.y,0.0f };
+                baselineY -= MinCord.y;
+                baselineY -= MaxCord.y;
+                MinCord.y = baselineY+MinCord.y;
+                MaxCord.y = baselineY+MaxCord.y;
 
+                MinCord.x += penPosX;
+                MaxCord.x += penPosX;
 
-
-
-            //OffsetX = std::round(OffsetX * GetViewPortExtent().width * 0.5f) / (GetViewPortExtent().width*0.5f);
+                glyphPosPixelMin = Core::ToNDC(MinCord);
+                glyphPosPixelMax =Core::ToNDC(MaxCord);
+                if(glyphPosPixelMin.y < BoundingBox[0].y){
+                         return;
+                 }
+            }
            
+            
+
+
+          m_Vertices[m_VertexPointer + 0].Position = {  glyphPosPixelMin.x,  glyphPosPixelMin.y, 0.0f }; // bottom-left
+          m_Vertices[m_VertexPointer + 1].Position = {  glyphPosPixelMin.x,  glyphPosPixelMax.y, 0.0f }; // top-left
+          m_Vertices[m_VertexPointer + 2].Position = {  glyphPosPixelMax.x,  glyphPosPixelMax.y, 0.0f }; // top-right
+          m_Vertices[m_VertexPointer + 3].Position = {  glyphPosPixelMax.x,  glyphPosPixelMin.y, 0.0f }; // bottom-right
+
+          penPosX += advance.x;
+          //penPosY -= advance.y;
+
             if (RemainingOffset > 0)
                 OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
     
@@ -1128,57 +1160,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
             m_VertexPointer += 4;
-            //Draw the pointer
           
-
-            OffsetX += std::abs(MinCord.x)+MaxCord.x+ FixedPadding;
+           
         }
-       // OffsetX = -FixedPadding;
-       // Core::Log(ErrorType::Info, OffsetX / 4);
     }
-
-
-    void Renderer::DrawOutline(Float3 Position, Float2 Size,Float4 Color,float OutlineWidth)
-    {
-
-        if (m_VertexCountOutlines + 4 > m_VertexOutineMaxCountPerDrawCall)
-            FlushOutlines();
-        m_VertexOutline[m_VertexCountOutlines].ID = 0;
-        m_VertexOutline[m_VertexCountOutlines+1].ID = 0;
-        m_VertexOutline[m_VertexCountOutlines+2].ID = 0;
-        m_VertexOutline[m_VertexCountOutlines+3].ID = 0;
-
-       // m_VertexOutline[m_VertexCountOutlines].Position = { Position.x - Size.x,Position.y - Size.y };
-       // m_VertexOutline[m_VertexCountOutlines + 1].Position = { Position.x - Size.x,Position.y + Size.y };
-       // m_VertexOutline[m_VertexCountOutlines + 2].Position = { Position.x + Size.x,Position.y + Size.y };
-       // m_VertexOutline[m_VertexCountOutlines + 3].Position = { Position.x + Size.x,Position.y - Size.y };
-
-       m_VertexOutline[m_VertexCountOutlines].Position = {Position.x-Size.x-OutlineWidth,Position.y-Size.y-OutlineWidth };
-       m_VertexOutline[m_VertexCountOutlines + 1].Position = {Position.x-Size.x-OutlineWidth,Position.y+Size.y+OutlineWidth};
-       m_VertexOutline[m_VertexCountOutlines + 2].Position = {Position.x+Size.x+OutlineWidth,Position.y+Size.y+OutlineWidth};
-       m_VertexOutline[m_VertexCountOutlines + 3].Position = {Position.x+Size.x+OutlineWidth,Position.y-Size.y-OutlineWidth};
-
-        m_VertexOutline[m_VertexCountOutlines].TextureID = 0;
-        m_VertexOutline[m_VertexCountOutlines + 1].TextureID = 0;
-        m_VertexOutline[m_VertexCountOutlines + 2].TextureID = 0;
-        m_VertexOutline[m_VertexCountOutlines + 3].TextureID = 0;
-
-        m_VertexOutline[m_VertexCountOutlines].Color = Color;
-        m_VertexOutline[m_VertexCountOutlines + 1].Color = Color;
-        m_VertexOutline[m_VertexCountOutlines + 2].Color = Color;
-        m_VertexOutline[m_VertexCountOutlines + 3].Color = Color;
-
-
-
-        m_VertexOutline[m_VertexCountOutlines].TexCoords = { 0.0f,1.0f };
-        m_VertexOutline[m_VertexCountOutlines + 1].TexCoords = { 0.0f,0.0f };
-        m_VertexOutline[m_VertexCountOutlines + 2].TexCoords = { 1.0f,0.0f };
-        m_VertexOutline[m_VertexCountOutlines + 3].TexCoords = { 1.0f,1.0f };
-
-
-        m_VertexCountOutlines += 4;
-    }
-
 
     void Renderer::DrawParticle()
     {
@@ -1213,8 +1198,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
     
     }
-    void Renderer::
-    ReCreateFrameBuffers(){
+    void Renderer::ReCreateFrameBuffers(){
         VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_R32G32_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
         VkFormat DepthStencilFormat = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
@@ -1277,6 +1261,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
         m_CommandBuffers.resize(MAX_FRAME_DRAWS);
+        m_TransferCommandBuffers.resize(MAX_FRAME_DRAWS);
         
 
         VkCommandBufferAllocateInfo allocinfo{};
@@ -1295,11 +1280,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         allocinfo2.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocinfo2.commandPool = m_GraphicsPool.GetCommandPool();
         allocinfo2.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocinfo2.commandBufferCount =1;
+        allocinfo2.commandBufferCount =MAX_FRAME_DRAWS;
 
-         result = vkAllocateCommandBuffers(m_Device,&allocinfo2,&m_TransferCommandBuffer);
+         result = vkAllocateCommandBuffers(m_Device,&allocinfo2,m_TransferCommandBuffers.data());
         if(result != VK_SUCCESS)
             Core::Log(ErrorType::Error,"Failed to create command buffers.");
+
     }
    
   
@@ -1338,7 +1324,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void  Renderer::CreateSurface(GLFWwindow* window,VkSurfaceKHR* surface){
              VkResult result= glfwCreateWindowSurface(m_Instance,window,nullptr,surface);
             if(result != VK_SUCCESS)
-            Core::Log(ErrorType::Error,"Failed to create surface.");
+            Core::Log(ErrorType::Error,"Failed to create surface.{Renderer::CreateSurface} ",(int)result);
     }
  
     void Renderer::Statistics(bool renderGui,void* guiRenderer){
@@ -1354,6 +1340,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
             gui->PushStyle(GUI::Style::BORDER,&style);
             gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(m_DrawCallCountGeometry+m_DrawCallCountGUI),{0.0f,0.75f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
+
             gui->Text("TriangleCount","TRIANGLE: "+std::to_string(m_VertexCountPerFrame/3),{0.0f,0.25f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
             gui->Text("VertexCount","VERTEX: "+std::to_string(m_VertexCountPerFrame),{0.0f,-0.25f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
 
@@ -1448,6 +1435,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             }
         }
 
+        std::vector<Shader> shaders{};
+        shaders.reserve(m_LoadedShaderPaths.size());
+        for(uint32_t i=0;i < m_LoadedShaderPaths.size();i++){
+            shaders.emplace_back(m_LoadedShaderPaths[i],m_Device);
+        }
+
+        m_PipelineDesc.ShaderCount = m_LoadedShaderPaths.size();
+        m_PipelineDesc.Shaders = shaders.data();
+
         ReCreatePipeline(m_PipelineDesc);
 
     }
@@ -1470,15 +1466,17 @@ void Renderer::StartRecordingCommands()
     bufferbegininfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
 
-
     vkResetCommandBuffer(m_CurrentCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
     vkBeginCommandBuffer(m_CurrentCommandBuffer, &bufferbegininfo);
     vkCmdBindPipeline(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
 
+    vkResetCommandBuffer(m_Context->TransferCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+    vkBeginCommandBuffer(m_Context->TransferCommandBuffer,&bufferbegininfo);
 }
 
 void Renderer::StopRecordingCommands()
 {
+    vkEndCommandBuffer(m_Context->TransferCommandBuffer);
     
     vkEndCommandBuffer(m_CurrentCommandBuffer);
     m_DrawCommandsGeometry.resize(0);
@@ -1504,12 +1502,6 @@ void Renderer::DrawBatch()
 
     VkDeviceSize Offset{ 0 };
     vkCmdBeginRenderPass(m_CurrentCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-   // vkCmdSetStencilTestEnable(m_CurrentCommandBuffer, VK_TRUE);
-
-    //vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0xFF);
-    //vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
-    //vkCmdSetStencilReference(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
-    //vkCmdSetStencilCompareMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 1);
 
     for (int i = 0; i < m_DrawCommandsGeometry.size(); i++) {
         DrawCommand DrawCall = m_DrawCommandsGeometry[i];
@@ -1561,11 +1553,6 @@ void Renderer::DrawBatch()
 
     }
 
-    // vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0x00);
-    //vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_NOT_EQUAL);
-    //vkCmdSetStencilWriteMask(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, 0xFF);
-   // vkCmdSetStencilOp(m_CurrentCommandBuffer, VK_STENCIL_FACE_FRONT_BIT, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_ALWAYS);
-   
     vkCmdEndRenderPass(m_CurrentCommandBuffer);
 
     m_VertexCountPerDrawCall = 0;
@@ -1610,26 +1597,43 @@ void Renderer::CreateDescriptorSets(){
     }
 
     }
+void Renderer::QueueShaderChange(const std::string& path){
+    if(m_QueuedShaders.capacity() == m_QueuedShaders.size())
+    {
+        Core::Log(ErrorType::Warning,"Reached maximum queued shader.{QueueShader::Change}",m_QueuedShaders.capacity(),m_QueuedShaders.size());
+        return;
+    }
+    m_QueuedShaderPaths.push_back(path);
+    m_QueuedShaders.emplace_back(path,m_Device);
+}
+void Renderer::QueueShaderChange(Asset<Shader> shaderAsset){
 
+
+}
+void Renderer::RunRendererChangeQueue(){
+    if(m_QueuedShaders.size() == 0)
+        return;
+    vkDeviceWaitIdle(m_Device);
+
+    
+    m_PipelineDesc.ShaderCount =m_QueuedShaders.size();
+    m_PipelineDesc.Shaders =m_QueuedShaders.data();
+    ReCreatePipeline(m_PipelineDesc);
+
+    m_LoadedShaderPaths.clear();
+    for(uint32_t i =0;i < m_QueuedShaderPaths.size();i++)
+        m_LoadedShaderPaths.push_back(m_QueuedShaderPaths[i]);
+
+
+    m_QueuedShaders.clear();
+    m_QueuedShaderPaths.clear();
+    m_QueuedShaders.reserve(20);
+    
+}
 void Renderer::DrawGUIBatch()
 {
-    /*
-    VkDeviceSize Offset{ 0 };
-    for (int i = 0; i < m_DrawGUICommands.size(); i++) {
-
-        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexGUIBuffers[i]->GetBuffer(), &Offset);
-
-        vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
-
-        VkDescriptorSet DescriptorSets[] = { m_GUICameraDescriptor.GetDescriptorSet(),m_DescriptorSetTexturesGUI[i].GetDescriptorSet()};
-
-        vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
-
-
-        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawGUICommands[i].VertexCount * 1.5f), 1, 0, 0, 0);
-
-    }
-    */
+  
+   
 }
 void Renderer::Shutdown(){
     if(m_ShutDown)
