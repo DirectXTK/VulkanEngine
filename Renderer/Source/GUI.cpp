@@ -42,67 +42,45 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 {
 	InputSystem* inputSystem = &m_Application->m_InputSystem;
 	Renderer* renderer = m_Application->m_Renderer;
-	if (m_CurrentPanel == m_PanelIDs.size()) {
-		m_PanelIDs[m_CurrentPanel] = { {Position.x,Position.y},Size,Core::RandomUInt64(0, std::numeric_limits<uint64_t>::max()) };
+	GUUID id(ID);
+
+	if (m_PanelIDs.find(id) == m_PanelIDs.end()) {
+		m_PanelIDs[id] = { Position,Size,id };
 	}
 
 	if (!Dragable) {
 		if (m_PanelDepth >= 1) {
 			PanelData* PrevPanel = m_CurrenPanelParent;
-			m_PanelIDs[m_CurrentPanel] = { { (Position.x * PrevPanel->Size.x) + PrevPanel->Position.x , (Position.y * PrevPanel->Size.y) + PrevPanel->Position.y   },Size,Core::RandomUInt64(0, std::numeric_limits<uint64_t>::max()) };
-			m_PanelIDs[m_CurrentPanel].pParent = PrevPanel;
+			m_PanelIDs[id] = { { (Position.x * PrevPanel->Size.x) + PrevPanel->Position.x , (Position.y * PrevPanel->Size.y) + PrevPanel->Position.y   },Size,Core::RandomUInt64(0, std::numeric_limits<uint64_t>::max()) };
+			m_PanelIDs[id].pParent = PrevPanel;
 
 		}
-		else {
-			m_PanelIDs[m_CurrentPanel].Position = { Position.x ,Position.y };
-
-		}
+	
 	}
 	else {
 		if (m_PanelDepth >= 1) {
 			PanelData* PrevPanel = m_CurrenPanelParent;
-			m_PanelIDs[m_CurrentPanel] = { { (m_PanelIDs[m_CurrentPanel].Position.x * PrevPanel->Size.x) + PrevPanel->Position.x , (m_PanelIDs[m_CurrentPanel].Position.y * PrevPanel->Size.y) + PrevPanel->Position.y   },m_PanelIDs[m_CurrentPanel].Size,Core::RandomUInt64(0, std::numeric_limits<uint64_t>::max()) };
-			m_PanelIDs[m_CurrentPanel].pParent = PrevPanel;
+			m_PanelIDs[id] = { { (m_PanelIDs[id].Position.x * PrevPanel->Size.x) + PrevPanel->Position.x , (m_PanelIDs[id].Position.y * PrevPanel->Size.y) + PrevPanel->Position.y   },m_PanelIDs[id].Size,Core::RandomUInt64(0, std::numeric_limits<uint64_t>::max()) };
+			m_PanelIDs[id].pParent = PrevPanel;
+			Core::Log('wadada');
 
 		}
-		else {
-			m_PanelIDs[m_CurrentPanel].Position = { m_PanelIDs[m_CurrentPanel].Position.x ,m_PanelIDs[m_CurrentPanel].Position.y };
-
-		}
+	
 	}
 		
 
 
-	m_CurrenPanelParent = &m_PanelIDs[m_CurrentPanel];
+	m_CurrenPanelParent = &m_PanelIDs[id];
 
 	if (Dragable) {
 		if (inputSystem->IsMouseClicked(MouseCodes::LEFT, false)){
-			m_PanelIDs[m_CurrentPanel].Offset.x = m_PanelIDs[m_CurrentPanel].Position.x-m_Application->GetMousePosNorm().x;
-			m_PanelIDs[m_CurrentPanel].Offset.y =m_PanelIDs[m_CurrentPanel].Position.y -m_Application->GetMousePosNorm().y;
-		}
-		 if (m_DraggedPanel != -1&& !inputSystem->IsMouseClicked(MouseCodes::LEFT, true)) {
-			 m_DraggedPanel = -1;
-		}
-
-
-
-		if (m_SelectedObjID == m_PanelIDs[m_CurrentPanel].ID.ID  &&m_DraggedPanel ==-1)
-		{
-
-				Float2 Pos = m_Application->GetMousePosNorm();
-				Float2 Dis = { Pos.x-m_PanelIDs[m_CurrentPanel].Position.x,Pos.y-m_PanelIDs[m_CurrentPanel].Position.y };
-				m_DraggedPanel = m_CurrentPanel;
-				Dis.x += m_PanelIDs[m_CurrentPanel].Offset.x;
-				Dis.y += m_PanelIDs[m_CurrentPanel].Offset.y;
-
-				m_DraggedPanelDragAmount.x = Pos.x- m_PanelIDs[m_CurrentPanel].Offset.x;
-				m_DraggedPanelDragAmount.y = Pos.y- m_PanelIDs[m_CurrentPanel].Offset.y;
-
-
+			m_PanelIDs[id].Offset.x = m_PanelIDs[id].Position.x-m_Application->GetMousePosNorm().x;
+			m_PanelIDs[id].Offset.y =m_PanelIDs[id].Position.y -m_Application->GetMousePosNorm().y;
 		}
 		
-		if (m_DraggedPanel != -1)
-		{
+		
+		if (m_DraggedPanel == id) 
+		{	
 			Float2 Pos = m_Application->GetMousePosNorm();
 			Float2 Dis = { Pos.x - m_PanelIDs[m_DraggedPanel].Position.x,Pos.y - m_PanelIDs[m_DraggedPanel].Position.y };
 			Dis.x += m_PanelIDs[m_DraggedPanel].Offset.x;
@@ -112,15 +90,12 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 			m_PanelIDs[m_DraggedPanel].Position.y += Pos.y - m_PanelIDs[m_DraggedPanel].Position.y + m_PanelIDs[m_DraggedPanel].Offset.y;
 
 		}
-
 	}
 	if(TextureHandle !=0)
-		renderer->DrawQuad({ m_PanelIDs[m_CurrentPanel].Position.x,m_PanelIDs[m_CurrentPanel].Position.y,0.0f }, Color, Size,TextureHandle, m_PanelIDs[m_CurrentPanel].ID.ID,0);
+		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y,0.0f }, Color, Size,TextureHandle, m_PanelIDs[id].ID.ID,0);
 	else
-		renderer->DrawQuad({ m_PanelIDs[m_CurrentPanel].Position.x,m_PanelIDs[m_CurrentPanel].Position.y,0.0f },Color, Size,m_PanelIDs[m_CurrentPanel].ID.ID);
-		m_PanelDepth++;
-		m_CurrentPanel++;
-	
+		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y,0.0f },Color, Size,m_PanelIDs[id].ID.ID);
+	m_PanelDepth++;
 }
 
 bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Position,Float4 Color,Float2 Size,MouseCodes mousecode,GUUID TextureHandle,bool SavesState, bool Dragable,bool** IsPressed)
@@ -593,26 +568,29 @@ void GUIRenderer::OnKeyBoardEvent(KeyBoardEvent& event){
 }
 void GUIRenderer::OnMouseEvent(MouseEvent& event){
 	Renderer* renderer = Application::GetRenderer();
+	Float2 data{};
+	bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
 
 	if(event.Code == MouseCodes::LEFT && event.State == EventState::PRESSED){
-		Float2 data{};
-		bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
 		if(succeded){
 			m_SelectedObjID = *(uint64_t*)&data;
+			m_DraggedPanel = m_SelectedObjID;
 		}
 
 	}
+
 	if(event.Code == MouseCodes::LEFT && event.State == EventState::RELEASED){
-		m_SelectedObjID =0;
+		m_SelectedObjID = 0;
+		m_DraggedPanel =0;
+
 	}
 
 
 }
 void GUIRenderer::EndGUI()
 {
-	m_SelectedObjID =0;
+	m_SelectedObjID = 0;
 	//Update the dragged panel/button
-
 
 	//delete button that hasn't been used.
 }

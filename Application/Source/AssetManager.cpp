@@ -9,11 +9,27 @@
 void ASSETLOADASSET(AssetHandle* data){
 			data->Manager->UnloadAsset(data->ID,data->Type);
 }
+void AssetHandle::FreePermaHandle(){
+	RefCount--;
+	if(RefCount <=0)
+	{
+		Core::Log("dwadad");
+		switch(Type){
+		case AssetType::FONT: {delete (Font*)Data;break;}	
+		case AssetType::TEXTURE: {delete (Texture*)Data;break;}	
+		case AssetType::TEXTUREATLAS: {delete (Texture*)Data;break;}	
+		case AssetType::ANIMATION: {delete (Animator*)Data;break;}	
+	
+		default : {Core::Log("FreePermaHandle type ",(uint32_t)Type," not implemented.");}
+		}
+	}
 
+}
 void AssetManager::Init(Application* app)
 {
 	m_APP = app;
 }
+
 void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 {
 	if(!std::filesystem::exists(FolderPath)){
@@ -209,7 +225,7 @@ void AssetManager::LoadAnimation(const std::string& filePath,const std::string& 
 
 		GUUID TextureID =asset.GetID();
 
-		baseTexture->CreateTextureAtlasData(filePath);
+		//baseTexture->CreateTextureAtlasData(filePath);
 
 
 		//Load animation
@@ -225,16 +241,18 @@ void AssetManager::LoadAnimation(const std::string& filePath,const std::string& 
 		LoadAssetPerma<Animator>(animator,AssetType::ANIMATION,fileName);
 }
 void AssetManager::Shutdown(){
+	for(uint32_t i=0 ; i < m_PermaAssets.size();i++){
+		auto it =m_Resources.find(m_PermaAssets[i]);
+		if(it != m_Resources.end())
+			m_Resources[m_PermaAssets[i]].FreePermaHandle();
+	}
 	for(auto it = m_Resources.begin();it != m_Resources.end();it++){
+	
 		#ifdef DEBUG
-			Core::Log("Deleted:",it->second.AssetPath);
+				if(it->second.RefCount >0)
+					Core::Log("Resources isn't deleted.",it->second.RefCount ," ",(uint32_t)it->second.Type,"} ",it->second.AssetPath);
 		#endif
-		switch(it->second.Type){
-			case AssetType::TEXTURE : {delete (Texture*)it->second.Data; break;}
-			case AssetType::FONT : {delete (Font*)it->second.Data; break;}
-			case AssetType::TEXTUREATLAS : {delete (Texture*)it->second.Data; break;}
-			case AssetType::ANIMATION : {delete (Animator*)it->second.Data; break;}
-		}
+		
 	}
 	m_Resources.clear();
 }

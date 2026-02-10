@@ -328,6 +328,11 @@ void Application::RunAStar(){
         delete m_GUIRenderer;
         m_AssetManager.Shutdown();
         delete m_Renderer;
+
+        delete[] m_PickBuffer;
+        delete m_PathFinderSystem;
+
+
         glfwTerminate();
     }
     void Application::OpenTerminalAndAttachToStream(){

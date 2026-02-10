@@ -82,7 +82,7 @@ private:
 
 
 	//std::unordered_map<uint32_t, ButtonData> m_ButtonIDs{};
-	std::unordered_map<uint32_t, PanelData> m_PanelIDs{};
+	std::unordered_map<GUUID, PanelData> m_PanelIDs{};
 
 	//styles 
 	struct StyleContainer {
@@ -102,8 +102,7 @@ private:
 	uint32_t m_PanelDepth{};
 	PanelData* m_CurrenPanelParent{};
 	uint32_t m_CurrentPanel{};
-	int32_t m_DraggedPanel{ -1 };
-	Float2 m_DraggedPanelDragAmount{};
+	GUUID m_DraggedPanel{ 0 };
 	//uint32_t m_CurrentButton{};
 	//If true when saves position of the buttons
 	bool m_SaveState{};

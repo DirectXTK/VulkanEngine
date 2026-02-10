@@ -219,8 +219,20 @@ void Texture::CopyFromBuffer(VkDevice device, Buffer* srcbuffer, VkCommandBuffer
 
 Texture::~Texture()
 {	
-	if(m_TextureAtlasData)
-		delete[] m_TextureAtlasData;
+	Core::Log("m_TextureCount",m_TextureCount);
+	Core::Log("m_TextureAtlasData",m_TextureAtlasData);
+
+	if(m_TextureAtlasData){
+		if(m_TextureAtlasData->Data)
+			delete[] m_TextureAtlasData->Data;
+		delete m_TextureAtlasData;
+	}
+	#ifdef DEBUG
+		if(!m_Image) Core::Log(ErrorType::Warning,"Image was nullptr{~Texture()}");
+		if(!m_DeviceMemory) Core::Log(ErrorType::Warning,"DeviceMemory was nullptr{~Texture()}");
+		if(!m_Sampler) Core::Log(ErrorType::Warning,"Sampler was nullptr{~Texture()}");
+		if(!m_ImageView) Core::Log(ErrorType::Warning,"ImageView was nullptr{~Texture()}");
+	#endif
 
 	vkDestroyImage(m_Context->Device,m_Image,nullptr);
 	vkFreeMemory(m_Context->Device, m_DeviceMemory, nullptr);
@@ -523,6 +535,6 @@ void Texture::CopyDataFromBuffer(VkCommandBuffer CommandBuffer,VkBuffer BufferSr
 	m_TextureAtlasData->Data = new TextureCoords[AtlasCoords.size()];
 	m_TextureCount = (uint32_t)AtlasCoords.size();
 	memcpy(m_TextureAtlasData->Data, AtlasCoords.data(), sizeof(TextureCoords) * AtlasCoords.size());
-
+	Core::Log("m_TextureAtlasData",m_TextureAtlasData);
 	return DataRet;
 }

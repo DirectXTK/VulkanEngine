@@ -17,6 +17,8 @@ struct AssetHandle{
 	AssetHandle(){}
 
 	void MakeItPermaHandle(){RefCount++;}
+	//only use for perma handles once.
+	void FreePermaHandle();
 	AssetType GetType(){return Type;}
 	GUUID ID{};
 	uint32_t RefCount{};
@@ -67,6 +69,7 @@ public:
 	}
     Asset& operator=( Asset&& other){
 		if(this != &other){
+			Release();
 			m_Data = std::move(other.m_Data);
 			other.m_Data = nullptr;
 		}
@@ -102,21 +105,19 @@ private:
         //*m_RefCount+=1;
 	}
     void Release(){
-        if(m_Data){
-			m_Data->RefCount-=1;
-		}
-        else{
+		if(!m_Data)
 			return;
-		}
+		if(m_Data->RefCount <=0)
+			return;
+		m_Data->RefCount--;
         
-        if(m_Data->RefCount ==0)
-        {	
+		if(m_Data->RefCount ==0){
 			T* ConvertedData = (T*)m_Data->Data;
 			delete ConvertedData;
 			ASSETLOADASSET(m_Data);
 			m_Data = nullptr;
+		}
           	 
-        }
 	}
 
 
@@ -156,6 +157,7 @@ public:
       	   m_Resources[ID] = AssetHandle(ID,this,type,Resource);
 		#endif
 		 m_Resources[ID].MakeItPermaHandle();
+		 m_PermaAssets.push_back(ID);
 		 m_ResourceCount[type]++;
          return Asset<T>(&m_Resources[ID]);
 	}
@@ -166,6 +168,7 @@ public:
             return Asset<T>(&m_Resources[ID]);
          m_Resources[ID] = AssetHandle(ID,this,type,Resource,"UNNAMED");
 		 m_Resources[ID].MakeItPermaHandle();
+		 m_PermaAssets.push_back(ID);
 		 m_ResourceCount[type]++;
          return Asset<T>(&m_Resources[ID]);
 	}
@@ -235,6 +238,7 @@ private:
 	void LoadTextureAtlas(const std::string& filePath,const std::string& fileName);
 
 	std::unordered_map<GUUID, AssetHandle> m_Resources{};
+	std::vector<GUUID> m_PermaAssets{};
 	std::unordered_map<AssetType, uint64_t> m_ResourceCount;
 
 

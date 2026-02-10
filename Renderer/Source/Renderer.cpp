@@ -402,6 +402,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
              //vkResetFences(m_Device,1,&m_ImageFreeF[m_CurrentFrame]);
         m_Textures[m_CurrentFrame].clear();
+        m_Textures[m_CurrentFrame].rehash(0);
+
        m_AcquireImageResult =  vkAcquireNextImageKHR(m_Device,m_SwapChain->GetSwapChain(),1000000000,m_ImageAvailS[m_CurrentFrame],nullptr,&m_ImageIndex);
        if(m_AcquireImageResult == VK_ERROR_OUT_OF_DATE_KHR){
             ResizeWindow();
@@ -1022,7 +1024,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 Float2 sizeNDC = {(float)m_CurrentFont.GetData()->FontSize/(float)GetViewPortExtent().width*0.15f,(float)m_CurrentFont.GetData()->FontSize/GetViewPortExtent().height*1.25f};
                 DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, m_ArrowColor, sizeNDC, 0);
             }
-
+            if(LetterIndex >= font->GlyphCount)
+                continue;
             //edge cases
             //Special cases
             switch (Message[i]) {
@@ -1048,13 +1051,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             TextureRenderingData texture = textures[TextureHandle];
                 //its the size of the bitmap not the character itself.
 
-
             m_Vertices[m_VertexPointer].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
             m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
             if (LetterIndex != -1) {
-
                 m_Vertices[m_VertexPointer].TexCoords = font->Coords[LetterIndex].Coords[0];
                 m_Vertices[m_VertexPointer + 1].TexCoords = font->Coords[LetterIndex].Coords[1];
                 m_Vertices[m_VertexPointer + 2].TexCoords = font->Coords[LetterIndex].Coords[2];
@@ -1713,6 +1714,8 @@ void Renderer::Shutdown(){
 void Renderer::FinishExecution(){
     vkDeviceWaitIdle(m_Device);
     //release assets
+    m_Textures->clear();
     m_CurrentFont.~Asset();
+    m_CurrentFont= Asset<Font>();
 }
 

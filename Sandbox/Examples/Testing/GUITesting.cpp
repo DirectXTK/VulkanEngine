@@ -12,7 +12,7 @@ void GUITestingLayer::OnCreate() {
 	sliderdata.StructSize = sizeof(GUI::SliderStyle);
 	sliderdata.FillColor = {0.0f,0.0f,1.0f,1.0f};
 
-	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/Animation/",AssetType::ANIMATION);
+	//Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/Animation/",AssetType::ANIMATION);
 
 	  Asset<Animator> asset= Application::GetAsset<Animator>("PEASawdaawdANT");
 		if(asset){

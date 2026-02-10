@@ -7,7 +7,8 @@ workspace "VulkanEngine"
     configurations{
         "Debug",
         "Release",
-        "Distrib"
+        "Distrib",
+        "Verbose"
     }
     linkoptions {
     "-Wl,--start-group",
@@ -24,6 +25,17 @@ workspace "VulkanEngine"
       runtime "Release"
       optimize "on"
     filter{"configurations:Debug"}
+      defines {"DEBUG"}
+    filter{"configurations:Verbose"}
+      buildoptions {
+      "-fsanitize=address",
+      "-fsanitize=undefined",
+      "-fno-omit-frame-pointer"
+      }
+      linkoptions {
+      "-fsanitize=address",
+      "-fsanitize=undefined"
+      }
       defines {"DEBUG"}
     filter{"configurations:Distrib"}
       defines {"DISTRIB"}

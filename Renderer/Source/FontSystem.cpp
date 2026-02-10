@@ -8,7 +8,9 @@ FontSystem::FontSystem()
 {
 	m_Renderer = Application::GetRenderer();
 	g_FontSystem = this;
-
+	FT_Error error = FT_Init_FreeType(&m_Library);
+	if (error) 
+		Core::Log(ErrorType::Error, "Failed to initialize FreeType.");
 
 	//try to load any font or a default one
 	const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Sacrifice.ttf";
@@ -18,13 +20,8 @@ FontSystem::FontSystem()
 	m_Renderer->SetCurrentFont(m_CurrentFont);
 }
 Asset<Font> FontSystem::LoadFont(const std::string& filePath){
-	FT_Error error = FT_Init_FreeType(&m_Library);
-	if (error) {
-		Core::Log(ErrorType::Error, "Failed to initialize FreeType.");
-		return Asset<Font>();
-	}
 	//loads the font
-	error = FT_New_Face(m_Library, filePath.c_str(), 0, &m_Face);
+	FT_Error error = FT_New_Face(m_Library, filePath.c_str(), 0, &m_Face);
 	if (error == FT_Err_Unknown_File_Format) {
 		Core::Log(ErrorType::Error, "Unknown file format of font");
 	}
@@ -34,7 +31,10 @@ Asset<Font> FontSystem::LoadFont(const std::string& filePath){
 	}
 
 	std::string Name = Core::GetFileName(filePath);
-	return ReRenderFaces("FONT"+Name+std::to_string(m_CharacterSize),Core::GetFileName(filePath));
+	Asset<Font> asset= ReRenderFaces("FONT"+Name+std::to_string(m_CharacterSize),Core::GetFileName(filePath));
+	//LASTERROR
+	//FT_Done_Face(m_Face);
+	return asset;
 }
 
 void FontSystem::Run(void* app,void* iRenderer)
@@ -384,7 +384,6 @@ void FontSystem::KeyBoardCallback(KeyBoardEvent* event)
 
 FontSystem::~FontSystem()
 {
-	FT_Done_Face(m_Face);
 	FT_Done_FreeType(m_Library);
 }
 void FontSystem::SpecialCases(KeyCodes& Code, EventState& State, char* Buffer, uint64_t Size)
@@ -539,7 +538,6 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 	MinCord = new Float2[m_Face->num_glyphs];
 	MaxCord = new Float2[m_Face->num_glyphs];
 	advance = new Float2[m_Face->num_glyphs];
-	Core::Log("Assetname ",fontName);
 
 	memset(AtlasCoords,0x00000000, m_Face->num_glyphs*sizeof(TextureCoords));
 	for(uint32_t i =0 ;i < m_Face->num_glyphs;i++){

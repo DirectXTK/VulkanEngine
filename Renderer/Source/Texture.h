@@ -97,7 +97,7 @@ private:
 
 	
 	//Atlas data
-	TextureAtlasData* m_TextureAtlasData{};
+	TextureAtlasData* m_TextureAtlasData{nullptr};
 	uint32_t m_TextureCount{};
 
 	VkImage m_Image{};
