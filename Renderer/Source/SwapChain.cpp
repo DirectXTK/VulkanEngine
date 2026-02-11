@@ -78,7 +78,8 @@
            }
         void SwapChain::DestroyImageViews(){
           for(uint32_t i=0;i < m_SwapChainImages.size();i++){
-            m_SwapChainImages[i]->DestroyView();
+            m_SwapChainImages[i]->RemoveImage();
+            delete m_SwapChainImages[i];
           }
         }
        

@@ -51,7 +51,7 @@ protected:
 	void OnMouseEvent(MouseEvent& event);
 private:
 	void DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor, const Float4& BackGroundColor,float BorderWidth);
-	void ReapplyStyles();
+	void ReapplyStyles(const GUI::Style& removedStyle);
 
 	friend Application;
 

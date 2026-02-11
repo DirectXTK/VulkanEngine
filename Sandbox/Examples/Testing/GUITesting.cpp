@@ -12,7 +12,7 @@ void GUITestingLayer::OnCreate() {
 	sliderdata.StructSize = sizeof(GUI::SliderStyle);
 	sliderdata.FillColor = {0.0f,0.0f,1.0f,1.0f};
 
-	//Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/Animation/",AssetType::ANIMATION);
+	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/",AssetType::NONE);
 
 	  Asset<Animator> asset= Application::GetAsset<Animator>("PEASawdaawdANT");
 		if(asset){
@@ -86,7 +86,7 @@ void GUITestingLayer::OnGUI()
 
 	Application::GetRenderer()->ChangeArrowColor({1.0f,0.0f,0.0f,1.0f});
 	guiRenderer->Panel("Panel", {0.0f,-0.9f}, {0.0f,0.5f,0.5f,1.0f}, {1.0f,0.1f}, 0, true);
-	guiRenderer->Slider("FONTSIZE",&FontSize,{-0.5f,-0.5f},{0.5f,0.2f},{0.1f},{0.0f,64.f});
+	guiRenderer->Slider("FONTSIZE",&FontSize,{-0.5f,-0.5f},{0.5f,0.2f},0.1f,{0.0f,64.f});
 	guiRenderer->InputText("USERNAME",username,ARRAYSIZE(username),{0.0f,0.0f},{1.0f,1.0f});
 
 	guiRenderer->InputText("PASS",pass,ARRAYSIZE(pass),{-0.5f,0.0f},{0.2f,1.0f});

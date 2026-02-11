@@ -219,8 +219,6 @@ void Texture::CopyFromBuffer(VkDevice device, Buffer* srcbuffer, VkCommandBuffer
 
 Texture::~Texture()
 {	
-	Core::Log("m_TextureCount",m_TextureCount);
-	Core::Log("m_TextureAtlasData",m_TextureAtlasData);
 
 	if(m_TextureAtlasData){
 		if(m_TextureAtlasData->Data)
@@ -504,17 +502,39 @@ void Texture::CopyDataFromBuffer(VkCommandBuffer CommandBuffer,VkBuffer BufferSr
 
 	while (Offset != (uint64_t)-1) {
 		TextureCoords coords{};
+		uint64_t tempOffset{};
 
 
 		Offset = Data.find("x", Offset) + 4;
-		TileLocX = std::stoi(Data.substr(Offset, Data.find(",") - Offset));
+		if(Offset == std::string::npos){
+			Core::Log(ErrorType::Error,"Couldn't find string inside another string{",MetaDataPath,"}");
+			return nullptr;
+		}
+		TileLocX = std::stoi(Data.substr(Offset, Data.find(",",Offset) - Offset));
 		Offset = Data.find("y", Offset) + 4;
-		TileLocY = std::stoi(Data.substr(Offset, Data.find(",") - Offset));
+		if(Offset == std::string::npos){
+			Core::Log(ErrorType::Error,"Couldn't find string inside another string{",MetaDataPath,"}");
+			return nullptr;
+		}
+		TileLocY = std::stoi(Data.substr(Offset, Data.find(",",Offset) - Offset));
 		Offset = Data.find("w", Offset) + 4;
-		TileSizeX = std::stoi(Data.substr(Offset, Data.find(",") - Offset));
+		if(Offset == std::string::npos){
+			Core::Log(ErrorType::Error,"Couldn't find string inside another string{",MetaDataPath,"}");
+			return nullptr;
+		}
+		TileSizeX = std::stoi(Data.substr(Offset, Data.find(",",Offset) - Offset));
 		Offset = Data.find("h", Offset) + 4;
-		TileSizeY = std::stoi(Data.substr(Offset, Data.find("}" - 1) - Offset));
-
+		if(Offset == std::string::npos){
+			Core::Log(ErrorType::Error,"Couldn't find string inside another string{",MetaDataPath,"}");
+			return nullptr;
+		}
+		tempOffset= Data.find('}',Offset);
+		if(tempOffset == std::string::npos){
+			Core::Log(ErrorType::Error,"Couldn't find string inside another string{",MetaDataPath,"} index ",Offset ,(char)Data[Offset]);
+			return nullptr;
+		}
+		TileSizeY = std::stoi(Data.substr(Offset, tempOffset- Offset));
+	
 		coords.Coords[0] = { (float)TileLocX / (float)Width,1.0f - (float)TileLocY / (float)Height };
 		coords.Coords[1] = { (float)TileLocX / (float)Width,1.0f - ((float)TileLocY + TileSizeY) / (float)Height };
 		coords.Coords[2] = { (float)(TileLocX + TileSizeX) / (float)Width,1.0f - (float)(TileLocY + TileSizeY) / (float)Height };
@@ -535,6 +555,5 @@ void Texture::CopyDataFromBuffer(VkCommandBuffer CommandBuffer,VkBuffer BufferSr
 	m_TextureAtlasData->Data = new TextureCoords[AtlasCoords.size()];
 	m_TextureCount = (uint32_t)AtlasCoords.size();
 	memcpy(m_TextureAtlasData->Data, AtlasCoords.data(), sizeof(TextureCoords) * AtlasCoords.size());
-	Core::Log("m_TextureAtlasData",m_TextureAtlasData);
 	return DataRet;
 }

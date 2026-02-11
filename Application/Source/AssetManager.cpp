@@ -13,7 +13,6 @@ void AssetHandle::FreePermaHandle(){
 	RefCount--;
 	if(RefCount <=0)
 	{
-		Core::Log("dwadad");
 		switch(Type){
 		case AssetType::FONT: {delete (Font*)Data;break;}	
 		case AssetType::TEXTURE: {delete (Texture*)Data;break;}	

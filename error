@@ -1,0 +1,62 @@
+Source/Texture.cpp:514:59: runtime error: index -1 out of bounds for type 'const char[2]'
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior Source/Texture.cpp:514:59 
+=================================================================
+==72471==ERROR: AddressSanitizer: global-buffer-overflow on address 0x55830eae769f at pc 0x55830e4d61a3 bp 0x7ffde82a9730 sp 0x7ffde82a8f00
+READ of size 1 at 0x55830eae769f thread T0
+    #0 0x55830e4d61a2 in strlen.part.0 asan_interceptors.cpp.o
+    #1 0x55830e5fa83c in std::char_traits<char>::length(char const*) (/users/jimy/Repos/VulkanEngine/bin/Verbose/linux/x86_64/Sandbox/Sandbox+0x42f83c) (BuildId: 97c38ea00886ae8fbbd3c565f51ce6507f11f5c5)
+    #2 0x55830e654d8c in std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>::find(char const*, unsigned long) const (/users/jimy/Repos/VulkanEngine/bin/Verbose/linux/x86_64/Sandbox/Sandbox+0x489d8c) (BuildId: 97c38ea00886ae8fbbd3c565f51ce6507f11f5c5)
+    #3 0x55830e86559d in Texture::CreateTextureAtlasData(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const&) (/users/jimy/Repos/VulkanEngine/bin/Verbose/linux/x86_64/Sandbox/Sandbox+0x69a59d) (BuildId: 97c38ea00886ae8fbbd3c565f51ce6507f11f5c5)
+    #4 0x55830e67fd9e in AssetManager::LoadTextureAtlas(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const&) (/users/jimy/Repos/VulkanEngine/bin/Verbose/linux/x86_64/Sandbox/Sandbox+0x4b4d9e) (BuildId: 97c38ea00886ae8fbbd3c565f51ce6507f11f5c5)
+    #5 0x55830e67eb68 in AssetManager::LoadAllAssets(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, AssetType) (/users/jimy/Repos/VulkanEngine/bin/Verbose/linux/x86_64/Sandbox/Sandbox+0x4b3b68) (BuildId: 97c38ea00886ae8fbbd3c565f51ce6507f11f5c5)
+    #6 0x55830e65bd57 in Application::LoadAllAssets(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const&, AssetType const&) (/users/jimy/Repos/VulkanEngine/bin/Verbose/linux/x86_64/Sandbox/Sandbox+0x490d57) (BuildId: 97c38ea00886ae8fbbd3c565f51ce6507f11f5c5)
+    #7 0x55830e62ab71 in GUITestingLayer::OnCreate() (/users/jimy/Repos/VulkanEngine/bin/Verbose/linux/x86_64/Sandbox/Sandbox+0x45fb71) (BuildId: 97c38ea00886ae8fbbd3c565f51ce6507f11f5c5)
+    #8 0x55830e6a643a in LayerController::RunQueue() (/users/jimy/Repos/VulkanEngine/bin/Verbose/linux/x86_64/Sandbox/Sandbox+0x4db43a) (BuildId: 97c38ea00886ae8fbbd3c565f51ce6507f11f5c5)
+    #9 0x55830e663984 in Application::Run() (/users/jimy/Repos/VulkanEngine/bin/Verbose/linux/x86_64/Sandbox/Sandbox+0x498984) (BuildId: 97c38ea00886ae8fbbd3c565f51ce6507f11f5c5)
+    #10 0x55830e64d963 in main (/users/jimy/Repos/VulkanEngine/bin/Verbose/linux/x86_64/Sandbox/Sandbox+0x482963) (BuildId: 97c38ea00886ae8fbbd3c565f51ce6507f11f5c5)
+    #11 0x7f5105427634  (/usr/lib/libc.so.6+0x27634) (BuildId: 9569a499070da747128b450e157301b26f5c2f9c)
+    #12 0x7f51054276e8 in __libc_start_main (/usr/lib/libc.so.6+0x276e8) (BuildId: 9569a499070da747128b450e157301b26f5c2f9c)
+    #13 0x55830e481934 in _start (/users/jimy/Repos/VulkanEngine/bin/Verbose/linux/x86_64/Sandbox/Sandbox+0x2b6934) (BuildId: 97c38ea00886ae8fbbd3c565f51ce6507f11f5c5)
+
+0x55830eae769f is located 33 bytes before global variable '.str.43' defined in 'Source/Texture.cpp' (0x55830eae76c0) of size 8
+  '.str.43' is ascii string '"frame"'
+0x55830eae769f is located 1 bytes before global variable '.str.42' defined in 'Source/Texture.cpp' (0x55830eae76a0) of size 2
+  '.str.42' is ascii string '}'
+0x55830eae769f is located 29 bytes after global variable '.str.41' defined in 'Source/Texture.cpp' (0x55830eae7680) of size 2
+  '.str.41' is ascii string ','
+SUMMARY: AddressSanitizer: global-buffer-overflow asan_interceptors.cpp.o in strlen.part.0
+Shadow bytes around the buggy address:
+  0x55830eae7400: f9 f9 f9 f9 00 00 00 f9 f9 f9 f9 f9 00 00 00 03
+  0x55830eae7480: f9 f9 f9 f9 00 00 00 00 f9 f9 f9 f9 00 00 00 05
+  
+  
+  0x55830eae7500: f9 f9 f9 f9 00 00 00 05 f9 f9 f9 f9 00 00 00 00
+  0x55830eae7580: 02 f9 f9 f9 f9 f9 f9 f9 00 00 01 f9 f9 f9 f9 f9
+  0x55830eae7600: 00 00 00 00 00 00 07 f9 f9 f9 f9 f9 07 f9 f9 f9
+=>0x55830eae7680: 02 f9 f9[f9]02 f9 f9 f9 00 f9 f9 f9 00 00 00 00
+  0x55830eae7700: f9 f9 f9 f9 02 f9 f9 f9 02 f9 f9 f9 02 f9 f9 f9
+  0x55830eae7780: 02 f9 f9 f9 00 00 00 00 00 00 06 f9 f9 f9 f9 f9
+  0x55830eae7800: 00 00 00 00 00 00 00 00 00 00 00 02 f9 f9 f9 f9
+  0x55830eae7880: 00 00 03 f9 f9 f9 f9 f9 00 f9 f9 f9 00 04 f9 f9
+  0x55830eae7900: 00 05 f9 f9 00 00 05 f9 f9 f9 f9 f9 00 06 f9 f9
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==72471==ABORTING
+

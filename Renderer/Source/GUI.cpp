@@ -22,8 +22,6 @@ GUIRenderer::GUIRenderer(Application* app,bool SaveState): m_Application(app),m_
 	PushStyle(GUI::Style::BORDER,&BorderData);
 	PushStyle(GUI::Style::OUTLINE,&OutlineStyle);
 
-	Renderer* renderer = Application::GetRenderer();
-	
 }
 void GUIRenderer::BeginGUI()
 {
@@ -62,8 +60,6 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 			PanelData* PrevPanel = m_CurrenPanelParent;
 			m_PanelIDs[id] = { { (m_PanelIDs[id].Position.x * PrevPanel->Size.x) + PrevPanel->Position.x , (m_PanelIDs[id].Position.y * PrevPanel->Size.y) + PrevPanel->Position.y   },m_PanelIDs[id].Size,Core::RandomUInt64(0, std::numeric_limits<uint64_t>::max()) };
 			m_PanelIDs[id].pParent = PrevPanel;
-			Core::Log('wadada');
-
 		}
 	
 	}
@@ -468,7 +464,7 @@ void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 		break;
 	}
 	}
-	ReapplyStyles();
+	ReapplyStyles(style);
 }
 void GUIRenderer::PopStyle() {
 	StyleContainer container = m_Styles[m_Styles.size()-1];;
@@ -498,59 +494,66 @@ void GUIRenderer::PopStyle() {
 	
 	free(container.StyleData);
 	m_Styles.pop_back();
-	ReapplyStyles();
+	ReapplyStyles(container.StyleType);
 
 }
-void GUIRenderer::ReapplyStyles() {
-	StyleContainer Container = m_Styles[m_Styles.size()-1];
+void GUIRenderer::ReapplyStyles(const GUI::Style& removedStyle) {
 
-	switch (Container.StyleType) {
-	case GUI::Style::COLOR: {
-		GUI::ColorStyle* ColorData = (GUI::ColorStyle*)Container.StyleData;
+	for(int32_t i=m_Styles.size()-1;i >=0;i--){
+		StyleContainer Container = m_Styles[i];
+		if(removedStyle == Container.StyleType){
 
-		m_CurrentColor = ColorData->Color;
+			switch(removedStyle){
+				case GUI::Style::BORDER:{
+					m_CurrentBorderData = (GUI::BorderStyle*)Container.StyleData;
+					return;
+				}
+				case GUI::Style::COLOR:{
+					m_CurrentColor = ((GUI::ColorStyle*)Container.StyleData)->Color;
+					return;
+				}
+				case GUI::Style::OUTLINE:{
+					m_CurrentOutlineData = (GUI::OutlineStyle*)Container.StyleData;
+					return;
+				}
+				case GUI::Style::SLIDER:{
+					m_CurrentSliderData = (GUI::SliderStyle*)Container.StyleData;
+					return;
+				}
+				default :{ Core::Log("Invalid type ",(uint32_t)removedStyle," GUIRenderer::ReapplyStyles");break;}
+			}
 
-		break;
-	}
-	case GUI::Style::BORDER: {
-		GUI::BorderStyle* Border = (GUI::BorderStyle*)Container.StyleData;
-		m_CurrentBorderData = Border;
-		break;
-	}
-	case GUI::Style::SLIDER: {
-		GUI::SliderStyle* slider = (GUI::SliderStyle*)Container.StyleData;
-		m_CurrentSliderData = slider;
-		break;
-	}
-	case GUI::Style::OUTLINE: {
-		GUI::OutlineStyle* outline = (GUI::OutlineStyle*)Container.StyleData;
-		m_CurrentOutlineData = outline;
-		break;
-	}
-	case GUI::Style::NONE: {
 
+		}
 	}
-	default: {
-		Core::Log(ErrorType::Error,"Reapply styles style in invalid ",(uint32_t)Container.StyleType);
+	//set default if no is available
+	switch(removedStyle){
+		case GUI::Style::BORDER:{
+			GUI::BorderStyle border{};
+			PushStyle(removedStyle,&border);
+			break;
+		}
+		case GUI::Style::COLOR:{
+			GUI::ColorStyle color{};
+			PushStyle(removedStyle,&color);
+			break;
+		}
+		case GUI::Style::OUTLINE:{
+			GUI::OutlineStyle outline{};
+			PushStyle(removedStyle,&outline);
+			break;
+		}
+		case GUI::Style::SLIDER:{
+			GUI::SliderStyle slider{};
+			PushStyle(removedStyle,&slider);
+			break;
+		}
+		default :{ Core::Log("Invalid type ",(uint32_t)removedStyle," GUIRenderer::ReapplyStyles()"); break;}
 	}
-	}
-
-	if(!m_CurrentBorderData){
-		for(uint32_t i =0;i < m_Styles.size();i++)
-			if(m_Styles[i].StyleType == GUI::Style::BORDER) m_CurrentBorderData = (GUI::BorderStyle*)m_Styles[i].StyleData;
-	}
-	if(!m_CurrentSliderData){
-		for(uint32_t i =0;i < m_Styles.size();i++)
-			if(m_Styles[i].StyleType == GUI::Style::SLIDER) m_CurrentSliderData = (GUI::SliderStyle*)m_Styles[i].StyleData;
-	}
-	if(!m_CurrentOutlineData){
-		for(uint32_t i =0;i < m_Styles.size();i++)
-			if(m_Styles[i].StyleType == GUI::Style::OUTLINE) m_CurrentOutlineData = (GUI::OutlineStyle*)m_Styles[i].StyleData;
-	}
-
 }
 void GUIRenderer::SetFontSize(uint32_t Size)
 {	
+	
 		Size = std::clamp((int)Size,1,96);
 		m_FontSystem->SetCharcterSize(Size);
 }
@@ -596,7 +599,8 @@ void GUIRenderer::EndGUI()
 }
 	GUIRenderer::~GUIRenderer(){
 
-
+		for(uint32_t i=0;i < m_Styles.size();i++)
+			free(m_Styles[i].StyleData);
 		delete[] m_PickBufferData;
 	}
 

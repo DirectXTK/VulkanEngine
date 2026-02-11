@@ -187,7 +187,6 @@ private:
     std::vector<VkSemaphore> m_ImageAvailS{};
     std::vector<VkSemaphore> m_RenderFinishedS{};
     std::vector<VkFence> m_DrawFences{};
-    std::vector<VkFence> m_ImageFreeF{};
     //Buffers
 
     std::vector<Buffer*> m_IndexBuffers{};

@@ -27,7 +27,6 @@ struct Font {
 		delete[] MinCord;
 		delete[] MaxCord;
 		delete[] Advance;
-		Core::Log("Font data freed");
 	}
 };
 

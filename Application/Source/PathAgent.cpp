@@ -225,7 +225,7 @@ std::vector<Float2> Funnel(const std::vector<Portal>& portals)
     return result;
 }
 int FindContainingPolygon(const Float2& pos){
-
+    return 1;
 }
 float CalculateDistanceFloat(const Float2& first,const Float2& second){
     return std::fabs(first.x-second.x)+std::fabs(first.y-second.y);

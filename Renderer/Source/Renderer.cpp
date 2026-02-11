@@ -52,8 +52,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     m_Context = context;
     m_SwapChain = new SwapChain(m_Window,m_Instance,m_Context, m_Surface);
     m_SwapChainDetails = m_SwapChain->GetSwapChainCapabilities();
-
-
     m_SwapChain->CreateSwapChain(MAX_FRAME_DRAWS);
 
    
@@ -66,7 +64,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     UniformBufferDesc.SizeBytes = sizeof(UniformCameraBufferData);  
     for(uint32_t i =0;i < m_UniformBuffer.size();i++)
          m_UniformBuffer[i] = new Buffer(UniformBufferDesc);
-
   
     CreateCommandBuffers();
     context->CommandPool =m_GraphicsPool.GetCommandPool();
@@ -196,6 +193,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     m_IndexBuffers.push_back(new Buffer(IndexBufferDesc));
 
     m_IndexBuffers[0]->UploadToBuffer(m_Device, m_Indices, uint64_t(m_VertexCount * 1.5 * sizeof(uint32_t)));
+    delete[] m_Indices;
 
     //VkFormat format2 = Core::ChooseBestFormat(m_PhysicalDevice,{ VK_FORMAT_R32G32_UINT },VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
 
@@ -238,7 +236,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::OnWindowResize(uint32_t width,uint32_t height){
         m_ResizeWindow=true;
         m_NewWindowSize ={(float)width,(float)height};
-        m_Camera.SetViewportSize({(float)width,(float)height});
     }
 
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
@@ -263,7 +260,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
      m_PipelineDesc.VertexStageInput[2] = { VK_FORMAT_R32G32_UINT,offsetof(Vertex,ID),2,0 };
      m_PipelineDesc.VertexStageInput[3] = { VK_FORMAT_R32G32_SFLOAT,offsetof(Vertex,TexCoords),3,0 };
      m_PipelineDesc.VertexStageInput[4] = { VK_FORMAT_R32_UINT,offsetof(Vertex,TextureID),4,0 };
-
 
 
      m_PipelineDesc.Viewport.x =0;
@@ -302,6 +298,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 for(uint32_t i=0;i < m_SwapChain->GetSwapChainImageCount();i++){
             }
 
+            m_Camera.SetViewportSize({(float)m_NewWindowSize.x,(float)m_NewWindowSize.y});
+
                 m_FrameBuffers.clear();
 
             m_SwapChain->DestroyImageViews();
@@ -327,11 +325,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 vkDestroySemaphore(m_Device,m_RenderFinishedS[i],nullptr);
                 vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
             }
-
+        
             CreateSamaphore();
-                for(uint32_t i=0 ;i < m_ImageAvailS.size();i++){
-
-            }
+           
 
 
             vkResetCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
@@ -651,7 +647,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             submitinfo.commandBufferCount = 2;
             submitinfo.pCommandBuffers = commandsbuffers;
             submitinfo.signalSemaphoreCount = 1;
-            submitinfo.pSignalSemaphores = &m_RenderFinishedS[m_CurrentFrame];
+            submitinfo.pSignalSemaphores = &m_RenderFinishedS[m_ImageIndex];
             vkResetFences(m_Device,1,&m_DrawFences[m_CurrentFrame]);
             VkResult result = vkQueueSubmit(m_GraphicsQ, 1, &submitinfo, m_DrawFences[m_CurrentFrame]);
             
@@ -667,7 +663,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             VkPresentInfoKHR presentinfo{};
             presentinfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
             presentinfo.waitSemaphoreCount = 1;
-            presentinfo.pWaitSemaphores = &m_RenderFinishedS[m_CurrentFrame];
+            presentinfo.pWaitSemaphores = &m_RenderFinishedS[m_ImageIndex];
             presentinfo.swapchainCount = 1;
             presentinfo.pSwapchains = &swapchain;
             presentinfo.pImageIndices = &m_ImageIndex;
@@ -1176,7 +1172,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_ImageAvailS.resize(MAX_FRAME_DRAWS);
             m_RenderFinishedS.resize(MAX_FRAME_DRAWS);
             m_DrawFences.resize(MAX_FRAME_DRAWS);
-            m_ImageFreeF.resize(MAX_FRAME_DRAWS);
         
         VkFenceCreateInfo fenceinfo{};
         fenceinfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -1195,7 +1190,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if(result != VK_SUCCESS)
                 Core::Log(ErrorType::Error,"Failed to create fence.");
             
-            VULKANDEBUG(vkCreateFence(m_Device,&fenceinfo,nullptr,&m_ImageFreeF[i]),"Failed to create fence (Renderer::CreateSemaphore)");
     }
     
     }
@@ -1387,6 +1381,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 m_PipelineDesc.Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
                 m_PipelineDesc.Blending = true;
 
+                
                 uint32_t* Indices = new uint32_t[m_VertexCount*1.5];
                 uint32_t Offset{};
                 for(uint32_t i =0;i < m_VertexCount*1.5;i+=6)
@@ -1399,6 +1394,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     Indices[i+5]=Offset;
                     Offset+=4;
                 }
+                BufferDesc desc{};
+                desc = m_IndexBuffers[0]->GetBufferDesc();
+                delete m_IndexBuffers[0];
+                desc.SizeBytes = sizeof(uint32_t)*m_VertexCount*1.5f;
+                m_IndexBuffers[0] = new Buffer(desc);
                 m_IndexBuffers[0]->UploadToBuffer(m_Device,Indices,m_IndexBuffers[0]->GetBufferDesc().SizeBytes);
                 delete[] Indices;
                 break;
@@ -1422,6 +1422,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     Indices[i+7]=Offset;
                     Offset+=4;
                 }
+                BufferDesc desc{};
+                desc = m_IndexBuffers[0]->GetBufferDesc();
+                delete m_IndexBuffers[0];
+                desc.SizeBytes = sizeof(uint32_t)*m_VertexCount*2;
+                m_IndexBuffers[0] = new Buffer(desc);
                 m_IndexBuffers[0]->UploadToBuffer(m_Device,Indices,m_IndexBuffers[0]->GetBufferDesc().SizeBytes);
                 delete[] Indices;
                 break;
@@ -1642,6 +1647,7 @@ void Renderer::Shutdown(){
     m_ShutDown = true;
     vkDeviceWaitIdle(m_Device);
 
+
     //deleting all buffers.
     for(uint32_t i =0;i < m_VertexBufferGeometry.size();i++)
         delete m_VertexBufferGeometry[i];
@@ -1683,8 +1689,6 @@ void Renderer::Shutdown(){
         vkDestroySemaphore(m_Device,m_ImageAvailS[i],nullptr);
     for(uint32_t i=0;i < m_DrawFences.size();i++)
         vkDestroyFence(m_Device,m_DrawFences[i],nullptr);
-    for(uint32_t i =0;i < m_ImageFreeF.size();i++)
-        vkDestroyFence(m_Device,m_ImageFreeF[i],nullptr);
 
     
     for(uint32_t i=0; i < m_DescriptorSetCamera.size();i++)
@@ -1702,7 +1706,7 @@ void Renderer::Shutdown(){
     vkDestroyCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),nullptr);
     
     delete m_SwapChain;
-    
+    delete m_Context;
     vkDestroySurfaceKHR(m_Instance,m_Surface,nullptr);
     vkDestroyDevice(m_Device,nullptr);
 
@@ -1710,6 +1714,13 @@ void Renderer::Shutdown(){
     destroyDebugMessenger(m_Instance,m_Messenger,nullptr);
     
     vkDestroyInstance(m_Instance,nullptr);
+
+    delete[] m_PipelineDesc.VertexStageInput;
+
+
+    delete[] m_Vertices;
+    delete[] m_VerticesGUI;  
+
 }
 void Renderer::FinishExecution(){
     vkDeviceWaitIdle(m_Device);

@@ -121,7 +121,8 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
 #ifdef LINUXX11
     glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
-#elifdef LINUXWAYLAND
+#endif
+#ifdef LINUXWAYLAND
     glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
 #endif
     glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
@@ -148,7 +149,7 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
      m_AssetManager.Init(this);
   
      //Init a* path finding algorith system
-     m_PathFinderSystem = new PathSystem(1000,1000,{0.025f,0.025f});
+    // m_PathFinderSystem = new PathSystem(1000,1000,{0.025f,0.025f});
 
      m_Renderer->InitializePipeline(500);
 
@@ -254,6 +255,7 @@ void Application::RunAStar(){
     Application* app = Application::GetApplication();
 
     if(event.GetEventType() == EventType::WINDOWRESIZE){
+        delete[] app->m_PickBuffer;
         app->m_PickBufferSize = app->m_Renderer->GetViewPortExtent().width*app->m_Renderer->GetViewPortExtent().height*sizeof(Float2);
         app->m_PickBuffer = new Float2[app->m_PickBufferSize];
     }
@@ -280,12 +282,12 @@ void Application::RunAStar(){
         app->m_LastFrameTime = Time::GetTimeMs();
         app->m_Renderer->BeginFrame(&app->m_Camera,app->m_DeltaTime);
 
-        if(app->m_Specs.AppDebugging)
-            app->m_PathFinderSystem->RenderGrid();
+       // if(app->m_Specs.AppDebugging)
+           // app->m_PathFinderSystem->RenderGrid();
 
         if(app->m_Renderer->GetSwapChainState() == VK_SUCCESS){
         
-        app->m_PathFinderSystem->ResetGrid();
+     //   app->m_PathFinderSystem->ResetGrid();
         app->m_LayerController.UpdateLayers(app->m_DeltaTime);
         app->m_LayerController.RenderLayers(app->m_DeltaTime);
 
@@ -330,7 +332,7 @@ void Application::RunAStar(){
         delete m_Renderer;
 
         delete[] m_PickBuffer;
-        delete m_PathFinderSystem;
+      //  delete m_PathFinderSystem;
 
 
         glfwTerminate();
