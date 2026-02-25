@@ -30,7 +30,6 @@
              createinfo.preTransform = m_Details.Capabilities.currentTransform;
              createinfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
              createinfo.clipped = VK_TRUE;
-
               if(m_Context->QueueFamil.Graphics != m_Context->QueueFamil.Presentation)
               {
                 uint32_t indices[] = { (uint32_t)m_Context->QueueFamil.Graphics,(uint32_t)m_Context->QueueFamil.Presentation};
@@ -62,16 +61,14 @@
             std::vector<VkImage> Images{};
             TextureCreateInfo swapChainTextureInfo{};
 
-              
 
             vkGetSwapchainImagesKHR(m_Context->Device,m_SwapChain,&ImageCount,nullptr);
             m_SwapChainImages.resize(ImageCount);
             Images.resize(ImageCount);
             vkGetSwapchainImagesKHR(m_Context->Device,m_SwapChain,&ImageCount,Images.data());
-
             for(uint32_t i =0;i < ImageCount;i++){
 
-                m_SwapChainImages[i]= new Texture(m_Context,surfaceformat.format,Images[i]);
+                m_SwapChainImages[i]= new Texture(m_Context,surfaceformat.format,Images[i],extent);
             
             }
             
@@ -185,7 +182,7 @@
 
         for(int i=0;i <m_Details.PresentModes.size();i++){
 
-            if(m_Details.PresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
+            if(m_Details.PresentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
               return m_Details.PresentModes[i];
 
 

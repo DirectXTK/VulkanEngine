@@ -15,7 +15,7 @@ int main() {
 	specs.AppDebugging = true;
 	Application::InitApplication(specs);
 	Application::AddLayer<GUITestingLayer>();
-
+	
 	Application::Run();
 	
 

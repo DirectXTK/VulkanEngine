@@ -46,7 +46,7 @@ public:
 	//Used for texture atlases.
 	Texture(Texture* texture, uint32_t TextureIndex);
 	//for swapChain
-	Texture(Context context,VkFormat format,VkImage image);
+	Texture(Context context,VkFormat format,VkImage image,VkExtent2D extent);
 
 
 	void TrasitionFormat(bool Write,VkImageLayout OldLayout, VkImageLayout NewLayout, VkCommandBuffer CommandBuffer);
@@ -80,6 +80,9 @@ public:
 	void RemoveImage(){m_Image = nullptr;}
 	void DestroyView();
 
+	VkFormat GetFormat(){return m_ImageFormat;}
+	VkImageLayout GetImageLayout(){return m_Layout;}
+
 	bool IsAtlas(){ if(m_TextureAtlasData)return true; return false;}
 
 	~Texture();
@@ -111,6 +114,7 @@ private:
 
 	uint32_t m_Width{}, m_Height{};
 	VkImageLayout m_Layout{};
+	VkFormat m_ImageFormat{};
 
 	VkImageAspectFlagBits m_AspectMask{};
 	uint32_t m_TextureIndex{};

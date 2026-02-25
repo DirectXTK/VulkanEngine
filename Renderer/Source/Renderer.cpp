@@ -18,7 +18,10 @@
 
 
 Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem,AssetManager* assetManager) {
+    
     m_RendererDesc = desc;
+    m_RendererDesc.Viewport.minDepth = 1.0f;
+    m_RendererDesc.Viewport.maxDepth = 0.0f;
 
     m_Window = window;
     m_ClearColor = desc.ClearColor;
@@ -27,7 +30,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
    //Create vulkan instance
 
     InstanceDesc instancedesc{};
-    instancedesc.ApiVersion = VK_API_VERSION_1_3;
+    instancedesc.ApiVersion = VK_API_VERSION_1_4;
     instancedesc.ValidationLayersEnabled = true;
     m_Instance = VulkanInstance::CreateInstance(instancedesc, &m_Messenger);
 
@@ -71,9 +74,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     uint32_t* Pixels = new uint32_t[1];
 
-    for (int i = 0; i < 1; i++) {
-        Pixels[i] = 0xFFFFFFFF;
-    }
+       Pixels[0] = 0xFFFFFFFF;
     TextureCreateInfo whiteTextureCreateInfo{};
     whiteTextureCreateInfo.Width =1;
     whiteTextureCreateInfo.Height=1;
@@ -90,7 +91,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
  
 
     VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_R32G32_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
-    VkFormat DepthStencilFormat = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    VkFormat DepthStencilFormat = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_D32_SFLOAT_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
     TextureCreateInfo colorAttachTextureInfo{};
     colorAttachTextureInfo.Format =format;
@@ -223,6 +224,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_DescriptorSetCamera[i].WriteTo(0,1,*m_UniformBuffer[i]->GetBuffer(),sizeof(UniformCameraBufferData));
 
     }
+    VkPhysicalDeviceProperties props;
+    vkGetPhysicalDeviceProperties(m_PhysicalDevice, &props);
+
+    Core::Log("MinUniformBufferOffestalign",props.limits.minUniformBufferOffsetAlignment);
+    Core::Log("SizeOfUniform",sizeof(UniformCameraBufferData));
 
     //Make swapchain image layout present
     VkCommandBuffer commandBuffer =CommandBuffer::StartSingleUseCommandBuffer(m_Context,m_Context->CommandPool);
@@ -271,8 +277,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     
 
      
-     m_PipelineDesc.Viewport.minDepth =0;
-     m_PipelineDesc.Viewport.maxDepth =1.0f;
+     m_PipelineDesc.Viewport.minDepth =0.0f;
+     m_PipelineDesc.Viewport.maxDepth =0.0f;
 
     std::string defaultShaderPaths[] = { {"EngineResources/Shaders/Vertex.vertS"},{"EngineResources/Shaders/Pixel.fragS"}};
 
@@ -386,9 +392,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
               m_UniformCameraData.GeometryCamera = m_Camera.GetViewProj();
               m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
-
             m_UniformBuffer[m_CurrentFrame]->UploadToBuffer(m_Device, &m_UniformCameraData, sizeof(UniformCameraBufferData));
-
 
             VkSwapchainKHR swapchain = m_SwapChain->GetSwapChain();
         
@@ -439,10 +443,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-            if (m_CurrentFrame ==1)
+            if (m_CurrentFrame ==1){
                 vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0]->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer->GetBuffer(), 1, &copyregion);
-          
-
+            }
+            
+       
 
     }
     void Renderer::CreatePickingImage(){
@@ -470,8 +475,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
         //Swap the buffers to allow normal rendering;
         Vertex* temp = m_Vertices;
-        m_Vertices = m_VerticesGUI;
-        m_VerticesGUI = temp;
+      //  m_Vertices = m_VerticesGUI;
+     //   m_VerticesGUI = temp;
+       // memset(m_Vertices,0,sizeof(Vertex)*m_VertexCount);
     }
 
 
@@ -479,13 +485,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
    
     void Renderer::CreateNewBufferForBatch(std::vector<Buffer*>& VertexBuffers, std::vector<Buffer*>& Stagging)
     {
-
+        
 
         VertexBuffers.push_back( new Buffer(VertexBuffers[0]->GetBufferDesc()));
         Stagging.push_back( new Buffer(Stagging[0]->GetBufferDesc()));
       
         
-    }
+    }   
     void Renderer::FlushGUI()
     {
     
@@ -499,7 +505,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             
           if (textureData.texture){
                 Texture* texture = (Texture*)textureData.texture.GetData();
-                m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
+
+                if(texture->GetImageLayout() == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                //ONLY HAPPENS then using loaded textures
+                   m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
+                   
+                   else
+                   Core::Log("Image image layout is not valid");
+                if(texture->GetFormat() != VK_FORMAT_R8G8B8A8_UNORM)
+                    Core::Log("FOrmat",(uint32_t)texture->GetFormat());
             }
             else{
                 if(m_AssetManager->HasAsset(textureIds[i])){
@@ -543,7 +557,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             FlushGUI();
             return;
         }   
-        std::vector<Texture*> debugTextures{};
+        return;
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
         auto& textures = m_Textures[m_CurrentFrame];
     
@@ -558,7 +572,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             if (textureData.texture){
                 Texture* texture = (Texture*)textureData.texture.GetData();
                 m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
-                debugTextures.push_back(texture);
             }
             else{
                 if(m_AssetManager->HasAsset(textureIds[i])){
@@ -614,12 +627,12 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-            FlushGUI();
-
-
-           m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
-           region.size = sizeof(Vertex)*m_VertexMaxCountGUI;
-
+                        
+                        
+                        m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
+                        region.size = sizeof(Vertex)*m_VertexMaxCountGUI;
+                        
+                        FlushGUI();
             for(uint32_t i=0 ;i < m_StaggingBufferGUI.size();i++)
               vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGUI[i]->GetBuffer(), *m_VertexBufferGUI[i]->GetBuffer(), 1, &region);
             
@@ -659,7 +672,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-
+            
             VkPresentInfoKHR presentinfo{};
             presentinfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
             presentinfo.waitSemaphoreCount = 1;
@@ -710,7 +723,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
              }
 
             
-
+      
         }
     
 
@@ -797,7 +810,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 m_Vertices[m_VertexPointer + 3].TextureID = TextureID;
         }
               
-         
+         if(TextureHandle != 0&&m_CurrentTextureDescriptorSetOffset ==0)
+            Core::Log("NOt zero ",m_CurrentTextureDescriptorSetOffset);
        
 
         m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
@@ -1195,8 +1209,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
     void Renderer::ReCreateFrameBuffers(){
         VkFormat format = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_R32G32_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
-        VkFormat DepthStencilFormat = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-
+        VkFormat DepthStencilFormat = Core::ChooseBestFormat(m_PhysicalDevice, { VK_FORMAT_D32_SFLOAT_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
         TextureCreateInfo colorAttachTextureInfo{};
         colorAttachTextureInfo.Format =format;
         colorAttachTextureInfo.Width = m_SwapChain->GetExtent().width;
@@ -1362,6 +1375,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         TextureCreateInfo createInfo{};
         createInfo.Format = VK_FORMAT_R8G8B8A8_UNORM;
         createInfo.ImageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT;
+        createInfo.ImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         Texture*texture = new Texture(m_Context,createInfo, Path,type);
         return texture;
     }
@@ -1371,7 +1385,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     void Renderer::InitRenderDesc(const RendererDesc& Desc){
         vkDeviceWaitIdle(m_Device);
         m_RendererDesc = Desc;
-
+        Core::Log("ReCreated");
         m_PipelineDesc.RenderPass = m_RenderPass;
         m_PipelineDesc.Viewport.width = (float)m_SwapChain->GetExtent().width;
         m_PipelineDesc.Viewport.height = (float)m_SwapChain->GetExtent().height;
@@ -1495,7 +1509,7 @@ void Renderer::DrawBatch()
     //Debugging 
         m_VertexCountPerFrame= 0;
 
-    VkClearValue ClearColor[] = { {m_ClearColor.r,m_ClearColor.g,m_ClearColor.b,m_ClearColor.a},{0.0f,0.0f},{0.0f,0xFF} };
+    VkClearValue ClearColor[] = { {m_ClearColor.r,m_ClearColor.g,m_ClearColor.b,m_ClearColor.a},{0.0f,0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f,0.0f} };
 
     VkRenderPassBeginInfo RenderPassBeginInfo{};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1539,7 +1553,8 @@ void Renderer::DrawBatch()
         DrawCommand DrawCall = m_DrawCommandsGUI[i];
         uint64_t VertexBufferOffset = {m_DrawCommandsGUI[i].VertexBufferOffset*sizeof(Vertex)};
 
-        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGUI[m_DrawCommandsGUI[i].VertexBufferIndex]->GetBuffer(), &VertexBufferOffset);
+
+        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGUI[m_DrawCommandsGUI[i].VertexBufferIndex]->GetBuffer(), &Offset);
 
         vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
@@ -1554,7 +1569,7 @@ void Renderer::DrawBatch()
         vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
-        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGUI[i].VertexCount * 1.5f), 1, 0, 0, 0);
+        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGUI[i].VertexCount * 1.5f), 1, 0,VertexBufferOffset, 0);
         m_VertexCountPerFrame+= DrawCall.VertexCount;
 
     }
@@ -1565,13 +1580,10 @@ void Renderer::DrawBatch()
 }
 void Renderer::CreateDescriptorSets(){
     uint32_t descriptorTextureCountPerSet = 1000;
-
-   m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-   m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-   m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-   m_DescriptorPool.AddDescriptorType(descriptorTextureCountPerSet*m_DescriptorSetTextures.size(), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-   m_DescriptorPool.AddDescriptorType(descriptorTextureCountPerSet*m_DescriptorSetTextures.size(), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-   m_DescriptorPool.AddDescriptorType(descriptorTextureCountPerSet*m_DescriptorSetTextures.size(), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+   for(uint32_t i=0;i < MAX_FRAME_DRAWS;i++){
+       m_DescriptorPool.AddDescriptorType(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+       m_DescriptorPool.AddDescriptorType(descriptorTextureCountPerSet*m_DescriptorSetTextures.size(), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+   }
 
 
     m_DescriptorPool.CreatePool(m_Context);

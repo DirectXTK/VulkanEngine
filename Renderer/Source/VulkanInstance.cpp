@@ -74,8 +74,8 @@
      vkEnumeratePhysicalDevices(instance, &DeviceCount, Devices.data());
 
      for (uint32_t i = 0; i < DeviceCount; i++) {
-
          if (IsPhysicalDeviceSiutable(Devices[i],surface)){
+
              *pDevice = Devices[i];
               return;
          }
@@ -129,13 +129,15 @@ void VulkanInstance::InitializeValidationLayers(VkInstance instance,VkDebugUtils
     VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
     VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 
+    
+
     creatinfo.messageType =     VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
     VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
     VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     creatinfo.pfnUserCallback = VulkanDebugCallBack;
     creatinfo.pUserData = nullptr;
 
-
+    
 
 
 

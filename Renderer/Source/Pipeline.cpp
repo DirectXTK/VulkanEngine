@@ -10,7 +10,7 @@ VkRenderPass Pipeline::CreateRenderPass(VkDevice device, VkFormat format) {
     DepthStencilAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     DepthStencilAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     DepthStencilAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-    DepthStencilAttachment.format = VK_FORMAT_D24_UNORM_S8_UINT;
+    DepthStencilAttachment.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
     DepthStencilAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     DepthStencilAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     DepthStencilAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -187,7 +187,7 @@ VkPipeline Pipeline::CreatePipeline(const PipelineDesc& desc,VkDevice device)
    DepthStencilCreateInfo.depthBoundsTestEnable = false;
    DepthStencilCreateInfo.stencilTestEnable = false;
    DepthStencilCreateInfo.depthWriteEnable = false;
-
+    DepthStencilCreateInfo.depthTestEnable = false;
    //DepthStencilCreateInfo.front = FrontState;
   // DepthStencilCreateInfo.back = BackState;
 
@@ -232,7 +232,7 @@ VkPipeline Pipeline::CreatePipeline(const PipelineDesc& desc,VkDevice device)
 
     VkPipelineColorBlendAttachmentState blendattachment{};
     blendattachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    blendattachment.blendEnable = desc.Blending;
+    blendattachment.blendEnable = true;
 
     blendattachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     blendattachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -241,8 +241,8 @@ VkPipeline Pipeline::CreatePipeline(const PipelineDesc& desc,VkDevice device)
     blendattachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
     blendattachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
-    VkPipelineColorBlendAttachmentState blendattachment2{};
-    blendattachment2.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT;
+        VkPipelineColorBlendAttachmentState blendattachment2{};
+        blendattachment2.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT;
     blendattachment2.blendEnable = false;
 
     blendattachment2.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -261,11 +261,11 @@ VkPipeline Pipeline::CreatePipeline(const PipelineDesc& desc,VkDevice device)
     blendstate.attachmentCount = 2;
 
 
-    VkDynamicState DynamicState[5] = { VK_DYNAMIC_STATE_STENCIL_TEST_ENABLE,VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,VK_DYNAMIC_STATE_STENCIL_OP,VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,VK_DYNAMIC_STATE_STENCIL_REFERENCE };
+    //VkDynamicState DynamicState[5] = { VK_DYNAMIC_STATE_STENCIL_TEST_ENABLE,VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,VK_DYNAMIC_STATE_STENCIL_OP,VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,VK_DYNAMIC_STATE_STENCIL_REFERENCE };
 
-    VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo{VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
-    DynamicStateCreateInfo.dynamicStateCount = 0;
-    DynamicStateCreateInfo.pDynamicStates = nullptr;
+  //  VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo{VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
+   // DynamicStateCreateInfo.dynamicStateCount = 0;
+  //  DynamicStateCreateInfo.pDynamicStates = nullptr;
     
  
 
@@ -281,7 +281,7 @@ VkGraphicsPipelineCreateInfo pipeline{};
     pipeline.pMultisampleState = &multisampleinfo;
     pipeline.pColorBlendState = &blendstate;
     pipeline.pDepthStencilState = &DepthStencilCreateInfo;
-    pipeline.pDynamicState = &DynamicStateCreateInfo;
+    pipeline.pDynamicState = nullptr;
     pipeline.layout = desc.PipelineLayout;
     pipeline.renderPass = desc.RenderPass;
     pipeline.subpass = 0;

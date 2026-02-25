@@ -75,12 +75,11 @@ void CommandBuffer::EndSingleUseCommandBuffer(Context context,VkCommandPool pool
     VkSubmitInfo SubmitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
     SubmitInfo.commandBufferCount = 1;
     SubmitInfo.pCommandBuffers = &commandBuffer;
-
+    
 
     vkEndCommandBuffer(commandBuffer);
     VULKANDEBUG(vkQueueSubmit(context->GraphicsQueue, 1, &SubmitInfo, fence),"Failed to submit queue(EndSignelCommandBuffer)");
     
-
    result =vkWaitForFences(context->Device, 1, &fence, true, 1*1000*1000*10);
    if (result != VK_SUCCESS)
        Core::Log(ErrorType::Error, "Failed to wait for fences.");

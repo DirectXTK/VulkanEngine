@@ -11,9 +11,9 @@ layout(binding=0) uniform MVP {
 } mvp;
 
 layout(location =0) out vec4 OutFragColor;
-layout(location =1) out uvec2 OutPickID;
+layout(location =1) flat out uvec2 OutPickID;
 layout(location =2) out vec2 OutTexCoords;
-layout(location =3) out uint OutTexID;
+layout(location =3) flat out uint OutTexID;
 
 layout(push_constant) uniform PushConstants {
     uint uniformBufferIndex;

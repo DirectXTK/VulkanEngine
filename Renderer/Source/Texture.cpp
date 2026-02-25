@@ -12,8 +12,6 @@ uint32_t CalculateBytesPerPixel(VkFormat format){
 				return 4;
 			case VK_FORMAT_R8G8B8A8_UINT:
 				return 4;
-			case VK_FORMAT_R8G8B8_UNORM:
-				return 3;
 			case VK_FORMAT_R8G8B8_UINT:
 				return 3;
 			case VK_FORMAT_R8G8_UNORM:
@@ -27,6 +25,10 @@ uint32_t CalculateBytesPerPixel(VkFormat format){
 			case VK_FORMAT_R32G32_UINT:
 				return 8;
 			case VK_FORMAT_D24_UNORM_S8_UINT: 
+				return 4;
+			case VK_FORMAT_D32_SFLOAT_S8_UINT:
+				return 8;
+			case VK_FORMAT_B8G8R8A8_UNORM:
 				return 4;
 			default :{
 				Core::Log(ErrorType::Error,"CalculateBytesPerPixel invalid type.Type = ",(uint32_t)format);
@@ -62,11 +64,14 @@ uint32_t CalculateBytesPerPixel(VkFormat format){
 
 	}
 
-	Texture::Texture(Context context,VkFormat format,VkImage image){
+	Texture::Texture(Context context,VkFormat format,VkImage image,VkExtent2D extent){
 		m_Context = context;
 		m_Image = image;
 		m_TextureType = TextureType::SwapChainImage;
 		m_AspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		m_Width = extent.width;
+		m_Height  = extent.height;
+		m_ChannelCount = CalculateBytesPerPixel(format);
 		CreateView(format,m_AspectMask,m_Context->Device);
 	}
 	Texture::Texture(Texture* texture, uint32_t TextureIndex){
@@ -113,14 +118,13 @@ bool Texture::WriteToFile(const std::string& path){
 
 	BufferDesc desc{};
 	desc.Device = m_Context->Device;
-	desc.Memoryflags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	desc.Memoryflags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 	desc.Physdevice = m_Context->PDevice;
 	desc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
 	desc.Usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	desc.SizeBytes = m_ChannelCount*m_Width*m_Height;
 
 	Buffer staggingBuffer(desc);
-
 	VkCommandBuffer commandBuffer =  CommandBuffer::StartSingleUseCommandBuffer(m_Context,m_Context->CommandPool);
 
 	VkBufferImageCopy region{};
@@ -136,7 +140,7 @@ bool Texture::WriteToFile(const std::string& path){
 
 	TrasitionFormat(true,m_Layout,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,commandBuffer);
 	vkCmdCopyImageToBuffer(commandBuffer,m_Image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,*staggingBuffer.GetBuffer(),1,&region);
-	TrasitionFormat(true,m_Layout,oldLayout,commandBuffer);
+	TrasitionFormat(true,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,commandBuffer);
 
 
 	CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_Context->CommandPool,commandBuffer);
@@ -158,8 +162,8 @@ void Texture::TrasitionFormat(bool Write,VkImageLayout OldLayout, VkImageLayout 
 	barrier.oldLayout = OldLayout;
 	barrier.newLayout = NewLayout;
 	barrier.image = m_Image;
-	barrier.dstQueueFamilyIndex = m_Context->QueueFamil.Graphics;
-	barrier.srcQueueFamilyIndex = m_Context->QueueFamil.Graphics;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.subresourceRange.aspectMask = m_AspectMask;
 	barrier.subresourceRange.levelCount = 1;
 	barrier.subresourceRange.baseMipLevel = 0;
@@ -186,10 +190,9 @@ void Texture::TrasitionFormat(bool Write,VkImageLayout OldLayout, VkImageLayout 
 
 	}
 
-	
 
 	vkCmdPipelineBarrier(CommandBuffer, SourceStage, DstStage, 0, 0, 0, 0, 0, 1, &barrier);
-	m_Layout = NewLayout;
+	m_Layout = NewLayout;	
 
 }
 
@@ -240,6 +243,7 @@ Texture::~Texture()
 
 void Texture::CreateImageAndView(VkFormat Format,VkSharingMode ShareMode,VkImageTiling ImageTilling,VkImageUsageFlags UsageFlags,VkMemoryPropertyFlags MemoryPropertyFlags,VkImageLayout InitialImageLayout,VkImageAspectFlagBits aspectFlagBits)
 {	
+	m_ImageFormat = Format;
 	m_AspectMask = aspectFlagBits;
 
 	VkImageCreateInfo imagecreateinfo{};
@@ -329,7 +333,6 @@ unsigned char* Texture::LoadTextureDataFromFile(std::string Path,uint64_t* Width
 void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTiling imageTilling,VkImageUsageFlags usageFlags,VkMemoryPropertyFlags memoryPropertyFlags,VkImageLayout initLayout, VkImageLayout finalLayout,void* initData,VkImageAspectFlagBits aspectFlagBits)
 {
 	static float Anisotropy{ 0 };
-
 	
 	VkDeviceSize texturesize = m_Width * m_Height * CalculateBytesPerPixel(format);
 	//create stagging buffer
@@ -378,7 +381,7 @@ void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTilin
 	samplercreateinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplercreateinfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplercreateinfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	samplercreateinfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
+	samplercreateinfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	samplercreateinfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	samplercreateinfo.unnormalizedCoordinates = false;
 	samplercreateinfo.compareOp = VK_COMPARE_OP_ALWAYS;
@@ -439,8 +442,8 @@ void Texture::CopyDataFromBuffer(VkCommandBuffer CommandBuffer,VkBuffer BufferSr
 {
 	VkBufferImageCopy region{  };
 	region.bufferOffset = 0;
-	region.bufferRowLength = m_Width;
-	region.bufferImageHeight =m_Height;
+	region.bufferRowLength = 0;
+	region.bufferImageHeight =0;
 
 	region.imageExtent.width = m_Width;
 	region.imageExtent.height = m_Height;
