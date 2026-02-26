@@ -43,5 +43,7 @@ struct SwapChainDetails{
         Float2 ToNDC(const Float2& pos);
         Float2 ToScreenPixels(const Float2& pos);
         
+
+        bool IsShaderExtension(const std::string& extension);
     }
 

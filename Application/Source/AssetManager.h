@@ -230,18 +230,26 @@ public:
 	void FreeAssetsPerma();
 
 	void Shutdown();
+	#ifdef DEBUG
 	~AssetManager();
+	#else
+	~AssetManager() = delete;
+	#endif
+	
 private:
 	void LoadFont(const std::string& FilePath,const std::string& fileName);
 	void LoadAnimation(const std::string& FolderPath,const std::string& fileName);
 	void LoadTexture(const std::string& filePath,const std::string& fileName);
 	void LoadTextureAtlas(const std::string& filePath,const std::string& fileName);
+	void LoadShader(const std::string& filePath,const std::string& fileName);
 
 	std::unordered_map<GUUID, AssetHandle> m_Resources{};
 	std::vector<GUUID> m_PermaAssets{};
 	std::unordered_map<AssetType, uint64_t> m_ResourceCount;
 
-
+	#ifdef DEBUG
+		bool m_ShutDown{false};
+	#endif
 
 	Application* m_APP{};
 };

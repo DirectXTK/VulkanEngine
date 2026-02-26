@@ -19,7 +19,8 @@ struct PipelineDesc {
 	VkPrimitiveTopology Topology{VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST};
 	bool Blending{true};
 
-	Shader* Shaders{};
+	VkShaderModule* ShaderModules{};
+	VkShaderStageFlagBits* ShaderStages{};
 	uint32_t ShaderCount{};
 };
 

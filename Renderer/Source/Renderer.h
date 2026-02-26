@@ -21,6 +21,8 @@
 #include "AssetManager.h"
 #include "FontSystem.h"
 
+#include "Particle.h"
+
 class InputSystem;
 class AssetManager;
 struct Vertex{
@@ -70,6 +72,8 @@ public:
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
     void DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureID=0);
+
+    void DrawParticle(const Float2& pos,const Float4 color,const Float2 size,GUUID textureID);
 
     void SetCurrentFont(Asset<Font> CurrentAsset);
     Asset<Font> GetCurrentFont(){return m_CurrentFont;}
@@ -223,6 +227,8 @@ private:
     bool IsExtensionsSupported(std::vector<const char*> extensions);
     void CreateSamaphore();
 
+    std::vector<Asset<Shader>> m_CurrentlyLoadedShaders{};
+
     //One frame data
     //Vertices for quads
     Vertex* m_VerticesQuad{};
@@ -273,6 +279,10 @@ private:
     //Text
     Asset<Font> m_CurrentFont{};
 
+    //Particle system
+    uint32_t m_MaxParticleCount{};
+    InstanceParticleData* m_Particles{};
+    uint32_t m_CurrentParticleIndex{};
 
 
 
@@ -306,7 +316,7 @@ private:
     //Shutdown
     bool m_ShutDown{false};
     //Queue changes
-    std::vector<Shader> m_QueuedShaders{};
+    std::vector<Asset<Shader>> m_QueuedShaders{};
 
 
     AssetManager* m_AssetManager{}; 

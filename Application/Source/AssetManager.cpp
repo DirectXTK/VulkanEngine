@@ -18,6 +18,7 @@ void AssetHandle::FreePermaHandle(){
 		case AssetType::TEXTURE: {delete (Texture*)Data;break;}	
 		case AssetType::TEXTUREATLAS: {delete (Texture*)Data;break;}	
 		case AssetType::ANIMATION: {delete (Animator*)Data;break;}	
+		case AssetType::SHADER: {delete (Shader*)Data;break;}	
 	
 		default : {Core::Log("FreePermaHandle type ",(uint32_t)Type," not implemented.");}
 		}
@@ -97,6 +98,19 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		}
 		break;
 	}
+	case AssetType::SHADER:{
+		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
+			std::string currentFile = dir_entry.path().string();
+			std::string fileExtension = Core::GetFileExtension(currentFile);	
+			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+
+			if(Core::IsShaderExtension(fileExtension)){
+				LoadShader(currentFile,fileName);
+			}
+
+		}
+		break;
+	}
 
 	default: {
 		Core::Log(ErrorType::Error, "Invalid AssetType.");
@@ -107,6 +121,14 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 
 
 }
+}
+void AssetManager::LoadShader(const std::string& filePath,const std::string& fileName){
+	auto it = m_Resources.find(fileName);
+	if(it != m_Resources.end())
+		return;
+	Shader* shader = new Shader(filePath,Application::GetRenderer()->GetContext()->Device);
+	LoadAssetPerma<Shader>(shader,AssetType::SHADER,fileName);
+	
 }
 	
 void AssetManager::DebugStatistics(bool GUI){
@@ -150,6 +172,11 @@ void AssetManager::DebugStatistics(bool GUI){
 			}
 				case AssetType::ANIMATION:{
 				Core::Log("Animation ID{",handle.ID.ID,"}"+debugStuff);
+
+				break;
+			}
+				case AssetType::SHADER:{
+				Core::Log("Shader ID{",handle.ID.ID,"}"+debugStuff);
 
 				break;
 			}
@@ -253,9 +280,17 @@ void AssetManager::Shutdown(){
 		#endif
 		
 	}
+	#ifdef DEBUG
+	 m_ShutDown = true;
+	 #endif
 	m_Resources.clear();
 }
 AssetManager::~AssetManager(){
+	#ifdef DEBUG
+	if(!m_ShutDown)
+		Core::Log("You needed to shutdown the manager manually");
+	#endif
+
 	Shutdown();
 }
 

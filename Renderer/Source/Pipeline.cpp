@@ -130,8 +130,8 @@ VkPipeline Pipeline::CreatePipeline(const PipelineDesc& desc,VkDevice device)
         shaderStages[i]= {};
         shaderStages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shaderStages[i].pName = "main";
-        shaderStages[i].module = desc.Shaders[i].GetShaderModule();
-        shaderStages[i].stage = desc.Shaders[i].GetShaderStage();
+        shaderStages[i].module = desc.ShaderModules[i];
+        shaderStages[i].stage = desc.ShaderStages[i];
 
     }
 

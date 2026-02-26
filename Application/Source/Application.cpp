@@ -144,6 +144,9 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
      m_InputSystem.Init(m_Window->GetHandle());
 
+   
+
+
      m_Renderer = new Renderer(desc, m_Window->GetHandle(), &m_InputSystem,&m_AssetManager);
 
      m_AssetManager.Init(this);
@@ -151,13 +154,15 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
      //Init a* path finding algorith system
     // m_PathFinderSystem = new PathSystem(1000,1000,{0.025f,0.025f});
 
+    m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::TEXTURE);
+     m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::SHADER);
      m_Renderer->InitializePipeline(500);
 
      m_FontSystem = new FontSystem();
 
      m_GUIRenderer = new GUIRenderer(this, false);
 
-     m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::TEXTURE);
+   
 
      m_PickBuffer = new Float2[m_Renderer->GetViewPortExtent().width*m_Renderer->GetViewPortExtent().height];
      m_PickBufferSize = m_Renderer->GetViewPortExtent().width*m_Renderer->GetViewPortExtent().height*sizeof(Float2);
@@ -228,6 +233,7 @@ void Application::Shutdown(){
     app->m_Running = false;
     app->m_Renderer->FinishExecution();
 
+    
     app->DeleteApplication();
 }
 void Application::QueueShutDown(){

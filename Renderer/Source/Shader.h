@@ -26,6 +26,8 @@ class Shader{
     VkShaderModule m_Module{nullptr};
     VkDevice m_Device{};
     ShaderDesc m_Desc{};
+    //for hot reloading.
+    double m_LastModified{};
 
 
 };

@@ -62,6 +62,17 @@ namespace Core{
             Core::Log(ErrorType::Error,"Failed to find supported format.");
             return VK_FORMAT_UNDEFINED;
         }
-      
+        bool IsShaderExtension(const std::string& extension){
+            if(extension == "fragS")
+                return true;
+            else if(extension == "vertS")
+                return true;
+            else if(extension == "geomS")
+                return true;
+            #ifdef DEBUG
+                Core::Log("Extension is incorrect, invalid or unsupported{",extension,"}");
+            #endif
+            return false;
+        }
 
 }

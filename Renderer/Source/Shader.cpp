@@ -201,7 +201,7 @@ TBuiltInResource DefaultTBuiltInResource = {
                 break;
             }
             default :{
-                Core::Log(ErrorType::Error,"Invalid type{GetShaderState}:",(uint32_t)m_Desc.Type);
+                Core::Log(ErrorType::Error,"Invalid type{GetShaderStage}:",(uint32_t)m_Desc.Type);
                 break;
             }
         }

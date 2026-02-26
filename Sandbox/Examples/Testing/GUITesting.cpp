@@ -25,62 +25,33 @@ void GUITestingLayer::OnCreate() {
 	if(asset2){
 		asset2.GetData()->WriteToFile("OutputTexture.png");
 	}
+
+   Renderer* renderer = Application::GetRenderer();
+
+
 }
 void GUITestingLayer::OnUpdate(double deltatime)
 {
    Renderer* renderer = Application::GetRenderer();
-
    if(animator)
    {
    		renderer->DrawQuad({0.0f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},animator,0);
    		animator.Update(deltatime);
    }
-	namespace fs = std::filesystem;
 
-	static double lastmod1{};
-	static double lastmod2{};
-	std::string file1="EngineResources/Shaders/Pixel.fragS";
-	std::string file2="EngineResources/Shaders/Vertex.vertS";
+   auto frag = Application::GetAsset<Shader>("Shaders/ParticleF");
+   if(frag)
+  	renderer->QueueShaderChange(frag);
 
-
-	auto ftime = fs::last_write_time(file1);
-
-	auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(ftime - fs::file_time_type::clock::now()+std::chrono::system_clock::now());
-
-	std::time_t lastmodified= std::chrono::system_clock::to_time_t(sctp);
-
- 
-
+	auto vert= Application::GetAsset<Shader>("Shaders/ParticleV");
+   if(vert)
+   	renderer->QueueShaderChange(vert);
 
 }
 void GUITestingLayer::OnRender(double deltime){
    Renderer* renderer = Application::GetRenderer();
 
-   //renderer->DrawQuad({0.1f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},Core::GetStringHash("GUI/CheckBoxTrue"),0);
-  // renderer->DrawQuad({0.2f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},Core::GetStringHash("GUI/CheckBoxFalse"),0);
-   //renderer->DrawQuad({0.3f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},Core::GetStringHash("Textures/Examples/BLOOD_KNIGHT"),0);
-     Vertex vertex[4]{};
-   vertex[0].Position = {0.0f,0.0f,0.0f};
-   vertex[1].Position = {0.0f,1.0f,0.0f};
-   vertex[2].Position = {1.0f,1.0f,0.0f};
-   vertex[3].Position = {1.0f,0.0f,0.0f};
 
-   vertex[0].Color = {1.0f,1.0f,1.0f,1.0f};
-   vertex[1].Color = {1.0f,1.0f,1.0f,1.0f};
-   vertex[2].Color = {1.0f,1.0f,1.0f,1.0f};
-   vertex[3].Color = {1.0f,1.0f,1.0f,1.0f};
-
-   vertex[0].TextureID = 0;
-   vertex[1].TextureID = 0;
-   vertex[2].TextureID = 0;
-   vertex[3].TextureID = 0;
-
-   vertex[0].TexCoords = { 0.0f,1.0f };
-   vertex[1].TexCoords = { 0.0f,0.0f };
-   vertex[2].TexCoords = { 1.0f,0.0f };
-   vertex[3].TexCoords = { 1.0f,1.0f };
-
-	renderer->DrawVertices(vertex,4);
 }
 void GUITestingLayer::OnEvent(Event& event){
 	if(event.GetEventType() == EventType::MOUSE){

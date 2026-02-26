@@ -57,6 +57,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     m_SwapChainDetails = m_SwapChain->GetSwapChainCapabilities();
     m_SwapChain->CreateSwapChain(MAX_FRAME_DRAWS);
 
+    //Allocation 
+    m_Particles = new InstanceParticleData[m_MaxParticleCount];
    
     BufferDesc UniformBufferDesc{};
     UniformBufferDesc.Device = m_Device;
@@ -238,12 +240,24 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
     CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_Context->CommandPool,commandBuffer);
 
-
  }
     void Renderer::OnWindowResize(uint32_t width,uint32_t height){
         m_ResizeWindow=true;
         m_NewWindowSize ={(float)width,(float)height};
     }
+void Renderer::DrawParticle(const Float2& pos,const Float4 color,const Float2 size,GUUID textureID){
+
+    m_Particles[m_CurrentParticleIndex].ParticlePos[0] = {pos.x-size.x,pos.y-size.y};
+    m_Particles[m_CurrentParticleIndex].ParticlePos[1] = {pos.x-size.x,pos.y+size.y};
+    m_Particles[m_CurrentParticleIndex].ParticlePos[2] = {pos.x+size.x,pos.y+size.y};
+    m_Particles[m_CurrentParticleIndex].ParticlePos[3] = {pos.x+size.x,pos.y-size.y};
+
+    m_Particles[m_CurrentParticleIndex].Color = color;
+    m_Particles[m_CurrentParticleIndex].Color = color;
+    m_Particles[m_CurrentParticleIndex].Color = color;
+    m_Particles[m_CurrentParticleIndex].Color = color;
+
+}
 void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureID){
     if(!vertices)
         return;
@@ -301,23 +315,33 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
      m_PipelineDesc.Viewport.minDepth =0.0f;
      m_PipelineDesc.Viewport.maxDepth =0.0f;
 
-    std::string defaultShaderPaths[] = { {"EngineResources/Shaders/Vertex.vertS"},{"EngineResources/Shaders/Pixel.fragS"}};
-
-    std::vector<Shader> Shaders{};
-    Shaders.reserve(2);
-
-    Shaders.emplace_back(defaultShaderPaths[0],m_Device);
-    Shaders.emplace_back(defaultShaderPaths[1],m_Device);
-
-    m_LoadedShaderPaths.push_back(defaultShaderPaths[0]);
-    m_LoadedShaderPaths.push_back(defaultShaderPaths[1]);
+    std::string defaultShaderPaths[] = { {"Shaders/DefaultPixel"},{"Shaders/DefaultVertex"}};
 
 
-    m_PipelineDesc.ShaderCount =Shaders.size();
-    m_PipelineDesc.Shaders = Shaders.data();
+    for(uint32_t i=0;i < ARRAYSIZE(defaultShaderPaths);i++){
+        auto shaderAsset = m_AssetManager->GetAsset<Shader>(defaultShaderPaths[i]);
+        if(!shaderAsset){
+
+            Core::Log(ErrorType::FatalError,"Default shader are non existent or provided with bad path");
+            //TODO dispatch event to shutdown application can't continue forwards.
+        }
+        m_CurrentlyLoadedShaders.push_back(shaderAsset);
+
+    }
+
+    m_PipelineDesc.ShaderCount =m_CurrentlyLoadedShaders.size();
+    m_PipelineDesc.ShaderModules = new VkShaderModule[m_CurrentlyLoadedShaders.size()];
+    m_PipelineDesc.ShaderStages = new VkShaderStageFlagBits[m_CurrentlyLoadedShaders.size()];
+    for(uint32_t i=0;i < m_CurrentlyLoadedShaders.size();i++){
+        m_PipelineDesc.ShaderModules[i] = m_CurrentlyLoadedShaders[i].GetData()->GetShaderModule();
+        m_PipelineDesc.ShaderStages[i] = m_CurrentlyLoadedShaders[i].GetData()->GetShaderStage();
+    }
 
 
     ReCreatePipeline(m_PipelineDesc);
+    m_LoadedShaderPaths.clear();
+    delete[] m_PipelineDesc.ShaderStages;
+    delete[] m_PipelineDesc.ShaderModules;
  }
     void Renderer::ResizeWindow(){
             vkDeviceWaitIdle(m_Device);
@@ -1475,17 +1499,19 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
             }
         }
 
-        std::vector<Shader> shaders{};
-        shaders.reserve(m_LoadedShaderPaths.size());
-        for(uint32_t i=0;i < m_LoadedShaderPaths.size();i++){
-            shaders.emplace_back(m_LoadedShaderPaths[i],m_Device);
+
+        m_PipelineDesc.ShaderCount = m_CurrentlyLoadedShaders.size();
+        m_PipelineDesc.ShaderModules= new VkShaderModule[m_CurrentlyLoadedShaders.size()];
+        m_PipelineDesc.ShaderStages= new VkShaderStageFlagBits[m_CurrentlyLoadedShaders.size()];
+        for(uint32_t i=0 ;i < m_CurrentlyLoadedShaders.size();i++){
+
+            m_PipelineDesc.ShaderModules[i] = m_CurrentlyLoadedShaders[i].GetData()->GetShaderModule();
+            m_PipelineDesc.ShaderStages[i] = m_CurrentlyLoadedShaders[i].GetData()->GetShaderStage();
         }
 
-        m_PipelineDesc.ShaderCount = m_LoadedShaderPaths.size();
-        m_PipelineDesc.Shaders = shaders.data();
-
         ReCreatePipeline(m_PipelineDesc);
-
+        delete[] m_PipelineDesc.ShaderStages;
+        delete[] m_PipelineDesc.ShaderModules;
     }
    void Renderer::ReCreatePipeline(const PipelineDesc& desc){
 
@@ -1641,32 +1667,42 @@ void Renderer::QueueShaderChange(const std::string& path){
         Core::Log(ErrorType::Warning,"Reached maximum queued shader.{QueueShader::Change}",m_QueuedShaders.capacity(),m_QueuedShaders.size());
         return;
     }
-    m_QueuedShaderPaths.push_back(path);
-    m_QueuedShaders.emplace_back(path,m_Device);
+    Core::Log(ErrorType::Error,"Currently not implemented");
 }
 void Renderer::QueueShaderChange(Asset<Shader> shaderAsset){
-
-
+    if(m_QueuedShaders.capacity() == m_QueuedShaders.size())
+    {
+        Core::Log(ErrorType::Warning,"Reached maximum queued shader.{QueueShader::Change}",m_QueuedShaders.capacity(),m_QueuedShaders.size());
+        return;
+    }
+    m_QueuedShaderPaths.push_back("None provided");
+    m_QueuedShaders.push_back(shaderAsset);
 }
 void Renderer::RunRendererChangeQueue(){
     if(m_QueuedShaders.size() == 0)
         return;
     vkDeviceWaitIdle(m_Device);
 
-    
+    m_CurrentlyLoadedShaders.clear();
+
     m_PipelineDesc.ShaderCount =m_QueuedShaders.size();
-    m_PipelineDesc.Shaders =m_QueuedShaders.data();
+    m_PipelineDesc.ShaderModules = new VkShaderModule[m_QueuedShaders.size()];
+    m_PipelineDesc.ShaderStages = new VkShaderStageFlagBits[m_QueuedShaders.size()];
+    for(uint32_t i=0;i < m_QueuedShaders.size();i++){
+        m_PipelineDesc.ShaderModules[i] =m_QueuedShaders[i].GetData()->GetShaderModule();
+        m_PipelineDesc.ShaderStages[i] = m_QueuedShaders[i].GetData()->GetShaderStage();
+        m_CurrentlyLoadedShaders.push_back(m_QueuedShaders[i]);
+    }
+
     ReCreatePipeline(m_PipelineDesc);
 
-    m_LoadedShaderPaths.clear();
-    for(uint32_t i =0;i < m_QueuedShaderPaths.size();i++)
-        m_LoadedShaderPaths.push_back(m_QueuedShaderPaths[i]);
 
 
     m_QueuedShaders.clear();
     m_QueuedShaderPaths.clear();
     m_QueuedShaders.reserve(20);
-    
+   delete[] m_PipelineDesc.ShaderModules;
+   delete[] m_PipelineDesc.ShaderStages;
 }
 void Renderer::DrawGUIBatch()
 {
@@ -1675,7 +1711,7 @@ void Renderer::DrawGUIBatch()
 }
 void Renderer::Shutdown(){
     if(m_ShutDown)
-        return;
+        return; 
     m_ShutDown = true;
     vkDeviceWaitIdle(m_Device);
 
@@ -1753,6 +1789,7 @@ void Renderer::Shutdown(){
     delete[] m_VerticesQuad;
     delete[] m_Vertices;
     delete[] m_VerticesGUI;  
+    delete[] m_Particles;
 
 }
 void Renderer::FinishExecution(){
@@ -1761,5 +1798,7 @@ void Renderer::FinishExecution(){
     m_Textures->clear();
     m_CurrentFont.~Asset();
     m_CurrentFont= Asset<Font>();
+    m_CurrentlyLoadedShaders.clear();
+    
 }
 
