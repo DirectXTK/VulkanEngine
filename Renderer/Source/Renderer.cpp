@@ -146,6 +146,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
      //Buffer* vertexdwadad = new Buffer(VertexBufferDesc);
     m_VerticesGUI = new Vertex[m_VertexMaxCountGUI];
+    m_VerticesQuad = new Vertex[m_VertexCount];
     m_Vertices = new Vertex[m_VertexCount];
 
     BufferDesc StaggingBufferDesc{};
@@ -191,9 +192,14 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
 
-    m_IndexBuffers.push_back(new Buffer(IndexBufferDesc));
+    m_IndexBuffersQuad = new Buffer(IndexBufferDesc);
+    m_IndexBufferVertices =new Buffer(IndexBufferDesc);
 
-    m_IndexBuffers[0]->UploadToBuffer(m_Device, m_Indices, uint64_t(m_VertexCount * 1.5 * sizeof(uint32_t)));
+    m_IndexBuffersQuad->UploadToBuffer(m_Device, m_Indices, 0);
+    for (int i = 0; i < m_VertexCount * 1.5; i++) {
+        m_Indices[i] = i;
+     }
+    m_IndexBufferVertices->UploadToBuffer(m_Device,m_Indices,0);
     delete[] m_Indices;
 
     //VkFormat format2 = Core::ChooseBestFormat(m_PhysicalDevice,{ VK_FORMAT_R32G32_UINT },VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -224,11 +230,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_DescriptorSetCamera[i].WriteTo(0,1,*m_UniformBuffer[i]->GetBuffer(),sizeof(UniformCameraBufferData));
 
     }
-    VkPhysicalDeviceProperties props;
-    vkGetPhysicalDeviceProperties(m_PhysicalDevice, &props);
-
-    Core::Log("MinUniformBufferOffestalign",props.limits.minUniformBufferOffsetAlignment);
-    Core::Log("SizeOfUniform",sizeof(UniformCameraBufferData));
 
     //Make swapchain image layout present
     VkCommandBuffer commandBuffer =CommandBuffer::StartSingleUseCommandBuffer(m_Context,m_Context->CommandPool);
@@ -243,7 +244,27 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_ResizeWindow=true;
         m_NewWindowSize ={(float)width,(float)height};
     }
+void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureID){
+    if(!vertices)
+        return;
+    if (m_VertexPointerQuad + vertexCount > m_VertexCount )
+        FlushGeometry();
+    if(textureID != 0){
+    auto textures = m_Textures[m_CurrentFrame];
+    auto index = textures.find(textureID);
+    if(index == textures.end()){
 
+          if(textures.size() >= m_TextureSlotCount)
+                FlushGeometry();    
+            textures[textureID] = {m_AssetManager->GetAsset<Texture>(textureID),m_CurrentTextureDescriptorSetOffset};
+            m_CurrentTextureDescriptorSetOffset++;
+    }
+    }
+    
+    memcpy(&m_Vertices[m_VertexPointerQuad],vertices,sizeof(Vertex)*vertexCount);   
+
+    m_VertexPointerQuad+=vertexCount;
+}
  void Renderer::InitializePipeline(uint64_t MaxTextureCount)
  {
     //reserve size for queued shaders
@@ -352,18 +373,20 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_DrawCallCountGeometry =0;
             m_DrawCallCountOutlines = 0;
             m_VertexCountRemaining = m_VertexCount;
-            m_CurrentVertexBufferIndex = 0;
+            m_CurrentVertexBufferQuadIndex = 0;
             m_VertexBufferOffset = 0;
             m_VertexCountPerDrawCall = 0;
             m_VertexBufferOffsetGUI =0;
             m_VertexGUIRemaining = m_VertexMaxCountGUI;
             m_CurrentVertexBufferIndexGUI =0;
 
+            m_CurrentVertexBufferIndex = 1;
+
             m_VertexCount = m_RendererDesc.VertexCountPerDrawCall;
 
             //Swap back to normal
-            Vertex* temp = m_Vertices;
-            m_Vertices = m_VerticesGUI;
+            Vertex* temp = m_VerticesQuad;
+            m_VerticesQuad = m_VerticesGUI;
             m_VerticesGUI = temp;
 
     }
@@ -464,20 +487,19 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     {
 
         FlushGeometry();
-        m_StaggingBufferGeometry[m_CurrentVertexBufferIndex]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexPointer);
+        m_StaggingBufferGeometry[m_CurrentVertexBufferQuadIndex]->UploadToBuffer(m_Device, m_VerticesQuad, sizeof(Vertex) * m_VertexPointerQuad);
           
      
        m_GUIRendering = true;
          
         
-        m_VertexPointer =0;
+        m_VertexPointerQuad =0;
         m_VertexCount = m_VertexMaxCountGUI;
 
         //Swap the buffers to allow normal rendering;
-        Vertex* temp = m_Vertices;
-      //  m_Vertices = m_VerticesGUI;
-     //   m_VerticesGUI = temp;
-       // memset(m_Vertices,0,sizeof(Vertex)*m_VertexCount);
+        Vertex* temp = m_VerticesQuad;
+        m_VerticesQuad = m_VerticesGUI;
+        m_VerticesGUI = temp;
     }
 
 
@@ -507,7 +529,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 Texture* texture = (Texture*)textureData.texture.GetData();
 
                 if(texture->GetImageLayout() == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                //ONLY HAPPENS then using loaded textures
                    m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(textureData.Index,1 ,texture->GetImageView(), texture->GetSampler());
                    
                    else
@@ -524,24 +545,24 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             }
         }
 
-        m_DrawCommandsGUI.push_back({ m_VertexPointer-m_VertexBufferOffsetGUI,m_CurrentVertexBufferIndexGUI,m_VertexBufferOffsetGUI,m_DrawCallCountGUI + m_DrawCallCountGeometry });
+        m_DrawCommandsGUI.push_back({ m_VertexPointerQuad-m_VertexBufferOffsetGUI,m_CurrentVertexBufferIndexGUI,m_VertexBufferOffsetGUI,m_DrawCallCountGUI + m_DrawCallCountGeometry });
 
-        m_VertexCountPerDrawCall += m_VertexPointer;
-        if (m_VertexPointer >= m_VertexGUIRemaining) {
-           m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
+        m_VertexCountPerDrawCall += m_VertexPointerQuad;
+        if (m_VertexPointerQuad >= m_VertexGUIRemaining) {
+           m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_VerticesQuad, sizeof(Vertex) * m_VertexMaxCountGUI);
             if(m_VertexCountPerDrawCall >=m_VertexBufferGUI.size()*m_VertexMaxCountGUI )
                  CreateNewBufferForBatch(m_VertexBufferGUI, m_StaggingBufferGUI);
             m_CurrentVertexBufferIndexGUI++;
             m_VertexGUIRemaining = m_VertexMaxCountGUI;
             m_VertexBufferOffsetGUI = 0;
-            m_VertexPointer=0;
+            m_VertexPointerQuad=0;
         }
         else {
-            m_VertexGUIRemaining -= (m_VertexPointer-m_VertexBufferOffsetGUI);
+            m_VertexGUIRemaining -= (m_VertexPointerQuad-m_VertexBufferOffsetGUI);
         }
        
 
-        m_VertexBufferOffsetGUI+=(m_VertexPointer-m_VertexBufferOffsetGUI);
+        m_VertexBufferOffsetGUI+=(m_VertexPointerQuad-m_VertexBufferOffsetGUI);
         m_VertexCount = m_VertexGUIRemaining;
 
         m_DrawCallCountGUI++;
@@ -557,7 +578,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             FlushGUI();
             return;
         }   
-        return;
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
         auto& textures = m_Textures[m_CurrentFrame];
     
@@ -583,27 +603,27 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         }
 
 
-        m_DrawCommandsGeometry.push_back({ m_VertexPointer-m_VertexBufferOffset,m_CurrentVertexBufferIndex,m_VertexBufferOffset,m_DrawCallCountGUI + m_DrawCallCountGeometry });
-        m_VertexCountPerDrawCall += m_VertexPointer;
-        if (m_VertexPointer >= m_VertexCountRemaining) {
-            m_StaggingBufferGeometry[m_CurrentVertexBufferIndex]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexCount);
+        m_DrawCommandsGeometry.push_back({ m_VertexPointerQuad-m_VertexBufferOffset,m_CurrentVertexBufferQuadIndex,m_VertexBufferOffset,m_DrawCallCountGUI + m_DrawCallCountGeometry });
+        m_VertexCountPerDrawCall += m_VertexPointerQuad;
+        if (m_VertexPointerQuad >= m_VertexCountRemaining) {
+            m_StaggingBufferGeometry[m_CurrentVertexBufferQuadIndex]->UploadToBuffer(m_Device, m_VerticesQuad, sizeof(Vertex) * m_VertexCount);
          
             if(m_VertexCountPerDrawCall >=m_VertexBufferGeometry.size()*m_VertexCount ){
                  CreateNewBufferForBatch(m_VertexBufferGeometry, m_StaggingBufferGeometry);
             }
-            m_CurrentVertexBufferIndex++;
+            m_CurrentVertexBufferQuadIndex++;
             m_VertexCountRemaining = m_VertexCount;
             m_VertexBufferOffset = 0;
-            m_VertexPointer = 0;
+            m_VertexPointerQuad = 0;
 
             
         }
         else {
-            m_VertexCountRemaining -= (m_VertexPointer-m_VertexBufferOffset);
+            m_VertexCountRemaining -= (m_VertexPointerQuad-m_VertexBufferOffset);
 
         }
 
-            m_VertexBufferOffset += (m_VertexPointer-m_VertexBufferOffset);
+            m_VertexBufferOffset += (m_VertexPointerQuad-m_VertexBufferOffset);
 
 
             m_DrawCallCountGeometry++;
@@ -629,7 +649,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
                         
                         
-                        m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_Vertices, sizeof(Vertex) * m_VertexMaxCountGUI);
+                        m_StaggingBufferGUI[m_CurrentVertexBufferIndexGUI]->UploadToBuffer(m_Device, m_VerticesQuad, sizeof(Vertex) * m_VertexMaxCountGUI);
                         region.size = sizeof(Vertex)*m_VertexMaxCountGUI;
                         
                         FlushGUI();
@@ -689,7 +709,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                  Core::Log(ErrorType::Error, "Failed to queue present ",(int)result);
             }
 
-              m_VertexPointer =0;
+              m_VertexPointerQuad =0;
 
                m_Textures[m_CurrentFrame].clear();
             m_TextureIDByOrder[m_CurrentFrame].clear();
@@ -703,13 +723,13 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             m_GUIRendering = false;
 
             m_CurrentCameraDescriptorSetOffset =0;
-            m_CurrentTextureDescriptorSetOffset =1;
+            m_CurrentTextureDescriptorSetOffset= 1;
 
 
-            memset(m_Vertices,0,sizeof(Vertex)*m_VertexCount);
+            memset(m_VerticesQuad,0,sizeof(Vertex)*m_VertexCount);
             m_VertexBufferOffsetGUI =0;
             m_VertexBufferOffset =0;
-            m_VertexPointer = 0;
+            m_VertexPointerQuad = 0;
             m_CurrentVertexBufferIndexGUI=0;;
             m_VertexGUIRemaining=m_VertexMaxCountGUI;
 
@@ -735,7 +755,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         //texture map gets current container
         auto& textures = m_Textures[m_CurrentFrame];
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
-        if (m_VertexPointer + 4 > m_VertexCount )
+        if (m_VertexPointerQuad + 4 > m_VertexCount )
             FlushGeometry();
 
         if (TextureHandle != 0) {
@@ -747,10 +767,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                 case AssetType::TEXTURE: {
                     CurrentTextureHandle = TextureHandle;
 
-                    m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
-                    m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
-                    m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,0.0f };
-                    m_Vertices[m_VertexPointer + 3].TexCoords = { 1.0f,1.0f };
+                    m_VerticesQuad[m_VertexPointerQuad].TexCoords = { 0.0f,1.0f };
+                    m_VerticesQuad[m_VertexPointerQuad + 1].TexCoords = { 0.0f,0.0f };
+                    m_VerticesQuad[m_VertexPointerQuad + 2].TexCoords = { 1.0f,0.0f };
+                    m_VerticesQuad[m_VertexPointerQuad + 3].TexCoords = { 1.0f,1.0f };
                     break;
                 }
                 case AssetType::TEXTUREATLAS:{
@@ -759,15 +779,15 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     CurrentTextureHandle = TextureHandle;
                     if(TextureIndex < texture->GetTextureCount()){
 
-                         m_Vertices[m_VertexPointer].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[0];
-                         m_Vertices[m_VertexPointer + 1].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[1];
-                         m_Vertices[m_VertexPointer + 2].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[2];
-                         m_Vertices[m_VertexPointer + 3].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[3];
+                         m_VerticesQuad[m_VertexPointerQuad].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[0];
+                         m_VerticesQuad[m_VertexPointerQuad + 1].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[1];
+                         m_VerticesQuad[m_VertexPointerQuad + 2].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[2];
+                         m_VerticesQuad[m_VertexPointerQuad + 3].TexCoords = texture->GetTextureCoords(TextureIndex)->Coords[3];
                     }else{
-                          m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
-                          m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
-                          m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,0.0f };
-                          m_Vertices[m_VertexPointer + 3].TexCoords = { 1.0f,1.0f };
+                          m_VerticesQuad[m_VertexPointerQuad].TexCoords = { 0.0f,1.0f };
+                          m_VerticesQuad[m_VertexPointerQuad + 1].TexCoords = { 0.0f,0.0f };
+                          m_VerticesQuad[m_VertexPointerQuad + 2].TexCoords = { 1.0f,0.0f };
+                          m_VerticesQuad[m_VertexPointerQuad + 3].TexCoords = { 1.0f,1.0f };
                     }
                      break;
                 }
@@ -799,42 +819,42 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     TextureID = index->second.Index;
                 }
                 uint32_t RendererTextureIndex = textures[CurrentTextureHandle].Index;
-                m_Vertices[m_VertexPointer].TextureID = TextureID;
-                m_Vertices[m_VertexPointer + 1].TextureID = TextureID;
-                m_Vertices[m_VertexPointer + 2].TextureID = TextureID;
-                m_Vertices[m_VertexPointer + 3].TextureID = TextureID;  
+                m_VerticesQuad[m_VertexPointerQuad].TextureID = TextureID;
+                m_VerticesQuad[m_VertexPointerQuad + 1].TextureID = TextureID;
+                m_VerticesQuad[m_VertexPointerQuad + 2].TextureID = TextureID;
+                m_VerticesQuad[m_VertexPointerQuad + 3].TextureID = TextureID;  
         }else{
-                m_Vertices[m_VertexPointer].TextureID = TextureID;
-                m_Vertices[m_VertexPointer + 1].TextureID = TextureID;
-                m_Vertices[m_VertexPointer + 2].TextureID = TextureID;
-                m_Vertices[m_VertexPointer + 3].TextureID = TextureID;
+                m_VerticesQuad[m_VertexPointerQuad].TextureID = TextureID;
+                m_VerticesQuad[m_VertexPointerQuad + 1].TextureID = TextureID;
+                m_VerticesQuad[m_VertexPointerQuad + 2].TextureID = TextureID;
+                m_VerticesQuad[m_VertexPointerQuad + 3].TextureID = TextureID;
         }
               
          if(TextureHandle != 0&&m_CurrentTextureDescriptorSetOffset ==0)
             Core::Log("NOt zero ",m_CurrentTextureDescriptorSetOffset);
        
 
-        m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
-        m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
-        m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
-        m_Vertices[m_VertexPointer + 3].Position = { Position.x + Size.x,Position.y - Size.y };
+        m_VerticesQuad[m_VertexPointerQuad].Position = { Position.x - Size.x,Position.y - Size.y };
+        m_VerticesQuad[m_VertexPointerQuad + 1].Position = { Position.x - Size.x,Position.y + Size.y };
+        m_VerticesQuad[m_VertexPointerQuad + 2].Position = { Position.x + Size.x,Position.y + Size.y };
+        m_VerticesQuad[m_VertexPointerQuad + 3].Position = { Position.x + Size.x,Position.y - Size.y };
 
-        m_Vertices[m_VertexPointer].Color = Color;
-        m_Vertices[m_VertexPointer + 1].Color = Color;
-        m_Vertices[m_VertexPointer + 2].Color = Color;
-        m_Vertices[m_VertexPointer + 3].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad + 1].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad + 2].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad + 3].Color = Color;
 
 
 
-        m_Vertices[m_VertexPointer].ID = ID;
-        m_Vertices[m_VertexPointer + 1].ID = ID;
-        m_Vertices[m_VertexPointer + 2].ID = ID;
-        m_Vertices[m_VertexPointer + 3].ID = ID;
+        m_VerticesQuad[m_VertexPointerQuad].ID = ID;
+        m_VerticesQuad[m_VertexPointerQuad + 1].ID = ID;
+        m_VerticesQuad[m_VertexPointerQuad + 2].ID = ID;
+        m_VerticesQuad[m_VertexPointerQuad + 3].ID = ID;
 
            
    
 
-        m_VertexPointer += 4;
+        m_VertexPointerQuad += 4;
 
 
     }
@@ -857,7 +877,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         GUUID textureID = textureAsset.GetID();
         std::vector<GUUID>& textureIds = m_TextureIDByOrder[m_CurrentFrame];
 
-        if (m_VertexPointer + 4 > m_VertexCount)
+        if (m_VertexPointerQuad + 4 > m_VertexCount)
             FlushGeometry();
             if (textures.find(textureID) == textures.end()) {
                 if (textures.size() == m_TextureSlotCount - 1)
@@ -872,44 +892,44 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             Texture* texture = (Texture*)textureData.texture.GetData();
             if (!texture)
                 return;
-            m_Vertices[m_VertexPointer].TextureID = textureData.Index;
-            m_Vertices[m_VertexPointer + 1].TextureID = textureData.Index;
-            m_Vertices[m_VertexPointer + 2].TextureID = textureData.Index;
-            m_Vertices[m_VertexPointer + 3].TextureID = textureData.Index;
+            m_VerticesQuad[m_VertexPointerQuad].TextureID = textureData.Index;
+            m_VerticesQuad[m_VertexPointerQuad + 1].TextureID = textureData.Index;
+            m_VerticesQuad[m_VertexPointerQuad + 2].TextureID = textureData.Index;
+            m_VerticesQuad[m_VertexPointerQuad + 3].TextureID = textureData.Index;
 
 
-            m_Vertices[m_VertexPointer].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[0];
-            m_Vertices[m_VertexPointer + 1].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[1];
-            m_Vertices[m_VertexPointer + 2].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[2];
-            m_Vertices[m_VertexPointer + 3].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[3];
+            m_VerticesQuad[m_VertexPointerQuad].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[0];
+            m_VerticesQuad[m_VertexPointerQuad + 1].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[1];
+            m_VerticesQuad[m_VertexPointerQuad + 2].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[2];
+            m_VerticesQuad[m_VertexPointerQuad + 3].TexCoords = texture->GetTextureCoords(Animation.GetTextureIndex())->Coords[3];
 
 
       
   
-        m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
-        m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
-        m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
-        m_Vertices[m_VertexPointer + 3].Position = { Position.x + Size.x,Position.y - Size.y };
+        m_VerticesQuad[m_VertexPointerQuad].Position = { Position.x - Size.x,Position.y - Size.y };
+        m_VerticesQuad[m_VertexPointerQuad + 1].Position = { Position.x - Size.x,Position.y + Size.y };
+        m_VerticesQuad[m_VertexPointerQuad + 2].Position = { Position.x + Size.x,Position.y + Size.y };
+        m_VerticesQuad[m_VertexPointerQuad + 3].Position = { Position.x + Size.x,Position.y - Size.y };
 
 
 
 
-        m_Vertices[m_VertexPointer].Color = Color;
-        m_Vertices[m_VertexPointer + 1].Color = Color;
-        m_Vertices[m_VertexPointer + 2].Color = Color;
-        m_Vertices[m_VertexPointer + 3].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad + 1].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad + 2].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad + 3].Color = Color;
 
 
 
-        m_Vertices[m_VertexPointer].ID = ID;
-        m_Vertices[m_VertexPointer + 1].ID = ID;
-        m_Vertices[m_VertexPointer + 2].ID = ID;
-        m_Vertices[m_VertexPointer + 3].ID = ID;
+        m_VerticesQuad[m_VertexPointerQuad].ID = ID;
+        m_VerticesQuad[m_VertexPointerQuad + 1].ID = ID;
+        m_VerticesQuad[m_VertexPointerQuad + 2].ID = ID;
+        m_VerticesQuad[m_VertexPointerQuad + 3].ID = ID;
 
 
 
 
-        m_VertexPointer += 4;
+        m_VertexPointerQuad += 4;
 
     }
 
@@ -917,40 +937,40 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID)
     {
-        if (m_VertexPointer + 4 > m_VertexCount)
+        if (m_VertexPointerQuad + 4 > m_VertexCount)
             FlushGeometry();
 
-        m_Vertices[m_VertexPointer].Position = { Position.x - Size.x,Position.y - Size.y };
-        m_Vertices[m_VertexPointer + 1].Position = { Position.x - Size.x,Position.y + Size.y };
-        m_Vertices[m_VertexPointer + 2].Position = { Position.x + Size.x,Position.y + Size.y };
-        m_Vertices[m_VertexPointer + 3].Position = { Position.x + Size.x,Position.y - Size.y };
+        m_VerticesQuad[m_VertexPointerQuad].Position = { Position.x - Size.x,Position.y - Size.y };
+        m_VerticesQuad[m_VertexPointerQuad + 1].Position = { Position.x - Size.x,Position.y + Size.y };
+        m_VerticesQuad[m_VertexPointerQuad + 2].Position = { Position.x + Size.x,Position.y + Size.y };
+        m_VerticesQuad[m_VertexPointerQuad + 3].Position = { Position.x + Size.x,Position.y - Size.y };
 
-        m_Vertices[m_VertexPointer].TextureID = 0;
-        m_Vertices[m_VertexPointer + 1].TextureID = 0;
-        m_Vertices[m_VertexPointer + 2].TextureID = 0;
-        m_Vertices[m_VertexPointer + 3].TextureID = 0;
-
-
-        m_Vertices[m_VertexPointer].Color = Color;
-        m_Vertices[m_VertexPointer + 1].Color = Color;
-        m_Vertices[m_VertexPointer + 2].Color = Color;
-        m_Vertices[m_VertexPointer + 3].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad].TextureID = 0;
+        m_VerticesQuad[m_VertexPointerQuad + 1].TextureID = 0;
+        m_VerticesQuad[m_VertexPointerQuad + 2].TextureID = 0;
+        m_VerticesQuad[m_VertexPointerQuad + 3].TextureID = 0;
 
 
+        m_VerticesQuad[m_VertexPointerQuad].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad + 1].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad + 2].Color = Color;
+        m_VerticesQuad[m_VertexPointerQuad + 3].Color = Color;
 
-        m_Vertices[m_VertexPointer].ID = ID;
-        m_Vertices[m_VertexPointer + 1].ID = ID;
-        m_Vertices[m_VertexPointer + 2].ID = ID;
-        m_Vertices[m_VertexPointer + 3].ID = ID;
 
-            m_Vertices[m_VertexPointer].TexCoords = { 0.0f,1.0f };
-            m_Vertices[m_VertexPointer + 1].TexCoords = { 0.0f,0.0f };
-            m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,0.0f };
-            m_Vertices[m_VertexPointer + 3].TexCoords = { 1.0f,1.0f };
+
+        m_VerticesQuad[m_VertexPointerQuad].ID = ID;
+        m_VerticesQuad[m_VertexPointerQuad + 1].ID = ID;
+        m_VerticesQuad[m_VertexPointerQuad + 2].ID = ID;
+        m_VerticesQuad[m_VertexPointerQuad + 3].ID = ID;
+
+            m_VerticesQuad[m_VertexPointerQuad].TexCoords = { 0.0f,1.0f };
+            m_VerticesQuad[m_VertexPointerQuad + 1].TexCoords = { 0.0f,0.0f };
+            m_VerticesQuad[m_VertexPointerQuad + 2].TexCoords = { 1.0f,0.0f };
+            m_VerticesQuad[m_VertexPointerQuad + 3].TexCoords = { 1.0f,1.0f };
      
 
 
-        m_VertexPointer += 4;
+        m_VertexPointerQuad += 4;
     }
 
     void Renderer::SetCurrentFont(Asset<Font> FontAsset)
@@ -1005,7 +1025,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 
      
-        if (textures.size() == m_TextureSlotCount - 1|| m_VertexPointer>= m_VertexMaxCountGUI)
+        if (textures.size() == m_TextureSlotCount - 1|| m_VertexPointerQuad>= m_VertexMaxCountGUI)
             FlushGeometry();
         if (textures.find(TextureHandle) == textures.end()) {
             textures[TextureHandle] = { font->TextureAsset ,m_CurrentTextureDescriptorSetOffset };
@@ -1055,28 +1075,28 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             }
             //space letter index ==-1
 
-            if (m_VertexPointer>= m_VertexMaxCountGUI)
+            if (m_VertexPointerQuad>= m_VertexMaxCountGUI)
                 FlushGeometry();
           
             TextureRenderingData texture = textures[TextureHandle];
                 //its the size of the bitmap not the character itself.
 
-            m_Vertices[m_VertexPointer].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 1].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 2].TextureID = texture.Index;
-            m_Vertices[m_VertexPointer + 3].TextureID = texture.Index;
+            m_VerticesQuad[m_VertexPointerQuad].TextureID = texture.Index;
+            m_VerticesQuad[m_VertexPointerQuad + 1].TextureID = texture.Index;
+            m_VerticesQuad[m_VertexPointerQuad + 2].TextureID = texture.Index;
+            m_VerticesQuad[m_VertexPointerQuad + 3].TextureID = texture.Index;
             if (LetterIndex != -1) {
-                m_Vertices[m_VertexPointer].TexCoords = font->Coords[LetterIndex].Coords[0];
-                m_Vertices[m_VertexPointer + 1].TexCoords = font->Coords[LetterIndex].Coords[1];
-                m_Vertices[m_VertexPointer + 2].TexCoords = font->Coords[LetterIndex].Coords[2];
-                m_Vertices[m_VertexPointer + 3].TexCoords = font->Coords[LetterIndex].Coords[3];
+                m_VerticesQuad[m_VertexPointerQuad].TexCoords = font->Coords[LetterIndex].Coords[0];
+                m_VerticesQuad[m_VertexPointerQuad + 1].TexCoords = font->Coords[LetterIndex].Coords[1];
+                m_VerticesQuad[m_VertexPointerQuad + 2].TexCoords = font->Coords[LetterIndex].Coords[2];
+                m_VerticesQuad[m_VertexPointerQuad + 3].TexCoords = font->Coords[LetterIndex].Coords[3];
 
             }
             else {
-                m_Vertices[m_VertexPointer].TexCoords = {0.0f,0.0f };
-                m_Vertices[m_VertexPointer + 1].TexCoords = { 1.0f,0.0f };
-                m_Vertices[m_VertexPointer + 2].TexCoords = { 1.0f,1.0f };
-                m_Vertices[m_VertexPointer + 3].TexCoords = { 0.0f,1.0f };
+                m_VerticesQuad[m_VertexPointerQuad].TexCoords = {0.0f,0.0f };
+                m_VerticesQuad[m_VertexPointerQuad + 1].TexCoords = { 1.0f,0.0f };
+                m_VerticesQuad[m_VertexPointerQuad + 2].TexCoords = { 1.0f,1.0f };
+                m_VerticesQuad[m_VertexPointerQuad + 3].TexCoords = { 0.0f,1.0f };
             }
  
 
@@ -1137,10 +1157,10 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
             
 
 
-          m_Vertices[m_VertexPointer + 0].Position = {  glyphPosPixelMin.x,  glyphPosPixelMin.y, 0.0f }; // bottom-left
-          m_Vertices[m_VertexPointer + 1].Position = {  glyphPosPixelMin.x,  glyphPosPixelMax.y, 0.0f }; // top-left
-          m_Vertices[m_VertexPointer + 2].Position = {  glyphPosPixelMax.x,  glyphPosPixelMax.y, 0.0f }; // top-right
-          m_Vertices[m_VertexPointer + 3].Position = {  glyphPosPixelMax.x,  glyphPosPixelMin.y, 0.0f }; // bottom-right
+          m_VerticesQuad[m_VertexPointerQuad + 0].Position = {  glyphPosPixelMin.x,  glyphPosPixelMin.y, 0.0f }; // bottom-left
+          m_VerticesQuad[m_VertexPointerQuad + 1].Position = {  glyphPosPixelMin.x,  glyphPosPixelMax.y, 0.0f }; // top-left
+          m_VerticesQuad[m_VertexPointerQuad + 2].Position = {  glyphPosPixelMax.x,  glyphPosPixelMax.y, 0.0f }; // top-right
+          m_VerticesQuad[m_VertexPointerQuad + 3].Position = {  glyphPosPixelMax.x,  glyphPosPixelMin.y, 0.0f }; // bottom-right
 
           penPosX += advance.x;
           //penPosY -= advance.y;
@@ -1154,23 +1174,23 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
           
 
-            m_Vertices[m_VertexPointer].Color = Color;
-            m_Vertices[m_VertexPointer + 1].Color = Color;
-            m_Vertices[m_VertexPointer + 2].Color = Color;
-            m_Vertices[m_VertexPointer + 3].Color = Color;
+            m_VerticesQuad[m_VertexPointerQuad].Color = Color;
+            m_VerticesQuad[m_VertexPointerQuad + 1].Color = Color;
+            m_VerticesQuad[m_VertexPointerQuad + 2].Color = Color;
+            m_VerticesQuad[m_VertexPointerQuad + 3].Color = Color;
 
 
 
-            m_Vertices[m_VertexPointer].ID = id.ID;
-            m_Vertices[m_VertexPointer + 1].ID = id.ID;
-            m_Vertices[m_VertexPointer + 2].ID = id.ID;
-            m_Vertices[m_VertexPointer + 3].ID = id.ID;
+            m_VerticesQuad[m_VertexPointerQuad].ID = id.ID;
+            m_VerticesQuad[m_VertexPointerQuad + 1].ID = id.ID;
+            m_VerticesQuad[m_VertexPointerQuad + 2].ID = id.ID;
+            m_VerticesQuad[m_VertexPointerQuad + 3].ID = id.ID;
 
 
 
 
 
-            m_VertexPointer += 4;
+            m_VertexPointerQuad += 4;
           
            
         }
@@ -1409,11 +1429,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     Offset+=4;
                 }
                 BufferDesc desc{};
-                desc = m_IndexBuffers[0]->GetBufferDesc();
-                delete m_IndexBuffers[0];
+                desc = m_IndexBuffersQuad->GetBufferDesc();
+                delete m_IndexBuffersQuad;
                 desc.SizeBytes = sizeof(uint32_t)*m_VertexCount*1.5f;
-                m_IndexBuffers[0] = new Buffer(desc);
-                m_IndexBuffers[0]->UploadToBuffer(m_Device,Indices,m_IndexBuffers[0]->GetBufferDesc().SizeBytes);
+                m_IndexBuffersQuad = new Buffer(desc);
+                m_IndexBuffersQuad->UploadToBuffer(m_Device,Indices,m_IndexBuffersQuad->GetBufferDesc().SizeBytes);
                 delete[] Indices;
                 break;
             }
@@ -1437,11 +1457,11 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
                     Offset+=4;
                 }
                 BufferDesc desc{};
-                desc = m_IndexBuffers[0]->GetBufferDesc();
-                delete m_IndexBuffers[0];
+                desc = m_IndexBuffersQuad->GetBufferDesc();
+                delete m_IndexBuffersQuad;
                 desc.SizeBytes = sizeof(uint32_t)*m_VertexCount*2;
-                m_IndexBuffers[0] = new Buffer(desc);
-                m_IndexBuffers[0]->UploadToBuffer(m_Device,Indices,m_IndexBuffers[0]->GetBufferDesc().SizeBytes);
+                m_IndexBuffersQuad = new Buffer(desc);
+                m_IndexBuffersQuad->UploadToBuffer(m_Device,Indices,m_IndexBuffersQuad->GetBufferDesc().SizeBytes);
                 delete[] Indices;
                 break;
             }
@@ -1530,7 +1550,7 @@ void Renderer::DrawBatch()
 
         vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGeometry[DrawCall.VertexBufferIndex]->GetBuffer(), &VertexBufferOffset);
 
-        vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffersQuad->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
         VkDescriptorSet DescriptorSets[2];
         DescriptorSets[0] = m_DescriptorSetCamera[m_CurrentFrame].GetDescriptorSet();
@@ -1554,9 +1574,9 @@ void Renderer::DrawBatch()
         uint64_t VertexBufferOffset = {m_DrawCommandsGUI[i].VertexBufferOffset*sizeof(Vertex)};
 
 
-        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGUI[m_DrawCommandsGUI[i].VertexBufferIndex]->GetBuffer(), &Offset);
+        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, 0, 1, m_VertexBufferGUI[m_DrawCommandsGUI[i].VertexBufferIndex]->GetBuffer(), &VertexBufferOffset);
 
-        vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffers[0]->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(m_CurrentCommandBuffer, *m_IndexBuffersQuad->GetBuffer(), Offset, VK_INDEX_TYPE_UINT32);
 
         VkDescriptorSet DescriptorSets[2];
         DescriptorSets[0] = m_DescriptorSetCamera[m_CurrentFrame].GetDescriptorSet();
@@ -1569,7 +1589,7 @@ void Renderer::DrawBatch()
         vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
-        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGUI[i].VertexCount * 1.5f), 1, 0,VertexBufferOffset, 0);
+        vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGUI[i].VertexCount * 1.5f), 1, 0,0, 0);
         m_VertexCountPerFrame+= DrawCall.VertexCount;
 
     }
@@ -1664,8 +1684,8 @@ void Renderer::Shutdown(){
     for(uint32_t i =0;i < m_VertexBufferGeometry.size();i++)
         delete m_VertexBufferGeometry[i];
     
-    for(uint32_t i=0;i < m_IndexBuffers.size();i++)
-        delete m_IndexBuffers[i];
+        delete m_IndexBuffersQuad;
+        delete m_IndexBufferVertices;
     
     for(uint32_t i=0;i < m_StaggingBufferGeometry.size();i++)
         delete m_StaggingBufferGeometry[i];
@@ -1730,6 +1750,7 @@ void Renderer::Shutdown(){
     delete[] m_PipelineDesc.VertexStageInput;
 
 
+    delete[] m_VerticesQuad;
     delete[] m_Vertices;
     delete[] m_VerticesGUI;  
 

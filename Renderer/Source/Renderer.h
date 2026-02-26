@@ -69,6 +69,8 @@ public:
 
     void DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID);
 
+    void DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureID=0);
+
     void SetCurrentFont(Asset<Font> CurrentAsset);
     Asset<Font> GetCurrentFont(){return m_CurrentFont;}
     //PointerIndex = -1 means don't draw it.
@@ -189,7 +191,10 @@ private:
     std::vector<VkFence> m_DrawFences{};
     //Buffers
 
-    std::vector<Buffer*> m_IndexBuffers{};
+    //Indices are for quad 0 1 2 2 3 0
+    Buffer* m_IndexBuffersQuad{};
+    //Indices are normal 1 2 3 4... etc.
+    Buffer* m_IndexBufferVertices{};
     uint32_t* m_Indices{};
     
 
@@ -219,12 +224,18 @@ private:
     void CreateSamaphore();
 
     //One frame data
+    //Vertices for quads
+    Vertex* m_VerticesQuad{};
+    uint32_t m_VertexPointerQuad{};
+    uint32_t m_CurrentVertexBufferQuadIndex{};
+    //Vertices for other forms of geometry.
     Vertex* m_Vertices{};
-    uint32_t m_VertexCount{};
     uint32_t m_VertexPointer{};
+    uint32_t m_CurrentVertexBufferIndex{};
+
+    uint32_t m_VertexCount{};
     uint32_t m_VertexCountRemaining{};
     uint64_t m_VertexBufferOffset{};
-    uint32_t m_CurrentVertexBufferIndex{};
     uint64_t m_VertexCountPerDrawCall{};
 
     float m_DeltaTime{};

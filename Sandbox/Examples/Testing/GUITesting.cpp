@@ -49,14 +49,38 @@ void GUITestingLayer::OnUpdate(double deltatime)
 
 	std::time_t lastmodified= std::chrono::system_clock::to_time_t(sctp);
 
+ 
+
 
 }
 void GUITestingLayer::OnRender(double deltime){
    Renderer* renderer = Application::GetRenderer();
 
-   renderer->DrawQuad({0.1f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},Core::GetStringHash("GUI/CheckBoxTrue"),0);
-   renderer->DrawQuad({0.2f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},Core::GetStringHash("GUI/CheckBoxFalse"),0);
-   renderer->DrawQuad({0.3f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},Core::GetStringHash("Textures/Examples/BLOOD_KNIGHT"),0);
+   //renderer->DrawQuad({0.1f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},Core::GetStringHash("GUI/CheckBoxTrue"),0);
+  // renderer->DrawQuad({0.2f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},Core::GetStringHash("GUI/CheckBoxFalse"),0);
+   //renderer->DrawQuad({0.3f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},Core::GetStringHash("Textures/Examples/BLOOD_KNIGHT"),0);
+     Vertex vertex[4]{};
+   vertex[0].Position = {0.0f,0.0f,0.0f};
+   vertex[1].Position = {0.0f,1.0f,0.0f};
+   vertex[2].Position = {1.0f,1.0f,0.0f};
+   vertex[3].Position = {1.0f,0.0f,0.0f};
+
+   vertex[0].Color = {1.0f,1.0f,1.0f,1.0f};
+   vertex[1].Color = {1.0f,1.0f,1.0f,1.0f};
+   vertex[2].Color = {1.0f,1.0f,1.0f,1.0f};
+   vertex[3].Color = {1.0f,1.0f,1.0f,1.0f};
+
+   vertex[0].TextureID = 0;
+   vertex[1].TextureID = 0;
+   vertex[2].TextureID = 0;
+   vertex[3].TextureID = 0;
+
+   vertex[0].TexCoords = { 0.0f,1.0f };
+   vertex[1].TexCoords = { 0.0f,0.0f };
+   vertex[2].TexCoords = { 1.0f,0.0f };
+   vertex[3].TexCoords = { 1.0f,1.0f };
+
+	renderer->DrawVertices(vertex,4);
 }
 void GUITestingLayer::OnEvent(Event& event){
 	if(event.GetEventType() == EventType::MOUSE){

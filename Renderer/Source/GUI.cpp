@@ -304,7 +304,6 @@ void GUIRenderer::Slider(const std::string& strID, float* number, Float2 Positio
 			CurrentSlider->IsClicked = true;
 			CurrentSlider->MousePosChange = Application::GetMousePos().x;
 		}
-		Core::Log("Clicked");
 	}
 
 	

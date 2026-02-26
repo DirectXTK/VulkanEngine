@@ -25,6 +25,33 @@ VkDevice LogicalDevice::CreateLogicalDevice(VkPhysicalDevice physicalDevice,Queu
     deviceFeatures.samplerAnisotropy = true;
     deviceFeatures.fillModeNonSolid = true;
 
+    VkPhysicalDeviceFeatures isSupported{};
+    vkGetPhysicalDeviceFeatures(physicalDevice,&isSupported);
+    VkBool32 wantedFeatures[sizeof(VkPhysicalDeviceFeatures)/4];
+    VkBool32 supported[sizeof(VkPhysicalDeviceFeatures)/4];
+    memcpy(wantedFeatures,&deviceFeatures,sizeof(VkPhysicalDeviceFeatures));
+    memcpy(supported,&isSupported,sizeof(VkPhysicalDeviceFeatures));
+    for(uint32_t i=0 ;i < sizeof(VkPhysicalDeviceFeatures)/4;i++){
+        if(wantedFeatures[i] == VK_TRUE && supported[i]== VK_TRUE)
+         wantedFeatures[i] = VK_TRUE;
+         else 
+         wantedFeatures[i] = VK_FALSE;
+    }
+    memcpy(&deviceFeatures,wantedFeatures,sizeof(VkPhysicalDeviceFeatures));
+
+    VkPhysicalDeviceDescriptorIndexingFeatures indexFeatures{};
+    indexFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+    indexFeatures.shaderSampledImageArrayNonUniformIndexing = true;
+
+    VkPhysicalDeviceFeatures2 deviceFeatures2{};
+    deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    deviceFeatures2.pNext = &indexFeatures;
+    deviceFeatures2.features = deviceFeatures;
+    //check if supported
+    vkGetPhysicalDeviceFeatures2(physicalDevice,&deviceFeatures2);
+
+  
+
     VkDeviceCreateInfo devicecreateinfo{};
     devicecreateinfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     devicecreateinfo.queueCreateInfoCount = (uint32_t)queueInfos.size();
@@ -33,8 +60,8 @@ VkDevice LogicalDevice::CreateLogicalDevice(VkPhysicalDevice physicalDevice,Queu
     devicecreateinfo.ppEnabledExtensionNames = nullptr;
     devicecreateinfo.enabledExtensionCount = (uint32_t)g_DeviceExtensions.size();
     devicecreateinfo.ppEnabledExtensionNames = g_DeviceExtensions.data();
-    devicecreateinfo.pEnabledFeatures = &deviceFeatures;
-
+    devicecreateinfo.pEnabledFeatures = nullptr;
+    devicecreateinfo.pNext = &deviceFeatures2;
 
 
 
