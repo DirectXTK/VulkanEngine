@@ -40,13 +40,12 @@ void GUITestingLayer::OnUpdate(double deltatime)
    }
 	if(m_SpawnParticles){
 		ParticleProps prop{};
-		prop.LifeTime = Core::RandomFloat(SEC(1.0f),SEC(2.0f));
-		prop.Color.r = Core::RandomFloat(0.4f,1.0f);
-		prop.Color.a = 1.0f;
+		prop.LifeTime = Core::RandomFloat(SEC(2.0f),SEC(3.5f));
+		prop.Color = {1.0f,1.0f,1.0f,1.0f};
 		prop.Pos = Application::GetWorldMousePos();
 		prop.Size = {0.01f,0.01f};
-		prop.Velocity.x = Core::RandomFloat(-0.0015f,0.0015f);
-		prop.Velocity.y = Core::RandomFloat(-0.0015f,0.0015f);
+		prop.Velocity.x = Core::RandomFloat(-0.0010f,0.0010f);
+		prop.Velocity.y = Core::RandomFloat(-0.0010f,0.0010f);
 		Application::GetParticleSystem().DrawParticle(prop);
 	}
  

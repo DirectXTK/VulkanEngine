@@ -80,8 +80,6 @@ public:
     //PointerIndex = -1 means don't draw it.
     void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
     //GUI 
-    //Particles
-    void DrawParticle();
 
     void SetRenderDesc(const RendererDesc& desc);
     void QueueShaderChange(const std::string& path);
@@ -285,8 +283,14 @@ private:
     Asset<Font> m_CurrentFont{};
 
     //Particle system
-    uint32_t m_MaxParticleCount{1000};
-    InstanceParticleData* m_Particles{};
+    uint32_t m_MaxParticleVertexCount{MAXPARTICLECOUNT*4};
+    InstanceParticleData* m_ParticleInstanceData{};
+    VertexParticleData* m_ParticleVertexData{};
+    Buffer* m_ParticleVertexBuffer{};
+    Buffer* m_ParticleInstanceBuffer{};
+    Buffer* m_ParticleStaggingBuffer{};
+
+    uint32_t m_InstanceCount{};
     uint32_t m_CurrentParticleIndex{};
     PipelineDesc m_ParticlePipelineDesc{};
     VkPipeline m_ParticlePipeline{};

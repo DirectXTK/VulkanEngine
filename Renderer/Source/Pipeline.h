@@ -22,6 +22,9 @@ struct PipelineDesc {
 	VkShaderModule* ShaderModules{};
 	VkShaderStageFlagBits* ShaderStages{};
 	uint32_t ShaderCount{};
+
+	VkVertexInputBindingDescription* InputBindings{};
+	uint32_t InputBindingCount{};
 };
 
 class Pipeline {

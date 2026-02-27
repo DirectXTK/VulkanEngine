@@ -23,5 +23,8 @@ void ParticleSystem::UpdateAndDraw(double deltaTime){
 void ParticleSystem::DrawParticle(const ParticleProps& props){
     m_ParticleProps[m_CurrentParticle] = props;
     m_ParticleProps[m_CurrentParticle].Alive = true;
-    m_CurrentParticle++;
+    if(m_CurrentParticle+1 >= MAXPARTICLECOUNT)
+        m_CurrentParticle = 0;
+    else
+        m_CurrentParticle++;
 }

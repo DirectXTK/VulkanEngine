@@ -140,7 +140,6 @@ VkPipeline Pipeline::CreatePipeline(const PipelineDesc& desc,VkDevice device)
     vertexinputdesc.binding = 0;
     vertexinputdesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-
     VkVertexInputAttributeDescription* vertexinputattr = new VkVertexInputAttributeDescription[desc.VertexStageInputCount];
     
     for (uint32_t i = 0; i < desc.VertexStageInputCount; i++) {
@@ -157,9 +156,16 @@ VkPipeline Pipeline::CreatePipeline(const PipelineDesc& desc,VkDevice device)
     VkPipelineVertexInputStateCreateInfo vertexinputstate{};
     vertexinputstate.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexinputstate.vertexAttributeDescriptionCount = desc.VertexStageInputCount;
-    vertexinputstate.vertexBindingDescriptionCount = 1;
-    vertexinputstate.pVertexBindingDescriptions = &vertexinputdesc;
     vertexinputstate.pVertexAttributeDescriptions = vertexinputattr;
+
+    if(desc.InputBindings&& desc.InputBindingCount !=0){
+            vertexinputstate.vertexBindingDescriptionCount = desc.InputBindingCount;
+        vertexinputstate.pVertexBindingDescriptions = desc.InputBindings;
+    }else{
+        //use default
+        vertexinputstate.vertexBindingDescriptionCount = 1;
+        vertexinputstate.pVertexBindingDescriptions = &vertexinputdesc;
+    }
 
 
     VkPipelineInputAssemblyStateCreateInfo inputassassembly{};

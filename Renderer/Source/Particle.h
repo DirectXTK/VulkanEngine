@@ -2,10 +2,12 @@
 #include "AppCore.h"
 #define MAXPARTICLECOUNT 1000
 struct InstanceParticleData{
-    Float3 ParticlePos{};
     Float4 Color{};
     Float2 TextureCords{};
     uint32_t TextureID{};
+};
+struct VertexParticleData{
+    Float3 Position{};
 };
 struct ParticleProps{
     Float2 Pos{};
