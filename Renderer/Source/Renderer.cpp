@@ -247,16 +247,17 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     }
 void Renderer::DrawParticle(const Float2& pos,const Float4 color,const Float2 size,GUUID textureID){
 
-    m_Particles[m_CurrentParticleIndex].ParticlePos[0] = {pos.x-size.x,pos.y-size.y};
-    m_Particles[m_CurrentParticleIndex].ParticlePos[1] = {pos.x-size.x,pos.y+size.y};
-    m_Particles[m_CurrentParticleIndex].ParticlePos[2] = {pos.x+size.x,pos.y+size.y};
-    m_Particles[m_CurrentParticleIndex].ParticlePos[3] = {pos.x+size.x,pos.y-size.y};
+    m_Particles[m_CurrentParticleIndex].ParticlePos = {pos.x-size.x,pos.y-size.y,0.0};
+    m_Particles[m_CurrentParticleIndex+1].ParticlePos = {pos.x-size.x,pos.y+size.y,0.0};
+    m_Particles[m_CurrentParticleIndex+2].ParticlePos= {pos.x+size.x,pos.y+size.y,0.0};
+    m_Particles[m_CurrentParticleIndex+3].ParticlePos = {pos.x+size.x,pos.y-size.y,0.0};
 
     m_Particles[m_CurrentParticleIndex].Color = color;
-    m_Particles[m_CurrentParticleIndex].Color = color;
-    m_Particles[m_CurrentParticleIndex].Color = color;
-    m_Particles[m_CurrentParticleIndex].Color = color;
+    m_Particles[m_CurrentParticleIndex+1].Color = color;
+    m_Particles[m_CurrentParticleIndex+2].Color = color;
+    m_Particles[m_CurrentParticleIndex+3].Color = color;
 
+    m_CurrentParticleIndex+=4;
 }
 void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureID){
     if(!vertices)
@@ -339,6 +340,8 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
 
 
     ReCreatePipeline(m_PipelineDesc);
+    CreateParticlePipeline();
+
     m_LoadedShaderPaths.clear();
     delete[] m_PipelineDesc.ShaderStages;
     delete[] m_PipelineDesc.ShaderModules;
@@ -654,8 +657,28 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
            textureIds.clear();
         }
     
+           
+void Renderer::TransferParticleDataToBuffer(){
+    m_StaggingBufferGeometry[m_CurrentVertexBufferQuadIndex]->UploadToBuffer(m_Device,m_Particles,m_CurrentParticleIndex*sizeof(InstanceParticleData),m_VertexBufferOffset*sizeof(Vertex));
+
+       VkBufferCopy region{};
+            region.size = sizeof(InstanceParticleData) * m_CurrentParticleIndex;
+            region.dstOffset = m_VertexBufferOffset*sizeof(Vertex);
+            region.srcOffset = m_VertexBufferOffset*sizeof(Vertex);
+    vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGeometry[m_CurrentVertexBufferQuadIndex]->GetBuffer(), *m_VertexBufferGeometry[m_CurrentVertexBufferQuadIndex]->GetBuffer(), 1, &region);
+}
+void Renderer::SubmitDrawParticleCommands(){
+    VkDeviceSize offset{m_VertexBufferOffset*sizeof(Vertex)};
+
+    vkCmdBindPipeline(m_CurrentCommandBuffer,VK_PIPELINE_BIND_POINT_GRAPHICS,m_ParticlePipeline);
 
 
+
+    vkCmdBindIndexBuffer(m_CurrentCommandBuffer,*m_IndexBuffersQuad->GetBuffer(),0,VK_INDEX_TYPE_UINT32);
+    vkCmdBindVertexBuffers(m_CurrentCommandBuffer,0,1,m_VertexBufferGeometry[m_CurrentVertexBufferQuadIndex]->GetBuffer(),&offset);
+
+    vkCmdDrawIndexed(m_CurrentCommandBuffer,m_CurrentParticleIndex*1.5f,1,0,0,0);
+}
 
         void Renderer::EndFrame()
         {
@@ -679,11 +702,27 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
                         FlushGUI();
             for(uint32_t i=0 ;i < m_StaggingBufferGUI.size();i++)
               vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGUI[i]->GetBuffer(), *m_VertexBufferGUI[i]->GetBuffer(), 1, &region);
+
+            TransferParticleDataToBuffer();
             
+            VkClearValue ClearColor[] = { {m_ClearColor.r,m_ClearColor.g,m_ClearColor.b,m_ClearColor.a},{0.0f,0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f,0.0f} };
+
+            VkRenderPassBeginInfo RenderPassBeginInfo{};
+            RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            RenderPassBeginInfo.renderPass = m_RenderPass;
+            RenderPassBeginInfo.renderArea.offset = { 0,0 };
+            RenderPassBeginInfo.renderArea.extent = m_SwapChain->GetExtent();
+            RenderPassBeginInfo.pClearValues = ClearColor;          
+            RenderPassBeginInfo.clearValueCount = 3;
+            RenderPassBeginInfo.framebuffer = m_FrameBuffers[m_CurrentFrame].GetFrameBuffer(0);
+
+            vkCmdBeginRenderPass(m_CurrentCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
           
     
             DrawBatch();
 
+            SubmitDrawParticleCommands();
+            vkCmdEndRenderPass(m_CurrentCommandBuffer);
             StopRecordingCommands();
 
 
@@ -756,6 +795,8 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
             m_VertexPointerQuad = 0;
             m_CurrentVertexBufferIndexGUI=0;;
             m_VertexGUIRemaining=m_VertexMaxCountGUI;
+
+            m_CurrentParticleIndex = 0;
 
             //delete the next upcoming rendered frame temps buffs
             if(vkGetFenceStatus(m_Device,m_DrawFences[m_CurrentFrame]) == VK_FALSE){
@@ -1555,19 +1596,8 @@ void Renderer::DrawBatch()
     //Debugging 
         m_VertexCountPerFrame= 0;
 
-    VkClearValue ClearColor[] = { {m_ClearColor.r,m_ClearColor.g,m_ClearColor.b,m_ClearColor.a},{0.0f,0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f,0.0f} };
-
-    VkRenderPassBeginInfo RenderPassBeginInfo{};
-    RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    RenderPassBeginInfo.renderPass = m_RenderPass;
-    RenderPassBeginInfo.renderArea.offset = { 0,0 };
-    RenderPassBeginInfo.renderArea.extent = m_SwapChain->GetExtent();
-    RenderPassBeginInfo.pClearValues = ClearColor;          
-    RenderPassBeginInfo.clearValueCount = 3;
-    RenderPassBeginInfo.framebuffer = m_FrameBuffers[m_CurrentFrame].GetFrameBuffer(0);
-
+ 
     VkDeviceSize Offset{ 0 };
-    vkCmdBeginRenderPass(m_CurrentCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     for (int i = 0; i < m_DrawCommandsGeometry.size(); i++) {
         DrawCommand DrawCall = m_DrawCommandsGeometry[i];
@@ -1620,10 +1650,10 @@ void Renderer::DrawBatch()
 
     }
 
-    vkCmdEndRenderPass(m_CurrentCommandBuffer);
 
     m_VertexCountPerDrawCall = 0;
 }
+
 void Renderer::CreateDescriptorSets(){
     uint32_t descriptorTextureCountPerSet = 1000;
    for(uint32_t i=0;i < MAX_FRAME_DRAWS;i++){
@@ -1678,6 +1708,44 @@ void Renderer::QueueShaderChange(Asset<Shader> shaderAsset){
     m_QueuedShaderPaths.push_back("None provided");
     m_QueuedShaders.push_back(shaderAsset);
 }
+void Renderer::CreateParticlePipeline(){
+    VkShaderModule shaders[2];
+    VkShaderStageFlagBits shaderStages[2];
+
+    auto frag =m_AssetManager->GetAsset<Shader>("Shaders/ParticleF");
+    auto vert =m_AssetManager->GetAsset<Shader>("Shaders/ParticleV");
+
+    shaders[0] = vert.GetData()->GetShaderModule();
+    shaderStages[0] = vert.GetData()->GetShaderStage();
+    
+    shaders[1] = frag.GetData()->GetShaderModule();
+    shaderStages[1] = frag.GetData()->GetShaderStage();
+
+    m_ParticlePipelineDesc.RenderPass = m_RenderPass;
+    m_ParticlePipelineDesc.PipelineLayout = Pipeline::CreatePipelineLayout(m_Device,nullptr,0);
+    
+    m_ParticlePipelineDesc.ShaderCount = 2;
+    m_ParticlePipelineDesc.ShaderModules =shaders;
+    m_ParticlePipelineDesc.ShaderStages =shaderStages;
+
+    m_ParticlePipelineDesc.VertexInputStride = sizeof(InstanceParticleData);
+    m_ParticlePipelineDesc.VertexStageInputCount = 4;
+    m_ParticlePipelineDesc.VertexStageInput = new VertexStageInputAttrib[ m_ParticlePipelineDesc.VertexStageInputCount];
+    m_ParticlePipelineDesc.VertexStageInput[0] = {VK_FORMAT_R32G32B32_SFLOAT,offsetof(InstanceParticleData,ParticlePos),0,0};
+    m_ParticlePipelineDesc.VertexStageInput[1] = {VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(InstanceParticleData,Color),1,0};
+    m_ParticlePipelineDesc.VertexStageInput[2] = {VK_FORMAT_R32G32_SFLOAT,offsetof(InstanceParticleData,TextureCords),2,0};
+    m_ParticlePipelineDesc.VertexStageInput[3] = {VK_FORMAT_R32_UINT,offsetof(InstanceParticleData,TextureID),3,0};
+
+    //For now you same viewport.
+    m_ParticlePipelineDesc.Viewport = m_PipelineDesc.Viewport;
+
+
+
+
+     m_ParticlePipeline= Pipeline::CreatePipeline(m_ParticlePipelineDesc,m_Device);
+
+     delete[] m_ParticlePipelineDesc.VertexStageInput;
+}
 void Renderer::RunRendererChangeQueue(){
     if(m_QueuedShaders.size() == 0)
         return;
@@ -1704,11 +1772,7 @@ void Renderer::RunRendererChangeQueue(){
    delete[] m_PipelineDesc.ShaderModules;
    delete[] m_PipelineDesc.ShaderStages;
 }
-void Renderer::DrawGUIBatch()
-{
-  
-   
-}
+
 void Renderer::Shutdown(){
     if(m_ShutDown)
         return; 
@@ -1768,8 +1832,13 @@ void Renderer::Shutdown(){
     m_DescriptorPool.Destroy();
     
     vkDestroyRenderPass(m_Device,m_RenderPass,nullptr);
+
+    vkDestroyPipelineLayout(m_Device,m_ParticlePipelineDesc.PipelineLayout,nullptr);
     vkDestroyPipelineLayout(m_Device,m_PipelineLayout,nullptr);
     vkDestroyPipeline(m_Device,m_Pipeline,nullptr);
+    vkDestroyPipeline(m_Device,m_ParticlePipeline,nullptr);
+
+
     vkFreeCommandBuffers(m_Device,m_GraphicsPool.GetCommandPool(),m_CommandBuffers.size(),m_CommandBuffers.data());
     vkDestroyCommandPool(m_Device,m_GraphicsPool.GetCommandPool(),nullptr);
     

@@ -295,6 +295,7 @@ void Application::RunAStar(){
         
      //   app->m_PathFinderSystem->ResetGrid();
         app->m_LayerController.UpdateLayers(app->m_DeltaTime);
+        app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime);
         app->m_LayerController.RenderLayers(app->m_DeltaTime);
 
         app->m_GUIRenderer->BeginGUI();

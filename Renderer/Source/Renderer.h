@@ -120,13 +120,18 @@ private:
 
     void ResetFrameData();
 
+    //Pipelines
+    void CreateParticlePipeline();
     void ReCreatePipeline(const PipelineDesc& desc);
+
+    //particle
+    void TransferParticleDataToBuffer();
 
     void StartRecordingCommands();
     void StopRecordingCommands();
 
     void DrawBatch();
-    void DrawGUIBatch();
+    void SubmitDrawParticleCommands();
 
 
     void CreateNewBufferForBatch(std::vector<Buffer*>& VertexBuffers, std::vector<Buffer*>& Stagging);
@@ -280,10 +285,12 @@ private:
     Asset<Font> m_CurrentFont{};
 
     //Particle system
-    uint32_t m_MaxParticleCount{};
+    uint32_t m_MaxParticleCount{1000};
     InstanceParticleData* m_Particles{};
     uint32_t m_CurrentParticleIndex{};
-
+    PipelineDesc m_ParticlePipelineDesc{};
+    VkPipeline m_ParticlePipeline{};
+    std::array<VkCommandBuffer,MAX_FRAME_DRAWS> m_ParticleCommandBuffer{}; 
 
 
     Camera2D m_Camera{};

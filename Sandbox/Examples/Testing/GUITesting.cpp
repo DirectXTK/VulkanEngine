@@ -38,23 +38,29 @@ void GUITestingLayer::OnUpdate(double deltatime)
    		renderer->DrawQuad({0.0f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},animator,0);
    		animator.Update(deltatime);
    }
-
-   auto frag = Application::GetAsset<Shader>("Shaders/ParticleF");
-   if(frag)
-  	renderer->QueueShaderChange(frag);
-
-	auto vert= Application::GetAsset<Shader>("Shaders/ParticleV");
-   if(vert)
-   	renderer->QueueShaderChange(vert);
+	if(m_SpawnParticles){
+		ParticleProps prop{};
+		prop.LifeTime = Core::RandomFloat(SEC(1.0f),SEC(2.0f));
+		prop.Color.r = Core::RandomFloat(0.4f,1.0f);
+		prop.Color.a = 1.0f;
+		prop.Pos = Application::GetWorldMousePos();
+		prop.Size = {0.01f,0.01f};
+		prop.Velocity.x = Core::RandomFloat(-0.0015f,0.0015f);
+		prop.Velocity.y = Core::RandomFloat(-0.0015f,0.0015f);
+		Application::GetParticleSystem().DrawParticle(prop);
+	}
+ 
 
 }
 void GUITestingLayer::OnRender(double deltime){
    Renderer* renderer = Application::GetRenderer();
 
-
+	//renderer->DrawParticle(Application::GetWorldMousePos(),{0.9f,0.1f,0.1f,1.0f},{0.01f,0.01f},0);
 }
 void GUITestingLayer::OnEvent(Event& event){
 	if(event.GetEventType() == EventType::MOUSE){
+		Core::Log("dwaad");
+
 		OnMouseEvent((MouseEvent&)event);
 	}
 	if(event.GetEventType() == EventType::KEYBOARD){
@@ -62,10 +68,42 @@ void GUITestingLayer::OnEvent(Event& event){
 	}
 }
 void GUITestingLayer::OnKeyBoardEvent(KeyBoardEvent& event){
+	Renderer* renderer= Application::GetRenderer();
+	if(event.State == EventState::PRESSED){
+	if(event.Key == KeyCodes::P){
+		auto frag = Application::GetAsset<Shader>("Shaders/ParticleF");
+   	if(frag)
+  		renderer->QueueShaderChange(frag);
 
+		auto vert= Application::GetAsset<Shader>("Shaders/ParticleV");
+  	 if(vert)
+   		renderer->QueueShaderChange(vert);
+	}
+	}
+	if(event.State == EventState::PRESSED){
+	if(event.Key == KeyCodes::O){
+		auto frag = Application::GetAsset<Shader>("Shaders/DefaultPixel");
+   		if(frag)
+  		renderer->QueueShaderChange(frag);
+
+		auto vert= Application::GetAsset<Shader>("Shaders/DefaultVertex");
+  	 	if(vert)
+   		renderer->QueueShaderChange(vert);
+	}
+	}
 }
 void GUITestingLayer::OnMouseEvent(MouseEvent& event){
+	if(event.Code == MouseCodes::LEFT&& event.State == EventState::PRESSED){
+		m_SpawnParticles = true;
+	}
+	if(event.Code == MouseCodes::LEFT&& event.State == EventState::RELEASED){
+		m_SpawnParticles = false;
+		Core::Log("RELEASED");
 
+	}
+
+
+	
 
 }
 

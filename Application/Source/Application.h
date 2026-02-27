@@ -89,6 +89,7 @@ public:
     static PathAgentHandle CreatePathAgent(const Float2& position,const Float2& size,const AgentType& type);
 
     static Application* GetApplication(){return m_Application;}
+    static ParticleSystem& GetParticleSystem(){return m_Application->m_ParticleSystem;}
     static bool DeleteApplication();
     ~Application();
 private:
@@ -114,6 +115,7 @@ private:
     //multithreading
     std::vector<std::thread> m_ThreadPool{};
 
+    ParticleSystem m_ParticleSystem{};
 
     //selection
     Float2* m_PickBuffer{};

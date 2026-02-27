@@ -11,6 +11,7 @@
 *.sln.docstates
 *.vcxproj
 *.vcxproj.filters
+*.spv
 *.sln
 /Libs
 Makefile
