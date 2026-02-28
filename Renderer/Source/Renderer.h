@@ -38,6 +38,8 @@ struct DrawCommand {
     uint32_t VertexBufferIndex{};
     uint64_t VertexBufferOffset{};
     uint32_t DescriptorSetTextureIndex{};
+    //only used for instanced rendering.
+    uint32_t InstanceCount{};
 };
 enum class RenderMode{SOLID,WIREFRAME};
 
@@ -123,7 +125,7 @@ private:
     void ReCreatePipeline(const PipelineDesc& desc);
 
     //particle
-    void TransferParticleDataToBuffer();
+    void FlushInstance();
 
     void StartRecordingCommands();
     void StopRecordingCommands();
@@ -265,6 +267,7 @@ private:
     std::vector<DrawCommand> m_DrawCommandsGeometry{};
     std::vector<DrawCommand> m_DrawCommandsGUI{};
     std::vector<DrawCommand> m_DrawCommandsOutlines{};
+    std::vector<DrawCommand> m_InstanceDrawCommands{};
 
     std::vector<Buffer*> m_VertexBufferGeometry{};
     std::vector<Buffer*> m_VertexBufferGUI{};
@@ -283,15 +286,21 @@ private:
     Asset<Font> m_CurrentFont{};
 
     //Particle system
-    uint32_t m_MaxParticleVertexCount{MAXPARTICLECOUNT*4};
     InstanceParticleData* m_ParticleInstanceData{};
     VertexParticleData* m_ParticleVertexData{};
-    Buffer* m_ParticleVertexBuffer{};
+    uint32_t m_MaxInstanceCount{MAXPARTICLECOUNT};
+    uint32_t m_MaxInstanceVertexCount{(uint32_t)(MAXPARTICLECOUNT*0.25f)};
+
+    Float2 m_LastInstanceObjectSize{};
+    Float4 m_LastInstanceObjectColor{};
+    GUUID m_LastInstanceObjectTextureUUID{};
+
     Buffer* m_ParticleInstanceBuffer{};
     Buffer* m_ParticleStaggingBuffer{};
 
+    uint32_t m_CurrentInstanceVertexIndex{0};
+
     uint32_t m_InstanceCount{};
-    uint32_t m_CurrentParticleIndex{};
     PipelineDesc m_ParticlePipelineDesc{};
     VkPipeline m_ParticlePipeline{};
     std::array<VkCommandBuffer,MAX_FRAME_DRAWS> m_ParticleCommandBuffer{}; 

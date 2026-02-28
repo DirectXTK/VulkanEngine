@@ -58,8 +58,8 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     m_SwapChain->CreateSwapChain(MAX_FRAME_DRAWS);
 
     //Allocation 
-    m_ParticleVertexData = new VertexParticleData[m_MaxParticleVertexCount];
-    m_ParticleInstanceData = new InstanceParticleData[100];
+    m_ParticleVertexData = new VertexParticleData[m_MaxInstanceVertexCount];
+    m_ParticleInstanceData = new InstanceParticleData[m_MaxInstanceCount];
    
     BufferDesc UniformBufferDesc{};
     UniformBufferDesc.Device = m_Device;
@@ -247,17 +247,43 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_NewWindowSize ={(float)width,(float)height};
     }
 void Renderer::DrawParticle(const Float2& pos,const Float4 color,const Float2 size,GUUID textureID){
-    if(m_CurrentParticleIndex+4 >= m_MaxParticleVertexCount)
-        m_CurrentParticleIndex = 0;
+    if(m_InstanceCount+1 >= m_MaxInstanceCount){
+        #ifdef DEBUG
+        Core::Log(ErrorType::Warning,"Instance limit reached DrawParticle()");
+        #endif
+        return;
+    }
 
-    m_ParticleVertexData[m_CurrentParticleIndex].Position = {pos.x-size.x,pos.y-size.y,0.0};
-    m_ParticleVertexData[m_CurrentParticleIndex+1].Position = {pos.x-size.x,pos.y+size.y,0.0};
-    m_ParticleVertexData[m_CurrentParticleIndex+2].Position= {pos.x+size.x,pos.y+size.y,0.0};
-    m_ParticleVertexData[m_CurrentParticleIndex+3].Position = {pos.x+size.x,pos.y-size.y,0.0};
+    if(m_LastInstanceObjectSize != size || m_LastInstanceObjectTextureUUID != textureID||m_LastInstanceObjectColor != color){
+        if(m_InstanceCount !=0){
 
-    m_ParticleInstanceData[0].Color = color;
 
-    m_CurrentParticleIndex+=4;
+
+            m_LastInstanceObjectTextureUUID = textureID;
+            m_LastInstanceObjectSize = size;
+            m_LastInstanceObjectColor = color;
+            FlushInstance();
+        }else{
+            m_LastInstanceObjectTextureUUID = textureID;
+            m_LastInstanceObjectSize = size;
+            m_LastInstanceObjectColor = color;
+        }
+    }
+
+
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex].Color= color;
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].Color= color;
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].Color= color;
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].Color= color;
+    
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex].BasePosition= {-1.0f*size.x,-1.0f*size.y,0.0f};
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].BasePosition= {-1.0f*size.x,+size.y,0.0f};
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].BasePosition= {+size.x,+size.y,0.0f};
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].BasePosition= {+size.x,-1.0f*size.y,0.0f};
+
+
+        m_ParticleInstanceData[m_InstanceCount].Position = {pos.x,pos.y,0.0f};
+
     m_InstanceCount++;
 }
 void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureID){
@@ -659,44 +685,54 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
         }
     
            
-void Renderer::TransferParticleDataToBuffer(){
-    m_ParticleStaggingBuffer->UploadToBuffer(m_Device,m_ParticleVertexData,m_MaxParticleVertexCount*sizeof(VertexParticleData),0);
-    m_ParticleStaggingBuffer->UploadToBuffer(m_Device,m_ParticleVertexData,100*sizeof(InstanceParticleData),m_MaxParticleVertexCount*sizeof(VertexParticleData));
+void Renderer::FlushInstance(){
+  m_InstanceDrawCommands.push_back({4,0,m_CurrentInstanceVertexIndex*sizeof(VertexParticleData),0,m_InstanceCount});
 
-    VkBufferCopy region{};
-    region.size = sizeof(VertexParticleData) * m_MaxParticleVertexCount;
-    region.dstOffset = 0;
-    region.srcOffset = 0;
 
-    vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_ParticleStaggingBuffer->GetBuffer(), *m_ParticleVertexBuffer->GetBuffer(), 1, &region);
-    region.size = 100*sizeof(InstanceParticleData);
-    region.dstOffset = 0;
-    region.srcOffset = m_MaxParticleVertexCount*sizeof(VertexParticleData);
-    vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_ParticleStaggingBuffer->GetBuffer(), *m_ParticleInstanceBuffer->GetBuffer(), 1, &region);
+
+  m_CurrentInstanceVertexIndex+=4;
+
+
+
 }
 void Renderer::SubmitDrawParticleCommands(){
-    VkDeviceSize offset[2] = {0,0};
-    VkBuffer vertexBuffers[2] = {*m_ParticleVertexBuffer->GetBuffer(),*m_ParticleInstanceBuffer->GetBuffer()};
+    VkDeviceSize offset[2] = {0,m_MaxInstanceVertexCount*sizeof(VertexParticleData)};
+    VkBuffer vertexBuffers[2] = {*m_ParticleInstanceBuffer->GetBuffer(),*m_ParticleInstanceBuffer->GetBuffer()};
 
+    for(uint32_t i=0;i < m_InstanceDrawCommands.size();i++){
+    DrawCommand& draw = m_InstanceDrawCommands[i];
     vkCmdBindPipeline(m_CurrentCommandBuffer,VK_PIPELINE_BIND_POINT_GRAPHICS,m_ParticlePipeline);
 
-
-
+    offset[0] = draw.VertexBufferOffset;
+    Core::Log("draw.VertexBufferOffset",draw.VertexBufferOffset);
+    
     vkCmdBindIndexBuffer(m_CurrentCommandBuffer,*m_IndexBuffersQuad->GetBuffer(),0,VK_INDEX_TYPE_UINT32);
     vkCmdBindVertexBuffers(m_CurrentCommandBuffer,0,2,vertexBuffers,offset);
+    
+    vkCmdDrawIndexed(m_CurrentCommandBuffer,draw.VertexCount*1.5f,draw.InstanceCount,0,0,0);
+    offset[1] = (draw.InstanceCount*sizeof(InstanceParticleData))+(m_MaxInstanceVertexCount*sizeof(VertexParticleData));
 
-    vkCmdDrawIndexed(m_CurrentCommandBuffer,m_CurrentParticleIndex*1.5f,m_InstanceCount,0,0,0);
+}
+Core::Log("DrawCallCount count",m_InstanceDrawCommands.size());
+
+    m_InstanceDrawCommands.clear();
+    m_InstanceDrawCommands.resize(0);
 }
 
         void Renderer::EndFrame()
         {
              
-              VkBufferCopy region{};
-            region.size = sizeof(Vertex) * m_VertexCount;
+            VkBufferCopy region{};
+            region.size = m_ParticleStaggingBuffer->GetBufferDesc().SizeBytes;
             region.dstOffset = 0;
             region.srcOffset = 0;
             
+            m_ParticleStaggingBuffer->UploadToBuffer(m_Device,m_ParticleVertexData,m_MaxInstanceVertexCount*sizeof(VertexParticleData),0);
+            m_ParticleStaggingBuffer->UploadToBuffer(m_Device,m_ParticleInstanceData,m_MaxInstanceCount*sizeof(InstanceParticleData),m_MaxInstanceVertexCount*sizeof(VertexParticleData));
 
+                     
+            vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_ParticleStaggingBuffer->GetBuffer(), *m_ParticleInstanceBuffer->GetBuffer(), 1, &region);
+            region.size = sizeof(Vertex) * m_VertexCount;
                       for(uint32_t i =0;i < m_VertexBufferGeometry.size();i++)
                         vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGeometry[i]->GetBuffer(), *m_VertexBufferGeometry[i]->GetBuffer(), 1, &region);
 
@@ -711,7 +747,7 @@ void Renderer::SubmitDrawParticleCommands(){
             for(uint32_t i=0 ;i < m_StaggingBufferGUI.size();i++)
               vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGUI[i]->GetBuffer(), *m_VertexBufferGUI[i]->GetBuffer(), 1, &region);
 
-            TransferParticleDataToBuffer();
+            FlushInstance();
             
             VkClearValue ClearColor[] = { {m_ClearColor.r,m_ClearColor.g,m_ClearColor.b,m_ClearColor.a},{0.0f,0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f,0.0f} };
 
@@ -805,7 +841,7 @@ void Renderer::SubmitDrawParticleCommands(){
             m_VertexGUIRemaining=m_VertexMaxCountGUI;
             m_InstanceCount =0;
 
-            m_CurrentParticleIndex = 0;
+            m_CurrentInstanceVertexIndex = 0;
 
             //delete the next upcoming rendered frame temps buffs
             if(vkGetFenceStatus(m_Device,m_DrawFences[m_CurrentFrame]) == VK_FALSE){
@@ -1724,13 +1760,9 @@ void Renderer::CreateParticlePipeline(){
     bufferDesc.Memoryflags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     bufferDesc.Physdevice = m_PhysicalDevice;
     bufferDesc.Usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    bufferDesc.SizeBytes = 100*sizeof(InstanceParticleData);
+    bufferDesc.SizeBytes = m_MaxInstanceCount*sizeof(InstanceParticleData)+(m_MaxInstanceVertexCount*sizeof(VertexParticleData));
     m_ParticleInstanceBuffer = new Buffer(bufferDesc);
 
-    bufferDesc.SizeBytes = m_MaxParticleVertexCount*sizeof(VertexParticleData);
-    m_ParticleVertexBuffer = new Buffer(bufferDesc);
-
-    bufferDesc.SizeBytes +=100*sizeof(InstanceParticleData);
     bufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT| VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
     bufferDesc.Usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
@@ -1753,13 +1785,14 @@ void Renderer::CreateParticlePipeline(){
     m_ParticlePipelineDesc.ShaderStages =shaderStages;
 
     m_ParticlePipelineDesc.VertexInputStride = sizeof(InstanceParticleData);
-    m_ParticlePipelineDesc.VertexStageInputCount = 4;
+    m_ParticlePipelineDesc.VertexStageInputCount = 5;
     m_ParticlePipelineDesc.VertexStageInput = new VertexStageInputAttrib[ m_ParticlePipelineDesc.VertexStageInputCount];
-    m_ParticlePipelineDesc.VertexStageInput[0] = {VK_FORMAT_R32G32B32_SFLOAT,offsetof(VertexParticleData,Position),0,0};
+    m_ParticlePipelineDesc.VertexStageInput[0] = {VK_FORMAT_R32G32B32_SFLOAT,offsetof(InstanceParticleData,Position),0,1};
 
-    m_ParticlePipelineDesc.VertexStageInput[1] = {VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(InstanceParticleData,Color),1,1};
-    m_ParticlePipelineDesc.VertexStageInput[2] = {VK_FORMAT_R32G32_SFLOAT,offsetof(InstanceParticleData,TextureCords),2,1};
-    m_ParticlePipelineDesc.VertexStageInput[3] = {VK_FORMAT_R32_UINT,offsetof(InstanceParticleData,TextureID),3,1};
+    m_ParticlePipelineDesc.VertexStageInput[1] = {VK_FORMAT_R32G32B32_SFLOAT,offsetof(VertexParticleData,BasePosition),1,0};
+    m_ParticlePipelineDesc.VertexStageInput[2] = {VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(VertexParticleData,Color),2,0};
+    m_ParticlePipelineDesc.VertexStageInput[3] = {VK_FORMAT_R32G32_SFLOAT,offsetof(VertexParticleData,TextureCords),3,0};
+    m_ParticlePipelineDesc.VertexStageInput[4] = {VK_FORMAT_R32_UINT,offsetof(VertexParticleData,TextureID),4,0};
 
     VkVertexInputBindingDescription inputBindings[2];
 
@@ -1849,7 +1882,6 @@ void Renderer::Shutdown(){
     delete m_PickingImageBuffer;
 
     delete m_ParticleInstanceBuffer;
-    delete m_ParticleVertexBuffer;
     delete m_ParticleStaggingBuffer;
 
     

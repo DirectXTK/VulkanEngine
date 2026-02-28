@@ -266,6 +266,16 @@ struct Float4 {
         a -=other.a;
         return *this;
     }
+     bool operator!=(const Float4& rh) {
+        if (this->x != rh.x || this->y != rh.y || this->z != rh.z || this->w != rh.w)
+            return true;
+        return false;
+    }
+    bool operator==(const Float4& rh) {
+        if (this->x == rh.x && this->y == rh.y&& this->z == rh.z && this->w == rh.w)
+            return true;
+        return false;
+    }
 };
 namespace Core {
     //works if this is ractangle

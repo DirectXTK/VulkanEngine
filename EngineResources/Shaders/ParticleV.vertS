@@ -1,9 +1,10 @@
 #version 460
 
-layout(location =0) in vec3 InPos;
-layout(location =1) in vec4 InFragColor;
-layout(location =2) in vec2 InTexCoords;
-layout(location =3) in uint InTexID;
+layout(location =0) in vec3 InInstancePos;
+layout(location =1) in vec3 InBasePos;
+layout(location =2) in vec4 InFragColor;
+layout(location =3) in vec2 InTexCoords;
+layout(location =4) in uint InTexID;
 
 
 
@@ -13,7 +14,7 @@ layout(location =2) flat out uint OutTexID;
 
 
 void main() {
-    gl_Position = vec4(InPos.x,InPos.y,InPos.z,1.0);
+    gl_Position = vec4(InInstancePos.x+InBasePos.x,InInstancePos.y+InBasePos.y,InInstancePos.z+InBasePos.z,1.0);
     gl_Position.y = -gl_Position.y;
 
     OutTexCoords = InTexCoords;
