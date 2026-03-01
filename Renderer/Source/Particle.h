@@ -1,6 +1,6 @@
 #pragma once
 #include "AppCore.h"
-#define MAXPARTICLECOUNT 5000
+#define MAXPARTICLECOUNT 10000
 struct InstanceParticleData{
     Float3 Position{};
 };

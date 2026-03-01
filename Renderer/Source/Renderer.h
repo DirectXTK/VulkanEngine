@@ -290,6 +290,7 @@ private:
     VertexParticleData* m_ParticleVertexData{};
     uint32_t m_MaxInstanceCount{MAXPARTICLECOUNT};
     uint32_t m_MaxInstanceVertexCount{(uint32_t)(MAXPARTICLECOUNT*0.25f)};
+    uint32_t m_ParticleDrawCallCount{};
 
     Float2 m_LastInstanceObjectSize{};
     Float4 m_LastInstanceObjectColor{};
@@ -301,6 +302,7 @@ private:
     uint32_t m_CurrentInstanceVertexIndex{0};
 
     uint32_t m_InstanceCount{};
+    uint32_t m_InstanceOffset{};
     PipelineDesc m_ParticlePipelineDesc{};
     VkPipeline m_ParticlePipeline{};
     std::array<VkCommandBuffer,MAX_FRAME_DRAWS> m_ParticleCommandBuffer{}; 
@@ -308,7 +310,7 @@ private:
 
     Camera2D m_Camera{};
     //Texturing
-    uint32_t m_TextureSlotCount{ 3};
+    uint32_t m_TextureSlotCount{ 2};
     Texture* m_BlankWhiteTexture{};
     DescriptorPool m_DescriptorPoolTextures{};
 

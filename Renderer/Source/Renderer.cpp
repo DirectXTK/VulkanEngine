@@ -147,7 +147,6 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
     // VertexBufferDesc.SizeBytes = desc.VertexCountPerDrawCall * sizeof(Vertex)*20000;
 
-     //Buffer* vertexdwadad = new Buffer(VertexBufferDesc);
     m_VerticesGUI = new Vertex[m_VertexMaxCountGUI];
     m_VerticesQuad = new Vertex[m_VertexCount];
     m_Vertices = new Vertex[m_VertexCount];
@@ -247,15 +246,20 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_NewWindowSize ={(float)width,(float)height};
     }
 void Renderer::DrawParticle(const Float2& pos,const Float4 color,const Float2 size,GUUID textureID){
-    if(m_InstanceCount+1 >= m_MaxInstanceCount){
+    if(m_InstanceOffset+1 >= m_MaxInstanceCount||m_CurrentInstanceVertexIndex+4 >= m_MaxInstanceVertexCount){
         #ifdef DEBUG
-        Core::Log(ErrorType::Warning,"Instance limit reached DrawParticle()");
+        Core::Log(ErrorType::Warning,"Instance limit reached DrawParticle()", "C",m_CurrentInstanceVertexIndex,"MaxInst ",m_InstanceOffset);
         #endif
         return;
     }
 
-    if(m_LastInstanceObjectSize != size || m_LastInstanceObjectTextureUUID != textureID||m_LastInstanceObjectColor != color){
-        if(m_InstanceCount !=0){
+    if(m_InstanceOffset ==0){
+             m_LastInstanceObjectTextureUUID = textureID;
+            m_LastInstanceObjectSize = size;
+            m_LastInstanceObjectColor = color;
+    }
+
+    if(m_LastInstanceObjectColor != color||m_LastInstanceObjectSize != size|| m_LastInstanceObjectTextureUUID != textureID){
 
 
 
@@ -263,27 +267,51 @@ void Renderer::DrawParticle(const Float2& pos,const Float4 color,const Float2 si
             m_LastInstanceObjectSize = size;
             m_LastInstanceObjectColor = color;
             FlushInstance();
-        }else{
-            m_LastInstanceObjectTextureUUID = textureID;
-            m_LastInstanceObjectSize = size;
-            m_LastInstanceObjectColor = color;
-        }
+          
+    }
+    //Load texture
+    auto texture = m_AssetManager->GetAsset<Texture>(textureID);
+    if(texture){
+
+
+
+        m_VerticesQuad[m_CurrentInstanceVertexIndex].TexCoords = { 0.0f,1.0f };
+        m_VerticesQuad[m_CurrentInstanceVertexIndex + 1].TexCoords = { 0.0f,0.0f };
+        m_VerticesQuad[m_CurrentInstanceVertexIndex + 2].TexCoords = { 1.0f,0.0f };
+        m_VerticesQuad[m_CurrentInstanceVertexIndex + 3].TexCoords = { 1.0f,1.0f };
+
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureID =0;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].TextureID =0;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].TextureID =0;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].TextureID =0;
     }
 
+      m_VerticesQuad[m_CurrentInstanceVertexIndex].TexCoords = { 0.0f,1.0f };
+        m_VerticesQuad[m_CurrentInstanceVertexIndex + 1].TexCoords = { 0.0f,0.0f };
+        m_VerticesQuad[m_CurrentInstanceVertexIndex + 2].TexCoords = { 1.0f,0.0f };
+        m_VerticesQuad[m_CurrentInstanceVertexIndex + 3].TexCoords = { 1.0f,1.0f };
+
+
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureID =0;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].TextureID =0;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].TextureID =0;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].TextureID =0;
 
     m_ParticleVertexData[m_CurrentInstanceVertexIndex].Color= color;
     m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].Color= color;
     m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].Color= color;
     m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].Color= color;
+
+    
     
     m_ParticleVertexData[m_CurrentInstanceVertexIndex].BasePosition= {-1.0f*size.x,-1.0f*size.y,0.0f};
     m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].BasePosition= {-1.0f*size.x,+size.y,0.0f};
     m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].BasePosition= {+size.x,+size.y,0.0f};
     m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].BasePosition= {+size.x,-1.0f*size.y,0.0f};
 
+        m_ParticleInstanceData[m_InstanceOffset].Position = {pos.x,pos.y,0.0f};
 
-        m_ParticleInstanceData[m_InstanceCount].Position = {pos.x,pos.y,0.0f};
-
+    m_InstanceOffset++;
     m_InstanceCount++;
 }
 void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureID){
@@ -425,6 +453,7 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
     void Renderer::ResetFrameData(){
             m_DrawCallCountGUI = 0;
             m_DrawCallCountGeometry =0;
+            m_ParticleDrawCallCount=0;
             m_DrawCallCountOutlines = 0;
             m_VertexCountRemaining = m_VertexCount;
             m_CurrentVertexBufferQuadIndex = 0;
@@ -573,8 +602,9 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
     
         auto& textures = m_Textures[m_CurrentFrame];
         auto& textureIds = m_TextureIDByOrder[m_CurrentFrame];
-        m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
-
+      //  m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(0,1 ,m_BlankWhiteTexture->GetImageView(), m_BlankWhiteTexture->GetSampler());
+           auto asset = m_AssetManager->GetAsset<Texture>(Core::GetStringHash("Particles/Fire"));
+        m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(0,1 ,asset.GetData()->GetImageView(), asset.GetData()->GetSampler());
 
         for (uint32_t i = 0; i < textureIds.size(); i++) {
             TextureRenderingData textureData = textures[textureIds[i]];
@@ -686,36 +716,40 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
     
            
 void Renderer::FlushInstance(){
+            auto asset = m_AssetManager->GetAsset<Texture>(Core::GetStringHash("Particles/Fire"));
+        m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(0,1 ,asset.GetData()->GetImageView(), asset.GetData()->GetSampler());
   m_InstanceDrawCommands.push_back({4,0,m_CurrentInstanceVertexIndex*sizeof(VertexParticleData),0,m_InstanceCount});
 
 
 
   m_CurrentInstanceVertexIndex+=4;
-
+  m_InstanceCount=0;
 
 
 }
 void Renderer::SubmitDrawParticleCommands(){
     VkDeviceSize offset[2] = {0,m_MaxInstanceVertexCount*sizeof(VertexParticleData)};
     VkBuffer vertexBuffers[2] = {*m_ParticleInstanceBuffer->GetBuffer(),*m_ParticleInstanceBuffer->GetBuffer()};
+    uint32_t instanceOffset{0};
 
+    m_ParticleDrawCallCount = m_InstanceDrawCommands.size();
+
+    Core::Log("ParticleDrawCallCount",m_ParticleDrawCallCount);
     for(uint32_t i=0;i < m_InstanceDrawCommands.size();i++){
     DrawCommand& draw = m_InstanceDrawCommands[i];
     vkCmdBindPipeline(m_CurrentCommandBuffer,VK_PIPELINE_BIND_POINT_GRAPHICS,m_ParticlePipeline);
 
     offset[0] = draw.VertexBufferOffset;
-    Core::Log("draw.VertexBufferOffset",draw.VertexBufferOffset);
     
+
     vkCmdBindIndexBuffer(m_CurrentCommandBuffer,*m_IndexBuffersQuad->GetBuffer(),0,VK_INDEX_TYPE_UINT32);
     vkCmdBindVertexBuffers(m_CurrentCommandBuffer,0,2,vertexBuffers,offset);
     
-    vkCmdDrawIndexed(m_CurrentCommandBuffer,draw.VertexCount*1.5f,draw.InstanceCount,0,0,0);
-    offset[1] = (draw.InstanceCount*sizeof(InstanceParticleData))+(m_MaxInstanceVertexCount*sizeof(VertexParticleData));
+    vkCmdDrawIndexed(m_CurrentCommandBuffer,draw.VertexCount*1.5f,draw.InstanceCount,0,0,instanceOffset);
+    instanceOffset+=draw.InstanceCount;
 
 }
-Core::Log("DrawCallCount count",m_InstanceDrawCommands.size());
 
-    m_InstanceDrawCommands.clear();
     m_InstanceDrawCommands.resize(0);
 }
 
@@ -727,6 +761,9 @@ Core::Log("DrawCallCount count",m_InstanceDrawCommands.size());
             region.dstOffset = 0;
             region.srcOffset = 0;
             
+            FlushInstance();
+
+
             m_ParticleStaggingBuffer->UploadToBuffer(m_Device,m_ParticleVertexData,m_MaxInstanceVertexCount*sizeof(VertexParticleData),0);
             m_ParticleStaggingBuffer->UploadToBuffer(m_Device,m_ParticleInstanceData,m_MaxInstanceCount*sizeof(InstanceParticleData),m_MaxInstanceVertexCount*sizeof(VertexParticleData));
 
@@ -747,7 +784,6 @@ Core::Log("DrawCallCount count",m_InstanceDrawCommands.size());
             for(uint32_t i=0 ;i < m_StaggingBufferGUI.size();i++)
               vkCmdCopyBuffer(m_CurrentCommandBuffer, *m_StaggingBufferGUI[i]->GetBuffer(), *m_VertexBufferGUI[i]->GetBuffer(), 1, &region);
 
-            FlushInstance();
             
             VkClearValue ClearColor[] = { {m_ClearColor.r,m_ClearColor.g,m_ClearColor.b,m_ClearColor.a},{0.0f,0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f,0.0f} };
 
@@ -768,7 +804,6 @@ Core::Log("DrawCallCount count",m_InstanceDrawCommands.size());
             SubmitDrawParticleCommands();
             vkCmdEndRenderPass(m_CurrentCommandBuffer);
             StopRecordingCommands();
-
 
 
 
@@ -834,13 +869,17 @@ Core::Log("DrawCallCount count",m_InstanceDrawCommands.size());
 
 
             memset(m_VerticesQuad,0,sizeof(Vertex)*m_VertexCount);
+            memset(m_ParticleInstanceData,0,sizeof(InstanceParticleData)*m_MaxInstanceCount);
+            memset(m_ParticleVertexData,0,sizeof(VertexParticleData)*m_MaxInstanceVertexCount);
+
             m_VertexBufferOffsetGUI =0;
             m_VertexBufferOffset =0;
             m_VertexPointerQuad = 0;
             m_CurrentVertexBufferIndexGUI=0;;
             m_VertexGUIRemaining=m_VertexMaxCountGUI;
-            m_InstanceCount =0;
 
+            m_InstanceCount =0;
+            m_InstanceOffset=0;
             m_CurrentInstanceVertexIndex = 0;
 
             //delete the next upcoming rendered frame temps buffs
@@ -1474,7 +1513,7 @@ Core::Log("DrawCallCount count",m_InstanceDrawCommands.size());
             style.BorderColor = {1.0f,0.0f,0.0f,1.0f};
             style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
             gui->PushStyle(GUI::Style::BORDER,&style);
-            gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(m_DrawCallCountGeometry+m_DrawCallCountGUI),{0.0f,0.75f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
+            gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(m_DrawCallCountGeometry+m_DrawCallCountGUI+m_ParticleDrawCallCount),{0.0f,0.75f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
 
             gui->Text("TriangleCount","TRIANGLE: "+std::to_string(m_VertexCountPerFrame/3),{0.0f,0.25f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
             gui->Text("VertexCount","VERTEX: "+std::to_string(m_VertexCountPerFrame),{0.0f,-0.25f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
@@ -1777,8 +1816,12 @@ void Renderer::CreateParticlePipeline(){
     shaders[1] = frag.GetData()->GetShaderModule();
     shaderStages[1] = frag.GetData()->GetShaderStage();
 
+
+    VkDescriptorSetLayout descriptorLayouts[2] = {m_DescriptorSetCamera[0].GetDescriptorLayout(),m_DescriptorSetTextures[0].GetDescriptorLayout()};
+
+        
     m_ParticlePipelineDesc.RenderPass = m_RenderPass;
-    m_ParticlePipelineDesc.PipelineLayout = Pipeline::CreatePipelineLayout(m_Device,nullptr,0);
+    m_ParticlePipelineDesc.PipelineLayout = Pipeline::CreatePipelineLayout(m_Device,descriptorLayouts,ARRAYSIZE(descriptorLayouts));
     
     m_ParticlePipelineDesc.ShaderCount = 2;
     m_ParticlePipelineDesc.ShaderModules =shaders;

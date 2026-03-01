@@ -1,4 +1,4 @@
-#version 460
+   #version 460
 #extension GL_EXT_nonuniform_qualifier : enable
 precision highp float;
 
@@ -19,7 +19,7 @@ void main(){
    OutInColor =
     InColor *
     texture(TextureSampler[nonuniformEXT(TexID)], TexCoords);
- // OutInColor = vec4(1.0,1.0,1.0,1.0);
+ // OutInColor = vec4(1.0,1.0,1.0,1.0);   
  //OutInColor = vec4(0.0, 0.0, 1.0, 1.0);
     OutInColor2 = InPickID;
 }

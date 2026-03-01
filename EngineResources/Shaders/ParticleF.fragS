@@ -13,5 +13,6 @@ layout(set =1 ,binding =0) uniform sampler2D TextureSampler[1000];
 
 
 void main(){
-   OutInColor = InColor;
+
+   OutInColor = InColor*texture(TextureSampler[nonuniformEXT(TexID)],TexCoords);
 }

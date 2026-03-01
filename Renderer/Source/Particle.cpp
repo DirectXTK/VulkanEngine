@@ -13,8 +13,6 @@ void ParticleSystem::UpdateAndDraw(double deltaTime){
                 prop.Pos.x += prop.Velocity.x;
                 prop.Pos.y += prop.Velocity.y;
             
-                
-
                 renderer->DrawParticle(prop.Pos,prop.Color,prop.Size,prop.TextureID);
             }
         }
