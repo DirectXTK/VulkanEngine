@@ -33,7 +33,7 @@ public:
 
     //Write Fn
     void WriteTo(uint32_t Index,uint32_t Count, VkBuffer uniformBuffer, uint64_t Size);
-    void WriteToTexture(uint32_t Index, uint32_t Count,VkImageView imageView, VkSampler sampler);
+    void WriteToTexture(uint32_t Index, uint32_t Count,VkImageView* imageView, VkSampler* sampler);
 
 private:
     void CreateDescriptorSetLayout(VkDescriptorSetLayout* descriptorSetLayout, uint32_t descriptorCount, VkDescriptorType descriptorType, VkShaderStageFlags stageFlags);

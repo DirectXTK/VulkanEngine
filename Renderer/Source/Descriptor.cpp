@@ -60,15 +60,15 @@
         vkUpdateDescriptorSets(m_Context->Device, 1, &write, 0, nullptr);
     }
 
-    void DescriptorSet::WriteToTexture(uint32_t Offset,uint32_t Count, VkImageView imageView, VkSampler sampler)
+    void DescriptorSet::WriteToTexture(uint32_t Offset,uint32_t Count, VkImageView* imageView, VkSampler* sampler)
     {
         
         std::vector<VkDescriptorImageInfo> info{};
         info.resize(Count);
         for(uint32_t i =0;i < Count;i++){
         info[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        info[i].imageView = imageView;
-        info[i].sampler = sampler;
+        info[i].imageView = imageView[i];
+        info[i].sampler = sampler[i];
     }
 
 

@@ -148,6 +148,9 @@ private:
     void CreateDescriptorSets();
 
     void CreatePickingImage();
+
+    //returns  ofset for the next available descriptor offset it assumes from offset to offset+textureslot count then you need to querry another offset with this function.
+    uint32_t GetDescriptorNextOffset();
     //Options
     RendererDesc m_RendererDesc{};
     RendererDesc m_RendererDescNext{};
@@ -277,6 +280,7 @@ private:
     std::vector<Buffer*> m_StaggingBufferGUI{};
     std::vector<Buffer*> m_StaggingBufferOutlines{};
 
+    uint32_t m_QuadTextureDescriptorSetRange{};
     uint32_t m_CurrentTextureDescriptorSetOffset{1};
     uint32_t m_CurrentCameraDescriptorSetOffset{};
     //Camera
@@ -291,10 +295,12 @@ private:
     uint32_t m_MaxInstanceCount{MAXPARTICLECOUNT};
     uint32_t m_MaxInstanceVertexCount{(uint32_t)(MAXPARTICLECOUNT*0.25f)};
     uint32_t m_ParticleDrawCallCount{};
+    uint32_t m_InstanceDescriptorRange{};
+    uint32_t m_ParticleDescriptorOffset{};
 
     Float2 m_LastInstanceObjectSize{};
     Float4 m_LastInstanceObjectColor{};
-    GUUID m_LastInstanceObjectTextureUUID{};
+    GUUID m_LastInstanceObjectTextureUUID{0};
 
     Buffer* m_ParticleInstanceBuffer{};
     Buffer* m_ParticleStaggingBuffer{};
@@ -307,6 +313,12 @@ private:
     VkPipeline m_ParticlePipeline{};
     std::array<VkCommandBuffer,MAX_FRAME_DRAWS> m_ParticleCommandBuffer{}; 
 
+    struct BatchInfo{
+        uint32_t InstanceVertexIndex{};
+        uint32_t TextureIndex{};
+    };
+    std::array<Asset<Texture>,1000> m_TextureStorageBuffer[MAX_FRAME_DRAWS];
+    std::unordered_map<GUUID,BatchInfo> m_TextureStorageBufferLoadedTextures[MAX_FRAME_DRAWS];
 
     Camera2D m_Camera{};
     //Texturing
@@ -320,8 +332,8 @@ private:
         Asset<Texture> texture{};
         uint32_t Index{};
     };
-    std::unordered_map<GUUID, TextureRenderingData> m_Textures[MAX_FRAME_DRAWS];
-    std::vector<GUUID> m_TextureIDByOrder[MAX_FRAME_DRAWS];
+ //   std::unordered_map<GUUID, TextureRenderingData> m_Textures[MAX_FRAME_DRAWS];
+  //  std::vector<GUUID> m_TextureIDByOrder[MAX_FRAME_DRAWS];
     //GUI stuff
     Vertex* m_VerticesGUI{};
     uint64_t m_VertexMaxCountGUI{ 4 };

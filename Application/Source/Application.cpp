@@ -100,7 +100,8 @@ void Application::LogSystemAndAppInformation(){
     std::cout << "  SSE3 "<<Core::GetCPUSupportedInscrutionSets().SSE3<<"\n";
     std::cout << "  SSE4.1 "<<Core::GetCPUSupportedInscrutionSets().SSE41<<"\n";
     std::cout << "  SSE4.2 "<<Core::GetCPUSupportedInscrutionSets().SSE42<<"\n";
-    std::cout << "  GPU "<<Core::GetGPUName()<<"\n";
+    std::cout << "  GPU "<<Core::GetGPUName();
+
 
 
 
@@ -109,8 +110,7 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
     m_Specs = specs;
 
-    if(specs.AppDebugging)
-        LogSystemAndAppInformation();
+
     if(specs.OpenTerminal)
         OpenTerminalAndAttachToStream();
     m_ThreadPool.resize(Core::GetCPUThreadCount());
@@ -166,6 +166,9 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
      m_PickBuffer = new Float2[m_Renderer->GetViewPortExtent().width*m_Renderer->GetViewPortExtent().height];
      m_PickBufferSize = m_Renderer->GetViewPortExtent().width*m_Renderer->GetViewPortExtent().height*sizeof(Float2);
+
+     if(specs.AppDebugging)
+        LogSystemAndAppInformation();
 
      return true;
 

@@ -32,6 +32,11 @@ namespace Core{
 
             return true;
         }
+        uint32_t GetTextureSlotCount(VkPhysicalDevice pDevice){
+            VkPhysicalDeviceProperties props{};
+            vkGetPhysicalDeviceProperties(pDevice,&props);
+            return props.limits.maxPerStageDescriptorSampledImages;
+        }
         Float2 ToScreenPixels(const Float2& pos){
            return{(pos.x * 0.5f + 0.5f) * Application::GetRenderer()->GetViewPortExtent().width,
             (0.5f - pos.y * 0.5f) * Application::GetRenderer()->GetViewPortExtent().height};

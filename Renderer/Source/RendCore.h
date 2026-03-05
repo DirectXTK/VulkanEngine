@@ -43,6 +43,7 @@ struct SwapChainDetails{
         Float2 ToNDC(const Float2& pos);
         Float2 ToScreenPixels(const Float2& pos);
         
+        uint32_t GetTextureSlotCount(VkPhysicalDevice pdevice);
 
         bool IsShaderExtension(const std::string& extension);
     }

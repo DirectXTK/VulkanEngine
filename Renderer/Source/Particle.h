@@ -7,7 +7,7 @@ struct InstanceParticleData{
 struct VertexParticleData{
     Float3 BasePosition{};
     Float4 Color{};
-    Float2 TextureCords{};
+    Float2 TextureCords{0.0f,0.0f};
     uint32_t TextureID{};
 };
 struct ParticleProps{
@@ -15,6 +15,9 @@ struct ParticleProps{
     Float4 Color{};
     GUUID TextureID{0};  
     Float2 Size{};
+
+    void* CustomData{};
+    void(*CustomFunction)(const ParticleProps&);
 
     Float2 Velocity{};
     float LifeTime{};

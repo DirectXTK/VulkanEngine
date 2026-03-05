@@ -40,22 +40,22 @@ void GUITestingLayer::OnUpdate(double deltatime)
    }
 	if(m_SpawnParticles){
 		ParticleProps prop{};
-		//prop.LifeTime = Core::RandomFloat(SEC(2.0f),SEC(3.5f));
-		prop.LifeTime = SEC(3.f);
+		prop.LifeTime = Core::RandomFloat(SEC(0.0f),SEC(4.5f));
+		//prop.LifeTime = SEC(3.f);
 		prop.Color = {1.0f,1.0f,1.0f,1.0f};
 		prop.Pos = Application::GetWorldMousePos();
 		prop.Size = {0.009f,0.009f};
-		prop.TextureID = Core::GetStringHash("Particles/Fire");
+		prop.TextureID = Core::GetStringHash("Particles/Water");
 		for(uint32_t i=0;i < 10;i++){
-		prop.Velocity.x = Core::RandomFloat(-0.0010f,0.0010f);
-		prop.Velocity.y = Core::RandomFloat(-0.0010f,0.0010f);
+		prop.Velocity.x = Core::RandomFloat(-0.0005f,0.0005f);
+		prop.Velocity.y = Core::RandomFloat(0.0001f,0.0010f);
 		Application::GetParticleSystem().DrawParticle(prop);
 
 		}
-			for(uint32_t i=0;i < 0;i++){
+			for(uint32_t i=0;i < 10;i++){
 		prop.Velocity.x = Core::RandomFloat(-0.0015f,0.0010f);
 		prop.Velocity.y = Core::RandomFloat(-0.0015f,0.0010f);
-		prop.Color = {1.0f,0.0f,1.0f,1.0f};
+		prop.TextureID = Core::GetStringHash("Particles/Fire");
 		Application::GetParticleSystem().DrawParticle(prop);
 
 		}
@@ -108,7 +108,6 @@ void GUITestingLayer::OnMouseEvent(MouseEvent& event){
 	}
 	if(event.Code == MouseCodes::LEFT&& event.State == EventState::RELEASED){
 		m_SpawnParticles = false;
-		Core::Log("RELEASED");
 
 	}
 
