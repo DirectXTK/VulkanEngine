@@ -75,7 +75,8 @@ public:
 
     void DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureID=0);
 
-    void DrawParticle(const Float2& pos,const Float4 color,const Float2 size,GUUID textureID);
+    void DrawInstance(const Float2& pos,const Float4 color,const Float2 size,GUUID ID,GUUID textureID=0,int textureIndex =-1);
+    void DrawInstance(const Float2& pos,const Float4 color,const Float2 size,GUUID ID,Animator animation);
 
     void SetCurrentFont(Asset<Font> CurrentAsset);
     Asset<Font> GetCurrentFont(){return m_CurrentFont;}

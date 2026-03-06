@@ -32,6 +32,7 @@ workspace "VulkanEngine"
       "-fsanitize=undefined",
       "-fno-omit-frame-pointer"
       }
+      symbols "On"             
       linkoptions {
       "-fsanitize=address",
       "-fsanitize=undefined"

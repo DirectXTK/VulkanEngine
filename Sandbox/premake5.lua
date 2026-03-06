@@ -31,7 +31,7 @@ project "Sandbox"
         vulkanSDK.."/Lib/",
     }
 
-     
+        
     links{
       "freetype","z","png16","bz2","brotlidec",
       "glfw3",

@@ -245,7 +245,114 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_ResizeWindow=true;
         m_NewWindowSize ={(float)width,(float)height};
     }
-void Renderer::DrawParticle(const Float2& pos,const Float4 color,const Float2 size,GUUID textureID){
+void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 size,GUUID ID,Animator animation){
+     if(m_InstanceOffset+1 >= m_MaxInstanceCount||m_CurrentInstanceVertexIndex+4 >= m_MaxInstanceVertexCount){
+        #ifdef DEBUG
+        Core::Log(ErrorType::Warning,"Instance limit reached DrawParticle()", "C",m_CurrentInstanceVertexIndex,"MaxInst ",m_InstanceOffset);
+        #endif
+        return;
+    }
+
+    #ifdef DEBUG
+    if(!animation)
+        Core::Log("Animation isn't loaded properly or loaded at all DrawInstance()");
+    #endif
+
+    Asset<Texture> texture = animation.GetCurrentTexture();
+    GUUID textureID = animation.GetCurrentTexture().GetID();
+    uint32_t textureIndex = animation.GetTextureIndex();
+    if(!texture.GetData()->IsAtlas())
+    Core::Log("texture index",textureIndex);
+    if(m_InstanceOffset ==0){
+            m_LastInstanceObjectSize = size;
+            m_LastInstanceObjectColor = color;
+    }
+
+    if(m_LastInstanceObjectColor != color||m_LastInstanceObjectSize != size|| (m_LastInstanceObjectTextureUUID != 0&& m_LastInstanceObjectTextureUUID != textureID) ){
+  
+            m_LastInstanceObjectSize = size;
+            m_LastInstanceObjectColor = color;
+            FlushInstance();
+          
+    }
+
+    if(textureID != m_LastInstanceObjectTextureUUID){
+    auto texture = m_AssetManager->GetAsset<Texture>(textureID);
+    auto it = m_TextureStorageBufferLoadedTextures[m_CurrentFrame].find(textureID);
+    if(it != m_TextureStorageBufferLoadedTextures[m_CurrentFrame].end()){
+            Core::Log("LOG");
+        
+
+        if(m_TextureStorageBuffer[m_CurrentFrame][it->second.TextureIndex].GetData()->IsAtlas()){
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[0];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[1];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[2];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[3];
+        }else{
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = { 0.0f,1.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = { 0.0f,0.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = { 1.0f,0.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = { 1.0f,1.0f };
+        }
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureID =it->second.TextureIndex;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].TextureID =it->second.TextureIndex;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].TextureID =it->second.TextureIndex;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].TextureID =it->second.TextureIndex;
+
+        m_LastInstanceObjectTextureUUID = textureID;
+    }
+    else if(texture){
+        
+        if(texture.GetData()->IsAtlas()){
+            Core::Log("LOG");
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[0];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[1];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[2];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[3];
+        }else{
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = { 0.0f,1.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = { 0.0f,0.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = { 1.0f,0.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = { 1.0f,1.0f };
+        }
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureID =m_ParticleDescriptorOffset;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].TextureID =m_ParticleDescriptorOffset;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].TextureID =m_ParticleDescriptorOffset;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].TextureID =m_ParticleDescriptorOffset;
+
+        m_LastInstanceObjectTextureUUID = textureID;
+
+        m_TextureStorageBuffer[m_CurrentFrame][m_ParticleDescriptorOffset] = texture;
+        m_TextureStorageBufferLoadedTextures[m_CurrentFrame][textureID] = {m_CurrentInstanceVertexIndex,m_ParticleDescriptorOffset};
+
+        m_ParticleDescriptorOffset++;
+    }   
+
+    }
+     m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[0];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[1];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[2];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[3];
+
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex].Color= color;
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].Color= color;
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].Color= color;
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].Color= color;
+
+    
+    
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex].BasePosition= {-1.0f*size.x,-1.0f*size.y,0.0f};
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].BasePosition= {-1.0f*size.x,+size.y,0.0f};
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].BasePosition= {+size.x,+size.y,0.0f};
+    m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].BasePosition= {+size.x,-1.0f*size.y,0.0f};
+
+        m_ParticleInstanceData[m_InstanceOffset].Position = {pos.x,pos.y,0.0f};
+        m_ParticleInstanceData[m_InstanceOffset].ID = ID;  
+
+    m_InstanceOffset++;
+    m_InstanceCount++;
+}
+void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 size,GUUID ID,GUUID textureID,int textureIndex){
     if(m_InstanceOffset+1 >= m_MaxInstanceCount||m_CurrentInstanceVertexIndex+4 >= m_MaxInstanceVertexCount){
         #ifdef DEBUG
         Core::Log(ErrorType::Warning,"Instance limit reached DrawParticle()", "C",m_CurrentInstanceVertexIndex,"MaxInst ",m_InstanceOffset);
@@ -260,7 +367,6 @@ void Renderer::DrawParticle(const Float2& pos,const Float4 color,const Float2 si
 
     if(m_LastInstanceObjectColor != color||m_LastInstanceObjectSize != size|| (m_LastInstanceObjectTextureUUID != 0&& m_LastInstanceObjectTextureUUID != textureID) ){
   
-            Core::Log("m_CurrentInstanceVertexIndex",m_CurrentInstanceVertexIndex);
             m_LastInstanceObjectSize = size;
             m_LastInstanceObjectColor = color;
             FlushInstance();
@@ -273,11 +379,17 @@ void Renderer::DrawParticle(const Float2& pos,const Float4 color,const Float2 si
     if(it != m_TextureStorageBufferLoadedTextures[m_CurrentFrame].end()){
         
 
-        m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = { 0.0f,1.0f };
-        m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = { 0.0f,0.0f };
-        m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = { 1.0f,0.0f };
-        m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = { 1.0f,1.0f };
-
+        if(m_TextureStorageBuffer[m_CurrentFrame][it->second.TextureIndex].GetData()->IsAtlas()){
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[0];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[1];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[2];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[3];
+        }else{
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = { 0.0f,1.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = { 0.0f,0.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = { 1.0f,0.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = { 1.0f,1.0f };
+        }
         m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureID =it->second.TextureIndex;
         m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].TextureID =it->second.TextureIndex;
         m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].TextureID =it->second.TextureIndex;
@@ -287,12 +399,18 @@ void Renderer::DrawParticle(const Float2& pos,const Float4 color,const Float2 si
     }
     else if(texture){
       
-        Core::Log("bla");
-        m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = { 0.0f,1.0f };
-        m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = { 0.0f,0.0f };
-        m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = { 1.0f,0.0f };
-        m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = { 1.0f,1.0f };
+        if(texture.GetData()->IsAtlas()){
 
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[0];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[1];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[2];
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[3];
+        }else{
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = { 0.0f,1.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = { 0.0f,0.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = { 1.0f,0.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = { 1.0f,1.0f };
+        }
         m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureID =m_ParticleDescriptorOffset;
         m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].TextureID =m_ParticleDescriptorOffset;
         m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].TextureID =m_ParticleDescriptorOffset;
@@ -321,6 +439,7 @@ void Renderer::DrawParticle(const Float2& pos,const Float4 color,const Float2 si
     m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].BasePosition= {+size.x,-1.0f*size.y,0.0f};
 
         m_ParticleInstanceData[m_InstanceOffset].Position = {pos.x,pos.y,0.0f};
+        m_ParticleInstanceData[m_InstanceOffset].ID = ID;  
 
     m_InstanceOffset++;
     m_InstanceCount++;
@@ -736,6 +855,7 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
     
 
 void Renderer::FlushInstance(){
+
     if(m_ParticleDescriptorOffset >= m_InstanceDescriptorRange){
         m_ParticleDescriptorOffset = GetDescriptorNextOffset();
         m_InstanceDescriptorRange = m_ParticleDescriptorOffset+m_TextureSlotCount;
@@ -796,15 +916,12 @@ void Renderer::SubmitDrawParticleCommands(){
             region.srcOffset = 0;
             
             //upload all the texture
-            uint32_t max = std::max(m_QuadTextureDescriptorSetRange,m_InstanceDescriptorRange);
+            uint32_t descriptorCount = m_TextureStorageBuffer[m_CurrentFrame].size();
             VkImageView* imageViews{};
             VkSampler* samplers{};
-
-            imageViews = new VkImageView[max];
-            samplers = new VkSampler[max];
-            
-            Core::Log("ImageCountused",m_TextureStorageBufferLoadedTextures[m_CurrentFrame].size());
-            for(uint32_t i=0;i < max;i++){
+            imageViews = new VkImageView[descriptorCount];
+            samplers = new VkSampler[descriptorCount];
+            for(uint32_t i=0;i < descriptorCount;i++){
                   auto asset = m_TextureStorageBuffer[m_CurrentFrame].at(i);
                      if(asset){
                         auto texture = asset.GetData();
@@ -816,7 +933,7 @@ void Renderer::SubmitDrawParticleCommands(){
                     }
                     
                 }
-            m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(0,max ,imageViews, samplers);
+            m_DescriptorSetTextures[m_CurrentFrame].WriteToTexture(0,descriptorCount ,imageViews, samplers);
                 
             delete[] imageViews;
             delete[] samplers;
@@ -857,7 +974,6 @@ void Renderer::SubmitDrawParticleCommands(){
             RenderPassBeginInfo.framebuffer = m_FrameBuffers[m_CurrentFrame].GetFrameBuffer(0);
 
             vkCmdBeginRenderPass(m_CurrentCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-          
     
             DrawBatch();
 
@@ -1881,14 +1997,15 @@ void Renderer::CreateParticlePipeline(){
     m_ParticlePipelineDesc.ShaderStages =shaderStages;
 
     m_ParticlePipelineDesc.VertexInputStride = sizeof(InstanceParticleData);
-    m_ParticlePipelineDesc.VertexStageInputCount = 5;
+    m_ParticlePipelineDesc.VertexStageInputCount = 6;
     m_ParticlePipelineDesc.VertexStageInput = new VertexStageInputAttrib[ m_ParticlePipelineDesc.VertexStageInputCount];
     m_ParticlePipelineDesc.VertexStageInput[0] = {VK_FORMAT_R32G32B32_SFLOAT,offsetof(InstanceParticleData,Position),0,1};
+    m_ParticlePipelineDesc.VertexStageInput[1] = {VK_FORMAT_R32G32_UINT,offsetof(InstanceParticleData,ID),1,1};
 
-    m_ParticlePipelineDesc.VertexStageInput[1] = {VK_FORMAT_R32G32B32_SFLOAT,offsetof(VertexParticleData,BasePosition),1,0};
-    m_ParticlePipelineDesc.VertexStageInput[2] = {VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(VertexParticleData,Color),2,0};
-    m_ParticlePipelineDesc.VertexStageInput[3] = {VK_FORMAT_R32G32_SFLOAT,offsetof(VertexParticleData,TextureCords),3,0};
-    m_ParticlePipelineDesc.VertexStageInput[4] = {VK_FORMAT_R32_UINT,offsetof(VertexParticleData,TextureID),4,0};
+    m_ParticlePipelineDesc.VertexStageInput[2] = {VK_FORMAT_R32G32B32_SFLOAT,offsetof(VertexParticleData,BasePosition),2,0};
+    m_ParticlePipelineDesc.VertexStageInput[3] = {VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(VertexParticleData,Color),3,0};
+    m_ParticlePipelineDesc.VertexStageInput[4] = {VK_FORMAT_R32G32_SFLOAT,offsetof(VertexParticleData,TextureCords),4,0};
+    m_ParticlePipelineDesc.VertexStageInput[5] = {VK_FORMAT_R32_UINT,offsetof(VertexParticleData,TextureID),5,0};
 
     VkVertexInputBindingDescription inputBindings[2];
 
@@ -1983,12 +2100,17 @@ void Renderer::Shutdown(){
     
     m_FrameBuffers.clear();
     
-    for(uint32_t i =0;i < MAX_FRAME_DRAWS;i++)
     
-    for(uint32_t i=0;i < m_DepthStencilAttachments.size();i++)
-    delete m_DepthStencilAttachments[i];
-    for(uint32_t i=0;i < m_ColorAttachments.size();i++)
-    delete m_ColorAttachments[i];
+    for(uint32_t i=0;i < m_DepthStencilAttachments.size();i++){
+
+        delete m_DepthStencilAttachments[i];
+    }
+    m_DepthStencilAttachments.clear();
+    for(uint32_t i=0;i < m_ColorAttachments.size();i++){
+
+          delete m_ColorAttachments[i];
+    }
+    m_ColorAttachments.clear();
     for(uint32_t i=0;i < m_RenderFinishedS.size();i++)
         vkDestroySemaphore(m_Device,m_RenderFinishedS[i],nullptr);
     for(uint32_t i=0;i < m_ImageAvailS.size();i++)
@@ -1998,11 +2120,10 @@ void Renderer::Shutdown(){
 
     
     for(uint32_t i=0; i < m_DescriptorSetCamera.size();i++)
-    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetCamera[i].GetDescriptorLayout(),nullptr);
+        vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetCamera[i].GetDescriptorLayout(),nullptr);
 
     for(uint32_t i=0;i < m_DescriptorSetTextures.size();i++)
-    vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetTextures[i].GetDescriptorLayout(),nullptr);
-
+        vkDestroyDescriptorSetLayout(m_Device,m_DescriptorSetTextures[i].GetDescriptorLayout(),nullptr);
     m_DescriptorPool.Destroy();
     
     vkDestroyRenderPass(m_Device,m_RenderPass,nullptr);
@@ -2042,8 +2163,8 @@ void Renderer::FinishExecution(){
     m_CurrentFont.~Asset();
     m_CurrentFont= Asset<Font>();
     for(uint32_t i=0 ; i < MAX_FRAME_DRAWS;i++){
-        for(uint32_t j=0;j < 1000;j++){
-            m_TextureStorageBuffer[i].at(j).~Asset();
+        for(uint32_t j=0;j < m_TextureStorageBuffer[i].size();j++){
+            m_TextureStorageBuffer[i].at(j) = Asset<Texture>();
 
         }
 

@@ -1,16 +1,19 @@
 #version 460
 
 layout(location =0) in vec3 InInstancePos;
-layout(location =1) in vec3 InBasePos;
-layout(location =2) in vec4 InFragColor;
-layout(location =3) in vec2 InTexCoords;
-layout(location =4) in uint InTexID;
+layout(location =1) in uvec2 InInstanceID;
+
+layout(location =2) in vec3 InBasePos;
+layout(location =3) in vec4 InFragColor;
+layout(location =4) in vec2 InTexCoords;
+layout(location =5) in uint InTexID;
 
 
 
 layout(location =0) out vec4 OutFragColor;
 layout(location =1) out vec2 OutTexCoords;
 layout(location =2) flat out uint OutTexID;
+layout(location =3) flat out uvec2 OutID;
 
 layout(set =0,binding =0 ) uniform MVP{
     mat4 viewproj[2];
@@ -20,6 +23,7 @@ void main() {
     gl_Position = mvp.viewproj[0]*vec4(InInstancePos.x+InBasePos.x,InInstancePos.y+InBasePos.y,InInstancePos.z+InBasePos.z,1.0);
     gl_Position.y = -gl_Position.y;
 
+    OutID = InInstanceID;
     OutTexCoords = InTexCoords;
     OutTexID = InTexID;
     OutFragColor = InFragColor;

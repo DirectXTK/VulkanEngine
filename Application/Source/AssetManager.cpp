@@ -57,7 +57,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 			std::string fileExtension = Core::GetFileExtension(currentFile);	
 			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
 
-			 if(fileExtension == "json"){
+			 if(fileExtension == "json")
 				LoadTextureAtlas(currentFile,fileName);
 
 		
@@ -121,7 +121,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 
 
 }
-}
+
 void AssetManager::LoadShader(const std::string& filePath,const std::string& fileName){
 	auto it = m_Resources.find(fileName);
 	if(it != m_Resources.end())
@@ -166,7 +166,7 @@ void AssetManager::DebugStatistics(bool GUI){
 				break;
 			}
 				case AssetType::TEXTUREATLAS:{
-				Core::Log("Animation ID{",handle.ID.ID,"}"+debugStuff);
+				Core::Log("TEXTUREATLAS ID{",handle.ID.ID,"}"+debugStuff);
 
 				break;
 			}

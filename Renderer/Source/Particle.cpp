@@ -6,19 +6,37 @@ void ParticleSystem::UpdateAndDraw(double deltaTime){
         if(m_ParticleProps[i].Alive){
             m_ParticleProps[i].LifeTime -=deltaTime;
             if(m_ParticleProps[i].LifeTime <= 0.0f){
+                if(m_ParticleProps[i].CustomData){
+                    if(m_ParticleProps[i].CustomDataDestructor)
+                        m_ParticleProps[i].CustomDataDestructor(m_ParticleProps->CustomData);
+                    else
+                        free(m_ParticleProps[i].CustomData);
+                }
+                
                 m_ParticleProps[i].Alive = false;
             }else{
                 //Draw and update velocity
                 ParticleProps& prop = m_ParticleProps[i];
-                prop.Pos.x += prop.Velocity.x;
-                prop.Pos.y += prop.Velocity.y;
             
-                renderer->DrawParticle(prop.Pos,prop.Color,prop.Size,prop.TextureID);
+                if(prop.CustomFunction)
+                    prop.CustomFunction(prop);
+                if(prop.TextureID !=0)
+                    renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID,prop.TextureID,prop.TextureIndex);
+                else if(prop.Animation){
+                    renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID,prop.Animation);
+                    prop.Animation.Update(deltaTime);
+                }
             }
         }
     }
 }
 void ParticleSystem::DrawParticle(const ParticleProps& props){
+
+    #ifdef DEBUG
+    if(props.CustomData && !props.CustomDataDestructor)
+        Core::Log(ErrorType::Warning,"Memory leak you need to create a custom data destructor ParticleProps.CustomDataDesctructor is nullptr now using free() function");
+    #endif
+
     m_ParticleProps[m_CurrentParticle] = props;
     m_ParticleProps[m_CurrentParticle].Alive = true;
     if(m_CurrentParticle+1 >= MAXPARTICLECOUNT)

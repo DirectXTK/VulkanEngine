@@ -1,8 +1,10 @@
 #pragma once
 #include "AppCore.h"
+#include "Animator.h"
 #define MAXPARTICLECOUNT 10000
 struct InstanceParticleData{
     Float3 Position{};
+    GUUID ID{0};
 };
 struct VertexParticleData{
     Float3 BasePosition{};
@@ -15,9 +17,13 @@ struct ParticleProps{
     Float4 Color{};
     GUUID TextureID{0};  
     Float2 Size{};
+    GUUID ID{0};
+    int TextureIndex{-1};
+    Animator Animation{};
 
     void* CustomData{};
-    void(*CustomFunction)(const ParticleProps&);
+    void(*CustomFunction)(ParticleProps&);
+    void(*CustomDataDestructor)(void*);
 
     Float2 Velocity{};
     float LifeTime{};

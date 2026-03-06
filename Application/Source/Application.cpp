@@ -155,7 +155,9 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
     // m_PathFinderSystem = new PathSystem(1000,1000,{0.025f,0.025f});
 
     m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::TEXTURE);
-     m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::SHADER);
+    m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::SHADER);
+
+     m_AssetManager.DebugStatistics(false);
      m_Renderer->InitializePipeline(500);
 
      m_FontSystem = new FontSystem();

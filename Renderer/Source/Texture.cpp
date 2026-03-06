@@ -222,7 +222,6 @@ void Texture::CopyFromBuffer(VkDevice device, Buffer* srcbuffer, VkCommandBuffer
 
 Texture::~Texture()
 {	
-
 	if(m_TextureAtlasData){
 		if(m_TextureAtlasData->Data)
 			delete[] m_TextureAtlasData->Data;
@@ -395,7 +394,6 @@ void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTilin
 		Core::Log(ErrorType::Error, "Failed to create texture sampler.");
 
 
-
 }
 
 void Texture::CreateTextureAtlasAndParent(const std::string& MetaData,uint64_t Width,uint64_t Height)
@@ -464,6 +462,7 @@ void Texture::CopyDataFromBuffer(VkCommandBuffer CommandBuffer,VkBuffer BufferSr
 	TextureAtlasData* DataRet{};
 	std::vector<TextureCoords> AtlasCoords{};
 	//Parent texture width and height
+
 
 
 	uint64_t Width{}, Height{};
@@ -551,7 +550,6 @@ void Texture::CopyDataFromBuffer(VkCommandBuffer CommandBuffer,VkBuffer BufferSr
 
 	}
 	//
-
 	///here
 	m_TextureAtlasData = new TextureAtlasData();
 

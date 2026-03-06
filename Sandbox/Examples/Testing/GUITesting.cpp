@@ -13,6 +13,7 @@ void GUITestingLayer::OnCreate() {
 	sliderdata.FillColor = {0.0f,0.0f,1.0f,1.0f};
 
 	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/",AssetType::NONE);
+	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/Examples/Animation/",AssetType::ANIMATION);
 
 	  Asset<Animator> asset= Application::GetAsset<Animator>("PEASawdaawdANT");
 		if(asset){
@@ -30,8 +31,39 @@ void GUITestingLayer::OnCreate() {
 
 
 }
+struct FireParticleData{
+	float SwivelAmount{0.0005f};
+	float SwivelDirection{1.0f};
+	float CurrentTime{};
+};
+void ParticleFire( ParticleProps& props){
+	const float timeToSwivelInOneDir{SEC(2.4f)};
+	FireParticleData* fireData = (FireParticleData*)props.CustomData;
+
+	fireData->CurrentTime-=Application::GetDeltaTime();
+	if(fireData->CurrentTime <=0.0f){
+		fireData->CurrentTime = Core::RandomFloat(1.0f,timeToSwivelInOneDir);
+		fireData->SwivelDirection*=-1.0f;
+	}
+
+	props.Pos.y +=Core::RandomFloat(0.0f,0.001f);
+	props.Pos.x += Core::RandomFloat(0.0f,fireData->SwivelAmount)*fireData->SwivelDirection;
+
+}
+void ParticleVelocityAdd(ParticleProps& props){
+	const float velSlow{0.997f}; 
+
+	props.Pos.x += props.Velocity.x;
+	props.Pos.y += props.Velocity.y;
+
+	props.Velocity.x *=velSlow;
+	props.Velocity.y *=velSlow;
+}
 void GUITestingLayer::OnUpdate(double deltatime)
 {
+
+
+
    Renderer* renderer = Application::GetRenderer();
    if(animator)
    {
@@ -40,23 +72,32 @@ void GUITestingLayer::OnUpdate(double deltatime)
    }
 	if(m_SpawnParticles){
 		ParticleProps prop{};
-		prop.LifeTime = Core::RandomFloat(SEC(0.0f),SEC(4.5f));
+		prop.LifeTime = Core::RandomFloat(SEC(3.3f),SEC(8.0f));
 		//prop.LifeTime = SEC(3.f);
 		prop.Color = {1.0f,1.0f,1.0f,1.0f};
 		prop.Pos = Application::GetWorldMousePos();
-		prop.Size = {0.009f,0.009f};
-		prop.TextureID = Core::GetStringHash("Particles/Water");
+		prop.Size = {0.015f,0.015f};
+		prop.ID = GUUID();
+		prop.CustomFunction= ParticleVelocityAdd;
+		prop.Animation = *Application::GetAsset<Animator>("TOWN_HALL").GetData();
+		prop.Animation.SetStage("IDLE");
+		//prop.TextureID = Core::GetStringHash("Particles/Water");
 		for(uint32_t i=0;i < 10;i++){
-		prop.Velocity.x = Core::RandomFloat(-0.0005f,0.0005f);
-		prop.Velocity.y = Core::RandomFloat(0.0001f,0.0010f);
+		prop.Velocity.x = Core::RandomFloat(-0.005f,0.005f);
+		prop.Velocity.y = Core::RandomFloat(-0.005f,0.0050f);
 		Application::GetParticleSystem().DrawParticle(prop);
 
 		}
 			for(uint32_t i=0;i < 10;i++){
 		prop.Velocity.x = Core::RandomFloat(-0.0015f,0.0010f);
 		prop.Velocity.y = Core::RandomFloat(-0.0015f,0.0010f);
+		prop.Size = {0.012f,0.012f};
+		prop.CustomFunction = ParticleFire;
+		FireParticleData* data = (FireParticleData*)malloc(sizeof(FireParticleData));
+		*data = FireParticleData();
+		prop.CustomData = data;
 		prop.TextureID = Core::GetStringHash("Particles/Fire");
-		Application::GetParticleSystem().DrawParticle(prop);
+		//Application::GetParticleSystem().DrawParticle(prop);
 
 		}
 	}
