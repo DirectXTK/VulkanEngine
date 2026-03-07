@@ -8,3 +8,6 @@ Corrently supported features is very limited<br>
  -Simple gui and font rendering<br>
 <h2><p align=left>Planned features</p></h2>
  -Light rendering<br>
+<h2><p align=left>How to build</p></h2>
+ Corrently no steps are provided may or not run out of the box
+<h2><p align=left>Documentation</p></h2>
