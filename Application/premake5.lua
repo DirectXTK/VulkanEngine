@@ -43,6 +43,7 @@ project "Application"
 
 
     postbuildcommands { 
+      "{MKDIR} "..LibLocation.."",
       "{COPY} %{cfg.targetdir}/libApplication.a "..LibLocation..""
     }
 

@@ -36,6 +36,7 @@ project "Renderer"
       "freetype","z","png16","glslang","SPIRV","OGLCompiler"
     }
     postbuildcommands { 
+      "{MKDIR} "..LibLocation.."",
       "{COPY} %{cfg.targetdir}/libRenderer.a "..LibLocation..""
     }
 
