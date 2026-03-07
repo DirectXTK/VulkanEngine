@@ -1,6 +1,10 @@
-COPYPATH=${2:-"."}
-mkdir $COPYPATH/$1
-cp -r ../Resources $COPYPATH/$1
-echo VSIO
+
 EXEPATH=$(cat ../ExeLocation)
-cp ../bin"$EXEPATH"/Sandbox $COPYPATH/$1
+cd "../bin"$EXEPATH
+echo "Name=Sandbox" >> Sandbox.desktop    [Desktop Entry]
+Name=My App
+Exec=/path/to/myapp
+Icon=/path/to/myicon.png
+Type=Application
+Terminal=false
+Categories=Utility;
