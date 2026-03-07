@@ -103,7 +103,17 @@ void Animator::SetStage(const std::string& StageTag)
 	m_CurrentDuration = m_CurrentStageInfo.Duration;
 	}else{
 		m_CurrentStage = m_Stages.begin()->second;
+		m_CurrentStageInfo = m_StageInfos[m_CurrentStage.From];
+		m_StageInfoOffset = m_CurrentStage.From;
+		m_CurrentDuration = m_CurrentStageInfo.Duration;
+		
+	
+		#ifdef DEBUG
 		Core::Log(ErrorType::Warning,"Invalid animator stageTag ",StageTag,".");
+		for(auto it = m_Stages.begin();it != m_Stages.end();it++){
+			Core::Log("Valid tags :",it->first);
+		}
+		#endif
 	}
 
 }

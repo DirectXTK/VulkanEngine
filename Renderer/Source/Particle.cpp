@@ -30,6 +30,13 @@ void ParticleSystem::UpdateAndDraw(double deltaTime){
         }
     }
 }
+void ParticleSystem::Shutdown(){
+    for(uint32_t i=0; i < MAXPARTICLECOUNT;i++){
+        m_ParticleProps[i] = ParticleProps();
+    }
+    memset(m_ParticleProps,0,sizeof(ParticleProps)*MAXPARTICLECOUNT);
+}
+
 void ParticleSystem::DrawParticle(const ParticleProps& props){
 
     #ifdef DEBUG

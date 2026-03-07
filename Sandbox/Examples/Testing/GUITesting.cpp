@@ -76,11 +76,11 @@ void GUITestingLayer::OnUpdate(double deltatime)
 		//prop.LifeTime = SEC(3.f);
 		prop.Color = {1.0f,1.0f,1.0f,1.0f};
 		prop.Pos = Application::GetWorldMousePos();
-		prop.Size = {0.015f,0.015f};
+		prop.Size = {0.012f,0.015f};
 		prop.ID = GUUID();
 		prop.CustomFunction= ParticleVelocityAdd;
-		prop.Animation = *Application::GetAsset<Animator>("TOWN_HALL").GetData();
-		prop.Animation.SetStage("IDLE");
+		prop.Animation = *Application::GetAsset<Animator>("FireAnim").GetData();
+		prop.Animation.SetStage("BURN");
 		//prop.TextureID = Core::GetStringHash("Particles/Water");
 		for(uint32_t i=0;i < 10;i++){
 		prop.Velocity.x = Core::RandomFloat(-0.005f,0.005f);
@@ -97,7 +97,7 @@ void GUITestingLayer::OnUpdate(double deltatime)
 		*data = FireParticleData();
 		prop.CustomData = data;
 		prop.TextureID = Core::GetStringHash("Particles/Fire");
-		//Application::GetParticleSystem().DrawParticle(prop);
+		Application::GetParticleSystem().DrawParticle(prop);
 
 		}
 	}

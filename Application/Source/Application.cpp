@@ -336,6 +336,8 @@ void Application::RunAStar(){
 
 }
     Application::~Application(){
+
+        m_ParticleSystem.Shutdown();
         delete m_Window;
 
         delete m_FontSystem;

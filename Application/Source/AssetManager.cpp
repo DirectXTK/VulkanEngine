@@ -251,7 +251,7 @@ void AssetManager::LoadAnimation(const std::string& filePath,const std::string& 
 
 		GUUID TextureID =asset.GetID();
 
-		//baseTexture->CreateTextureAtlasData(filePath);
+		baseTexture->CreateTextureAtlasData(filePath);
 
 
 		//Load animation

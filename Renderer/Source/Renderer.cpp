@@ -261,8 +261,6 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
     Asset<Texture> texture = animation.GetCurrentTexture();
     GUUID textureID = animation.GetCurrentTexture().GetID();
     uint32_t textureIndex = animation.GetTextureIndex();
-    if(!texture.GetData()->IsAtlas())
-    Core::Log("texture index",textureIndex);
     if(m_InstanceOffset ==0){
             m_LastInstanceObjectSize = size;
             m_LastInstanceObjectColor = color;
@@ -280,7 +278,6 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
     auto texture = m_AssetManager->GetAsset<Texture>(textureID);
     auto it = m_TextureStorageBufferLoadedTextures[m_CurrentFrame].find(textureID);
     if(it != m_TextureStorageBufferLoadedTextures[m_CurrentFrame].end()){
-            Core::Log("LOG");
         
 
         if(m_TextureStorageBuffer[m_CurrentFrame][it->second.TextureIndex].GetData()->IsAtlas()){
@@ -304,7 +301,6 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
     else if(texture){
         
         if(texture.GetData()->IsAtlas()){
-            Core::Log("LOG");
             m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[0];
             m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[1];
             m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = texture.GetData()->GetTextureCoords(textureIndex)->Coords[2];
@@ -583,7 +579,6 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
     void Renderer::ResetFrameData(){
             m_DrawCallCountGUI = 0;
             m_DrawCallCountGeometry =0;
-            m_ParticleDrawCallCount=0;
             m_DrawCallCountOutlines = 0;
             m_VertexCountRemaining = m_VertexCount;
             m_CurrentVertexBufferQuadIndex = 0;
@@ -1681,17 +1676,19 @@ void Renderer::SubmitDrawParticleCommands(){
             style.BorderColor = {1.0f,0.0f,0.0f,1.0f};
             style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
             gui->PushStyle(GUI::Style::BORDER,&style);
-            gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(m_DrawCallCountGeometry+m_DrawCallCountGUI+m_ParticleDrawCallCount),{0.0f,0.75f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
+            gui->SetFontSize(8);
+            gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(m_DrawCallCountGeometry+m_DrawCallCountGUI+m_ParticleDrawCallCount),{0.0f,0.90f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
 
-            gui->Text("TriangleCount","TRIANGLE: "+std::to_string(m_VertexCountPerFrame/3),{0.0f,0.25f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
-            gui->Text("VertexCount","VERTEX: "+std::to_string(m_VertexCountPerFrame),{0.0f,-0.25f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
+            gui->Text("TriangleCount","TRIANGLE: "+std::to_string(m_VertexCountPerFrame/3),{0.0f,0.70f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+            gui->Text("VertexCount","VERTEX: "+std::to_string(m_VertexCountPerFrame+m_CurrentInstanceVertexIndex),{0.0f,0.50f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+            gui->Text("Instance","INSTANCE: "+std::to_string(m_InstanceOffset),{0.0f,0.30f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
 
             std::string deltatimeString = std::to_string(m_DeltaTime);
 
             uint64_t Index = deltatimeString.find_last_of(".");
             uint32_t Prec = 3;
             deltatimeString = deltatimeString.substr(0,Index+Prec);
-            gui->Text("Frametime","FRAMETIME: "+deltatimeString,{0.0f,-0.75f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.25f});
+            gui->Text("Frametime","FRAMETIME: "+deltatimeString,{0.0f,0.10f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
 
             gui->PopStyle();
             gui->EndPanel();

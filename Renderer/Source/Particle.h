@@ -35,6 +35,7 @@ public:
     void DrawParticle(const ParticleProps& props);
     void UpdateAndDraw(double deltaTime);
 
+    void Shutdown();
 private:
     ParticleProps m_ParticleProps[MAXPARTICLECOUNT];
     uint32_t m_CurrentParticle{};

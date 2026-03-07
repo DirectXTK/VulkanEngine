@@ -77,7 +77,11 @@ public:
         return *this;
 }
 
-    T* GetData(){return (T*)m_Data->Data;}
+    T* GetData(){ 
+		#ifdef DEBUG
+			if(!m_Data)Core::Log(ErrorType::Error,"m_Data was nullptr Asset::GetData()"); 
+		#endif
+		return (T*)m_Data->Data;}
     AssetType GetType(){return m_Data->Type;}
 	uint32_t GetRefCount(){return m_Data->RefCount;}
 	GUUID GetID(){return m_Data->ID;}
