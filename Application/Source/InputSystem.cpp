@@ -69,7 +69,12 @@ void KeyCallBack(GLFWwindow* window,int Key,int ScanCode,int action,int mods){
 		g_InputSystem->DispatchEvent(textEvent);
 	}
 }
-
+void ScrollCallback(GLFWwindow* window,double offsetX,double offsetY){
+	MouseEvent event{};
+	event.Code = MouseCodes::SCROLL;
+	event.ScrollY = offsetY;
+	g_InputSystem->DispatchEvent(event);
+}
 void MouseButtonCallBack(GLFWwindow* window, int Key, int Action, int Mod) {
 	MouseEvent event{};
 	event.Code = (MouseCodes)Key;
@@ -94,6 +99,7 @@ void InputSystem::Init(GLFWwindow* window){
 	glfwSetKeyCallback(m_CurrentWindow, KeyCallBack);
 	glfwSetWindowCloseCallback(m_CurrentWindow, WindowCloseCallback);
 	glfwSetWindowSizeCallback(m_CurrentWindow,WindowResizeCallback);
+	glfwSetScrollCallback(m_CurrentWindow,ScrollCallback);
 
 	InitKeyboard();
 }

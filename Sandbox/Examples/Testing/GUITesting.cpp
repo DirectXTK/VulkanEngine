@@ -71,6 +71,7 @@ void GUITestingLayer::OnUpdate(double deltatime)
    		animator.Update(deltatime);
    }
 	if(m_SpawnParticles){
+		return;
 		ParticleProps prop{};
 		prop.LifeTime = Core::RandomFloat(SEC(3.3f),SEC(8.0f));
 		//prop.LifeTime = SEC(3.f);
@@ -194,14 +195,10 @@ void GUITestingLayer::OnGUI()
 	guiRenderer->SetFont("EngineResources/Fonts/Sacrifice.ttf");
 
 	guiRenderer->Panel("P2s",{0.0f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.5f,0.2f},0,true);
-	guiRenderer->InputText("USERNA2ME",username,ARRAYSIZE(username),{0.0f,0.0f},{1.0f,1.0f});
-	guiRenderer->EndPanel();
-	guiRenderer->SetFont("EngineResources/Fonts/Daydream.ttf");
-
-	guiRenderer->Panel("TEST",{0.0f,0.0f},{0.0f,1.0f,0.0f,1.0f},{0.6f,0.2f},0,true);
-	guiRenderer->Quad({0.5f,0.0f},{1.1f,0.9f},{1.0f,1.0f,1.0f,1.0f},0);
+	guiRenderer->InputText("USERNA2ME",username,ARRAYSIZE(username),{0.0f,0.0f},{1.0f,1.0f},true);
 	guiRenderer->EndPanel();
 
+	Application::GetAssetManager()->DebugStatistics(true);
 
 }
 

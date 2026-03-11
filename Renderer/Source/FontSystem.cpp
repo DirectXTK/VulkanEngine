@@ -187,8 +187,12 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 		}else if(event.Key == KeyCodes::BACKSPACE){
 			if(m_ArrowPosition != 0)
 			{
+				InputTextEvent event{};
+				event.RemovedChar = data.buffer[m_ArrowPosition-1];
 				memccpy(data.buffer+m_ArrowPosition-1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
 				m_ArrowPosition--;
+
+				Application::DispatchEvent(event);
 			}
 		}
 		else{
@@ -201,6 +205,9 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 			data.buffer[m_ArrowPosition] = insertedChar;
 			if(m_ArrowPosition != data.bufferSize-1)
 				m_ArrowPosition++;
+			InputTextEvent event{};
+			event.AddedChar = insertedChar;
+			Application::DispatchEvent(event);
 		}
 	}
 

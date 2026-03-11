@@ -28,7 +28,7 @@ public:
 	//returns true if checkbox is currently checked
 	bool CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture = 0);
 
-	void InputText(const char* ID, char* Buffer, uint64_t BufferSize, Float2 Position, Float2 Size);
+	void InputText(const char* ID, char* Buffer, uint64_t BufferSize, Float2 Position, Float2 Size,bool scrollable = false);
 
 	void EndPanel();
 
@@ -49,10 +49,12 @@ protected:
 	void OnEvent(Event& event);
 	void OnKeyBoardEvent(KeyBoardEvent& event);
 	void OnMouseEvent(MouseEvent& event);
+	void OnInputTextEvent(InputTextEvent& event);
 private:
 	void DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor, const Float4& BackGroundColor,float BorderWidth);
 	void ReapplyStyles(const GUI::Style& removedStyle);
 
+	void UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,float lineSizeX);
 	friend Application;
 
 	Application* m_Application{};
@@ -72,6 +74,11 @@ private:
 		bool IsClicked{false};
 		float MousePosChange{};
 	};
+	struct InputTextData{
+		int64_t ScrollYIndex{};
+		//shows which line starts where.
+		std::vector<uint64_t> LineStarts{};
+	};
 	struct CheckBoxData{
 		bool IsClicked{false};
 	};
@@ -79,7 +86,9 @@ private:
 	std::unordered_map<std::string, PanelData> m_Panels{};
 	std::unordered_map<std::string, SliderData> m_Sliders{};
 	std::unordered_map<std::string, CheckBoxData> m_CheckBoxes{};
+	std::unordered_map<GUUID, InputTextData> m_InputTextData{};
 
+	bool m_InputTextInputEvent{false};
 
 	//std::unordered_map<uint32_t, ButtonData> m_ButtonIDs{};
 	std::unordered_map<GUUID, PanelData> m_PanelIDs{};
@@ -96,7 +105,13 @@ private:
 	GUI::SliderStyle* m_CurrentSliderData{};
 	GUI::OutlineStyle* m_CurrentOutlineData{};
 
+	//Scroll 0 means no scrolling happend.
+	float m_Scroll{};
+
+	//Clicked object.
 	GUUID m_SelectedObjID{0};
+	//Currently selected obj.
+	GUUID m_CurrentlySelectedObject{0};
 	Float2* m_PickBufferData{};
 
 	uint32_t m_PanelDepth{};

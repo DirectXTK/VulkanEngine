@@ -132,6 +132,7 @@ void AssetManager::LoadShader(const std::string& filePath,const std::string& fil
 }
 	
 void AssetManager::DebugStatistics(bool GUI){
+	if(!GUI){
 	Core::Log("Resource count",m_Resources.size());
 	std::vector<GUUID> idsSorted{};
 	idsSorted.reserve(m_Resources.size());
@@ -146,7 +147,7 @@ void AssetManager::DebugStatistics(bool GUI){
 			idsSorted.push_back(it->first);
 	}
 	CurrentType++;
-}
+	}
 	for(uint32_t i=0 ;i < idsSorted.size();i++){
 		AssetHandle handle = m_Resources[idsSorted[i]];
 		std::string debugStuff{};
@@ -186,6 +187,20 @@ void AssetManager::DebugStatistics(bool GUI){
 			}
 		}
 		
+	}
+	}else{
+		GUIRenderer* gui = Application::GetGUIRenderer();
+		std::string buffer{};
+
+		for(auto it = m_Resources.begin();it != m_Resources.end();it++){
+			buffer +=it->second.AssetPath+"\n";
+		}
+		gui->InputText("RESOURCES",buffer.data(),buffer.size(),{0.0f,0.0f},{1.0f,0.5f},true);
+
+
+
+
+
 	}
 
 }

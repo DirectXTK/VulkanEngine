@@ -1076,7 +1076,10 @@ void Renderer::SubmitDrawParticleCommands(){
 
         if (TextureHandle != 0) {
             TexutreAsset = m_AssetManager->GetAsset<Texture>(TextureHandle);
-
+            if(!TexutreAsset){
+                return;
+                Core::Log(ErrorType::Error,"TextureID is invalid");
+            }
 
 
                 switch (TexutreAsset.GetType()) {

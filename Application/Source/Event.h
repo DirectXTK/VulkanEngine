@@ -7,7 +7,7 @@ enum class KeyCodes{SINGLEQUOTES=39,COMMA=44,DOT=46,FOWARDFLASH=47,NUM0=48,NUM1,
 enum class MouseCodes {LEFT, RIGHT,SCROLL};
 //Expended means this thas expended by other function.
 enum class EventState  {RELEASED,PRESSED,HOLD};
-enum class EventType{NONE,EXPENDED,KEYBOARD,MOUSE,WINDOWSHUTDOWN,WINDOWRESIZE,TEXTEVENT};
+enum class EventType{NONE,EXPENDED,KEYBOARD,MOUSE,WINDOWSHUTDOWN,WINDOWRESIZE,TEXTEVENT,INPUTTEXTEVENT};
 namespace Core {
 	KeyCodes ConvertFromGlfwInt(int KeyCode, int Mod);
 }
@@ -25,11 +25,18 @@ public:
 	KeyCodes Key{};
 	EventState State{  }; 
 };
+class InputTextEvent:public Event{
+	public:
+	InputTextEvent():Event(EventType::INPUTTEXTEVENT){}
+	char AddedChar{};
+	char RemovedChar{};
+};
 class MouseEvent:public Event {
 public:
 	MouseEvent():Event(EventType::MOUSE){}
 
 
+	double ScrollY{};
 	MouseCodes Code{};
 	EventState State{};
 };

@@ -46,7 +46,7 @@ workspace "VulkanEngine"
       runtime "Release"         
       staticruntime "On"      
       linktimeoptimization "On"
-
+      
     
     startproject "Application"
     startproject "Renderer"

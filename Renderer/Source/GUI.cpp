@@ -354,9 +354,20 @@ void GUIRenderer::Slider(const std::string& strID, int* number, Float2 Position,
 	}
 
 }
-void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size) {
+void GUIRenderer::UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,float lineSizeX){
+	lineStarts.clear();
+	lineStarts.push_back(0);
+	for(uint32_t i=0 ;i < bufferSize;i++){
+		if(buffer[i] =='\0')
+			break;
+		if(buffer[i] == '\n')
+			lineStarts.push_back(i+1);
+	}
+}
+void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size,bool scrollable) {
 	Float2 rSize{Size};
-	Float2 lPosition{};
+	Float2 lPosition{Position};
+	GUUID id = Core::GetStringHash(ID);
 
 	if (m_CurrenPanelParent) {
 		lPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
@@ -368,7 +379,52 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 		lPosition.x = std::clamp(lPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x-rSize.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x+rSize.x);
 		lPosition.y = std::clamp(lPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y-rSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y+rSize.y);
 	}
-	m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize);
+	if(scrollable){
+		
+
+		float totalLogicalPosYSize{rSize.y*0.5f};
+		float logicalPosY{};
+		Renderer* renderer  = Application::GetRenderer();
+
+		auto it = m_InputTextData.find(id);
+		if(it == m_InputTextData.end())
+		{
+			m_InputTextData[id] ={0};
+			m_InputTextData[id].LineStarts.push_back(0);
+			UpdateLineStarts(m_InputTextData[id].LineStarts,Buffer,BufferSize,0);
+		}else{
+			if(m_CurrentlySelectedObject == Core::GetStringHash(ID)){
+				it->second.ScrollYIndex -= m_Scroll;
+			}
+			it->second.ScrollYIndex = std::clamp(it->second.ScrollYIndex ,(int64_t)0,(int64_t)m_InputTextData[id].LineStarts.size()-1);
+			totalLogicalPosYSize =m_InputTextData[id].LineStarts.size();
+		}
+		if(m_InputTextInputEvent){
+
+		UpdateLineStarts(m_InputTextData[id].LineStarts,Buffer,BufferSize,0);
+		m_InputTextInputEvent = false;
+		}
+		//calculate how much chars fit in this window 
+		int64_t lineIndex = m_InputTextData[id].ScrollYIndex;
+
+		if(lineIndex+1 >= m_InputTextData[id].LineStarts.size())
+		lineIndex =m_InputTextData[id].LineStarts.size()-1;
+		//logicalPosY= (lPosition.y+(Size.y*0.5f*0.1f/totalLogicalPosYSize));
+		logicalPosY = lPosition.y+rSize.y-(lineIndex*rSize.y/totalLogicalPosYSize)-rSize.y*0.5f/totalLogicalPosYSize;
+
+		m_FontSystem->InputText(ID, Buffer+m_InputTextData[id].LineStarts[lineIndex], BufferSize, lPosition, rSize);
+
+		renderer->DrawQuad({lPosition.x+rSize.x-rSize.x*0.1f*0.5f,lPosition.y+rSize.y*0.5f,0.0f},{0.7f,0.7f,0.1f,1.0f},{rSize.x*0.05f*0.5f,rSize.y*0.5f},0);
+
+		renderer->DrawQuad({lPosition.x+rSize.x-rSize.x*0.1f*0.5f,logicalPosY,0.0f},{1.0f,0.0f,0.0f,1.0f},{rSize.x*0.05f*0.5f,rSize.y*0.5f/totalLogicalPosYSize},0);
+
+
+
+	}else{
+		m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize);
+	}
+
+
 }
 void GUIRenderer::SetFont(const std::string& strID){
 	m_FontSystem->SetFont(strID);
@@ -378,8 +434,6 @@ void GUIRenderer::SetFont(GUUID id){
 }
 void GUIRenderer::EndPanel()
 {
-	
-
 	if (m_CurrenPanelParent->pParent)
 		m_CurrenPanelParent = m_CurrenPanelParent->pParent;
 	else
@@ -564,6 +618,21 @@ void GUIRenderer::OnEvent(Event& event){
 		OnKeyBoardEvent((KeyBoardEvent&)event);
 	else if(event.GetEventType() == EventType::MOUSE)
 		OnMouseEvent((MouseEvent&)event);
+	else if(event.GetEventType() == EventType::INPUTTEXTEVENT)
+		OnInputTextEvent((InputTextEvent&)event);
+}
+void GUIRenderer::OnInputTextEvent(InputTextEvent& event){
+	if(m_CurrentlySelectedObject !=0){
+		auto it = m_InputTextData.find(m_CurrentlySelectedObject);
+		if(it != m_InputTextData.end()){
+			m_InputTextInputEvent = true;
+			Core::Log("Removed char",event.RemovedChar);
+			Core::Log("Added char",event.AddedChar);
+		}
+
+	}
+
+
 }
 void GUIRenderer::OnKeyBoardEvent(KeyBoardEvent& event){
 
@@ -576,21 +645,29 @@ void GUIRenderer::OnMouseEvent(MouseEvent& event){
 	if(event.Code == MouseCodes::LEFT && event.State == EventState::PRESSED){
 		if(succeded){
 			m_SelectedObjID = *(uint64_t*)&data;
+			m_CurrentlySelectedObject = m_SelectedObjID;
 			m_DraggedPanel = m_SelectedObjID;
 		}
+
 
 	}
 
 	if(event.Code == MouseCodes::LEFT && event.State == EventState::RELEASED){
 		m_SelectedObjID = 0;
 		m_DraggedPanel =0;
-
+	}
+	if(event.Code == MouseCodes::SCROLL){
+		if(event.ScrollY > 0.0f)
+		m_Scroll = 1.0f;
+		else 
+		m_Scroll = -1.0f;
 	}
 
 
 }
 void GUIRenderer::EndGUI()
 {
+	m_Scroll = 0.0f;
 	m_SelectedObjID = 0;
 	//Update the dragged panel/button
 
