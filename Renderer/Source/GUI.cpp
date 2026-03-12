@@ -390,18 +390,22 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 		if(it == m_InputTextData.end())
 		{
 			m_InputTextData[id] ={0};
-			m_InputTextData[id].LineStarts.push_back(0);
 			UpdateLineStarts(m_InputTextData[id].LineStarts,Buffer,BufferSize,0);
 		}else{
 			if(m_CurrentlySelectedObject == Core::GetStringHash(ID)){
 				it->second.ScrollYIndex -= m_Scroll;
+				
 			}
 			it->second.ScrollYIndex = std::clamp(it->second.ScrollYIndex ,(int64_t)0,(int64_t)m_InputTextData[id].LineStarts.size()-1);
 			totalLogicalPosYSize =m_InputTextData[id].LineStarts.size();
+			if(m_Scroll !=0.0f && m_CurrentlySelectedObject == id){
+					m_FontSystem->ChangeArrowOffset(m_InputTextData[id].LineStarts[it->second.ScrollYIndex]);
+				}
 		}
 		if(m_InputTextInputEvent){
 
 		UpdateLineStarts(m_InputTextData[id].LineStarts,Buffer,BufferSize,0);
+		//make the pointer functional again with added scrolling.
 		m_InputTextInputEvent = false;
 		}
 		//calculate how much chars fit in this window 
@@ -412,7 +416,7 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 		//logicalPosY= (lPosition.y+(Size.y*0.5f*0.1f/totalLogicalPosYSize));
 		logicalPosY = lPosition.y+rSize.y-(lineIndex*rSize.y/totalLogicalPosYSize)-rSize.y*0.5f/totalLogicalPosYSize;
 
-		m_FontSystem->InputText(ID, Buffer+m_InputTextData[id].LineStarts[lineIndex], BufferSize, lPosition, rSize);
+		m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize,m_InputTextData[id].LineStarts[lineIndex]);
 
 		renderer->DrawQuad({lPosition.x+rSize.x-rSize.x*0.1f*0.5f,lPosition.y+rSize.y*0.5f,0.0f},{0.7f,0.7f,0.1f,1.0f},{rSize.x*0.05f*0.5f,rSize.y*0.5f},0);
 
@@ -626,8 +630,6 @@ void GUIRenderer::OnInputTextEvent(InputTextEvent& event){
 		auto it = m_InputTextData.find(m_CurrentlySelectedObject);
 		if(it != m_InputTextData.end()){
 			m_InputTextInputEvent = true;
-			Core::Log("Removed char",event.RemovedChar);
-			Core::Log("Added char",event.AddedChar);
 		}
 
 	}

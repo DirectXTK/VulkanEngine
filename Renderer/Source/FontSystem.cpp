@@ -152,6 +152,10 @@ void FontSystem::OnMouseEvent(MouseEvent& event){
 		auto it = m_InputTextData.find(selectedID);
 
 		if(it != m_InputTextData.end()){
+			if(m_CurrentlySelectedInputData != selectedID){
+				m_ArrowPosition =0;
+				m_ArrowPositionOffset =0;
+			}
 			m_CurrentlySelectedInputData = selectedID;
 			m_IsArrowActive = true;
 			//indicate to find the position.
@@ -170,7 +174,6 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 		auto it =m_InputTextData.find(m_CurrentlySelectedInputData);
 		if(it != m_InputTextData.end()){
 		InputTextData data = it->second;
-
 		if(event.Key == KeyCodes::ARROWLEFT){
 			if(m_ArrowPosition != 0)
 				m_ArrowPosition--;
@@ -205,6 +208,7 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 			data.buffer[m_ArrowPosition] = insertedChar;
 			if(m_ArrowPosition != data.bufferSize-1)
 				m_ArrowPosition++;
+			Core::Log("InserrtedChar",insertedChar," ",m_ArrowPosition);
 			InputTextEvent event{};
 			event.AddedChar = insertedChar;
 			Application::DispatchEvent(event);
@@ -216,12 +220,15 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 
 	}
 }
-void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Float2 Position, Float2 Size)
+void FontSystem::ChangeArrowOffset(int32_t offset){
+	m_ArrowPositionOffset = offset;
+
+}
+void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Float2 Position, Float2 Size,uint64_t stringOffset)
 {
 	GUUID SelectID = Core::GetStringHash(ID);
 	bool ScrollableBoundBox{};
 
-	Buffer[BufferSize-1] = '\0';
 
 	Float2 BoundingBox[4];
 	BoundingBox[0] = { Position.x ,Position.y  };
@@ -231,6 +238,8 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	
 
 	m_InputTextData[SelectID] = {BufferSize,Buffer,Size};
+	BufferSize-stringOffset;
+	Buffer+=stringOffset;
 	//Draw the invisible barrier that  provides the selecting 
 	DrawBorder(Position, Size, SelectID);
 
@@ -242,8 +251,10 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		}
 		//fins the pos according to mouse pos
 		if(m_ArrowPosition == std::numeric_limits<uint64_t>::max()){
+			Core::Log("m_ArrowPositionOffset",m_ArrowPositionOffset);
+			Core::Log("Arrow pos",m_ArrowPosition);
 
-			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,Position,Size);
+			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,Position,Size)+m_ArrowPositionOffset;
 			Core::Log("Arrow pos",m_ArrowPosition);
 		}
 
@@ -254,11 +265,11 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 				m_IsArrowActive = false;
 				
 			}
-			m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition);
+			m_Renderer->RenderText(Buffer,BufferSize, { BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition-m_ArrowPositionOffset);
 			return;
 		}
 	}
-	m_Renderer->RenderText(Buffer, { BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	m_Renderer->RenderText(Buffer, BufferSize,{ BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
 }
 void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Float2 MaxSize)
 {
@@ -301,7 +312,7 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 	DrawBorder(Position, Size, SelectID);
 
 
-	renderer->RenderText(Message, { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	renderer->RenderText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
 
 }
 void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
@@ -344,7 +355,7 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 	//DrawBorder(Position, Size, SelectID);
 
 
-	renderer->RenderText(Message, { BoundingBox[1].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	renderer->RenderText(Message,strlen(Message), { BoundingBox[1].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
 
 }
 void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)

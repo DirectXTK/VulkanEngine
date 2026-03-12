@@ -81,7 +81,7 @@ public:
     void SetCurrentFont(Asset<Font> CurrentAsset);
     Asset<Font> GetCurrentFont(){return m_CurrentFont;}
     //PointerIndex = -1 means don't draw it.
-    void RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
+    void RenderText(const char* Message,uint64_t bufferSize, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizeNorm,GUUID id,int64_t PointerIndex=-1);
     //GUI 
 
     void SetRenderDesc(const RendererDesc& desc);

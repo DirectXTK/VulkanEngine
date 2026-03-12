@@ -52,7 +52,7 @@ public:
 	//Renders simple text.
 	// MaxCharacters 0 means unlimited.
 	//Returns true then max characters has been reached.
-	void InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size);
+	void InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size,uint64_t stringOffset=0);
 
 
 	void Text(const char* StrID,const char* Message, Float2 Position, Float2 MaxSize = {0.f,0.f});
@@ -64,6 +64,8 @@ public:
 	Asset<Font> LoadFont(const std::string& filePath);
 
 	void OnEvent(Event& event);
+
+	void ChangeArrowOffset(int32_t offset);
 
 	~FontSystem();
 private:
@@ -112,6 +114,7 @@ private:
 	//Pointer
 	//Typing
 	float m_TypingCooldown{};
+	uint32_t m_ArrowPositionOffset{0};
 
 	std::queue<EventState> m_KeyStates{};
 	std::queue<KeyCodes> m_KeyCodes{};

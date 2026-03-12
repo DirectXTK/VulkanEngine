@@ -1300,7 +1300,7 @@ void Renderer::SubmitDrawParticleCommands(){
     float Renderer::GetFONTDPI(){
         return 72;
     }
-    void Renderer::RenderText(const char* Message, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
+    void Renderer::RenderText(const char* Message,uint64_t bufferSize, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
     {
         //Char being edited index
         if (m_CurrentFont.GetType() != AssetType::FONT)
@@ -1312,7 +1312,7 @@ void Renderer::SubmitDrawParticleCommands(){
         auto& textures = m_TextureStorageBuffer[m_CurrentFrame];
         Font* font = (Font*)m_CurrentFont.GetData();
         Texture* FontAtlasTexture{};
-        uint64_t stringLen{strlen(Message)};
+        uint64_t stringLen{bufferSize};
 
         Float4 Color{ 1.0f,1.0f,1.0f,1.0f };
         float CharSizeNorm{};
