@@ -76,6 +76,7 @@ private:
 	void DrawPointer(Float2 Position,float CharacterSize,float SizeY);
 	void DrawBorder(Float2& Position, Float2& Size, GUUID ID);
 
+	void OnTextEvent(TextEvent& event);
 	void OnMouseEvent(MouseEvent& event);
 	void OnKeyBoardEvent(KeyBoardEvent& event);
 
@@ -120,6 +121,10 @@ private:
 	std::queue<KeyCodes> m_KeyCodes{};
 	bool m_KeyAlreadyPressed[300];
 	
+	//copying
+	bool m_ControlKey{false};
+	bool m_CopyTriggered{false};
+
 
 	//styles
 	std::stack<GUI::Style> m_Style{};

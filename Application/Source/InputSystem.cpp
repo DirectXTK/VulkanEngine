@@ -47,7 +47,7 @@ void KeyCallBack(GLFWwindow* window,int Key,int ScanCode,int action,int mods){
 	g_InputSystem->DispatchEvent(event);
 
 	TextEvent textEvent{};
-	textEvent.KeyUint = ScanCode+8;
+	textEvent.KeyUint = ScanCode;
 	textEvent.State = (EventState)action;
 
 	xkb_state_update_key(
@@ -66,7 +66,8 @@ void KeyCallBack(GLFWwindow* window,int Key,int ScanCode,int action,int mods){
     g_Keyboard.state, (xkb_keycode_t)textEvent.KeyUint, buf, ARRAYSIZE(buf));
 	if(len > 0){
 		textEvent.KeyUint = buf[0];
-		g_InputSystem->DispatchEvent(textEvent);
+		if(textEvent.KeyUint >15)
+			g_InputSystem->DispatchEvent(textEvent);
 	}
 }
 void ScrollCallback(GLFWwindow* window,double offsetX,double offsetY){

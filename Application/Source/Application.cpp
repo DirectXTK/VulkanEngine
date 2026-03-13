@@ -34,6 +34,14 @@ void ChechCommands(Application* app,std::string Command){
         Core::Log("Invalid command");
     }
 }
+void Application::CopyToClipBoard(const std::string_view& str){
+    Application* app = GetApplication();
+    glfwSetClipboardString(app->m_Window->GetHandle(),str.data());
+}
+std::string Application::GetClipBoardString(){
+    Application* app = GetApplication();
+    return std::string(glfwGetClipboardString(app->m_Window->GetHandle()));
+}
 void Application::LoadAllAssets(const std::string& path,const AssetType& typeToLoad){
     Application* app = Application::GetApplication();
     app->m_AssetManager.LoadAllAssets(path,typeToLoad);

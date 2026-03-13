@@ -161,44 +161,40 @@ void GUITestingLayer::OnMouseEvent(MouseEvent& event){
 
 void GUITestingLayer::OnGUI()
 {
-	GUIRenderer* guiRenderer = Application::GetGUIRenderer();
+	GUIRenderer* gui = Application::GetGUIRenderer();
 	
-	static float FontSize{16.0f};
-	static char username[50];
-	static char pass[50];
 
+	static Float4 panelColor{1.0f,1.0f,1.0f,1.0f};
+	static Float4 borderColor{1.0f,1.0f,1.0f,1.0f};
+	static char username[50]{};
 
-	guiRenderer->SetFontSize((uint32_t)16);
-	guiRenderer->SetFont("EngineResources/Fonts/Daydream.ttf");
+	gui->SetFontSize((uint32_t)12);
 
 	Application::GetRenderer()->ChangeArrowColor({1.0f,0.0f,0.0f,1.0f});
-	guiRenderer->Panel("Panel", {0.0f,-0.9f}, {0.0f,0.5f,0.5f,1.0f}, {1.0f,0.1f}, 0, true);
-	guiRenderer->Slider("FONTSIZE",&FontSize,{-0.5f,-0.5f},{0.5f,0.2f},0.1f,{0.0f,64.f});
-	guiRenderer->InputText("USERNAME",username,ARRAYSIZE(username),{0.0f,0.0f},{1.0f,1.0f});
-
-	guiRenderer->InputText("PASS",pass,ARRAYSIZE(pass),{-0.5f,0.0f},{0.2f,1.0f});
-	guiRenderer->Quad({0.0f,0.7f},{0.2f,0.9f},{0.5f,0.5f,1.0f,1.0f});
-	guiRenderer->SetFontSize((uint32_t)FontSize);
-
-	guiRenderer->Button("Start Button","", { 0.0f,0.5f }, { 1.0f,0.0f,0.0f,1.0f }, { 0.5f,0.5f },MouseCodes::LEFT,0,false);
-
-	//guiRenderer->PushStyle(GUI::Style::SLIDER,&sliderdata);
-	guiRenderer->Text("ID","ATlafatafa!",{-0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
-	guiRenderer->SetFontSize((uint32_t)4);
+	GUI::BorderStyle border{};
+	border.BorderColor = borderColor;
+	border.BorderWidth = 0.01f;
 	
-	guiRenderer->CheckBox("test",{-0.8f,0.0f},{0.10f,0.50f},{1.0f,1.0f,1.0f,1.0f});
-	guiRenderer->Text("S","\"TES TING.\"",{0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.5f});
-	guiRenderer->SetFontSize((uint32_t)16);
+	gui->PushStyle(GUI::Style::BORDER,&border);
+	gui->Panel("Panel",{0.0f,0.0f},panelColor,{0.3f,0.3f},0,true);
 
-	//guiRenderer->PopStyle();
-	guiRenderer->EndPanel();
-	guiRenderer->SetFont("EngineResources/Fonts/Sacrifice.ttf");
+	gui->Slider("PanelColorr",&panelColor.r,{-0.5f,0.8f},{1.0,1.0f,0.0f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
+	gui->Slider("PanelColorg",&panelColor.g,{-0.5f,0.6f},{1.0,1.0f,0.0f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
+	gui->Slider("PanelColorb",&panelColor.b,{-0.5f,0.4f},{1.0,1.0f,0.0f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 
-	guiRenderer->Panel("P2s",{0.0f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.5f,0.2f},0,true);
-	guiRenderer->InputText("USERNA2ME",username,ARRAYSIZE(username),{0.0f,0.0f},{1.0f,1.0f},true);
-	guiRenderer->EndPanel();
+	gui->Slider("Borderr",&borderColor.r,{-0.1f,0.8f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
+	gui->Slider("Borderg",&borderColor.g,{-0.1f,0.6f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
+	gui->Slider("Borderb",&borderColor.b,{-0.1f,0.4f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 
-	Application::GetAssetManager()->DebugStatistics(true);
+	gui->SetFont("EngineResources/Fonts/Sacrifice.ttf");
+	gui->InputText("UserName",username,ARRAYSIZE(username),{0.0f,-0.5f},{0.5f,0.2f},false);
+	gui->SetFont("EngineResources/Fonts/Daydream.ttf");
+
+	gui->PopStyle();
+	gui->EndPanel();
+
+
+	//Application::GetAssetManager()->DebugStatistics(true);
 
 }
 

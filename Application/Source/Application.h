@@ -62,6 +62,10 @@ public:
     template<typename ASSETTYPE>
     static Asset<ASSETTYPE> GetAsset(GUUID id){return GetApplication()->m_AssetManager.GetAsset<ASSETTYPE>(id);}
 
+    //Copy
+    static void CopyToClipBoard(const std::string_view& str);
+    static std::string GetClipBoardString();
+
 
     static void Run();
     static void QueueShutDown();

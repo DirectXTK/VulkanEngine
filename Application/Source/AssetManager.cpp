@@ -195,7 +195,7 @@ void AssetManager::DebugStatistics(bool GUI){
 		for(auto it = m_Resources.begin();it != m_Resources.end();it++){
 			buffer +=it->second.AssetPath+"\n";
 		}
-		gui->InputText("RESOURCES",buffer.data(),buffer.size(),{0.0f,0.0f},{1.0f,0.5f},true);
+		gui->InputText("RESOURCES",buffer.data(),buffer.size(),{0.0f,0.0f},{0.5f,0.25f},true);
 
 
 

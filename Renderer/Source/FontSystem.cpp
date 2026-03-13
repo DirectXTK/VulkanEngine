@@ -96,17 +96,19 @@ void FontSystem::OnEvent(Event& event){
 		OnKeyBoardEvent((KeyBoardEvent&)event);
 	if(event.GetEventType() == EventType::MOUSE)
 		OnMouseEvent((MouseEvent&)event);
+	if(event.GetEventType() == EventType::TEXTEVENT)
+		OnTextEvent((TextEvent&)event);
 }
 uint64_t FontSystem::FindMousePosInText(const Float2& mousePos,char* Buffer,uint64_t BufferSize,const Float2& Position,const Float2& size){
 	Float2 arrowPos{Core::ToScreenPixels(Position)};
 	float arrowPixelY = Core::ToScreenPixels(mousePos).y;
 	float smallestDist{std::numeric_limits<float>::max()};
 	uint32_t currentLine{0};
-	Float2 sizeInPixels = Core::ToScreenPixels(size);
+	Float2 sizeInPixels = Core::ToScreenPixels(	{size.x,size.y});
 	
 
 	arrowPixelY = std::fabs(arrowPixelY-arrowPos.y);
-	arrowPixelY = size.y*Application::GetRenderer()->GetViewPortExtent().height*0.5f/m_CurrentFont.GetData()->NewLineSize;
+	arrowPixelY = size.y*Application::GetRenderer()->GetViewPortExtent().height/m_CurrentFont.GetData()->NewLineSize;
 	
 	arrowPixelY -=(((arrowPos.y-Core::ToScreenPixels(mousePos).y))/m_CurrentFont.GetData()->NewLineSize); 
 
@@ -168,7 +170,25 @@ void FontSystem::OnMouseEvent(MouseEvent& event){
 		}
 	}
 }
+void FontSystem::OnTextEvent(TextEvent& event){
+	char insertedChar= event.KeyChar;
+			
+			
+		if(m_CurrentlySelectedInputData !=0){
+			auto it = m_InputTextData.find(m_CurrentlySelectedInputData);
+			if(it != m_InputTextData.end()){
+			InputTextData data = it->second;
 
+			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
+			data.buffer[m_ArrowPosition] = insertedChar;
+			if(m_ArrowPosition != data.bufferSize-1)
+				m_ArrowPosition++;
+			InputTextEvent event{};
+			event.AddedChar = insertedChar;
+			Application::DispatchEvent(event);
+			}
+		}
+}
 void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 	if(event.State == EventState::PRESSED||event.State == EventState::HOLD&& m_CurrentlySelectedInputData != 0){
 		auto it =m_InputTextData.find(m_CurrentlySelectedInputData);
@@ -197,28 +217,37 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 
 				Application::DispatchEvent(event);
 			}
-		}
-		else{
-			char insertedChar= (char)event.Key;
-			if(event.Key == KeyCodes::ENTER)
-				insertedChar = '\n';
-			
+		}else if(event.Key == KeyCodes::ENTER){
+			char insertedChar = '\n';
 
 			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
 			data.buffer[m_ArrowPosition] = insertedChar;
 			if(m_ArrowPosition != data.bufferSize-1)
 				m_ArrowPosition++;
-			Core::Log("InserrtedChar",insertedChar," ",m_ArrowPosition);
 			InputTextEvent event{};
 			event.AddedChar = insertedChar;
 			Application::DispatchEvent(event);
 		}
+		
+	}
+	}
+	if(event.Key == KeyCodes::CTRL){
+		if(event.State == EventState::PRESSED)
+			m_ControlKey = true;
+		if(event.State == EventState::RELEASED)
+			m_ControlKey = false;
+
+	}
+
+	if(m_ControlKey&&event.Key == KeyCodes::C && event.State == EventState::PRESSED){
+		m_CopyTriggered = true;
+	}else{
+		m_CopyTriggered =false;
 	}
 
 
 
 
-	}
 }
 void FontSystem::ChangeArrowOffset(int32_t offset){
 	m_ArrowPositionOffset = offset;
@@ -231,11 +260,15 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 
 
 	Float2 BoundingBox[4];
-	BoundingBox[0] = { Position.x ,Position.y  };
-	BoundingBox[1] = { Position.x ,Position.y + Size.y };
+	BoundingBox[0] = { Position.x - Size.x,Position.y- Size.y  };
+	BoundingBox[1] = { Position.x - Size.x,Position.y + Size.y };
 	BoundingBox[2] = { Position.x + Size.x,Position.y + Size.y };
-	BoundingBox[3] = { Position.x + Size.x,Position.y };
+	BoundingBox[3] = { Position.x + Size.x,Position.y - Size.y};
 	
+	if(m_CopyTriggered&&m_CurrentlySelectedInputData == SelectID){
+		Application::CopyToClipBoard(std::string_view(Buffer,BufferSize));
+		m_CopyTriggered = false;
+	}
 
 	m_InputTextData[SelectID] = {BufferSize,Buffer,Size};
 	BufferSize-stringOffset;
@@ -251,11 +284,8 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		}
 		//fins the pos according to mouse pos
 		if(m_ArrowPosition == std::numeric_limits<uint64_t>::max()){
-			Core::Log("m_ArrowPositionOffset",m_ArrowPositionOffset);
-			Core::Log("Arrow pos",m_ArrowPosition);
 
-			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,Position,Size)+m_ArrowPositionOffset;
-			Core::Log("Arrow pos",m_ArrowPosition);
+			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[0].y},Size)+m_ArrowPositionOffset;
 		}
 
 
@@ -265,11 +295,11 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 				m_IsArrowActive = false;
 				
 			}
-			m_Renderer->RenderText(Buffer,BufferSize, { BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition-m_ArrowPositionOffset);
+			m_Renderer->RenderText(Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition-m_ArrowPositionOffset);
 			return;
 		}
 	}
-	m_Renderer->RenderText(Buffer, BufferSize,{ BoundingBox[0].x,BoundingBox[1].y  }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	m_Renderer->RenderText(Buffer, BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID);
 }
 void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Float2 MaxSize)
 {
@@ -365,29 +395,7 @@ void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 	
 	Float4 DefBackGroundColor{ 0.2f,0.2f,0.2f,1.0f };
 
-	if (m_Style.empty()) {
-		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
-		return;
-	}
-
-	//style switcthes
-	switch (m_Style.top()) {
-	case GUI::Style::BORDER: {
-
-		GUI::BorderStyle* BorderData = (GUI::BorderStyle*)m_StyleData.top();
-		Core::Log("MakyYra");
-		Core::Log("BorderWith",BorderData->BorderWidth);
-
-		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, BorderData->BorderColor, { (Size.x * 0.5f) + BorderData->BorderWidth,(Size.y * 0.5f)+ BorderData->BorderWidth }, ID.ID);
-		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, BorderData->BackGroundColor, { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
-		break;
-	}
-	default: {
-		renderer->DrawQuad({ Position.x + (Size.x * 0.5f),Position.y + (Size.y * 0.5f),0.0f }, DefBackGroundColor, { Size.x * 0.5f,Size.y * 0.5f }, ID.ID);
-		break;
-	}
-	}
-
+		renderer->DrawQuad({ Position.x ,Position.y ,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { Size.x ,Size.y  }, ID.ID);
 }
 
 

@@ -20,8 +20,8 @@ public:
 
 	void Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size);
 
-	void Slider(const std::string& strID, float* number, Float2 Position,  Float2 Size, float SlideAmount,Float2 MinMax,uint32_t DecimalPlaces=3);
-	void Slider(const std::string& strID, int* number, Float2 Position, Float2 Size, float SlideAmount = 0.01f);
+	void Slider(const std::string& strID, float* number,const Float2& Position,const  Float4& color, const Float2& Size,const  float SlideAmount,const  Float2& MinMax,const  uint32_t DecimalPlaces=3);
+	void Slider(const std::string& strID, int* number,const  Float2& Position,const Float4& color ,const Float2& Size,const  float SlideAmount=0.01f);
 
 	void Quad(const Float2& position,const Float2& size,const Float4& color,GUUID textureID=0);
 
@@ -53,6 +53,8 @@ protected:
 private:
 	void DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor, const Float4& BackGroundColor,float BorderWidth);
 	void ReapplyStyles(const GUI::Style& removedStyle);
+
+	void ApplyCurrentStyles( Float2& position, Float2& size, Float4& color,GUUID id =0);
 
 	void UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,float lineSizeX);
 	friend Application;
@@ -90,20 +92,19 @@ private:
 
 	bool m_InputTextInputEvent{false};
 
+	
 	//std::unordered_map<uint32_t, ButtonData> m_ButtonIDs{};
 	std::unordered_map<GUUID, PanelData> m_PanelIDs{};
-
+	
 	//styles 
 	struct StyleContainer {
 		//heap allocated
 		GUI::Style StyleType{};
 		void* StyleData{};
 	};
-	std::vector<StyleContainer> m_Styles{};
-	Float4 m_CurrentColor{};
-	GUI::BorderStyle* m_CurrentBorderData{};
-	GUI::SliderStyle* m_CurrentSliderData{};
-	GUI::OutlineStyle* m_CurrentOutlineData{};
+	std::vector<std::stack<StyleContainer>> m_StylesInQueue{};
+	GUI::Style m_LastAddedStyle{};
+
 
 	//Scroll 0 means no scrolling happend.
 	float m_Scroll{};

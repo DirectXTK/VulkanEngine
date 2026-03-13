@@ -61,18 +61,18 @@ void FontTestingLayer::OnGUI()
 
 	guiRenderer->PushStyle(GUI::Style::BORDER, &BorderStyle);
 	guiRenderer->PushStyle(GUI::Style::COLOR, &ColorStyle);
-	guiRenderer->Slider("Slider", &FontSize, { 0.0f,0.0f }, { 0.1f,0.1f }, 1.0f,{0.0f,100.f},1);
+	guiRenderer->Slider("Slider", &FontSize, { 0.0f,0.0f },{1.0f,1.0f,1.0f,1.0f}, { 0.1f,0.1f }, 1.0f,{0.0f,100.f},1);
 	guiRenderer->InputText("Mkat", Buffer, ARRAYSIZE(Buffer), { 0.0f, -0.5f },{0.5f,0.1f});
 	guiRenderer->PopStyle();
 	
 	
 	guiRenderer->PushStyle(GUI::Style::SLIDER,&sliderStyle);
-	guiRenderer->Slider("Slider1", &FontSize, { 0.5f,0.0f }, { 0.1f,0.1f }, 0.01f, {0.0f,100.f});
-	guiRenderer->Slider("ldwad", &FontSize, { 0.5f,0.5f }, { 0.1f,0.1f }, 1.0f, {0.0f,100.f});
+	guiRenderer->Slider("Slider1", &FontSize, { 0.5f,0.0f },{1.0f,1.0f,1.0f,1.0f}, { 0.1f,0.1f }, 0.01f, {0.0f,100.f});
+	guiRenderer->Slider("ldwad", &FontSize, { 0.5f,0.5f },{1.0f,1.0f,1.0f,1.0f}, { 0.1f,0.1f }, 1.0f, {0.0f,100.f});
 	guiRenderer->PopStyle();
 	
 	static float TestNumber{ -1.0f };
-	guiRenderer->Slider("Test123", &TestNumber, { 0.0f,0.5f }, { 0.1f,0.1f }, 1.0f, {0.0f,100.f});
+	guiRenderer->Slider("Test123", &TestNumber, { 0.0f,0.5f },{1.0f,1.0f,1.0f,1.0f}, { 0.1f,0.1f }, 1.0f, {0.0f,100.f});
 	guiRenderer->Text("Number",std::to_string(Application::GetAssetCount(AssetType::FONT)),{-0.5f,0.5f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
 	guiRenderer->Text("Number",std::to_string(Application::GetAssetCount(AssetType::TEXTURE)),{-0.5f,0.8f},{0.0f,0.0f,0.1f,1.0f},{0.1f,0.1f});
 
