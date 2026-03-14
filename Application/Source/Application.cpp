@@ -332,7 +332,6 @@ void Application::RunAStar(){
         glfwPollEvents();
         
         app->m_LayerController.RunQueue();
-        //app->m_LayerController.TransitionLayers();
         app->m_Renderer->RunRendererChangeQueue();
     }
     ThreadRunning.store(false);

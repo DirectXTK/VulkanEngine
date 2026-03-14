@@ -52,6 +52,10 @@ void LayerController::RemoveLayer(Layer* layer){
 	Core::Log("Layer not found{RemoveLayer}");
 }
 void LayerController::RunQueue(){
+
+	if(!m_CommandQueue.empty()){
+		Application::GetGUIRenderer()->ResetGUIData();
+	}
 	for(uint32_t i=0;i < m_CommandQueue.size();i++){
 		TransitionData& data = m_CommandQueue.front();
 		int32_t index{-1};

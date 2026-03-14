@@ -274,7 +274,6 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	BufferSize-stringOffset;
 	Buffer+=stringOffset;
 	//Draw the invisible barrier that  provides the selecting 
-	DrawBorder(Position, Size, SelectID);
 
 	if(m_CurrentlySelectedInputData == SelectID){
 		m_PointerCooldown -= Application::GetDeltaTime();
@@ -345,36 +344,33 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 	renderer->RenderText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
 
 }
-void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
+void FontSystem:: Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
 {
 	Renderer* renderer = Application::GetRenderer();
 	
 	GUUID SelectID =id;
-	Float2 CharacterSizeNorm = { float(m_CharacterSize / renderer->GetViewPortExtent().width),float(m_CharacterSize / renderer->GetViewPortExtent().height) };
+	Float2 CharacterSizeNorm = { m_CurrentFont.GetData()->Advance[(uint32_t)' '].x/Application::GetRenderer()->GetViewPortExtent().width,m_CharacterSize*1.25f/Application::GetRenderer()->GetViewPortExtent().height};
 
 	Float2 Size{};
 
 
 
-	if (MaxSize.x != 0) {
+	if (MaxSize.x != 0.0f) {
 		Size.x = MaxSize.x;
 	}
 	else {
-		Size.x = ((m_Padding + m_Padding + CharacterSizeNorm.x) * strlen(Message)) + m_Padding;
-
+		Size.x = CharacterSizeNorm.x * (strlen(Message)+2)*4;
+		Core::Log("Sizex",Size.x,",",CharacterSizeNorm.x);
 	}
 
-	if (MaxSize.y != 0) {
+	if (MaxSize.y != 0.0f) {
 		Size.y = MaxSize.y;
 
 	}
-	else if (MaxSize.x != 0) {
-		Size.y = strlen(Message) / (m_PaddingY + m_PaddingY + CharacterSizeNorm.x);
-	}
 	else {
-		Size.y = m_PaddingY + m_PaddingY + CharacterSizeNorm.y;
+		Size.y = CharacterSizeNorm.y * strlen(Message);
+		Core::Log("SizeY",Size.y,",",CharacterSizeNorm.y);
 	}
-
 
 	Float2 BoundingBox[4];
 	BoundingBox[0] = { Position.x-Size.x ,Position.y-Size.y };
@@ -385,7 +381,7 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 	//DrawBorder(Position, Size, SelectID);
 
 
-	renderer->RenderText(Message,strlen(Message), { BoundingBox[1].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	renderer->RenderText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
 
 }
 void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
@@ -393,8 +389,6 @@ void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 	Renderer* renderer = Application::GetRenderer();
 
 	
-	Float4 DefBackGroundColor{ 0.2f,0.2f,0.2f,1.0f };
-
 		renderer->DrawQuad({ Position.x ,Position.y ,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { Size.x ,Size.y  }, ID.ID);
 }
 

@@ -30,6 +30,9 @@ public:
 
 	void InputText(const char* ID, char* Buffer, uint64_t BufferSize, Float2 Position, Float2 Size,bool scrollable = false);
 
+	//Applies this only to the next object/item.Size is dependent on on char count and font size.
+	void Tooltip(const std::string& tooltip,const Float2& maxSize,const Float2& posOffset={0.0f,0.0f},const Float4& backGroundColor={0.0f,0.0f,0.0f,0.0f},const Float4& borderColor={0.0f,0.0f,0.0f,0.0f},GUUID id =0);
+
 	void EndPanel();
 
 	void PushStyle(const GUI::Style& style,void* Data);
@@ -40,9 +43,15 @@ public:
 	void SetFont(const std::string& strID);
 	void SetFont(GUUID id);
 
+	bool IsObjectHovered(GUUID objID);
+	bool IsObjectHovered(const std::string& strID);
+
 	uint32_t GetFontSize();
 
 	void EndGUI();
+
+	//BackEnd function used to clear hash maps
+	void ResetGUIData();
 
 	~GUIRenderer();
 protected:
@@ -57,6 +66,8 @@ private:
 	void ApplyCurrentStyles( Float2& position, Float2& size, Float4& color,GUUID id =0);
 
 	void UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,float lineSizeX);
+
+	void DrawTooltips();
 	friend Application;
 
 	Application* m_Application{};
@@ -105,6 +116,15 @@ private:
 	std::vector<std::stack<StyleContainer>> m_StylesInQueue{};
 	GUI::Style m_LastAddedStyle{};
 
+	struct TooltipBackEndData{
+		std::string tooltip{};
+		Float2 Pos{};
+		GUUID ID{0};
+		Float2 Size{};
+		Float4 BorderColor{1.0f,1.0f,1.0f,1.0f};
+		Float4 BackGroundColor{1.0f,1.0f,1.0f,0.0f};
+	};
+	std::stack<TooltipBackEndData> m_TooltipStack{};
 
 	//Scroll 0 means no scrolling happend.
 	float m_Scroll{};

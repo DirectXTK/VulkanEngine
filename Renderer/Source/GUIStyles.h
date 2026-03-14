@@ -1,7 +1,7 @@
 #pragma once
 #include "AppCore.h"
 namespace GUI {
-	enum class Style { NONE, COLOR, BORDER ,SLIDER,OUTLINE,NUMOFSTYLES};
+	enum class Style { NONE, COLOR, BORDER ,SLIDER,OUTLINE,TOOLTIP,NUMOFSTYLES};
 	struct ColorStyle {
 		//used for debbuging
 		uint8_t StructSize{};
@@ -17,8 +17,8 @@ namespace GUI {
 		uint8_t StructSize{};
 		bool DrawBorder{ false };
 		float BorderWidth{ 0.00f };
-		Float4 BorderColor{ 1.0f,1.0f,1.0f,1.0f };
-		Float4 BackGroundColor{ 1.0f,1.0f,1.0f,1.0f };
+		Float4 BorderColor{ 1.0f,1.0f,1.0f,0.0f };
+		Float4 BackGroundColor{ 1.0f,1.0f,1.0f,0.0f };
 
 		//placeholder for now
 		void* BackGroundTexture{nullptr};

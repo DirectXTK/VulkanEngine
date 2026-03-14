@@ -3,6 +3,7 @@
 #include  "../Examples/Testing/GUITesting.h"
 #include "../Examples/Testing/TestingLayer.h"
 #include "../Examples/Testing/AnimationTestingLayer.h"
+#include "../Examples/Testing/ExampleMenu.h"
 int main() {
 	
 	ApplicationSpecs specs{};

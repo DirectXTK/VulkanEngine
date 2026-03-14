@@ -167,6 +167,7 @@ void GUITestingLayer::OnGUI()
 	static Float4 panelColor{1.0f,1.0f,1.0f,1.0f};
 	static Float4 borderColor{1.0f,1.0f,1.0f,1.0f};
 	static char username[50]{};
+	static float timeHovered{};
 
 	gui->SetFontSize((uint32_t)12);
 
@@ -174,6 +175,8 @@ void GUITestingLayer::OnGUI()
 	GUI::BorderStyle border{};
 	border.BorderColor = borderColor;
 	border.BorderWidth = 0.01f;
+	border.DrawBorder = true;
+	border.BackGroundColor = {0.0f,0.0f,1.0f,1.0f};
 	
 	gui->PushStyle(GUI::Style::BORDER,&border);
 	gui->Panel("Panel",{0.0f,0.0f},panelColor,{0.3f,0.3f},0,true);
@@ -186,11 +189,25 @@ void GUITestingLayer::OnGUI()
 	gui->Slider("Borderg",&borderColor.g,{-0.1f,0.6f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("Borderb",&borderColor.b,{-0.1f,0.4f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 
+	
 	gui->SetFont("EngineResources/Fonts/Sacrifice.ttf");
-	gui->InputText("UserName",username,ARRAYSIZE(username),{0.0f,-0.5f},{0.5f,0.2f},false);
-	gui->SetFont("EngineResources/Fonts/Daydream.ttf");
-
+	gui->InputText("UserName",username,ARRAYSIZE(username),{0.0f,-0.5f},{0.5f,0.2f},true);
+	
 	gui->PopStyle();
+
+	//Wierd placement when using multuple tooltips.
+	if(gui->IsObjectHovered("Check") || timeHovered >SEC(1.0f)){
+			timeHovered+=Application::GetDeltaTime();
+		gui->Tooltip("LAFA",{0.1f,0.1f},{0.0f,0.2f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f},Core::GetStringHash("CheckTooltip"));
+		gui->Tooltip("CIKT",{0.3f,0.1f},{0.0f,0.8f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
+
+	}
+	if(gui->IsObjectHovered("CheckTooltip")){
+		Core::Log(":dwadad");
+		gui->Tooltip("CIKT",{0.3f,0.1f},{0.0f,0.8f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
+	}
+	gui->CheckBox("Check",{0.5f,0.0f},{0.2f,0.2f},{1.0f,1.0f,1.0f,1.0f});
+	gui->SetFont("EngineResources/Fonts/Daydream.ttf");
 	gui->EndPanel();
 
 

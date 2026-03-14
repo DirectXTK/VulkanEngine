@@ -14,15 +14,5 @@ private:
 
 };
 
-void RunExampleMenu() {
-	ApplicationSpecs specs{};
-	specs.WindowTitle = "Example";
-	specs.WindowHeight = 500;
-	specs.WindowWidth = 500;
 
-	Application::InitApplication(specs);
-	Application::AddLayer<ExampleMenu>();
-	Application::Run();;
-
-}
 
