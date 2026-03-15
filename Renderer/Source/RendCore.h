@@ -36,7 +36,7 @@ struct SwapChainDetails{
 
     namespace Core{
         //returns false when out of bounds.
-        bool ReadPixel(Float2* pixelData,uint64_t width,uint64_t height,uint64_t posx,uint64_t posy,Float2* outReadPixel);
+        bool ReadPixel(Float2* pixelData,int32_t width,int32_t height,int32_t posx,int32_t posy,Float2* outReadPixel);
         uint32_t FindMemoryTypeIndex(VkPhysicalDevice physicaldevice,uint32_t Allowedtypes,VkMemoryPropertyFlags flags);
         VkFormat ChooseBestFormat(VkPhysicalDevice pdevice,const std::vector<VkFormat>& formats,VkImageTiling tilling,VkFormatFeatureFlags flags);
         void CopyImageToImage(VkDevice device,VkPhysicalDevice pdevice,Image* src,Image* dst);

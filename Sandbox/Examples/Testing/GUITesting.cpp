@@ -176,7 +176,7 @@ void GUITestingLayer::OnGUI()
 	border.BorderColor = borderColor;
 	border.BorderWidth = 0.01f;
 	border.DrawBorder = true;
-	border.BackGroundColor = {0.0f,0.0f,1.0f,1.0f};
+	border.BackGroundColor = {0.5f,0.5f,0.5f,1.0f};
 	
 	gui->PushStyle(GUI::Style::BORDER,&border);
 	gui->Panel("Panel",{0.0f,0.0f},panelColor,{0.3f,0.3f},0,true);
@@ -190,7 +190,7 @@ void GUITestingLayer::OnGUI()
 	gui->Slider("Borderb",&borderColor.b,{-0.1f,0.4f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 
 	
-	gui->SetFont("EngineResources/Fonts/Sacrifice.ttf");
+	gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
 	gui->InputText("UserName",username,ARRAYSIZE(username),{0.0f,-0.5f},{0.5f,0.2f},true);
 	
 	gui->PopStyle();
@@ -202,7 +202,6 @@ void GUITestingLayer::OnGUI()
 
 	}
 	if(gui->IsObjectHovered("CheckTooltip")){
-		Core::Log(":dwadad");
 		gui->Tooltip("CIKT",{0.3f,0.1f},{0.0f,0.6f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
 	}
 	gui->CheckBox("Check",{0.5f,0.0f},{0.2f,0.2f},{1.0f,1.0f,1.0f,1.0f});

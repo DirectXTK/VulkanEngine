@@ -225,11 +225,9 @@ Float2 Application::GetMousePosChange(){
     Float2 rawID{};
 
     if(!Core::ReadPixel(app->m_PickBuffer,app->m_Renderer->GetViewPortExtent().width,app->m_Renderer->GetViewPortExtent().height,MousePos.x,MousePos.y,&rawID)){
-        Core::Log(ErrorType::Error,"Failed to read pixel Application::GetCurrentlyHoveredPixelID","MouseX:",MousePos.x," MouseY:",MousePos.y," Width:",app->m_Renderer->GetViewPortExtent().width," Height:" ,app->m_Renderer->GetViewPortExtent().height);
         return GUUID(0);
     }
     uint64_t* ID = (uint64_t*)&rawID;
-    Core::Log(*ID);
      return GUUID(*ID);
  }
 

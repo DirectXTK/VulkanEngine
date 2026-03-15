@@ -586,7 +586,6 @@ void GUIRenderer::DrawTooltips(){
 
 	for(uint32_t i=0;i < m_TooltipStack.size();){
 		TooltipBackEndData& data = m_TooltipStack.top();
-		Core::Log(m_TooltipStack.size());
 		//Draw border
 		if(data.BorderColor.a != 0.0f)
 			renderer->DrawQuad({data.Pos.x,data.Pos.y,0.0f},data.BorderColor,{data.Size.x+0.01f,data.Size.y+0.01f},data.ID.ID);

@@ -271,7 +271,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	}
 
 	m_InputTextData[SelectID] = {BufferSize,Buffer,Size};
-	BufferSize-stringOffset;
+	BufferSize-=stringOffset;
 	Buffer+=stringOffset;
 	//Draw the invisible barrier that  provides the selecting 
 

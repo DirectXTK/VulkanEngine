@@ -20,7 +20,7 @@ namespace Core{
             Core::Log(ErrorType::Error,"Couldn't find memory type index.");
             return 0;
         }
-        bool ReadPixel(Float2* pixelData,uint64_t width,uint64_t height,uint64_t posx,uint64_t posy,Float2* outReadPixel){
+        bool ReadPixel(Float2* pixelData,int32_t width,int32_t height,int32_t posx,int32_t posy,Float2* outReadPixel){
 
             if(posx < 0  || posy < 0)
                 return false;
