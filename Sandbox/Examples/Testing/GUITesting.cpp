@@ -199,12 +199,11 @@ void GUITestingLayer::OnGUI()
 	if(gui->IsObjectHovered("Check") || timeHovered >SEC(1.0f)){
 			timeHovered+=Application::GetDeltaTime();
 		gui->Tooltip("LAFA",{0.1f,0.1f},{0.0f,0.2f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f},Core::GetStringHash("CheckTooltip"));
-		gui->Tooltip("CIKT",{0.3f,0.1f},{0.0f,0.8f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
 
 	}
 	if(gui->IsObjectHovered("CheckTooltip")){
 		Core::Log(":dwadad");
-		gui->Tooltip("CIKT",{0.3f,0.1f},{0.0f,0.8f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
+		gui->Tooltip("CIKT",{0.3f,0.1f},{0.0f,0.6f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
 	}
 	gui->CheckBox("Check",{0.5f,0.0f},{0.2f,0.2f},{1.0f,1.0f,1.0f,1.0f});
 	gui->SetFont("EngineResources/Fonts/Daydream.ttf");

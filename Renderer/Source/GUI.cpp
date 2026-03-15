@@ -6,7 +6,7 @@
 
 struct TooltipData{
 	TooltipData(const std::string& str): tooltip(str) {}
-	std::string tooltip;
+	std::string tooltip{};
 	Float2 MaxSize{};
 	Float2 PosOffset{};
 	GUUID ID{0};
@@ -457,11 +457,10 @@ void GUIRenderer::ApplyCurrentStyles( Float2& position, Float2& size, Float4& co
 				break;
 			}
 			case GUI::Style::TOOLTIP:{
-				TooltipData& tooltip = *(TooltipData*)container.StyleData;
+				
 				TooltipBackEndData backEndData{};
-				for(uint32_t j=0 ;j < m_StylesInQueue[(uint32_t)GUI::Style::TOOLTIP-1].size();j++){	
-				Core::Log("Error",m_StylesInQueue[(uint32_t)GUI::Style::TOOLTIP-1].size());
-				tooltip =*(TooltipData*)m_StylesInQueue[(uint32_t)GUI::Style::TOOLTIP-1].top().StyleData;
+				for(uint32_t j=0 ;j < m_StylesInQueue[(uint32_t)GUI::Style::TOOLTIP-1].size();){	
+				TooltipData& tooltip = *(TooltipData*)m_StylesInQueue[(uint32_t)GUI::Style::TOOLTIP-1].top().StyleData;
 				m_StylesInQueue[(uint32_t)GUI::Style::TOOLTIP-1].pop();
 				
 				backEndData.tooltip = tooltip.tooltip;
