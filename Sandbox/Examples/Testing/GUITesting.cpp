@@ -71,7 +71,6 @@ void GUITestingLayer::OnUpdate(double deltatime)
    		animator.Update(deltatime);
    }
 	if(m_SpawnParticles){
-		return;
 		ParticleProps prop{};
 		prop.LifeTime = Core::RandomFloat(SEC(3.3f),SEC(8.0f));
 		//prop.LifeTime = SEC(3.f);
@@ -80,8 +79,8 @@ void GUITestingLayer::OnUpdate(double deltatime)
 		prop.Size = {0.012f,0.015f};
 		prop.ID = GUUID();
 		prop.CustomFunction= ParticleVelocityAdd;
-		prop.Animation = *Application::GetAsset<Animator>("FireAnim").GetData();
-		prop.Animation.SetStage("BURN");
+		//prop.Animation = *Application::GetAsset<Animator>("FireAnim").GetData();
+		//prop.Animation.SetStage("BURN");
 		//prop.TextureID = Core::GetStringHash("Particles/Water");
 		for(uint32_t i=0;i < 10;i++){
 		prop.Velocity.x = Core::RandomFloat(-0.005f,0.005f);

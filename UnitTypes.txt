@@ -1,0 +1,476 @@
+FormatCount=24
+Color=
+7
+3
+,
+0
+Size=
+7
+2
+,
+12
+Health=
+3
+1
+,
+24
+Damage=
+5
+1
+,
+32
+AttackTime=
+7
+1
+,
+36
+Range=
+7
+1
+,
+40
+MovementSpeed=
+7
+1
+,
+44
+UnitType=
+5
+1
+,
+48
+Category=
+5
+1
+,
+52
+AbilityIndex=
+5
+-1
+,
+56
+AbilityIndexCount=
+3
+1
+,
+64
+Name=
+10
+1
+,
+72
+BuildableBuildingType=
+5
+-1
+,
+104
+BuildableBuildingCount=
+3
+1
+,
+112
+TimeToBuild=
+7
+1
+,
+120
+Race=
+5
+1
+,
+124
+GoldCost=
+5
+1
+,
+128
+WoodCost=
+5
+1
+,
+132
+AnimationHandle=
+6
+1
+,
+136
+IconHandle=
+7
+1
+,
+144
+Tooltip=
+10
+1
+,
+152
+PrimaryDefence=
+7
+1
+,
+184
+SecondaryDefence=
+7
+1
+,
+188
+SecondaryName=
+10
+1
+,
+192
+UnitType
+ 
+
+224
+DataCount=14
+UnitType
+ Color=1,1,1
+ Size=0.015,0.015
+ Health=50
+ Damage=5
+ AttackTime=50
+ Range=0.015
+ MovementSpeed=0.0525
+ UnitType=1
+ Category=1
+ AbilityIndex=1,2
+ AbilityIndexCount=2
+ Name=PEASANT
+ BuildableBuildingType=3,4
+ BuildableBuildingCount=2
+ TimeToBuild=2000
+ Race=1
+ GoldCost=10
+ WoodCost=0
+ AnimationHandle=17560970131721434821
+ IconHandle=0
+ Tooltip=WORKER UNIT USED FOR BUILDING HARVESTING
+ PrimaryDefence=0
+ SecondaryDefence=0
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.015,0.015
+ Health=75
+ Damage=5
+ AttackTime=1600
+ Range=0.033
+ MovementSpeed=0.075
+ UnitType=2
+ Category=1
+ AbilityIndex=1
+ AbilityIndexCount=1
+ Name=WARRIOR
+ BuildableBuildingType=
+ BuildableBuildingCount=0
+ TimeToBuild=5000
+ Race=1
+ GoldCost=45
+ WoodCost=0
+ AnimationHandle=5832732120407660639
+ IconHandle=0
+ Tooltip=WARRIOR USED FOR MELEE COMBAT SIMPLE AND CHEAP
+ PrimaryDefence=0
+ SecondaryDefence=0
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.03,0.03
+ Health=500
+ Damage=5
+ AttackTime=1
+ Range=0
+ MovementSpeed=0
+ UnitType=3
+ Category=3
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=TOWN HALL
+ BuildableBuildingType=1
+ BuildableBuildingCount=1
+ TimeToBuild=10000
+ Race=1
+ GoldCost=300
+ WoodCost=100
+ AnimationHandle=8625030368242601538
+ IconHandle=0
+ Tooltip=THE MAIN BUILDING PRODUCES WORKERS AND IS DROPOFF POINT FOR RESOURCES
+ PrimaryDefence=0
+ SecondaryDefence=0.65
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.0375,0.015
+ Health=250
+ Damage=5
+ AttackTime=1
+ Range=0
+ MovementSpeed=0
+ UnitType=4
+ Category=3
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=BARRACKS
+ BuildableBuildingType=2,8,7,11,12,10,14
+ BuildableBuildingCount=7
+ TimeToBuild=10000
+ Race=1
+ GoldCost=45
+ WoodCost=75
+ AnimationHandle=0
+ IconHandle=0
+ Tooltip=TRAINS VERIOUS UNITS
+ PrimaryDefence=0
+ SecondaryDefence=0.65
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.015,0.0225
+ Health=100
+ Damage=0
+ AttackTime=0
+ Range=0
+ MovementSpeed=0.015
+ UnitType=5
+ Category=2
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=TREE
+ BuildableBuildingType=
+ BuildableBuildingCount=0
+ TimeToBuild=10000
+ Race=0
+ GoldCost=0
+ WoodCost=0
+ AnimationHandle=13602522054601392280
+ IconHandle=0
+ Tooltip=A TREE FOR WOOD
+ PrimaryDefence=0
+ SecondaryDefence=0
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.0225,0.0225
+ Health=1000
+ Damage=0
+ AttackTime=0
+ Range=0
+ MovementSpeed=0.015
+ UnitType=6
+ Category=2
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=GOLDMINE
+ BuildableBuildingType=
+ BuildableBuildingCount=0
+ TimeToBuild=10000
+ Race=0
+ GoldCost=0
+ WoodCost=0
+ AnimationHandle=5780245028563439163
+ IconHandle=0
+ Tooltip=RESOURCE FOR GOLD
+ PrimaryDefence=0
+ SecondaryDefence=0
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.0225,0.0075
+ Health=250
+ Damage=7
+ AttackTime=0.5
+ Range=0.03
+ MovementSpeed=0.03
+ UnitType=7
+ Category=1
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=KNIGHT
+ BuildableBuildingType=
+ BuildableBuildingCount=0
+ TimeToBuild=15000
+ Race=1
+ GoldCost=85
+ WoodCost=15
+ AnimationHandle=0
+ IconHandle=0
+ Tooltip=FASTER MORE TANKY UNIT
+ PrimaryDefence=0.35
+ SecondaryDefence=0.65
+ SecondaryName=Sir Laujan the unwise
+UnitType
+ Color=1,1,1
+ Size=0.01125,0.01125
+ Health=42
+ Damage=3
+ AttackTime=3
+ Range=0.06
+ MovementSpeed=0.018
+ UnitType=8
+ Category=1
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=PRIEST
+ BuildableBuildingType=
+ BuildableBuildingCount=0
+ TimeToBuild=15000
+ Race=1
+ GoldCost=45
+ WoodCost=35
+ AnimationHandle=0
+ IconHandle=0
+ Tooltip=UNIT THAT CAN HEAL AND APPLY BLESS DEBUFF FOR DEMON UNITS
+ PrimaryDefence=0
+ SecondaryDefence=0
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.01125,0.04125
+ Health=50
+ Damage=0
+ AttackTime=0
+ Range=0
+ MovementSpeed=0
+ UnitType=9
+ Category=3
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=BUILDINGPLACEHOLDER
+ BuildableBuildingType=
+ BuildableBuildingCount=0
+ TimeToBuild=0
+ Race=1
+ GoldCost=0
+ WoodCost=0
+ AnimationHandle=5780245028563439163
+ IconHandle=0
+ Tooltip=PLACEHOLDER FOR BUILDINGS
+ PrimaryDefence=0
+ SecondaryDefence=0
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.018,0.018
+ Health=45
+ Damage=5
+ AttackTime=1500
+ Range=0.18
+ MovementSpeed=0.0075
+ UnitType=10
+ Category=1
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=DRUID
+ BuildableBuildingType=
+ BuildableBuildingCount=0
+ TimeToBuild=0
+ Race=1
+ GoldCost=25
+ WoodCost=25
+ AnimationHandle=2355982575587601708
+ IconHandle=0
+ Tooltip=A CASTER CAN SLOW ANGEL UNITS
+ PrimaryDefence=0
+ SecondaryDefence=0
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.015,0.03
+ Health=90
+ Damage=25
+ AttackTime=2900
+ Range=0.045
+ MovementSpeed=0.003
+ UnitType=11
+ Category=1
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=ANGEL
+ BuildableBuildingType=
+ BuildableBuildingCount=0
+ TimeToBuild=0
+ Race=3
+ GoldCost=80
+ WoodCost=15
+ AnimationHandle=16658864366174065529
+ IconHandle=0
+ Tooltip=TANKY UNIT VERY SLOW BUT DOES HIGH DAMAGE AND APPLIES BLESS DEBUFF
+ PrimaryDefence=0
+ SecondaryDefence=0
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.0195,0.0435
+ Health=240
+ Damage=65
+ AttackTime=3300
+ Range=0.06
+ MovementSpeed=0.003
+ UnitType=12
+ Category=1
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=ARCHANGEL
+ BuildableBuildingType=
+ BuildableBuildingCount=0
+ TimeToBuild=0
+ Race=3
+ GoldCost=150
+ WoodCost=35
+ AnimationHandle=4836260231333503004
+ IconHandle=0
+ Tooltip=VERY TANKY HAS CLEAVE DAMAGE CAN CAST HOLY LIGHT AND BLESS
+ PrimaryDefence=0
+ SecondaryDefence=0
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.01125,0.045
+ Health=98
+ Damage=0
+ AttackTime=0
+ Range=0
+ MovementSpeed=0
+ UnitType=13
+ Category=3
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=MILL
+ BuildableBuildingType=
+ BuildableBuildingCount=0
+ TimeToBuild=0
+ Race=1
+ GoldCost=35
+ WoodCost=75
+ AnimationHandle=7326497414881315787
+ IconHandle=0
+ Tooltip=DROPOFF POINT FOR FOOD AND ENABLE CREATION OF FARMS
+ PrimaryDefence=0
+ SecondaryDefence=0.65
+ SecondaryName= 
+UnitType
+ Color=1,1,1
+ Size=0.009,0.0135
+ Health=65
+ Damage=10
+ AttackTime=2000
+ Range=0.105
+ MovementSpeed=0.03
+ UnitType=14
+ Category=1
+ AbilityIndex=
+ AbilityIndexCount=0
+ Name=ARCHER
+ BuildableBuildingType=
+ BuildableBuildingCount=0
+ TimeToBuild=0
+ Race=1
+ GoldCost=35
+ WoodCost=45
+ AnimationHandle=3203016366917024785
+ IconHandle=0
+ Tooltip=RANGED UNIT
+ PrimaryDefence=0
+ SecondaryDefence=0
+ SecondaryName= 

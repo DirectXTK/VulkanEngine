@@ -14,7 +14,7 @@ struct VertexParticleData{
 };
 struct ParticleProps{
     Float2 Pos{};
-    Float4 Color{};
+    Float4 Color{1.0f,1.0f,1.0f,1.0f};
     GUUID TextureID{0};  
     Float2 Size{};
     GUUID ID{0};

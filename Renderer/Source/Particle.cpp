@@ -25,6 +25,8 @@ void ParticleSystem::UpdateAndDraw(double deltaTime){
                 else if(prop.Animation){
                     renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID,prop.Animation);
                     prop.Animation.Update(deltaTime);
+                }else{
+                    renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID);
                 }
             }
         }

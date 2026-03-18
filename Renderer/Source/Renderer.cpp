@@ -368,6 +368,19 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
             FlushInstance();
           
     }
+    //fix here
+    if(textureID ==0){
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = { 0.0f,1.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = { 0.0f,0.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = { 1.0f,0.0f };
+            m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = { 1.0f,1.0f };
+
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureID =0;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].TextureID =0;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].TextureID =0;
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].TextureID =0;
+
+    }else{
     //Load texture
     if(textureID != m_LastInstanceObjectTextureUUID){
     auto texture = m_AssetManager->GetAsset<Texture>(textureID);
@@ -421,6 +434,7 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
     }   
 
     }
+}
 
     m_ParticleVertexData[m_CurrentInstanceVertexIndex].Color= color;
     m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].Color= color;
