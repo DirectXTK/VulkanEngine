@@ -323,7 +323,7 @@ private:
 
     Camera2D m_Camera{};
     //Texturing
-    uint32_t m_TextureSlotCount{ 8};
+    uint32_t m_TextureSlotCount{ 64};
     Texture* m_BlankWhiteTexture{};
     DescriptorPool m_DescriptorPoolTextures{};
 
