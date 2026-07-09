@@ -351,7 +351,7 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
 void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 size,GUUID ID,GUUID textureID,int textureIndex){
     if(m_InstanceOffset+1 >= m_MaxInstanceCount||m_CurrentInstanceVertexIndex+4 >= m_MaxInstanceVertexCount){
         #ifdef DEBUG
-        Core::Log(ErrorType::Warning,"Instance limit reached DrawParticle()", "C",m_CurrentInstanceVertexIndex,"MaxInst ",m_InstanceOffset);
+        Core::Log(ErrorType::Warning,"Instance limit reached DrawParticle()", "C",m_CurrentInstanceVertexIndex,"MaxInst",m_InstanceOffset);
         #endif
         return;
     }
@@ -361,7 +361,7 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
             m_LastInstanceObjectColor = color;
     }
 
-    if(m_LastInstanceObjectColor != color||m_LastInstanceObjectSize != size|| (m_LastInstanceObjectTextureUUID != 0&& m_LastInstanceObjectTextureUUID != textureID) ){
+    if(m_LastInstanceObjectColor != color||m_LastInstanceObjectSize != size|| ( m_LastInstanceObjectTextureUUID != textureID) ){
   
             m_LastInstanceObjectSize = size;
             m_LastInstanceObjectColor = color;
@@ -379,6 +379,7 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
         m_ParticleVertexData[m_CurrentInstanceVertexIndex+1].TextureID =0;
         m_ParticleVertexData[m_CurrentInstanceVertexIndex+2].TextureID =0;
         m_ParticleVertexData[m_CurrentInstanceVertexIndex+3].TextureID =0;
+        m_LastInstanceObjectTextureUUID=0;
 
     }else{
     //Load texture

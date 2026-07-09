@@ -79,7 +79,7 @@ void GUITestingLayer::OnUpdate(double deltatime)
 		prop.Size = {0.012f,0.015f};
 		prop.ID = GUUID();
 		prop.CustomFunction= ParticleVelocityAdd;
-		//prop.Animation = *Application::GetAsset<Animator>("FireAnim").GetData();
+	//	prop.Animation = *Application::GetAsset<Animator>("FireAnim").GetData();
 		//prop.Animation.SetStage("BURN");
 		//prop.TextureID = Core::GetStringHash("Particles/Water");
 		for(uint32_t i=0;i < 10;i++){
@@ -88,6 +88,7 @@ void GUITestingLayer::OnUpdate(double deltatime)
 		Application::GetParticleSystem().DrawParticle(prop);
 
 		}
+
 			for(uint32_t i=0;i < 10;i++){
 		prop.Velocity.x = Core::RandomFloat(-0.0015f,0.0010f);
 		prop.Velocity.y = Core::RandomFloat(-0.0015f,0.0010f);
@@ -201,7 +202,7 @@ void GUITestingLayer::OnGUI()
 
 	}
 	if(gui->IsObjectHovered("CheckTooltip")){
-		gui->Tooltip("CIKT",{0.3f,0.1f},{0.0f,0.6f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
+		gui->Tooltip("CIKT",{0.3f,0.1f},{0.0f,0.5f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
 	}
 	gui->CheckBox("Check",{0.5f,0.0f},{0.2f,0.2f},{1.0f,1.0f,1.0f,1.0f});
 	gui->SetFont("EngineResources/Fonts/Daydream.ttf");

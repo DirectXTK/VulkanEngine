@@ -297,7 +297,7 @@ private:
     uint32_t m_MaxInstanceVertexCount{(uint32_t)(MAXPARTICLECOUNT*0.25f)};
     uint32_t m_ParticleDrawCallCount{};
     uint32_t m_InstanceDescriptorRange{};
-    uint32_t m_ParticleDescriptorOffset{};
+    uint32_t m_ParticleDescriptorOffset{0};
 
     Float2 m_LastInstanceObjectSize{};
     Float4 m_LastInstanceObjectColor{};
