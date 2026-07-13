@@ -13,6 +13,7 @@
 *.vcxproj.filters
 *.spv
 *.sln
+*.o
 /Libs
 Makefile
 vgcore*
