@@ -12,6 +12,7 @@
 *.vcxproj
 *.vcxproj.filters
 *.sln
+*.o
 /Libs
 Makefile
 vgcore*
