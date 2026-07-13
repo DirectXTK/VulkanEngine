@@ -17,6 +17,7 @@ private:
     void OnMouseEvent(MouseEvent& event);
 
     bool m_SpawnParticles{false};
+    bool m_SpawningEnabled{false};
     Animator* m_Anim{};
     //Controlls
     float m_Move{ -1.0 };

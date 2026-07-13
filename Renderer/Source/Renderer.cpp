@@ -246,7 +246,9 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_NewWindowSize ={(float)width,(float)height};
     }
 void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 size,GUUID ID,Animator animation){
-     if(m_InstanceOffset+1 >= m_MaxInstanceCount||m_CurrentInstanceVertexIndex+4 >= m_MaxInstanceVertexCount){
+    if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,pos,size))
+        return; 
+    if(m_InstanceOffset+1 >= m_MaxInstanceCount||m_CurrentInstanceVertexIndex+4 >= m_MaxInstanceVertexCount){
         #ifdef DEBUG
         Core::Log(ErrorType::Warning,"Instance limit reached DrawParticle()", "C",m_CurrentInstanceVertexIndex,"MaxInst ",m_InstanceOffset);
         #endif
@@ -265,14 +267,20 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
             m_LastInstanceObjectSize = size;
             m_LastInstanceObjectColor = color;
     }
-
-    if(m_LastInstanceObjectColor != color||m_LastInstanceObjectSize != size|| (m_LastInstanceObjectTextureUUID != 0&& m_LastInstanceObjectTextureUUID != textureID) ){
-  
-            m_LastInstanceObjectSize = size;
-            m_LastInstanceObjectColor = color;
-            FlushInstance();
-          
+    if(m_LastInstanceObjectColor == color||m_LastInstanceObjectSize == size|| (m_LastInstanceObjectTextureUUID == 0&& m_LastInstanceObjectTextureUUID == textureID) ){
+        m_ParticleInstanceData[m_InstanceOffset].Position = {pos.x,pos.y,0.0f};
+        m_ParticleInstanceData[m_InstanceOffset].ID = ID;  
+        m_InstanceOffset++;
+        m_InstanceCount++;
     }
+    if(textureID ==0){
+         m_ParticleVertexData[m_CurrentInstanceVertexIndex].TextureCords = { 0.0f,1.0f };
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex + 1].TextureCords = { 0.0f,0.0f };
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex + 2].TextureCords = { 1.0f,0.0f };
+        m_ParticleVertexData[m_CurrentInstanceVertexIndex + 3].TextureCords = { 1.0f,1.0f };
+    }
+
+
 
     if(textureID != m_LastInstanceObjectTextureUUID){
     auto texture = m_AssetManager->GetAsset<Texture>(textureID);
@@ -349,6 +357,8 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
     m_InstanceCount++;
 }
 void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 size,GUUID ID,GUUID textureID,int textureIndex){
+    if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,pos,size))
+            return;
     if(m_InstanceOffset+1 >= m_MaxInstanceCount||m_CurrentInstanceVertexIndex+4 >= m_MaxInstanceVertexCount){
         #ifdef DEBUG
         Core::Log(ErrorType::Warning,"Instance limit reached DrawParticle()", "C",m_CurrentInstanceVertexIndex,"MaxInst",m_InstanceOffset);
@@ -625,7 +635,11 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
     void Renderer::BeginFrame(Camera2D* camera,float deltaTime){    
     
         ResetFrameData();
-        m_DeltaTime = deltaTime;
+        if(m_StatisticsCurrentTime <=.0f){
+            m_DeltaTime = deltaTime;
+            m_StatisticsCurrentTime = m_StatisticsUpdateInterval;
+        }
+        m_StatisticsCurrentTime-= deltaTime;
         
         m_CurrentCommandBuffer = m_CommandBuffers[m_CurrentFrame];
         m_Context->TransferCommandBuffer = m_TransferCommandBuffers[m_CurrentFrame];
@@ -1081,6 +1095,8 @@ void Renderer::SubmitDrawParticleCommands(){
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,int TextureIndex)
     {
+        if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
+            return;
         GUUID CurrentTextureHandle{};
         Asset<Texture> TexutreAsset{};
         uint32_t TextureID{};
@@ -1194,6 +1210,8 @@ void Renderer::SubmitDrawParticleCommands(){
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID)
     {
+         if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
+            return;
         //texture map gets current container
         auto& textures = m_TextureStorageBuffer[m_CurrentFrame];
         Asset<Texture> textureAsset = Animation.GetCurrentTexture();
@@ -1268,6 +1286,8 @@ void Renderer::SubmitDrawParticleCommands(){
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID)
     {
+        if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
+            return;
         if (m_VertexPointerQuad + 4 > m_VertexCount)
             FlushGeometry();
 

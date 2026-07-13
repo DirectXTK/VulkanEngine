@@ -47,6 +47,20 @@ namespace Core{
                 -(pos.y/Application::GetRenderer()->GetViewPortExtent().height)*2.0f +1.0f
             };
         }
+        bool IsFrustomCullable(const Float2& cameraPos,const Float2& cameraSize,float aspectRatio,const Float2& pos,const Float2& size){
+
+            float cameraLeft = cameraPos.x - (1/cameraSize.x);
+            float cameraRight = cameraPos.x +(1/cameraSize.x);
+            float cameraBottom = cameraPos.y - (1/cameraSize.y*aspectRatio);
+            float cameraTop = cameraPos.y + (1/cameraSize.y*aspectRatio);
+
+
+
+             return (pos.x + (size.x*1.0f)  < cameraLeft   ||
+             pos.x  -size.x               > cameraRight  ||
+             pos.y + (size.y*1.0f) < cameraBottom ||
+             pos.y  -size.y               > cameraTop);
+        }
         VkFormat ChooseBestFormat(VkPhysicalDevice pdevice,const std::vector<VkFormat>& formats,VkImageTiling tilling,VkFormatFeatureFlags flags){
 
                 for(int i =0;i < formats.size();i++){

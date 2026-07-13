@@ -1,5 +1,6 @@
 #include "GUITesting.h"
 #include "Serializer.h"
+#include "DefaultCameraControlls.h"
 GUI::SliderStyle sliderdata{};
 
 Animator animator{};
@@ -61,16 +62,42 @@ void ParticleVelocityAdd(ParticleProps& props){
 }
 void GUITestingLayer::OnUpdate(double deltatime)
 {
+	Renderer* renderer = Application::GetRenderer();
+
+	DefaultCameraControlls(Application::GetCurrentCamera());
+	static Float2 pos{0.0f,0.0f};
+
+	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+
+	if(Application::IsKeyPressed(KeyCodes::ARROWRIGHT))
+	{
+		pos.x+= 0.01f;
+	}	if(Application::IsKeyPressed(KeyCodes::ARROWLEFT))
+	{
+		pos.x-= 0.01f;
+	}
+
+		if(Application::IsKeyPressed(KeyCodes::ARROWUP))
+	{
+		pos.y+= 0.01f;
+	}	if(Application::IsKeyPressed(KeyCodes::ARROWDOWN))
+	{
+		pos.y-= 0.01f;
+	}
 
 
-
-   Renderer* renderer = Application::GetRenderer();
    if(animator)
    {
    		renderer->DrawQuad({0.0f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},animator,0);
    		animator.Update(deltatime);
    }
-	if(m_SpawnParticles){
+	if(m_SpawnParticles&&m_SpawningEnabled){
 		ParticleProps prop{};
 		prop.LifeTime = Core::RandomFloat(SEC(3.3f),SEC(8.0f));
 		//prop.LifeTime = SEC(3.f);
@@ -79,9 +106,9 @@ void GUITestingLayer::OnUpdate(double deltatime)
 		prop.Size = {0.012f,0.015f};
 		prop.ID = GUUID();
 		prop.CustomFunction= ParticleVelocityAdd;
-	//	prop.Animation = *Application::GetAsset<Animator>("FireAnim").GetData();
-		//prop.Animation.SetStage("BURN");
-		//prop.TextureID = Core::GetStringHash("Particles/Water");
+		prop.Animation = *Application::GetAsset<Animator>("FireAnim").GetData();
+		prop.Animation.SetStage("BURN");
+		prop.TextureID = Core::GetStringHash("Particles/Water");
 		for(uint32_t i=0;i < 10;i++){
 		prop.Velocity.x = Core::RandomFloat(-0.005f,0.005f);
 		prop.Velocity.y = Core::RandomFloat(-0.005f,0.0050f);
@@ -108,6 +135,7 @@ void GUITestingLayer::OnUpdate(double deltatime)
 void GUITestingLayer::OnRender(double deltime){
    Renderer* renderer = Application::GetRenderer();
 
+   renderer->DrawQuad({0.0f,-0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
 	//renderer->DrawParticle(Application::GetWorldMousePos(),{0.9f,0.1f,0.1f,1.0f},{0.01f,0.01f},0);
 }
 void GUITestingLayer::OnEvent(Event& event){
@@ -198,13 +226,16 @@ void GUITestingLayer::OnGUI()
 	//Wierd placement when using multuple tooltips.
 	if(gui->IsObjectHovered("Check") || timeHovered >SEC(1.0f)){
 			timeHovered+=Application::GetDeltaTime();
-		gui->Tooltip("LAFA",{0.1f,0.1f},{0.0f,0.2f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f},Core::GetStringHash("CheckTooltip"));
+		gui->Tooltip("SPAWNS FIREPARTICLES",{0.1f,0.1f},{0.0f,0.2f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f},Core::GetStringHash("CheckTooltip"));
 
 	}
 	if(gui->IsObjectHovered("CheckTooltip")){
-		gui->Tooltip("CIKT",{0.3f,0.1f},{0.0f,0.5f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
+		gui->Tooltip("AND WATER PARTICLES",{0.3f,0.1f},{0.0f,0.5f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
 	}
-	gui->CheckBox("Check",{0.5f,0.0f},{0.2f,0.2f},{1.0f,1.0f,1.0f,1.0f});
+	if(gui->CheckBox("Check",{0.5f,0.0f},{0.2f,0.2f},{1.0f,1.0f,1.0f,1.0f}))
+		m_SpawningEnabled = true;
+	else 
+		m_SpawningEnabled = false;
 	gui->SetFont("EngineResources/Fonts/Daydream.ttf");
 	gui->EndPanel();
 

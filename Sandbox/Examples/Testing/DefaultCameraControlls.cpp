@@ -30,9 +30,9 @@ void DefaultCameraControlls(Camera2D* camera) {
         Float2 size = camera->GetScale();
 
         m_Zoom += (Application::GetScroll() * m_Zoom * m_Magnification*deltaTime);
-        // m_Magnification = m_Magnification * m_Zoom;
-         //size.x += m_Zoom;
-        // size.y += m_Zoom;
+         m_Magnification = m_Magnification * m_Zoom;
+         size.x += m_Zoom;
+         size.y += m_Zoom;
 
         camera->SetScale({ m_Zoom,m_Zoom });
     }

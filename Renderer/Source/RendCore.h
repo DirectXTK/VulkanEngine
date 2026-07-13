@@ -44,6 +44,7 @@ struct SwapChainDetails{
         Float2 ToScreenPixels(const Float2& pos);
         
         uint32_t GetTextureSlotCount(VkPhysicalDevice pdevice);
+        bool IsFrustomCullable(const Float2& cameraPos,const Float2& cameraSize,float aspectRatio,const Float2& pos,const Float2& size);
 
         bool IsShaderExtension(const std::string& extension);
     }

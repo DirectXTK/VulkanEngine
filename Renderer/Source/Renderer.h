@@ -260,6 +260,9 @@ private:
     uint32_t m_DrawCallCountGeometry{};
     uint32_t m_DrawCallCountOutlines{};
     uint32_t m_DrawCallCountGUI{};
+    float m_StatisticsUpdateInterval{SEC(0.1f)};
+    float m_StatisticsCurrentTime{0.0f};
+    
 
     //TEMP(Testing)
     Buffer* m_PickingImageBuffer{};
