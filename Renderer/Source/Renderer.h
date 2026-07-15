@@ -62,7 +62,7 @@ public:
     Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem, AssetManager* assetManager);
     void InitializePipeline(uint64_t MaxTextureCount);
     //
-    void BeginFrame(Camera2D* camera,float deltaTime);
+    void BeginFrame(const Float2& cameraPos,const Float2& cameraSize,glm::mat4 viewproj,float deltaTime);
     void BeginGUIFrame();
 
 
@@ -112,6 +112,12 @@ public:
     void Shutdown();
     float GetFONTDPI();
     void ChangeArrowColor(const Float4& color){m_ArrowColor = color;}
+
+    //Multithreading functions
+    void MarkSubmitAsReady();
+    void SetRendererThreadFrameTime(float renderThreadTime){m_RenderThreadFrameTime = renderThreadTime;}
+    bool IsShuttingDown(){return m_IsShuttingDown;}
+    uint32_t FrameInFlight(){return m_FrameInFlight;}
 
     ~Renderer();
 private:
@@ -288,6 +294,8 @@ private:
     uint32_t m_CurrentTextureDescriptorSetOffset{1};
     uint32_t m_CurrentCameraDescriptorSetOffset{};
     //Camera
+    Float2 m_CameraPos{};
+    Float2 m_CameraSize{};
     UniformCameraBufferData m_UniformCameraData{};
 
     //Text
@@ -324,7 +332,6 @@ private:
     std::array<Asset<Texture>,1000> m_TextureStorageBuffer[MAX_FRAME_DRAWS];
     std::unordered_map<GUUID,BatchInfo> m_TextureStorageBufferLoadedTextures[MAX_FRAME_DRAWS];
 
-    Camera2D m_Camera{};
     //Texturing
     uint32_t m_TextureSlotCount{ 64};
     Texture* m_BlankWhiteTexture{};
@@ -355,6 +362,11 @@ private:
     bool m_ShutDown{false};
     //Queue changes
     std::vector<Asset<Shader>> m_QueuedShaders{};
+
+    //MultiThreading
+    float m_RenderThreadFrameTime{};
+    uint32_t m_FrameInFlight{0};
+    bool m_IsShuttingDown{false};
 
 
     AssetManager* m_AssetManager{}; 

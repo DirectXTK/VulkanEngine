@@ -9,6 +9,7 @@
 #include "FontSystem.h"
 #include "Collider.h"
 #include "Event.h"
+#include "RendererFrontEnd.h"
 
 #include "PathAgent.h"
 
@@ -48,6 +49,7 @@ public:
     static AssetManager* GetAssetManager() { return &GetApplication()->m_AssetManager; }
     static Camera2D* GetCurrentCamera(){return &Application::GetApplication()->m_Camera;}
     static Renderer* GetRenderer(){return GetApplication()->m_Renderer;}
+    static Render* GetRender(){return GetApplication()->m_Render;}
     static GUIRenderer* GetGUIRenderer(){return GetApplication()->m_GUIRenderer;}
 
     static ApplicationSpecs& GetApplicationSpecs(){ return Application::GetApplication()->m_Specs;}
@@ -118,6 +120,8 @@ private:
     ColliderSystem m_CollisionSystem{};
     //multithreading
     std::vector<std::thread> m_ThreadPool{};
+    std::thread* m_RendererThread{};
+    Render* m_Render{};
 
     ParticleSystem m_ParticleSystem{};
 

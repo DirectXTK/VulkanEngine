@@ -33,7 +33,6 @@ void GUIRenderer::BeginGUI()
 	delete []m_PickBufferData;
 	m_PickBufferData = new Float2[renderer->GetViewPortExtent().width*renderer->GetViewPortExtent().height];
 	buffer->LoadFromBufferToVar(m_PickBufferData,renderer->GetViewPortExtent().width*renderer->GetViewPortExtent().height*sizeof(Float2));
-	//Core::Log("Size",renderer->GetViewPortExtent().height," ", renderer->GetViewPortExtent().width);
 }
 
 

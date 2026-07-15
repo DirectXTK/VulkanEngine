@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "AppTime.h"
 #include "AssetManager.h"
+#include "RendererThreadLoop.h"
  Application* Application::m_Application = nullptr;
 void ChechCommands(Application* app,std::string Command){
     uint64_t argsStart = Command.find(" ");
@@ -167,6 +168,7 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
      m_AssetManager.DebugStatistics(false);
      m_Renderer->InitializePipeline(500);
+     m_Render = new Render(m_Renderer);
 
      m_FontSystem = new FontSystem();
 
@@ -180,6 +182,7 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
      if(specs.AppDebugging)
         LogSystemAndAppInformation();
 
+    m_RendererThread = new std::thread(RendererLoop,m_Renderer,m_GUIRenderer,m_Render);
      return true;
 
  }
@@ -290,14 +293,13 @@ void Application::RunAStar(){
     std::thread InputThread(RunCommandLineInputTemp,app,std::ref(ThreadRunning));
 
     while(!glfwWindowShouldClose(app->m_Window->GetHandle())&& app->m_Running){
-
-        app->m_Renderer->GetCustomBuffer(0)->LoadFromBufferToVar(app->m_PickBuffer,app->m_PickBufferSize,0);
+        //TEMP
+       // app->m_Renderer->GetCustomBuffer(0)->LoadFromBufferToVar(app->m_PickBuffer,app->m_PickBufferSize,0);
 
         app->m_InputSystem.ResetMouseChange();
 
         app->m_DeltaTime = Time::GetTimeMs() - app->m_LastFrameTime;
         app->m_LastFrameTime = Time::GetTimeMs();
-        app->m_Renderer->BeginFrame(&app->m_Camera,app->m_DeltaTime);
 
        // if(app->m_Specs.AppDebugging)
            // app->m_PathFinderSystem->RenderGrid();
@@ -307,19 +309,18 @@ void Application::RunAStar(){
      //   app->m_PathFinderSystem->ResetGrid();
         app->m_LayerController.UpdateLayers(app->m_DeltaTime);
         app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime);
+        if(app->m_Render->GetReadyFrameCount() != MAX_FRAME_DRAWS){
+        app->m_Render->StartQueue(*Application::GetCurrentCamera());
+
         app->m_LayerController.RenderLayers(app->m_DeltaTime);
-
-        app->m_GUIRenderer->BeginGUI();
-        app->m_Renderer->BeginGUIFrame();
-
-        app->m_LayerController.UpdateGUILayers();
-        
-          if(app->m_RendererDebugging){
+        if(app->m_RendererDebugging){
             app->m_Renderer->Statistics(true,app->m_GUIRenderer);
         }
+        app->m_LayerController.UpdateGUILayers();
+     }
 
-        app->m_GUIRenderer->EndGUI();
-        app->m_Renderer->EndFrame();
+        app->m_Render->FinishQueue();
+
     }
 
       

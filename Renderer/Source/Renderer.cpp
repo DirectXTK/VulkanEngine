@@ -246,7 +246,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_NewWindowSize ={(float)width,(float)height};
     }
 void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 size,GUUID ID,Animator animation){
-    if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,pos,size))
+    if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,pos,size))
         return; 
     if(m_InstanceOffset+1 >= m_MaxInstanceCount||m_CurrentInstanceVertexIndex+4 >= m_MaxInstanceVertexCount){
         #ifdef DEBUG
@@ -357,7 +357,7 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
     m_InstanceCount++;
 }
 void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 size,GUUID ID,GUUID textureID,int textureIndex){
-    if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,pos,size))
+    if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,pos,size))
             return;
     if(m_InstanceOffset+1 >= m_MaxInstanceCount||m_CurrentInstanceVertexIndex+4 >= m_MaxInstanceVertexCount){
         #ifdef DEBUG
@@ -558,7 +558,6 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
                 for(uint32_t i=0;i < m_SwapChain->GetSwapChainImageCount();i++){
             }
 
-            m_Camera.SetViewportSize({(float)m_NewWindowSize.x,(float)m_NewWindowSize.y});
 
                 m_FrameBuffers.clear();
 
@@ -632,7 +631,7 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
             m_VerticesGUI = temp;
 
     }
-    void Renderer::BeginFrame(Camera2D* camera,float deltaTime){    
+    void Renderer::BeginFrame(const Float2& cameraPos,const Float2& cameraSize,glm::mat4 viewproj,float deltaTime){    
     
         ResetFrameData();
         if(m_StatisticsCurrentTime <=.0f){
@@ -657,10 +656,10 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
 
 
 
-            m_Camera = *camera;
-
-              m_UniformCameraData.GeometryCamera = m_Camera.GetViewProj();
-              m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
+            m_CameraPos = cameraPos;
+            m_CameraSize = cameraSize;
+            m_UniformCameraData.GeometryCamera = viewproj;
+            m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
             m_UniformBuffer[m_CurrentFrame]->UploadToBuffer(m_Device, &m_UniformCameraData, sizeof(UniformCameraBufferData));
 
             VkSwapchainKHR swapchain = m_SwapChain->GetSwapChain();
@@ -1089,13 +1088,15 @@ void Renderer::SubmitDrawParticleCommands(){
              }
 
             
-      
+             m_FrameInFlight--;
         }
     
-
+    void Renderer::MarkSubmitAsReady(){
+        m_FrameInFlight++;
+    }
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,int TextureIndex)
     {
-        if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
+        if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
             return;
         GUUID CurrentTextureHandle{};
         Asset<Texture> TexutreAsset{};
@@ -1210,7 +1211,7 @@ void Renderer::SubmitDrawParticleCommands(){
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID)
     {
-         if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
+         if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
             return;
         //texture map gets current container
         auto& textures = m_TextureStorageBuffer[m_CurrentFrame];
@@ -1286,7 +1287,7 @@ void Renderer::SubmitDrawParticleCommands(){
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID)
     {
-        if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
+        if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
             return;
         if (m_VertexPointerQuad + 4 > m_VertexCount)
             FlushGeometry();
@@ -1714,7 +1715,7 @@ void Renderer::SubmitDrawParticleCommands(){
             style.BorderColor = {1.0f,0.0f,0.0f,1.0f};
             style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
             gui->PushStyle(GUI::Style::BORDER,&style);
-            gui->SetFontSize(8);
+            gui->SetFontSize(12);
             gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(m_DrawCallCountGeometry+m_DrawCallCountGUI+m_ParticleDrawCallCount),{0.0f,0.90f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
 
             gui->Text("TriangleCount","TRIANGLE: "+std::to_string(m_VertexCountPerFrame/3),{0.0f,0.70f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
@@ -1727,6 +1728,11 @@ void Renderer::SubmitDrawParticleCommands(){
             uint32_t Prec = 3;
             deltatimeString = deltatimeString.substr(0,Index+Prec);
             gui->Text("Frametime","FRAMETIME: "+deltatimeString,{0.0f,0.10f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+
+            deltatimeString = std::to_string(m_RenderThreadFrameTime);
+            Index = deltatimeString.find_last_of(".");
+            deltatimeString = deltatimeString.substr(0,Index+Prec);
+            gui->Text("RendererThread time:","FRAMETIMERENDER"+deltatimeString,{0.0f,-0.1f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
 
             gui->PopStyle();
             gui->EndPanel();

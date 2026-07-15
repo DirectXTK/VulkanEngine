@@ -4,6 +4,7 @@
 #include "../Examples/Testing/TestingLayer.h"
 #include "../Examples/Testing/AnimationTestingLayer.h"
 #include "../Examples/Testing/ExampleMenu.h"
+#include "../Examples/Testing/MultiThreadingLayer.h"
 int main() {
 	
 	ApplicationSpecs specs{};
@@ -12,11 +13,11 @@ int main() {
 	specs.WindowWidth = 800;
 	specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
 	specs.RendererDebugging = true;
-	specs.IsWindowResizable = true;
+	specs.IsWindowResizable = false;
 	specs.ApplicationVersion = 0.001f;
-	specs.AppDebugging = true;
+	specs.AppDebugging = false;
 	Application::InitApplication(specs);
-	Application::AddLayer<GUITestingLayer>();
+	Application::AddLayer<MultiThreadingLayer>();
 	
 	Application::Run();
 	
