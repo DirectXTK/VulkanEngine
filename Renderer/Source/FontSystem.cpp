@@ -257,6 +257,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 {
 	GUUID SelectID = Core::GetStringHash(ID);
 	bool ScrollableBoundBox{};
+	Render* render = Application::GetRender();
 
 
 	Float2 BoundingBox[4];
@@ -294,15 +295,16 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 				m_IsArrowActive = false;
 				
 			}
-			m_Renderer->RenderText(Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition-m_ArrowPositionOffset);
+			render->DrawText(Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition-m_ArrowPositionOffset);
 			return;
 		}
 	}
-	m_Renderer->RenderText(Buffer, BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	render->DrawText(Buffer, BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
 }
 void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Float2 MaxSize)
 {
 
+	Render* render = Application::GetRender();
 	Renderer* renderer = Application::GetRenderer();
 
 	GUUID SelectID = Core::GetStringHash(StrId);
@@ -341,12 +343,12 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 	DrawBorder(Position, Size, SelectID);
 
 
-	renderer->RenderText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	render->DrawText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
 
 }
-void FontSystem:: Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
+void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
 {
-	Renderer* renderer = Application::GetRenderer();
+	Render* renderer = Application::GetRender();
 	
 	GUUID SelectID =id;
 	Float2 CharacterSizeNorm = { m_CurrentFont.GetData()->Advance[(uint32_t)' '].x/Application::GetRenderer()->GetViewPortExtent().width,m_CharacterSize*1.25f/Application::GetRenderer()->GetViewPortExtent().height};
@@ -381,12 +383,12 @@ void FontSystem:: Text(GUUID id, const char* Message, Float2 Position, Float2 Ma
 	//DrawBorder(Position, Size, SelectID);
 
 
-	renderer->RenderText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	renderer->DrawText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
 
 }
 void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 {
-	Renderer* renderer = Application::GetRenderer();
+	Render* renderer = Application::GetRender();
 
 	
 		renderer->DrawQuad({ Position.x ,Position.y ,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { Size.x ,Size.y  }, ID.ID);

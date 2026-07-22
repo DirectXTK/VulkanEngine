@@ -39,7 +39,7 @@ void GUIRenderer::BeginGUI()
 void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Float2 Size, GUUID TextureHandle, bool Dragable)
 {
 	InputSystem* inputSystem = &m_Application->m_InputSystem;
-	Renderer* renderer = m_Application->m_Renderer;
+	Render* renderer = m_Application->GetRender();
 	GUUID id(ID);
 
 	if (m_PanelIDs.find(id) == m_PanelIDs.end()) {
@@ -92,7 +92,7 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 	if(TextureHandle !=0)
 		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y,0.0f }, Color, Size,TextureHandle, m_PanelIDs[id].ID.ID,0);
 	else
-		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y,0.0f },Color, Size,m_PanelIDs[id].ID.ID);
+		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y,0.0f },Color, Size,m_PanelIDs[id].ID);
 	m_PanelDepth++;
 }
 void GUIRenderer::Tooltip(const std::string& tooltip,const Float2& maxSize,const Float2& posOffset,const Float4& backGroundColor,const Float4& borderColor,GUUID id){
@@ -107,7 +107,7 @@ void GUIRenderer::Tooltip(const std::string& tooltip,const Float2& maxSize,const
 }
 bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Position,Float4 Color,Float2 Size,MouseCodes mousecode,GUUID TextureHandle,bool SavesState, bool Dragable,bool** IsPressed)
 {
-	Renderer* renderer = m_Application->m_Renderer;
+	Render* renderer = m_Application->GetRender();
 	InputSystem* inputsystem = &m_Application->m_InputSystem;
 	Float2 LPosition{ Position };
 	ButtonData* CurrentButtonData{};
@@ -147,7 +147,7 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 	if(TextureHandle ==0)
 		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, CurrentButtonID.ID);
 	else
-		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, TextureHandle, CurrentButtonID.ID,0 );
+		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size,  CurrentButtonID.ID,TextureHandle,0 );
 
 	//draw text
 	if (Text.size() != 0) {
@@ -184,7 +184,7 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 }
 void GUIRenderer::Quad(const Float2& position,const Float2& size,const Float4& color,GUUID textureID){
 
-	Renderer* renderer = m_Application->m_Renderer;
+	Render* renderer = m_Application->GetRender();
 	Float2 LPosition{ position };
 	Float2 RSize{size};
 	ButtonData* CurrentButtonData{};
@@ -202,11 +202,11 @@ void GUIRenderer::Quad(const Float2& position,const Float2& size,const Float4& c
 		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y-RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
 	}
 	ApplyCurrentStyles(LPosition,RSize,rColor);
-	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},rColor,RSize,textureID,0);
+	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},rColor,RSize,0,textureID,-1);
 }
 
 bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture){
-	Renderer* renderer = m_Application->m_Renderer;
+	Render* renderer = m_Application->GetRender();
 	Float2 LPosition{ position };
 	Float2 RSize{size};
 	CheckBoxData* currentCheckBoxData{};
@@ -239,9 +239,9 @@ bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Fl
 	ApplyCurrentStyles(LPosition,RSize,rColor,CurrentButtonID);
 
 	if(currentCheckBoxData->IsClicked)
-		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,Core::GetStringHash("GUI/CheckBoxTrue"),CurrentButtonID.ID);
+		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,CurrentButtonID.ID,Core::GetStringHash("GUI/CheckBoxTrue"),-1);
 	else
-		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,Core::GetStringHash("GUI/CheckBoxFalse"),CurrentButtonID.ID);
+		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,CurrentButtonID.ID,Core::GetStringHash("GUI/CheckBoxFalse"),-1);
 	return currentCheckBoxData->IsClicked;
 }
 void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size) {
@@ -258,7 +258,7 @@ void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2
 	}
 }
 void GUIRenderer::DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor,const Float4& BackGroundColor, float BorderWidth) {
-	Renderer* renderer = m_Application->m_Renderer;
+	Render* renderer = m_Application->GetRender();
 	Float2 BorderSize{ Size.x+ BorderWidth,Size.y+ BorderWidth };
 	Float2 RealPosition= {Position.x,Position.y};
 	
@@ -268,7 +268,7 @@ void GUIRenderer::DrawBorder(const Float2& Position, const Float2& Size, const F
 void GUIRenderer::Slider(const std::string& strID,  float* number,const  Float2& Position,const Float4& color,const  Float2& Size,const  float SlideAmount,const Float2& MinMax,const  uint32_t DecimalPlaces)
 {
 	Float4 Color{color};
-	Renderer* renderer= m_Application->m_Renderer;
+	Render* renderer= m_Application->GetRender();
 	std::string StringNumber = std::to_string(*number);
 	SliderData* CurrentSlider = &m_Sliders[strID];
 	 float sliderClickedColorMin{.2f};
@@ -365,7 +365,7 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 	Float2 rSize{Size};
 	Float2 lPosition{Position};
 	GUUID id = Core::GetStringHash(ID);
-	Renderer* renderer  = Application::GetRenderer();
+	Render* renderer  = Application::GetRender();
 	Float4 color{};
 	Float4 sliderBarColor{0.5f,0.5,0.5f,0.9f};
 	Float4 sliderButtonColor{0.35f,0.4,0.4f,0.9f};
@@ -441,7 +441,7 @@ bool GUIRenderer::IsObjectHovered(GUUID objID){
 	return false;
 }
 void GUIRenderer::ApplyCurrentStyles( Float2& position, Float2& size, Float4& color,GUUID id){
-	Renderer* renderer= Application::GetRenderer();
+	Render* renderer= Application::GetRender();
 	for(uint32_t i=0 ; i < m_StylesInQueue.size();i++){
 		if(m_StylesInQueue[i].empty())
 			continue;
@@ -581,7 +581,7 @@ void GUIRenderer::OnMouseEvent(MouseEvent& event){
 
 }
 void GUIRenderer::DrawTooltips(){
-	Renderer* renderer = Application::GetRenderer();
+	Render* renderer = Application::GetRender();
 
 	for(uint32_t i=0;i < m_TooltipStack.size();){
 		TooltipBackEndData& data = m_TooltipStack.top();

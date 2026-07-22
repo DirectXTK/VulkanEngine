@@ -62,7 +62,7 @@ public:
     Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem, AssetManager* assetManager);
     void InitializePipeline(uint64_t MaxTextureCount);
     //
-    void BeginFrame(const Float2& cameraPos,const Float2& cameraSize,glm::mat4 viewproj,float deltaTime);
+    void BeginFrame(const Float2& cameraPos,const Float2& cameraSize,glm::mat4 viewproj);
     void BeginGUIFrame();
 
 
@@ -116,6 +116,7 @@ public:
     //Multithreading functions
     void MarkSubmitAsReady();
     void SetRendererThreadFrameTime(float renderThreadTime){m_RenderThreadFrameTime = renderThreadTime;}
+    void SetApplicationThreadFrameTime(float deltaTime);
     bool IsShuttingDown(){return m_IsShuttingDown;}
     uint32_t FrameInFlight(){return m_FrameInFlight;}
 

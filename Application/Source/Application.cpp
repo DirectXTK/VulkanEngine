@@ -300,6 +300,7 @@ void Application::RunAStar(){
 
         app->m_DeltaTime = Time::GetTimeMs() - app->m_LastFrameTime;
         app->m_LastFrameTime = Time::GetTimeMs();
+        app->m_Renderer->SetApplicationThreadFrameTime(app->m_DeltaTime);
 
        // if(app->m_Specs.AppDebugging)
            // app->m_PathFinderSystem->RenderGrid();
@@ -310,16 +311,16 @@ void Application::RunAStar(){
         app->m_LayerController.UpdateLayers(app->m_DeltaTime);
         app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime);
         if(app->m_Render->GetReadyFrameCount() != MAX_FRAME_DRAWS){
-        app->m_Render->StartQueue(*Application::GetCurrentCamera());
+             app->m_Render->StartQueue(*Application::GetCurrentCamera());
 
-        app->m_LayerController.RenderLayers(app->m_DeltaTime);
+             app->m_LayerController.RenderLayers(app->m_DeltaTime);
         if(app->m_RendererDebugging){
             app->m_Renderer->Statistics(true,app->m_GUIRenderer);
         }
         app->m_LayerController.UpdateGUILayers();
+        app->m_Render->FinishQueue();
      }
 
-        app->m_Render->FinishQueue();
 
     }
 

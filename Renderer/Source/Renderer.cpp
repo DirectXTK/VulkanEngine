@@ -600,6 +600,13 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
             CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_GraphicsPool.GetCommandPool(),singleCommandBuffer);
 
     }
+    void Renderer::SetApplicationThreadFrameTime(float deltaTime){
+     if(m_StatisticsCurrentTime <=.0f){
+            m_DeltaTime = deltaTime;
+            m_StatisticsCurrentTime = m_StatisticsUpdateInterval;
+        }
+        m_StatisticsCurrentTime-= deltaTime;
+    }
     void Renderer::ResetFrameData(){
             m_DrawCallCountGUI = 0;
             m_DrawCallCountGeometry =0;
@@ -631,14 +638,10 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
             m_VerticesGUI = temp;
 
     }
-    void Renderer::BeginFrame(const Float2& cameraPos,const Float2& cameraSize,glm::mat4 viewproj,float deltaTime){    
+    void Renderer::BeginFrame(const Float2& cameraPos,const Float2& cameraSize,glm::mat4 viewproj){    
     
         ResetFrameData();
-        if(m_StatisticsCurrentTime <=.0f){
-            m_DeltaTime = deltaTime;
-            m_StatisticsCurrentTime = m_StatisticsUpdateInterval;
-        }
-        m_StatisticsCurrentTime-= deltaTime;
+       
         
         m_CurrentCommandBuffer = m_CommandBuffers[m_CurrentFrame];
         m_Context->TransferCommandBuffer = m_TransferCommandBuffers[m_CurrentFrame];
