@@ -12,15 +12,17 @@ void RendererLoop(Renderer* renderer,GUIRenderer* gui,Render* render){
         if(render->GetReadyFrameCount() >0){
             double start = Time::GetTimeNs();
             renderer->BeginFrame(render->GetCameraPos(),render->GetCameraSize(),render->GetViewProj());
+            render->FinishRenderGeometry();
             gui->BeginGUI();
             renderer->BeginGUIFrame();
-
-        
-
-   
-                gui->EndGUI();
-                render->FinishRender();
-                renderer->EndFrame();
+            
+            render->FinishRenderGUI();
+            
+            
+            
+            gui->EndGUI();
+            render->EndFrame();
+            renderer->EndFrame();
 
             double deltaTime = (Time::GetTimeNs()-start)/1000000.f;
             timePassed+=deltaTime;

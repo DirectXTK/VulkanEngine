@@ -33,7 +33,7 @@ class ParticleSystem{
 public:
 
     void DrawParticle(const ParticleProps& props);
-    void UpdateAndDraw(double deltaTime);
+    void UpdateAndDraw(double deltaTime,bool draw);
 
     void Shutdown();
 private:

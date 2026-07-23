@@ -1290,7 +1290,7 @@ void Renderer::SubmitDrawParticleCommands(){
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID)
     {
-        if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
+        if(!m_GUIRendering&& Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
             return;
         if (m_VertexPointerQuad + 4 > m_VertexCount)
             FlushGeometry();

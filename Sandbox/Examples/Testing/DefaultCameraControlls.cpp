@@ -2,7 +2,7 @@
 void DefaultCameraControlls(Camera2D* camera) {
     float deltaTime = Application::GetDeltaTime();
     static float m_Move{ -1.0 };
-    static float m_Direct{ 0.005f };
+    static float m_Direct{ 0.05f };
     static float m_Zoom{ 1.0f };
     static float m_Magnification{ 0.015f };
     if (Application::IsKeyPressed(KeyCodes::D)) {

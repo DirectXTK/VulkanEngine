@@ -309,16 +309,19 @@ void Application::RunAStar(){
         
      //   app->m_PathFinderSystem->ResetGrid();
         app->m_LayerController.UpdateLayers(app->m_DeltaTime);
-        app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime);
         if(app->m_Render->GetReadyFrameCount() != MAX_FRAME_DRAWS){
              app->m_Render->StartQueue(*Application::GetCurrentCamera());
+             app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,true);
 
              app->m_LayerController.RenderLayers(app->m_DeltaTime);
+             app->m_Render->StartGUIQueue();
         if(app->m_RendererDebugging){
             app->m_Renderer->Statistics(true,app->m_GUIRenderer);
         }
         app->m_LayerController.UpdateGUILayers();
         app->m_Render->FinishQueue();
+     }else{
+        app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,false);
      }
 
 
