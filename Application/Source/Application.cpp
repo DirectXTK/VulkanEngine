@@ -243,6 +243,9 @@ void Application::Shutdown(){
     std::cout << "\033[0m"<<std::flush;
     std::cout << "Shutting Down...\n";
 
+    app->m_RendererThread->join();
+    delete app->m_Render;
+
     app->m_LayerController.DestroyLayers();
     app->m_Running = false;
     app->m_Renderer->FinishExecution();
@@ -282,6 +285,7 @@ void Application::RunAStar(){
 
     app->m_GUIRenderer->OnEvent(event);
     app->m_FontSystem->OnEvent(event);
+    app->m_Renderer->OnEvent(event);
     app->m_LayerController.OnEvent(event);
  }
 
@@ -335,8 +339,10 @@ void Application::RunAStar(){
         glfwPollEvents();
         
         app->m_LayerController.RunQueue();
-        app->m_Renderer->RunRendererChangeQueue();
     }
+    AppShutdownEvent event{};
+    DispatchEvent(event);
+
     ThreadRunning.store(false);
     app->m_Running = false;
     InputThread.join();

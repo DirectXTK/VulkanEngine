@@ -15,6 +15,16 @@ void Render::FinishQueue(){
     }
   
 }
+void Render::RemoveShader(const ShaderType& shaderType){
+    m_RemovedShaders[m_CurrentFrame].push_back(shaderType);
+}
+void Render::SetShader(GUUID id){
+    Core::Log(ErrorType::Warning,"Not implemented");
+   // m_AddedShaders[m_CurrentFrame].push_back(asset);
+}
+void Render::SetShader(Asset<Shader> asset){
+    m_AddedShaders[m_CurrentFrame].push_back(asset);
+}
 void Render::StartGUIQueue(){
     m_GeometryEndIndexes[m_CurrentFrame] = m_RenderQueues[m_CurrentFrame].size();
     m_GeometryEndIndexesText[m_CurrentFrame] = m_RenderQueuesText[m_CurrentFrame].size();
@@ -38,7 +48,7 @@ void Render::DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GU
 }
 void Render::DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GUUID id,GUUID textureID,int textureIndex){
         m_RenderQueues[m_CurrentFrame].push_back({pos,color,size,id,textureID,textureIndex});
-}
+}   
 void Render::EndFrame(){
     m_RenderQueues[m_RenderedFrameIndex].resize(0);
     m_RenderQueuesText[m_RenderedFrameIndex].resize(0);
@@ -83,6 +93,15 @@ void Render::FinishRenderGeometry(){
         InstanceQueue& data=m_InstanceQueue[m_RenderedFrameIndex].at(i);
         m_Renderer->DrawInstance(data.pos,data.color,data.size,data.id.ID,data.textureID,data.textureIndex);
     }
-   
+    for(uint i=0;i < m_AddedShaders[m_RenderedFrameIndex].size();i++){
+       m_Renderer->QueueShaderChange(m_AddedShaders[m_RenderedFrameIndex].at(i));
+    }
+    for(uint i=0;i < m_RemovedShaders[m_RenderedFrameIndex].size();i++){
+        m_Renderer->RemoveShader(m_RemovedShaders[m_RenderedFrameIndex].at(i));
+    }
 
+    m_RemovedShaders[m_RenderedFrameIndex].clear();
+    m_AddedShaders[m_RenderedFrameIndex].clear();
+}
+Render::~Render(){
 }

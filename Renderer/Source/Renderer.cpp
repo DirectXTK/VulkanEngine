@@ -1003,7 +1003,6 @@ void Renderer::SubmitDrawParticleCommands(){
     
             DrawBatch();
 
-            SubmitDrawParticleCommands();
             vkCmdEndRenderPass(m_CurrentCommandBuffer);
             StopRecordingCommands();
 
@@ -1858,6 +1857,14 @@ void Renderer::SubmitDrawParticleCommands(){
 Renderer::~Renderer(){
     Shutdown();
 }
+void Renderer::OnEvent(Event& event){
+    if(event.GetEventType() == EventType::APPSHUTDOWN)
+        OnAppShutDown((AppShutdownEvent&)event);
+}
+void Renderer::OnAppShutDown(AppShutdownEvent& event){
+    m_IsShuttingDown = true;
+}
+
 
 void Renderer::StartRecordingCommands()
 {
@@ -1916,6 +1923,9 @@ void Renderer::DrawBatch()
         m_VertexCountPerFrame+= DrawCall.VertexCount;
 
     }
+            SubmitDrawParticleCommands();
+            vkCmdBindPipeline(m_CurrentCommandBuffer,VK_PIPELINE_BIND_POINT_GRAPHICS,m_Pipeline);
+
 
    
     for (uint32_t i = 0; i < m_DrawCommandsGUI.size(); i++) {
@@ -2078,20 +2088,73 @@ void Renderer::CreateParticlePipeline(){
 
      delete[] m_ParticlePipelineDesc.VertexStageInput;
 }
+void Renderer::RemoveShader(const ShaderType& shaderType){
+    bool found{false};
+    for(uint32_t i=0 ; i < m_CurrentlyLoadedShaders.size();i++){
+        if(m_CurrentlyLoadedShaders[i].GetData()->GetType() == shaderType){
+            m_CurrentlyLoadedShaders.erase(m_CurrentlyLoadedShaders.begin()+i);
+            found = true;
+        }
+    }
+    if(!found)
+        return;
+
+    m_PipelineDesc.ShaderCount =m_CurrentlyLoadedShaders.size();
+    m_PipelineDesc.ShaderModules = new VkShaderModule[m_CurrentlyLoadedShaders.size()];
+    m_PipelineDesc.ShaderStages = new VkShaderStageFlagBits[m_CurrentlyLoadedShaders.size()];
+
+
+    for(uint32_t i=0;i < m_CurrentlyLoadedShaders.size();i++){
+        m_PipelineDesc.ShaderModules[i] =m_CurrentlyLoadedShaders[i].GetData()->GetShaderModule();
+        m_PipelineDesc.ShaderStages[i] = m_CurrentlyLoadedShaders[i].GetData()->GetShaderStage();
+    }
+
+    ReCreatePipeline(m_PipelineDesc);
+
+
+
+   delete[] m_PipelineDesc.ShaderModules;
+   delete[] m_PipelineDesc.ShaderStages;
+}
 void Renderer::RunRendererChangeQueue(){
     if(m_QueuedShaders.size() == 0)
         return;
     vkDeviceWaitIdle(m_Device);
 
-    m_CurrentlyLoadedShaders.clear();
+    for(uint32_t i=0 ;i < m_QueuedShaders.size();i++){
+        for(uint32_t j=0;j < m_CurrentlyLoadedShaders.size();j++){
 
-    m_PipelineDesc.ShaderCount =m_QueuedShaders.size();
-    m_PipelineDesc.ShaderModules = new VkShaderModule[m_QueuedShaders.size()];
-    m_PipelineDesc.ShaderStages = new VkShaderStageFlagBits[m_QueuedShaders.size()];
-    for(uint32_t i=0;i < m_QueuedShaders.size();i++){
-        m_PipelineDesc.ShaderModules[i] =m_QueuedShaders[i].GetData()->GetShaderModule();
-        m_PipelineDesc.ShaderStages[i] = m_QueuedShaders[i].GetData()->GetShaderStage();
-        m_CurrentlyLoadedShaders.push_back(m_QueuedShaders[i]);
+            if(!m_QueuedShaders[i])
+                continue;
+
+            if(m_CurrentlyLoadedShaders[j].GetData()->GetType() == m_QueuedShaders[i].GetData()->GetType()){
+                m_CurrentlyLoadedShaders[j] = m_QueuedShaders[i];
+
+                m_QueuedShaders[i] =Asset<Shader>();
+
+            }
+            
+        }
+
+    }
+
+    for(uint32_t i=0 ;i < m_QueuedShaders.size();i++){
+        if(!m_QueuedShaders[i])
+            continue;
+        if(m_QueuedShaders[i].GetData()->GetType() != ShaderType::None){
+            m_CurrentlyLoadedShaders.push_back(m_QueuedShaders[i]);
+        }
+    }
+  
+
+    m_PipelineDesc.ShaderCount =m_CurrentlyLoadedShaders.size();
+    m_PipelineDesc.ShaderModules = new VkShaderModule[m_CurrentlyLoadedShaders.size()];
+    m_PipelineDesc.ShaderStages = new VkShaderStageFlagBits[m_CurrentlyLoadedShaders.size()];
+
+
+    for(uint32_t i=0;i < m_CurrentlyLoadedShaders.size();i++){
+        m_PipelineDesc.ShaderModules[i] =m_CurrentlyLoadedShaders[i].GetData()->GetShaderModule();
+        m_PipelineDesc.ShaderStages[i] = m_CurrentlyLoadedShaders[i].GetData()->GetShaderStage();
     }
 
     ReCreatePipeline(m_PipelineDesc);
@@ -2106,8 +2169,12 @@ void Renderer::RunRendererChangeQueue(){
 }
 
 void Renderer::Shutdown(){
-    if(m_ShutDown)
+    if(m_ShutDown){
+        #ifdef DEBUG
+        Core::Log("It is already shutdown(Renderer::Shutdown).");
+        #endif
         return; 
+    }
     m_ShutDown = true;
     vkDeviceWaitIdle(m_Device);
 

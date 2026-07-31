@@ -4,15 +4,17 @@
 
     }
     void MultiThreadingLayer::OnCreate(){
+        m_OBJ.push_back({0.0f,0.0f});
 
     }
     void MultiThreadingLayer::OnUpdate(double deltaTime){
     }
     void MultiThreadingLayer::OnRender(double delaTime){
         Render* render= Application::GetRender();
+        
         for(uint32_t i=0 ;i < m_OBJ.size();i++){
 
-          //  render->DrawQuad({m_OBJ[i].x,m_OBJ[i].y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.02f,0.02f},0);
+           render->DrawQuad({m_OBJ[i].x,m_OBJ[i].y,0.0f},{1.0f,1.0f,0.0f,1.0f},{0.02f,0.02f},0);
         }
     }
     void MultiThreadingLayer::OnDestroy(){
@@ -31,7 +33,7 @@
     }
     void MultiThreadingLayer::OnMouseEvent(MouseEvent& event){
         if(event.Code == MouseCodes::LEFT && event.State == EventState::PRESSED){
-           // m_OBJ.push_back({Application::GetWorldMousePos()});
+            Render* render = Application::GetRender();
            ParticleProps props{};
            props.Pos = Application::GetWorldMousePos();
            props.Color = {1.0f,1.0f,1.0f,1.0f};
@@ -47,6 +49,13 @@
         }
     }
     void MultiThreadingLayer::OnKeyboardEvent(KeyBoardEvent& event){
+        Render* render = Application::GetRender();
+        if(event.Key == KeyCodes::D && event.State == EventState::PRESSED){
+            render->SetShader(Application::GetAsset<Shader>("Shaders/WireFrameG"));
+        }
+        if(event.Key == KeyCodes::O && event.State == EventState::PRESSED){
+            render->RemoveShader(ShaderType::Geometry);
+        }
         DefaultCameraControlls(Application::GetCurrentCamera());
     }
 

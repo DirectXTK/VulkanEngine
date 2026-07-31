@@ -87,7 +87,7 @@ public:
     void SetRenderDesc(const RendererDesc& desc);
     void QueueShaderChange(const std::string& path);
     void QueueShaderChange(Asset<Shader> shaderAsset);
-
+    void RemoveShader(const ShaderType& shaderType);
 
     Buffer* GetCustomBuffer(uint32_t index) { return m_PickingImageBuffer; }
     Buffer* GetViewportWithID();
@@ -120,8 +120,12 @@ public:
     bool IsShuttingDown(){return m_IsShuttingDown;}
     uint32_t FrameInFlight(){return m_FrameInFlight;}
 
+    void OnEvent(Event& event);
+
     ~Renderer();
 private:
+    void OnAppShutDown(AppShutdownEvent& event);
+
     void InitRenderDesc(const RendererDesc& desc);
     void ResizeWindow();
     bool CompileShaders();

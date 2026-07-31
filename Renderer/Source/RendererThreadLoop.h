@@ -23,6 +23,7 @@ void RendererLoop(Renderer* renderer,GUIRenderer* gui,Render* render){
             gui->EndGUI();
             render->EndFrame();
             renderer->EndFrame();
+            renderer->RunRendererChangeQueue();
 
             double deltaTime = (Time::GetTimeNs()-start)/1000000.f;
             timePassed+=deltaTime;

@@ -97,6 +97,7 @@ public:
     static Application* GetApplication(){return m_Application;}
     static ParticleSystem& GetParticleSystem(){return m_Application->m_ParticleSystem;}
     static bool DeleteApplication();
+
     ~Application();
 private:
     //has to be non static

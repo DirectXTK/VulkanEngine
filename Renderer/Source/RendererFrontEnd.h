@@ -16,6 +16,10 @@ class Render{
     
     void DrawText(const char* Message,uint64_t bufferSize, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex); 
 
+    void SetShader(GUUID id);
+    void SetShader(Asset<Shader> asset);
+    void RemoveShader(const ShaderType& shaderType);
+
 
     void FinishQueue();
 
@@ -31,6 +35,8 @@ class Render{
     Float2 GetCameraSize(){return m_CameraSize[m_RenderedFrameIndex];}
     Float2 GetCameraPos(){return m_CameraPos[m_RenderedFrameIndex];}
 
+    ~Render();
+
     private:
     struct RenderQueue{
         Float3 pos{};
@@ -42,7 +48,7 @@ class Render{
         
     };
     struct RenderQueueText{
-        char* message{};
+        char* message{nullptr};
         uint64_t bufferSize{};  
         Float2 pos{};
         //Size 4 array
@@ -52,9 +58,12 @@ class Render{
         GUUID id{};
         int64_t pointerIndex{};
 
-        //~RenderQueueText(){
-         //   delete[] message;
-        //}
+        ~RenderQueueText(){
+            if(message){
+                //delete[] message;
+                message = nullptr;
+            }
+        }
     };
     struct InstanceQueue{
         Float2 pos{};
@@ -76,6 +85,9 @@ class Render{
     glm::mat4 m_ViewProj[MAX_FRAME_DRAWS];
     Float2 m_CameraSize[MAX_FRAME_DRAWS];
     Float2 m_CameraPos[MAX_FRAME_DRAWS];
+
+    std::vector<ShaderType> m_RemovedShaders[MAX_FRAME_DRAWS];
+    std::vector<Asset<Shader>> m_AddedShaders[MAX_FRAME_DRAWS];
 
     std::vector<InstanceQueue> m_InstanceQueue[MAX_FRAME_DRAWS];
     std::vector<RenderQueue> m_RenderQueues[MAX_FRAME_DRAWS];

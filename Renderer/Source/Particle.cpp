@@ -5,8 +5,6 @@ void ParticleSystem::UpdateAndDraw(double deltaTime,bool draw){
     for(uint32_t i=0;i < MAXPARTICLECOUNT;i++){
         if(m_ParticleProps[i].Alive){
             m_ParticleProps[i].LifeTime -=deltaTime;
-            Core::Log("Limetime",   m_ParticleProps[i].LifeTime );
-            Core::Log("deltaTime",   deltaTime );
             if(m_ParticleProps[i].LifeTime <= 0.0f){
                 if(m_ParticleProps[i].CustomData){
                     if(m_ParticleProps[i].CustomDataDestructor)

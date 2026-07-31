@@ -7,7 +7,7 @@ enum class KeyCodes{SINGLEQUOTES=39,COMMA=44,DOT=46,FOWARDFLASH=47,NUM0=48,NUM1,
 enum class MouseCodes {LEFT, RIGHT,SCROLL};
 //Expended means this thas expended by other function.
 enum class EventState  {RELEASED,PRESSED,HOLD};
-enum class EventType{NONE,EXPENDED,KEYBOARD,MOUSE,WINDOWSHUTDOWN,WINDOWRESIZE,TEXTEVENT,INPUTTEXTEVENT};
+enum class EventType{NONE,EXPENDED,KEYBOARD,MOUSE,WINDOWSHUTDOWN,WINDOWRESIZE,TEXTEVENT,INPUTTEXTEVENT,APPSHUTDOWN};
 namespace Core {
 	KeyCodes ConvertFromGlfwInt(int KeyCode, int Mod);
 }
@@ -59,6 +59,11 @@ class TextEvent:public Event{
 		char KeyChar;
 	};
 	EventState State{  }; 
+};
+class AppShutdownEvent: public Event{
+public:
+	AppShutdownEvent():Event(EventType::APPSHUTDOWN){}
+
 };
 class EventHandler {
 public:
