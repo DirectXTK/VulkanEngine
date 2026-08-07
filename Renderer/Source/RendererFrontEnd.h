@@ -16,10 +16,11 @@ class Render{
     
     void DrawText(const char* Message,uint64_t bufferSize, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex); 
 
-    void SetShader(GUUID id);
     void SetShader(Asset<Shader> asset);
     void RemoveShader(const ShaderType& shaderType);
 
+    //if asset is not provided then font stays it only changes size
+    void SetFont(Asset<Font> asset,uint32_t charSize);
 
     void FinishQueue();
 
@@ -38,6 +39,44 @@ class Render{
     ~Render();
 
     private:
+
+    void RunCommands();
+
+    enum class CmdTypes{NONE,DRAW,DRAWTEXT,DRAWINSTANCED,CHANGESHADER,CHANGEFONT};
+    struct CmdCommand{
+        CmdTypes type{};
+        void* data{};
+    };
+    class CmdBuffer{
+        public:
+        uint64_t Size(){return m_Commands.size();}
+        CmdCommand& Current(){
+            
+                        #ifdef DEBUG
+            if(m_CurrentCmdIndex >= m_Commands.size() )
+            {
+                Core::Log(ErrorType::Error,"Index is out of bounds CmdBuffer::Current()");
+                CmdCommand cmd{};
+                return cmd;
+            }
+            #endif
+            
+            
+            return m_Commands[m_CurrentCmdIndex];
+        }
+        void Next(){   m_CurrentCmdIndex++; }
+        void ResetBuffer(){
+            m_CurrentCmdIndex=0;
+            m_Commands.clear();
+            m_Commands.resize(0);
+        }
+        void AddCmd(const CmdCommand& cmd){
+            m_Commands.push_back(cmd);
+        }
+        private:
+        uint64_t m_CurrentCmdIndex{0};
+        std::vector<CmdCommand> m_Commands{};
+    };
     struct RenderQueue{
         Float3 pos{};
         Float4 color{};
@@ -45,7 +84,8 @@ class Render{
         GUUID id{};
         GUUID textureID{0};
         int32_t textureId{-1};
-        
+        Animator animation{};
+        ~RenderQueue()=default;
     };
     struct RenderQueueText{
         char* message{nullptr};
@@ -58,12 +98,6 @@ class Render{
         GUUID id{};
         int64_t pointerIndex{};
 
-        ~RenderQueueText(){
-            if(message){
-                //delete[] message;
-                message = nullptr;
-            }
-        }
     };
     struct InstanceQueue{
         Float2 pos{};
@@ -78,6 +112,9 @@ class Render{
     uint32_t m_RenderedFrameIndex{};
     uint32_t m_CurrentFrame{};
     std::atomic<uint32_t> m_ReadyFrames{0};
+
+    uint64_t m_CommandBufferGUIBeginIndex{0};//Indexes then GUI command start in the commandbuffer.
+    CmdBuffer m_CommandBuffer[MAX_FRAME_DRAWS];
 
     uint32_t m_GeometryEndIndexes[MAX_FRAME_DRAWS];
     uint32_t m_GeometryEndIndexesText[MAX_FRAME_DRAWS];

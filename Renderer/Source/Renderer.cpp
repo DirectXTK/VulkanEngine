@@ -553,7 +553,7 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
     delete[] m_PipelineDesc.ShaderModules;
  }
     void Renderer::ResizeWindow(){
-            vkDeviceWaitIdle(m_Device);
+             vkDeviceWaitIdle(m_Device);
             vkWaitForFences(m_Device,1,&m_DrawFences[m_CurrentFrame],false,1000*1000*1000);
                 for(uint32_t i=0;i < m_SwapChain->GetSwapChainImageCount();i++){
             }
@@ -1178,7 +1178,7 @@ void Renderer::SubmitDrawParticleCommands(){
                 m_VerticesQuad[m_VertexPointerQuad + 1].TextureID = TextureID;
                 m_VerticesQuad[m_VertexPointerQuad + 2].TextureID = TextureID;
                 m_VerticesQuad[m_VertexPointerQuad + 3].TextureID = TextureID;
-        }
+        }   
               
          if(TextureHandle != 0&&m_CurrentTextureDescriptorSetOffset ==0)
             Core::Log("NOt zero ",m_CurrentTextureDescriptorSetOffset);
@@ -1853,7 +1853,9 @@ void Renderer::SubmitDrawParticleCommands(){
    }
 
 
-
+void Renderer::WaitForIdle(){
+    vkDeviceWaitIdle(m_Device);
+}
 Renderer::~Renderer(){
     Shutdown();
 }
@@ -1995,6 +1997,7 @@ void Renderer::CreateDescriptorSets(){
     }
 
     }
+
 void Renderer::QueueShaderChange(const std::string& path){
     if(m_QueuedShaders.capacity() == m_QueuedShaders.size())
     {
@@ -2089,35 +2092,15 @@ void Renderer::CreateParticlePipeline(){
      delete[] m_ParticlePipelineDesc.VertexStageInput;
 }
 void Renderer::RemoveShader(const ShaderType& shaderType){
-    bool found{false};
-    for(uint32_t i=0 ; i < m_CurrentlyLoadedShaders.size();i++){
-        if(m_CurrentlyLoadedShaders[i].GetData()->GetType() == shaderType){
-            m_CurrentlyLoadedShaders.erase(m_CurrentlyLoadedShaders.begin()+i);
-            found = true;
-        }
-    }
-    if(!found)
+    if(m_RemovedShaders.size() > 20)
+    {
+        Core::Log(ErrorType::Warning,"Reached maximum queued shader.{Renderer::RemoveShader}",m_RemovedShaders.capacity(),m_RemovedShaders.size());
         return;
-
-    m_PipelineDesc.ShaderCount =m_CurrentlyLoadedShaders.size();
-    m_PipelineDesc.ShaderModules = new VkShaderModule[m_CurrentlyLoadedShaders.size()];
-    m_PipelineDesc.ShaderStages = new VkShaderStageFlagBits[m_CurrentlyLoadedShaders.size()];
-
-
-    for(uint32_t i=0;i < m_CurrentlyLoadedShaders.size();i++){
-        m_PipelineDesc.ShaderModules[i] =m_CurrentlyLoadedShaders[i].GetData()->GetShaderModule();
-        m_PipelineDesc.ShaderStages[i] = m_CurrentlyLoadedShaders[i].GetData()->GetShaderStage();
     }
-
-    ReCreatePipeline(m_PipelineDesc);
-
-
-
-   delete[] m_PipelineDesc.ShaderModules;
-   delete[] m_PipelineDesc.ShaderStages;
+    m_RemovedShaders.push_back(shaderType);
 }
 void Renderer::RunRendererChangeQueue(){
-    if(m_QueuedShaders.size() == 0)
+    if(m_QueuedShaders.size() == 0&& m_RemovedShaders.size()==0)
         return;
     vkDeviceWaitIdle(m_Device);
 
@@ -2145,6 +2128,15 @@ void Renderer::RunRendererChangeQueue(){
             m_CurrentlyLoadedShaders.push_back(m_QueuedShaders[i]);
         }
     }
+    for(uint32_t i=0 ;i < m_RemovedShaders.size();i++){
+        for(int32_t j=0;j < m_CurrentlyLoadedShaders.size();j++){
+            if(m_RemovedShaders[i] == m_CurrentlyLoadedShaders[j].GetData()->GetType()){
+                m_CurrentlyLoadedShaders.erase(m_CurrentlyLoadedShaders.begin()+j);
+                j--;
+            }
+
+        }
+    }
   
 
     m_PipelineDesc.ShaderCount =m_CurrentlyLoadedShaders.size();
@@ -2162,6 +2154,7 @@ void Renderer::RunRendererChangeQueue(){
 
 
     m_QueuedShaders.clear();
+    m_RemovedShaders.clear();
     m_QueuedShaderPaths.clear();
     m_QueuedShaders.reserve(20);
    delete[] m_PipelineDesc.ShaderModules;

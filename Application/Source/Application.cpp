@@ -182,7 +182,6 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
      if(specs.AppDebugging)
         LogSystemAndAppInformation();
 
-    m_RendererThread = new std::thread(RendererLoop,m_Renderer,m_GUIRenderer,m_Render);
      return true;
 
  }
@@ -292,13 +291,14 @@ void Application::RunAStar(){
  void Application::Run(){
     std::atomic<bool> ThreadRunning(true);
     Application* app = GetApplication();
+    GUIRenderer* gui = app->m_GUIRenderer;
     app->m_Running = true;
 
     std::thread InputThread(RunCommandLineInputTemp,app,std::ref(ThreadRunning));
+    app->m_RendererThread = new std::thread(RendererLoop,app->m_Renderer,app->m_GUIRenderer,app->m_Render);
 
     while(!glfwWindowShouldClose(app->m_Window->GetHandle())&& app->m_Running){
         //TEMP
-       // app->m_Renderer->GetCustomBuffer(0)->LoadFromBufferToVar(app->m_PickBuffer,app->m_PickBufferSize,0);
 
         app->m_InputSystem.ResetMouseChange();
 
@@ -313,19 +313,24 @@ void Application::RunAStar(){
         
      //   app->m_PathFinderSystem->ResetGrid();
         app->m_LayerController.UpdateLayers(app->m_DeltaTime);
+
+
         if(app->m_Render->GetReadyFrameCount() != MAX_FRAME_DRAWS){
+
              app->m_Render->StartQueue(*Application::GetCurrentCamera());
              app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,true);
 
              app->m_LayerController.RenderLayers(app->m_DeltaTime);
              app->m_Render->StartGUIQueue();
+             gui->BeginGUI();
         if(app->m_RendererDebugging){
             app->m_Renderer->Statistics(true,app->m_GUIRenderer);
         }
         app->m_LayerController.UpdateGUILayers();
+        gui->EndGUI();
         app->m_Render->FinishQueue();
      }else{
-        app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,false);
+      //  app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,false);
      }
 
 
@@ -339,6 +344,7 @@ void Application::RunAStar(){
         glfwPollEvents();
         
         app->m_LayerController.RunQueue();
+
     }
     AppShutdownEvent event{};
     DispatchEvent(event);

@@ -117,6 +117,8 @@ public:
     void MarkSubmitAsReady();
     void SetRendererThreadFrameTime(float renderThreadTime){m_RenderThreadFrameTime = renderThreadTime;}
     void SetApplicationThreadFrameTime(float deltaTime);
+    void WaitForIdle();
+
     bool IsShuttingDown(){return m_IsShuttingDown;}
     uint32_t FrameInFlight(){return m_FrameInFlight;}
 
@@ -367,6 +369,8 @@ private:
     bool m_ShutDown{false};
     //Queue changes
     std::vector<Asset<Shader>> m_QueuedShaders{};
+    std::vector<ShaderType> m_RemovedShaders{};
+    
 
     //MultiThreading
     float m_RenderThreadFrameTime{};

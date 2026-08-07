@@ -13,17 +13,12 @@ void RendererLoop(Renderer* renderer,GUIRenderer* gui,Render* render){
             double start = Time::GetTimeNs();
             renderer->BeginFrame(render->GetCameraPos(),render->GetCameraSize(),render->GetViewProj());
             render->FinishRenderGeometry();
-            gui->BeginGUI();
-            renderer->BeginGUIFrame();
+
             
             render->FinishRenderGUI();
-            
-            
-            
-            gui->EndGUI();
+
             render->EndFrame();
             renderer->EndFrame();
-            renderer->RunRendererChangeQueue();
 
             double deltaTime = (Time::GetTimeNs()-start)/1000000.f;
             timePassed+=deltaTime;
@@ -31,6 +26,8 @@ void RendererLoop(Renderer* renderer,GUIRenderer* gui,Render* render){
                 renderer->SetRendererThreadFrameTime((float)deltaTime);
                 timePassed = 0;
             }
+            Core::Log("Still Rendering");
+
         }       
     }
     Core::Log("ShuttingDown RendererThread");

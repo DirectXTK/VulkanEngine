@@ -41,7 +41,7 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 	InputSystem* inputSystem = &m_Application->m_InputSystem;
 	Render* renderer = m_Application->GetRender();
 	GUUID id(ID);
-
+	
 	if (m_PanelIDs.find(id) == m_PanelIDs.end()) {
 		m_PanelIDs[id] = { Position,Size,id };
 	}

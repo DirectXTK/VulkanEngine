@@ -16,5 +16,7 @@ class MultiThreadingLayer : public Layer{
     void OnMouseEvent(MouseEvent& event);
     void OnKeyboardEvent(KeyBoardEvent& event);
 
+    std::vector<Animator> m_Animation{};
+    std::vector<GUUID> m_Textures{};
     std::vector<Float2> m_OBJ{};
 };

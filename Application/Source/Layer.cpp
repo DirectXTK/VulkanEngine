@@ -52,15 +52,26 @@ void LayerController::RemoveLayer(Layer* layer){
 	Core::Log("Layer not found{RemoveLayer}");
 }
 void LayerController::RunQueue(){
-
+	
+	//wait for rendering to complete
+	if(m_CommandQueue.size() != 0){
+		while(Application::GetRender()->GetReadyFrameCount() !=0){
+			Core::Log("StillWaiting");
+			Application::GetRenderer()->WaitForIdle();
+		}
+	}
 	if(!m_CommandQueue.empty()){
+		Application::GetRenderer()->WaitForIdle();
 		Application::GetGUIRenderer()->ResetGUIData();
 	}
+
+
 	for(uint32_t i=0;i < m_CommandQueue.size();i++){
 		TransitionData& data = m_CommandQueue.front();
 		int32_t index{-1};
 		if(data.Type == QueueType::TRANSITION){
 		for(uint32_t j=0;j < m_Layers.size();j++){
+
 			if(m_Layers[j] == data.Initial)
 			{
 				index =j;
@@ -72,13 +83,16 @@ void LayerController::RunQueue(){
 			delete data.Transitioned;
 		}
 		else{
+
 			if(data.Initial&& data.Transitioned)
 			{
 			data.Transitioned->SetController(data.Initial->m_Controller);
+
 			data.Initial->OnDestroy();
 			delete data.Initial;
 			m_Layers[index] = std::move(data.Transitioned);
 			m_Layers[index]->OnCreate();
+
 			}
 		}
 		}
@@ -86,9 +100,10 @@ void LayerController::RunQueue(){
 			if(data.Initial)
 			{
 			m_Layers.push_back(data.Initial);
+			
 			data.Initial->SetController(this);
 			data.Initial->OnCreate();
-			}
+		}
 		}
 		else if(data.Type == QueueType::REMOVE){
 			if(data.Initial)

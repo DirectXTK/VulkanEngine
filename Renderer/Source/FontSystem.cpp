@@ -382,7 +382,6 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 
 	//DrawBorder(Position, Size, SelectID);
 
-
 	renderer->DrawText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
 
 }

@@ -1,15 +1,40 @@
 #include "RendererFrontEnd.h"
+//
+struct DrawData{
+    Float2 pos{};
+    Float2 size{};
+    Float4 color{};
+    GUUID id{};
+    uint32_t textureIndex{};//TODO remove use index inside texture
+    Asset<Texture> textureAsset{};
+};
+struct DrawTextData{
+    char* msg{};
+    uint64_t msgLen{};
+    Float2 pos{};
+    Float2* boundingBox{};
+    float fixedPadding{};
+    float charSizeNorm{};
+    GUUID id{};
+    int64_t pointerIndex{};
+    Float4 color{};
+    ~DrawTextData(){
+        delete msg;
+    }
+};
+struct DrawDataInstanced{
+    uint32_t m_InstanceCount{};
+
+};
 Render::Render(Renderer* renderer): m_Renderer(renderer){
 }
 void Render::FinishQueue(){
     if(m_ReadyFrames == MAX_FRAME_DRAWS){
        return;
     }
-    else{
-    m_ReadyFrames++;    
-    }
-
     m_CurrentFrame++;
+    m_ReadyFrames++;    
+ 
     if(m_CurrentFrame == MAX_FRAME_DRAWS){
         m_CurrentFrame =0;
     }
@@ -18,22 +43,20 @@ void Render::FinishQueue(){
 void Render::RemoveShader(const ShaderType& shaderType){
     m_RemovedShaders[m_CurrentFrame].push_back(shaderType);
 }
-void Render::SetShader(GUUID id){
-    Core::Log(ErrorType::Warning,"Not implemented");
-   // m_AddedShaders[m_CurrentFrame].push_back(asset);
-}
+
 void Render::SetShader(Asset<Shader> asset){
     m_AddedShaders[m_CurrentFrame].push_back(asset);
 }
 void Render::StartGUIQueue(){
-    m_GeometryEndIndexes[m_CurrentFrame] = m_RenderQueues[m_CurrentFrame].size();
-    m_GeometryEndIndexesText[m_CurrentFrame] = m_RenderQueuesText[m_CurrentFrame].size();
+   m_CommandBufferGUIBeginIndex = m_CommandBuffer[m_CurrentFrame].Size();
 }
 void Render::DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GUUID id,Animator animation){
     Core::Log(ErrorType::Warning,"Not implemented");
+
 }
 void Render::DrawInstance(const Float2& pos,const Float4& color,const Float2& size,GUUID id,GUUID textureID ,int32_t textureIndex){
-    m_InstanceQueue[m_CurrentFrame].push_back({pos,color,size,id,textureID,textureIndex});
+    Core::Log(ErrorType::Warning,"Not implemented");
+
 }
 void Render::DrawInstance(const Float2& pos,const Float4& color,const Float2& size,GUUID id,Animator animation){
     Core::Log(ErrorType::Warning,"Not implemented");
@@ -41,19 +64,87 @@ void Render::DrawInstance(const Float2& pos,const Float4& color,const Float2& si
 void Render::DrawText(const char* Message,uint64_t bufferSize, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex){
     char* msg = new char[strlen(Message)*sizeof(char)];
     strcpy(msg,Message);
-    m_RenderQueuesText[m_CurrentFrame].push_back({msg,bufferSize,Position,BoundingBox,FixedPadding,CharSizePixels,id,PointerIndex,});
+    DrawTextData* data= new DrawTextData();
+    data->msg = msg;
+    data->msgLen = bufferSize;
+    data->pos = Position;
+    data->boundingBox = BoundingBox;
+    data->fixedPadding = FixedPadding;
+    data->charSizeNorm = CharSizePixels;
+    data->id = id;
+    data->pointerIndex = PointerIndex;
+    
+    CmdCommand cmd{};
+    cmd.data = data;
+    cmd.type = CmdTypes::DRAWTEXT;
+    m_CommandBuffer[m_CurrentFrame].AddCmd(cmd);
 }
 void Render::DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GUUID id){
-    m_RenderQueues[m_CurrentFrame].push_back({pos,color,size,id,0,-1});
+    CmdCommand cmd{};
+    DrawData* drawData = new DrawData();
+    drawData->pos = {pos.x,pos.y};
+    drawData->color = color;
+    drawData->size = size;
+    drawData->id;
+    cmd.data = drawData;
+    cmd.type = CmdTypes::DRAW;
+    m_CommandBuffer[m_CurrentFrame].AddCmd(cmd);
 }
 void Render::DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GUUID id,GUUID textureID,int textureIndex){
-        m_RenderQueues[m_CurrentFrame].push_back({pos,color,size,id,textureID,textureIndex});
+           Core::Log(ErrorType::Warning,"Not implemented");
 }   
-void Render::EndFrame(){
-    m_RenderQueues[m_RenderedFrameIndex].resize(0);
-    m_RenderQueuesText[m_RenderedFrameIndex].resize(0);
-    m_InstanceQueue[m_RenderedFrameIndex].resize(0);
+void Render::RunCommands(){
+    CmdBuffer& cmdB = m_CommandBuffer[m_RenderedFrameIndex];
+    bool guiRender{false};
+    uint64_t cmdBufferEnd =m_CommandBufferGUIBeginIndex;
+    uint64_t cmdBufferOffset =0;
 
+    //make two versions one with switch other with array and index to functions.
+    //The geometry commads go uptil gui commands
+
+Render:
+    for(uint32_t i=cmdBufferOffset;i < cmdBufferEnd;i++){
+        CmdCommand& cmd = cmdB.Current();
+        cmdB.Next();
+    switch(cmd.type){
+        case CmdTypes::DRAW:{
+            DrawData* data=(DrawData*)cmd.data;
+            m_Renderer->DrawQuad({data->pos.x,data->pos.y,0.0f},data->color,data->size,data->id.ID);
+            delete data;
+
+            break;
+        }
+        case CmdTypes::DRAWTEXT:{
+            DrawTextData* data=(DrawTextData*)cmd.data;
+            m_Renderer->RenderText(data->msg,data->msgLen,data->pos,data->boundingBox,data->fixedPadding,data->charSizeNorm,data->id,data->pointerIndex);
+            delete data;
+            break;
+        }
+       
+        
+       
+        default:{
+            Core::Log(ErrorType::Error,"Not implemented command or invalid {Render::RunCommands} type:",(int64_t)cmd.type);
+            break;
+        }
+    }   
+    }
+end:
+    m_Renderer->BeginGUIFrame();
+    if(!guiRender){
+        cmdBufferOffset = cmdBufferEnd;
+        cmdBufferEnd= cmdB.Size();
+        guiRender = true;
+        goto Render;
+    }
+    m_CommandBufferGUIBeginIndex=0;
+    cmdB.ResetBuffer();
+}
+void Render::EndFrame(){
+
+    RunCommands();
+    
+   
     m_GeometryEndIndexes[m_RenderedFrameIndex] =0;
     m_GeometryEndIndexesText[m_RenderedFrameIndex] =0;
 
@@ -65,43 +156,12 @@ void Render::EndFrame(){
 }
 void Render::FinishRenderGUI(){
 
- for(uint64_t i=m_GeometryEndIndexes[m_RenderedFrameIndex] ;i < m_RenderQueues[m_RenderedFrameIndex].size();i++){
-        RenderQueue& data=m_RenderQueues[m_RenderedFrameIndex].at(i);
-
-       if(data.textureID ==0)
-           m_Renderer->DrawQuad(data.pos,data.color,data.size,data.id.ID);
-        else
-            m_Renderer->DrawQuad(data.pos,data.color,data.size,data.textureID,data.id.ID,data.textureId);
 }
- for(uint64_t i=m_GeometryEndIndexesText[m_RenderedFrameIndex] ;i < m_RenderQueuesText[m_RenderedFrameIndex].size();i++){
-        RenderQueueText& data=m_RenderQueuesText[m_RenderedFrameIndex].at(i);
-
-        m_Renderer->RenderText(data.message,data.bufferSize,data.pos,data.boundingBox,data.fixedPadding,data.charPixelSize,data.id,data.pointerIndex);
-}
+void Render::SetFont(Asset<Font> asset,uint32_t charSize){
 
 }
 void Render::FinishRenderGeometry(){
-    //somehow seperate the GUI objects from normal ones.
-    for(uint64_t i=0 ;i < m_GeometryEndIndexes[m_RenderedFrameIndex];i++){
-        RenderQueue& data=m_RenderQueues[m_RenderedFrameIndex].at(i);
-        if(data.textureID ==0)
-            m_Renderer->DrawQuad(data.pos,data.color,data.size,data.id.ID);
-        else
-            m_Renderer->DrawQuad(data.pos,data.color,data.size,data.textureID,data.id.ID,data.textureId);
-    }
-    for(uint64_t i=0 ;i < m_InstanceQueue[m_RenderedFrameIndex].size();i++){
-        InstanceQueue& data=m_InstanceQueue[m_RenderedFrameIndex].at(i);
-        m_Renderer->DrawInstance(data.pos,data.color,data.size,data.id.ID,data.textureID,data.textureIndex);
-    }
-    for(uint i=0;i < m_AddedShaders[m_RenderedFrameIndex].size();i++){
-       m_Renderer->QueueShaderChange(m_AddedShaders[m_RenderedFrameIndex].at(i));
-    }
-    for(uint i=0;i < m_RemovedShaders[m_RenderedFrameIndex].size();i++){
-        m_Renderer->RemoveShader(m_RemovedShaders[m_RenderedFrameIndex].at(i));
-    }
 
-    m_RemovedShaders[m_RenderedFrameIndex].clear();
-    m_AddedShaders[m_RenderedFrameIndex].clear();
 }
 Render::~Render(){
 }

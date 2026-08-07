@@ -1,20 +1,41 @@
 #include "MultiThreadingLayer.h"
 #include "DefaultCameraControlls.h"
+
+
     MultiThreadingLayer::MultiThreadingLayer():Layer("MultiThreadingLayer"){
 
     }
     void MultiThreadingLayer::OnCreate(){
+        Application::LoadAllAssets("EngineResources/Examples/Animation/",AssetType::ANIMATION);
+        if(!Application::HasAsset(Core::GetStringHash("Examples/Animation/TOWN_HALL"))){
+            Core::Log("Doesn't have asset");
+        }
+        return;
+
+        Asset<Animator> animation =Application::GetAsset<Animator>("TOWN_HALL");
+        if(animation&& animation.GetType() == AssetType::ANIMATION){
+
+          //  m_Animation.push_back(*animation.GetData());
+         //   m_Animation[0].SetStage("IDLE");
+        } else{
+            return;
+        }
+        
+        m_Textures.push_back(Core::GetStringHash("Examples/Animation/TOWN_HALL"));
         m_OBJ.push_back({0.0f,0.0f});
 
     }
     void MultiThreadingLayer::OnUpdate(double deltaTime){
+          // m_Animation[0].Update(deltaTime);
+
+        
     }
     void MultiThreadingLayer::OnRender(double delaTime){
         Render* render= Application::GetRender();
         
         for(uint32_t i=0 ;i < m_OBJ.size();i++){
 
-           render->DrawQuad({m_OBJ[i].x,m_OBJ[i].y,0.0f},{1.0f,1.0f,0.0f,1.0f},{0.02f,0.02f},0);
+           //render->DrawQuad({m_OBJ[i].x,m_OBJ[i].y,0.0f},{1.0f,1.0f,0.0f,1.0f},{0.2f,0.2f},0);
         }
     }
     void MultiThreadingLayer::OnDestroy(){
@@ -22,7 +43,7 @@
 
     }
     void MultiThreadingLayer::OnGUI(){
-
+        Application::GetApplication()->m_FontSystem->Text("L","LAFA",{0.3,0.1});
     }
     void MultiThreadingLayer::OnEvent(Event& event){
         if(event.GetEventType() == EventType::MOUSE)
@@ -45,7 +66,10 @@
            Application::GetParticleSystem().DrawParticle(props);
            Application::GetParticleSystem().DrawParticle(props);
            Application::GetParticleSystem().DrawParticle(props);
+        }
+          if(event.Code == MouseCodes::RIGHT && event.State == EventState::PRESSED){
 
+            m_OBJ.push_back(Application::GetWorldMousePos());
         }
     }
     void MultiThreadingLayer::OnKeyboardEvent(KeyBoardEvent& event){
