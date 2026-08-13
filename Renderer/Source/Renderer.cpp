@@ -935,6 +935,10 @@ void Renderer::SubmitDrawParticleCommands(){
 
         void Renderer::EndFrame()
         {
+            //update statistics
+            m_VertexCountWhole = m_VertexCountPerFrame;
+            m_DrawCallWhole = m_DrawCommandsGeometry.size()+m_DrawCommandsGUI.size()+m_InstanceDrawCommands.size();
+
              
             VkBufferCopy region{};
             region.size = m_ParticleStaggingBuffer->GetBufferDesc().SizeBytes;
@@ -1399,7 +1403,7 @@ void Renderer::SubmitDrawParticleCommands(){
             Float2 SubTextureSize{};
             Float2 Size{};
             int32_t LetterIndex = Message[i];
-
+    
           
                //draw pointer
             if(PointerIndex ==i  ){
@@ -1474,6 +1478,8 @@ void Renderer::SubmitDrawParticleCommands(){
 
             MinCord.x = penPosX;
             MaxCord.x = penPosX+advance.x;
+
+        
 
             Float2 glyphPosPixelMin = Core::ToNDC(MinCord);
             Float2 glyphPosPixelMax =Core::ToNDC(MaxCord);
@@ -1706,45 +1712,7 @@ void Renderer::SubmitDrawParticleCommands(){
     }
  
     void Renderer::Statistics(bool renderGui,void* guiRenderer){
-        GUIRenderer* gui = (GUIRenderer*)guiRenderer;
-        if(renderGui){
-
-            gui->Panel("GuiStatistics",{-0.7f,0.7f},{1.0f,1.0f,0.5f,1.0f},{0.3f,0.3f});
-
-            GUI::BorderStyle style{sizeof(GUI::BorderStyle)};
-            style.BorderWidth = 0.01f;
-            style.DrawBorder = true;
-            style.BorderColor = {1.0f,0.0f,0.0f,1.0f};
-            style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
-            gui->PushStyle(GUI::Style::BORDER,&style);
-            gui->SetFontSize(12);
-            gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(m_DrawCallCountGeometry+m_DrawCallCountGUI+m_ParticleDrawCallCount),{0.0f,0.90f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-
-            gui->Text("TriangleCount","TRIANGLE: "+std::to_string(m_VertexCountPerFrame/3),{0.0f,0.70f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-            gui->Text("VertexCount","VERTEX: "+std::to_string(m_VertexCountPerFrame+m_CurrentInstanceVertexIndex),{0.0f,0.50f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-            gui->Text("Instance","INSTANCE: "+std::to_string(m_InstanceOffset),{0.0f,0.30f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-
-            std::string deltatimeString = std::to_string(m_DeltaTime);
-
-            uint64_t Index = deltatimeString.find_last_of(".");
-            uint32_t Prec = 3;
-            deltatimeString = deltatimeString.substr(0,Index+Prec);
-            gui->Text("Frametime","FRAMETIME: "+deltatimeString,{0.0f,0.10f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-
-            deltatimeString = std::to_string(m_RenderThreadFrameTime);
-            Index = deltatimeString.find_last_of(".");
-            deltatimeString = deltatimeString.substr(0,Index+Prec);
-            gui->Text("RendererThread time:","FRAMETIMERENDER"+deltatimeString,{0.0f,-0.1f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-
-            gui->PopStyle();
-            gui->EndPanel();
-
-
-
-        }else{
-
-            Core::Log(ErrorType::Info,"Draw call count",m_DrawCallCountGeometry+m_DrawCallCountGUI+m_DrawCallCountOutlines);
-        }
+     
     }
 
     Texture* Renderer::LoadTexture(std::string Path,TextureType type)
@@ -1781,7 +1749,7 @@ void Renderer::SubmitDrawParticleCommands(){
                     Indices[i+1]=Offset+1;
                     Indices[i+2] = Offset+2;
                     Indices[i+3]=Offset+2;
-                    Indices[i+4] = Offset+3;
+                    Indices[i+4] = Offset+3;    
                     Indices[i+5]=Offset;
                     Offset+=4;
                 }
@@ -1920,7 +1888,7 @@ void Renderer::DrawBatch()
         vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
-        
+
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(DrawCall.VertexCount * 1.5f), 1, 0,0, 0);
         m_VertexCountPerFrame+= DrawCall.VertexCount;
 
@@ -1949,7 +1917,6 @@ void Renderer::DrawBatch()
        static  uint32_t uniformBufferIndex{1};
         vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
-
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGUI[i].VertexCount * 1.5f), 1, 0,0, 0);
         m_VertexCountPerFrame+= DrawCall.VertexCount;
 

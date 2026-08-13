@@ -98,12 +98,18 @@ public:
     static ParticleSystem& GetParticleSystem(){return m_Application->m_ParticleSystem;}
     static bool DeleteApplication();
 
+    static void DrawRendererStatistics();
+
+    static void SetRendererThreadFrameTime(const float& frameTime){Application::GetApplication()->m_RendererThreadFrameTime = frameTime;}
+    static float GetRendererThreadFrameTime(){return Application::GetApplication()->m_RendererThreadFrameTime;}
+
     ~Application();
 private:
     //has to be non static
      bool InitApplicationBackEnd(ApplicationSpecs specs);
     static void OpenTerminalAndAttachToStream();
 
+    void UpdateRendererStatistics();
     static void Shutdown();
 
     //Debug
@@ -122,7 +128,10 @@ private:
     //multithreading
     std::vector<std::thread> m_ThreadPool{};
     std::thread* m_RendererThread{};
+    float m_RendererThreadFrameTime{};
+
     Render* m_Render{};
+    float m_RendererStatisticsUpdate{};
 
     ParticleSystem m_ParticleSystem{};
 
@@ -138,6 +147,7 @@ public:
     bool m_Running{};
     //Debugging
     bool m_RendererDebugging{false};
+    RendererStatistics m_RendererStatistics{};
     ApplicationSpecs m_Specs{};
     //console
     termios m_DefaultConsoleSett{};

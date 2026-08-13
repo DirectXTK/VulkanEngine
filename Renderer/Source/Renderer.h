@@ -20,8 +20,10 @@
 #include "Animator.h"
 #include "AssetManager.h"
 #include "FontSystem.h"
+#include "RendererSettings.h"
 
 #include "Particle.h"
+
 
 class InputSystem;
 class AssetManager;
@@ -112,7 +114,10 @@ public:
     void Shutdown();
     float GetFONTDPI();
     void ChangeArrowColor(const Float4& color){m_ArrowColor = color;}
-
+    //Statistics
+    uint32_t GetVertexCount(){return m_VertexCountWhole;}
+    uint32_t GetInstanceCount(){return m_InstanceCountWhole;}
+    uint32_t GetDrawCall(){return m_DrawCallWhole;}
     //Multithreading functions
     void MarkSubmitAsReady();
     void SetRendererThreadFrameTime(float renderThreadTime){m_RenderThreadFrameTime = renderThreadTime;}
@@ -233,6 +238,9 @@ private:
 
     //Debug
     VkDebugUtilsMessengerEXT m_Messenger{};
+    uint32_t m_VertexCountWhole{};
+    uint32_t m_InstanceCountWhole{};
+    uint32_t m_DrawCallWhole{};
     //all the rendered vertecies of the frame.
     uint64_t m_VertexCountPerFrame{};
     void CreateDebugger();

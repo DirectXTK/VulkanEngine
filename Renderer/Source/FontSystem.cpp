@@ -388,8 +388,6 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 {
 	Render* renderer = Application::GetRender();
-
-	
 		renderer->DrawQuad({ Position.x ,Position.y ,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { Size.x ,Size.y  }, ID.ID);
 }
 

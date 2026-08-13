@@ -4,7 +4,7 @@
 class Render{
     public:
 
-    Render(Renderer* renderer);
+    Render(Renderer* renderer,void* guiRenderer);
     void StartQueue(Camera2D& camera){m_ViewProj[m_CurrentFrame] = camera.GetViewProj();m_CameraPos[m_CurrentFrame] = camera.GetPosition(); m_CameraSize[m_CurrentFrame] = camera.GetScale();}
     void StartGUIQueue();
     
@@ -108,6 +108,7 @@ class Render{
         int32_t textureIndex{-1};
     };
     Renderer* m_Renderer{};
+    void* m_GUI{};
 
     uint32_t m_RenderedFrameIndex{};
     uint32_t m_CurrentFrame{};

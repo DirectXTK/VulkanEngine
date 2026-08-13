@@ -46,6 +46,7 @@ std::string Application::GetClipBoardString(){
 void Application::LoadAllAssets(const std::string& path,const AssetType& typeToLoad){
     Application* app = Application::GetApplication();
     app->m_AssetManager.LoadAllAssets(path,typeToLoad);
+    app->m_Renderer->WaitForIdle();
 }
 
 void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning){
@@ -168,11 +169,11 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
      m_AssetManager.DebugStatistics(false);
      m_Renderer->InitializePipeline(500);
-     m_Render = new Render(m_Renderer);
-
+     
      m_FontSystem = new FontSystem();
-
+     
      m_GUIRenderer = new GUIRenderer(this, false);
+     m_Render = new Render(m_Renderer,m_GUIRenderer);
 
    
 
@@ -233,7 +234,45 @@ Float2 Application::GetMousePosChange(){
      return GUUID(*ID);
  }
 
+void Application::DrawRendererStatistics(){
+       GUIRenderer* gui = (GUIRenderer*)Application::GetGUIRenderer();
+        RendererStatistics& statistics = Application::GetApplication()->m_RendererStatistics;    
+  
+       //Convert this to render compatible 
 
+            gui->Panel("GuiStatistics",{-0.7f,0.7f},{1.0f,1.0f,0.5f,1.0f},{0.3f,0.3f});
+
+            GUI::BorderStyle style{sizeof(GUI::BorderStyle)};
+            style.BorderWidth = 0.01f;
+            style.DrawBorder = true;
+            style.BorderColor = {1.0f,0.0f,0.0f,1.0f};
+            style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
+            gui->PushStyle(GUI::Style::BORDER,&style);
+            //Working here making it that font can be changed in render queue/commandbuffer.
+            gui->SetFontSize(16);
+            gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(statistics.DrawCallCount),{0.0f,0.90f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+            gui->Text("TriangleCount","TRIANGLE: "+std::to_string(statistics.VertexCount/3.f),{0.0f,0.70f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+            gui->Text("VertexCount","VERTEX: "+std::to_string(statistics.VertexCount),{0.0f,0.50f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+            gui->Text("Instance","INSTANCE: "+std::to_string(statistics.InstanceCount),{0.0f,0.30f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+
+            std::string deltatimeString = std::to_string(statistics.ApplicationThreadFrameTime);
+
+            uint64_t Index = deltatimeString.find_last_of(".");
+            uint32_t Prec = 3;
+            deltatimeString = deltatimeString.substr(0,Index+Prec);
+            gui->Text("Frametime","FRAMETIME: "+deltatimeString,{0.0f,0.10f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+
+            deltatimeString = std::to_string(statistics.RendererThreadFrameTime);
+            Index = deltatimeString.find_last_of(".");
+            deltatimeString = deltatimeString.substr(0,Index+Prec);
+            gui->Text("RendererThread time:","FRAMETIMERENDER"+deltatimeString,{0.0f,-0.1f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+
+            gui->PopStyle();
+            gui->EndPanel();
+
+
+
+}
 void Application::Shutdown(){
     Application* app = GetApplication();
     
@@ -273,6 +312,19 @@ void Application::RunCollisionAsync(void* objData,uint32_t posOffset,uint32_t si
 void Application::RunAStar(){
 
 }
+void Application::UpdateRendererStatistics(){
+        RendererStatistics& statistics = Application::GetApplication()->m_RendererStatistics;    
+        const float updatePeriod{SEC(0.15f)};
+        m_RendererStatisticsUpdate -= m_DeltaTime;
+       if(m_RendererStatisticsUpdate <=0.0f){
+            statistics.RendererThreadFrameTime = Application::GetRendererThreadFrameTime();
+            statistics.ApplicationThreadFrameTime = Application::GetDeltaTime();
+            statistics.VertexCount = Application::GetRenderer()->GetVertexCount();
+            statistics.InstanceCount = Application::GetRenderer()->GetInstanceCount();
+            statistics.DrawCallCount = Application::GetRenderer()->GetDrawCall();
+            m_RendererStatisticsUpdate = updatePeriod;
+        }
+}
  void Application::DispatchEvent(Event& event){
     Application* app = Application::GetApplication();
 
@@ -299,7 +351,9 @@ void Application::RunAStar(){
 
     while(!glfwWindowShouldClose(app->m_Window->GetHandle())&& app->m_Running){
         //TEMP
-
+        app->UpdateRendererStatistics();
+      
+        app->m_LayerController.RunQueue();
         app->m_InputSystem.ResetMouseChange();
 
         app->m_DeltaTime = Time::GetTimeMs() - app->m_LastFrameTime;
@@ -324,7 +378,7 @@ void Application::RunAStar(){
              app->m_Render->StartGUIQueue();
              gui->BeginGUI();
         if(app->m_RendererDebugging){
-            app->m_Renderer->Statistics(true,app->m_GUIRenderer);
+            DrawRendererStatistics();
         }
         app->m_LayerController.UpdateGUILayers();
         gui->EndGUI();
@@ -343,7 +397,6 @@ void Application::RunAStar(){
         glfwSwapBuffers(app->m_Window->GetHandle());
         glfwPollEvents();
         
-        app->m_LayerController.RunQueue();
 
     }
     AppShutdownEvent event{};

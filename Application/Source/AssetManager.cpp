@@ -118,8 +118,6 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	}
 	}
 	
-
-
 }
 
 void AssetManager::LoadShader(const std::string& filePath,const std::string& fileName){

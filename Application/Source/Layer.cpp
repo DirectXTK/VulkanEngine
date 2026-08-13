@@ -52,7 +52,8 @@ void LayerController::RemoveLayer(Layer* layer){
 	Core::Log("Layer not found{RemoveLayer}");
 }
 void LayerController::RunQueue(){
-	
+	if(m_CommandQueue.empty())
+		return;
 	//wait for rendering to complete
 	if(m_CommandQueue.size() != 0){
 		while(Application::GetRender()->GetReadyFrameCount() !=0){
@@ -64,6 +65,7 @@ void LayerController::RunQueue(){
 		Application::GetRenderer()->WaitForIdle();
 		Application::GetGUIRenderer()->ResetGUIData();
 	}
+
 
 
 	for(uint32_t i=0;i < m_CommandQueue.size();i++){
@@ -93,6 +95,7 @@ void LayerController::RunQueue(){
 			m_Layers[index] = std::move(data.Transitioned);
 			m_Layers[index]->OnCreate();
 
+
 			}
 		}
 		}
@@ -103,6 +106,7 @@ void LayerController::RunQueue(){
 			
 			data.Initial->SetController(this);
 			data.Initial->OnCreate();
+
 		}
 		}
 		else if(data.Type == QueueType::REMOVE){

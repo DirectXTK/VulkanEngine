@@ -10,7 +10,6 @@
         if(!Application::HasAsset(Core::GetStringHash("Examples/Animation/TOWN_HALL"))){
             Core::Log("Doesn't have asset");
         }
-        return;
 
         Asset<Animator> animation =Application::GetAsset<Animator>("TOWN_HALL");
         if(animation&& animation.GetType() == AssetType::ANIMATION){
@@ -20,6 +19,7 @@
         } else{
             return;
         }
+        Application::GetRender()->SetFont(Asset<Font>(),13);
         
         m_Textures.push_back(Core::GetStringHash("Examples/Animation/TOWN_HALL"));
         m_OBJ.push_back({0.0f,0.0f});
@@ -27,7 +27,6 @@
     }
     void MultiThreadingLayer::OnUpdate(double deltaTime){
           // m_Animation[0].Update(deltaTime);
-
         
     }
     void MultiThreadingLayer::OnRender(double delaTime){
@@ -43,7 +42,10 @@
 
     }
     void MultiThreadingLayer::OnGUI(){
-        Application::GetApplication()->m_FontSystem->Text("L","LAFA",{0.3,0.1});
+        //here
+        Application::GetRender()->SetFont(Asset<Font>(),13);
+
+        Application::GetApplication()->m_FontSystem->Text("L","HOLETTHEDOGSOUTHOOF   .",{0.0,0.0},{0.3f,0.1f});
     }
     void MultiThreadingLayer::OnEvent(Event& event){
         if(event.GetEventType() == EventType::MOUSE)

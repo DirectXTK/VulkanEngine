@@ -1,4 +1,5 @@
 #include "RendererFrontEnd.h"
+#include "GUI.h"
 //
 struct DrawData{
     Float2 pos{};
@@ -12,7 +13,7 @@ struct DrawTextData{
     char* msg{};
     uint64_t msgLen{};
     Float2 pos{};
-    Float2* boundingBox{};
+    Float2 boundingBox[4];
     float fixedPadding{};
     float charSizeNorm{};
     GUUID id{};
@@ -22,11 +23,16 @@ struct DrawTextData{
         delete msg;
     }
 };
+struct CmdChangeFontData{
+    Asset<Font> fontAsset{};
+    uint32_t charSize{};
+    
+};
 struct DrawDataInstanced{
     uint32_t m_InstanceCount{};
 
 };
-Render::Render(Renderer* renderer): m_Renderer(renderer){
+Render::Render(Renderer* renderer,void* guiRenderer): m_Renderer(renderer),m_GUI(guiRenderer){
 }
 void Render::FinishQueue(){
     if(m_ReadyFrames == MAX_FRAME_DRAWS){
@@ -38,7 +44,7 @@ void Render::FinishQueue(){
     if(m_CurrentFrame == MAX_FRAME_DRAWS){
         m_CurrentFrame =0;
     }
-  
+
 }
 void Render::RemoveShader(const ShaderType& shaderType){
     m_RemovedShaders[m_CurrentFrame].push_back(shaderType);
@@ -68,7 +74,10 @@ void Render::DrawText(const char* Message,uint64_t bufferSize, Float2 Position, 
     data->msg = msg;
     data->msgLen = bufferSize;
     data->pos = Position;
-    data->boundingBox = BoundingBox;
+    data->boundingBox[0]= BoundingBox[0];
+    data->boundingBox[1]= BoundingBox[1];
+    data->boundingBox[2]= BoundingBox[2];
+    data->boundingBox[3]= BoundingBox[3];
     data->fixedPadding = FixedPadding;
     data->charSizeNorm = CharSizePixels;
     data->id = id;
@@ -95,10 +104,10 @@ void Render::DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GU
 }   
 void Render::RunCommands(){
     CmdBuffer& cmdB = m_CommandBuffer[m_RenderedFrameIndex];
+    GUIRenderer* gui = (GUIRenderer*)m_GUI;
     bool guiRender{false};
     uint64_t cmdBufferEnd =m_CommandBufferGUIBeginIndex;
     uint64_t cmdBufferOffset =0;
-
     //make two versions one with switch other with array and index to functions.
     //The geometry commads go uptil gui commands
 
@@ -117,6 +126,17 @@ Render:
         case CmdTypes::DRAWTEXT:{
             DrawTextData* data=(DrawTextData*)cmd.data;
             m_Renderer->RenderText(data->msg,data->msgLen,data->pos,data->boundingBox,data->fixedPadding,data->charSizeNorm,data->id,data->pointerIndex);
+            delete data;
+            break;
+        }
+        case CmdTypes::CHANGEFONT:{
+            CmdChangeFontData* data = (CmdChangeFontData*)cmd.data;
+            if(data->fontAsset)
+                gui->SetFont(data->fontAsset.GetID());
+            if(data->charSize !=0){
+                
+                gui->SetFontSize(data->charSize);
+            }
             delete data;
             break;
         }
@@ -157,8 +177,15 @@ void Render::EndFrame(){
 void Render::FinishRenderGUI(){
 
 }
-void Render::SetFont(Asset<Font> asset,uint32_t charSize){
 
+void Render::SetFont(Asset<Font> asset,uint32_t charSize){
+    CmdChangeFontData* fontData = new CmdChangeFontData();
+    fontData->fontAsset = asset;
+    fontData->charSize = charSize;
+    CmdCommand cmd{};
+    cmd.type = CmdTypes::CHANGEFONT;
+    cmd.data = fontData;
+    m_CommandBuffer[m_CurrentFrame].AddCmd(cmd);
 }
 void Render::FinishRenderGeometry(){
 

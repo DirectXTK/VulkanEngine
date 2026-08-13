@@ -523,9 +523,9 @@ void GUIRenderer::PopStyle() {
 }
 void GUIRenderer::SetFontSize(uint32_t Size)
 {	
-	
+		Render& render = *Application::GetRender();
 		Size = std::clamp((int)Size,1,96);
-		m_FontSystem->SetCharcterSize(Size);
+		render.SetFont(Asset<Font>(),Size);
 }
 uint32_t GUIRenderer::GetFontSize() {
 	return m_FontSystem->GetFontSize();
