@@ -308,11 +308,10 @@ void GUIRenderer::Slider(const std::string& strID,  float* number,const  Float2&
 
 
 	
-	
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
 		float deltaPos = Application::GetMousePos().x -CurrentSlider->MousePosChange;
 		CurrentSlider->MousePosChange =  Application::GetMousePos().x ;
-
+		Core::Log("Zykt");
 		*number += deltaPos * SlideAmount;
 		*number=std::clamp(*number,MinMax.x,MinMax.y);
 	}

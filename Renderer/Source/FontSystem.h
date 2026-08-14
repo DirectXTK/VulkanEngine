@@ -89,10 +89,10 @@ private:
 		Float2 Size{};
 	};
 
-
 	//coeficient used for normalizing char size.
 	const float m_CharSizeNormCoe{ 0.000043f };
 
+	
 	Renderer* m_Renderer{};
 	Float2 m_TextureSize{};
 	Asset<Font> ReRenderFaces(GUUID fontID,const std::string& fontName);

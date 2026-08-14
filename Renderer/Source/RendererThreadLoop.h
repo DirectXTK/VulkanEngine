@@ -18,6 +18,8 @@ void RendererLoop(Renderer* renderer,GUIRenderer* gui,Render* render){
 
             render->EndFrame();
             renderer->EndFrame();
+            gui->EndGUI();
+
 
             double deltaTime = (Time::GetTimeNs()-start)/1000000.f;
             timePassed+=deltaTime;

@@ -1,5 +1,6 @@
 #include "RendererFrontEnd.h"
 #include "GUI.h"
+#include "Application.h"
 //
 struct DrawData{
     Float2 pos{};
@@ -131,12 +132,20 @@ Render:
         }
         case CmdTypes::CHANGEFONT:{
             CmdChangeFontData* data = (CmdChangeFontData*)cmd.data;
-            if(data->fontAsset)
-                gui->SetFont(data->fontAsset.GetID());
-            if(data->charSize !=0){
-                
-                gui->SetFontSize(data->charSize);
+            if(data->fontAsset){
+                FontSystem* m_FontSystem{};
+                if(!Application::HasAsset(data->fontAsset.GetID())){
+                    Core::Log("Invalid asset Render::RunCommands");
+
+                }else{
+                    
+                }
+            }else{
+                    Application::GetApplication()->m_FontSystem->SetCharcterSize(data->charSize);
+                   gui->SetFontSize(data->charSize);
+
             }
+        
             delete data;
             break;
         }

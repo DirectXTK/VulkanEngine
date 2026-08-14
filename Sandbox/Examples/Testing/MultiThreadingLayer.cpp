@@ -19,7 +19,7 @@
         } else{
             return;
         }
-        Application::GetRender()->SetFont(Asset<Font>(),13);
+        Application::GetRender()->SetFont(Asset<Font>(),16);
         
         m_Textures.push_back(Core::GetStringHash("Examples/Animation/TOWN_HALL"));
         m_OBJ.push_back({0.0f,0.0f});
@@ -43,15 +43,21 @@
     }
     void MultiThreadingLayer::OnGUI(){
         //here
+        GUIRenderer* gui = Application::GetGUIRenderer();
+        static float fontSize{10};
+
         Application::GetRender()->SetFont(Asset<Font>(),13);
 
         Application::GetApplication()->m_FontSystem->Text("L","HOLETTHEDOGSOUTHOOF   .",{0.0,0.0},{0.3f,0.1f});
+        gui->Slider("s5lider",&fontSize,{0.0f,-0.5f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0.1f,{10,16},1);
+        Application::GetRender()->SetFont(Asset<Font>(),10);
+        Application::GetApplication()->m_FontSystem->Text("L","HOLETTHEDOGSOUTHOOF   .",{0.0,0.5},{0.3f,0.2f});
     }
     void MultiThreadingLayer::OnEvent(Event& event){
-        if(event.GetEventType() == EventType::MOUSE)
-            OnMouseEvent((MouseEvent&)event);
-        else if(event.GetEventType() == EventType::KEYBOARD)
-            OnKeyboardEvent((KeyBoardEvent&)event);
+        //if(event.GetEventType() == EventType::MOUSE)
+           // OnMouseEvent((MouseEvent&)event);
+      //  else if(event.GetEventType() == EventType::KEYBOARD)
+        //    OnKeyboardEvent((KeyBoardEvent&)event);
 
     }
     void MultiThreadingLayer::OnMouseEvent(MouseEvent& event){

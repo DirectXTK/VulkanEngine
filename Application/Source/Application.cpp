@@ -239,7 +239,7 @@ void Application::DrawRendererStatistics(){
         RendererStatistics& statistics = Application::GetApplication()->m_RendererStatistics;    
   
        //Convert this to render compatible 
-
+        Application::GetRender()->SetFont(Asset<Font>(),16);
             gui->Panel("GuiStatistics",{-0.7f,0.7f},{1.0f,1.0f,0.5f,1.0f},{0.3f,0.3f});
 
             GUI::BorderStyle style{sizeof(GUI::BorderStyle)};
@@ -249,7 +249,6 @@ void Application::DrawRendererStatistics(){
             style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
             gui->PushStyle(GUI::Style::BORDER,&style);
             //Working here making it that font can be changed in render queue/commandbuffer.
-            gui->SetFontSize(16);
             gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(statistics.DrawCallCount),{0.0f,0.90f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
             gui->Text("TriangleCount","TRIANGLE: "+std::to_string(statistics.VertexCount/3.f),{0.0f,0.70f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
             gui->Text("VertexCount","VERTEX: "+std::to_string(statistics.VertexCount),{0.0f,0.50f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
@@ -381,7 +380,6 @@ void Application::UpdateRendererStatistics(){
             DrawRendererStatistics();
         }
         app->m_LayerController.UpdateGUILayers();
-        gui->EndGUI();
         app->m_Render->FinishQueue();
      }else{
       //  app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,false);
