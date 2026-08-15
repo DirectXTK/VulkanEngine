@@ -50,7 +50,7 @@
 
         Application::GetApplication()->m_FontSystem->Text("L","HOLETTHEDOGSOUTHOOF   .",{0.0,0.0},{0.3f,0.1f});
         gui->Slider("s5lider",&fontSize,{0.0f,-0.5f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0.1f,{10,16},1);
-        Application::GetRender()->SetFont(Asset<Font>(),10);
+        Application::GetRender()->SetFont(Asset<Font>(),fontSize);
         Application::GetApplication()->m_FontSystem->Text("L","HOLETTHEDOGSOUTHOOF   .",{0.0,0.5},{0.3f,0.2f});
     }
     void MultiThreadingLayer::OnEvent(Event& event){

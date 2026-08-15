@@ -239,7 +239,7 @@ void Application::DrawRendererStatistics(){
         RendererStatistics& statistics = Application::GetApplication()->m_RendererStatistics;    
   
        //Convert this to render compatible 
-        Application::GetRender()->SetFont(Asset<Font>(),16);
+        Application::GetRender()->SetFont(Asset<Font>(),13);
             gui->Panel("GuiStatistics",{-0.7f,0.7f},{1.0f,1.0f,0.5f,1.0f},{0.3f,0.3f});
 
             GUI::BorderStyle style{sizeof(GUI::BorderStyle)};
@@ -375,7 +375,6 @@ void Application::UpdateRendererStatistics(){
 
              app->m_LayerController.RenderLayers(app->m_DeltaTime);
              app->m_Render->StartGUIQueue();
-             gui->BeginGUI();
         if(app->m_RendererDebugging){
             DrawRendererStatistics();
         }

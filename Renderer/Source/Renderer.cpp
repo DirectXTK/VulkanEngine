@@ -105,12 +105,16 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     colorAttachTextureInfo.MemoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     colorAttachTextureInfo.SharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-
     m_ColorAttachments.resize(MAX_FRAME_DRAWS);
     m_DepthStencilAttachments.resize(MAX_FRAME_DRAWS);
-    for (int i = 0; i < m_ColorAttachments.size(); i++) {
-        m_ColorAttachments[i] =new Texture(m_Context,colorAttachTextureInfo,TextureType::ColorAttachment);
-    }
+    VkCommandBuffer singleCommandBuffer = CommandBuffer::StartSingleUseCommandBuffer(m_Context,m_GraphicsPool.GetCommandPool());
+            for(uint32_t i =0;i < m_ColorAttachments.size();i++){
+                delete m_ColorAttachments[i];
+
+                m_ColorAttachments[i] = new Texture(m_Context,colorAttachTextureInfo,TextureType::Custom);
+                m_ColorAttachments[i]->TrasitionFormat(true,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,singleCommandBuffer);
+            }
+    CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_GraphicsPool.GetCommandPool(),singleCommandBuffer);
     //change creat info for depth buffer
     colorAttachTextureInfo.ImageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
     colorAttachTextureInfo.ImageUsageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
@@ -208,17 +212,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 // m_FrameImageIndexed = new Image(m_PhysicalDevice,m_Device,format2,VK_SHARING_MODE_EXCLUSIVE,VK_IMAGE_USAGE_STORAGE_BIT,  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT           ,VK_IMAGE_TILING_OPTIMAL,m_SwapChain->GetExtent().width,m_SwapChain->GetExtent().height);
 
-    BufferDesc PickingImageBufferDesc{};
-    PickingImageBufferDesc.SizeBytes = m_ColorAttachments[0]->GetByteSize();
-    PickingImageBufferDesc.Usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    PickingImageBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
-    PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
-    PickingImageBufferDesc.Device = m_Device;
-    PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-
-
-    m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
-
+    CreatePickingImage();
  
 
    
@@ -574,7 +568,8 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
            
             InitRenderDesc(m_RendererDesc);
 
-            delete m_PickingImageBuffer;
+            for(uint32_t i=0 ;i < ARRAYSIZE(m_PickingImageBuffer);i++)
+                delete m_PickingImageBuffer[i];
             CreatePickingImage();
 
             
@@ -711,14 +706,7 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
             copyregion.imageSubresource.baseArrayLayer = 0;
             copyregion.imageSubresource.layerCount = 1;
 
-
-
-
-            if (m_CurrentFrame ==1){
-                vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0]->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer->GetBuffer(), 1, &copyregion);
-            }
-            
-       
+            vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0]->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer[m_CurrentFrame]->GetBuffer(), 1, &copyregion);
 
     }
     void Renderer::CreatePickingImage(){
@@ -729,7 +717,9 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
         PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
         PickingImageBufferDesc.Device = m_Device;
         PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-        m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
+
+        for(uint32_t i =0;i < ARRAYSIZE(m_PickingImageBuffer);i++)
+            m_PickingImageBuffer[i] = new Buffer(PickingImageBufferDesc);
     }
     void Renderer::BeginGUIFrame()
     {
@@ -1344,6 +1334,9 @@ void Renderer::SubmitDrawParticleCommands(){
     }
     void Renderer::RenderText(const char* Message,uint64_t bufferSize, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
     {
+        //TEMP 
+        CharSizePixels = m_CurrentFont.GetData()->FontSize;
+
         //Char being edited index
         if (m_CurrentFont.GetType() != AssetType::FONT)
         {
@@ -2163,7 +2156,8 @@ void Renderer::Shutdown(){
     for(uint32_t i =0;i < m_UniformBuffer.size();i++)
         delete m_UniformBuffer[i];
 
-    delete m_PickingImageBuffer;
+    for(uint32_t i=0 ;i < ARRAYSIZE(m_PickingImageBuffer);i++)
+        delete m_PickingImageBuffer[i];
 
     delete m_ParticleInstanceBuffer;
     delete m_ParticleStaggingBuffer;

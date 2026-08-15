@@ -10,12 +10,14 @@ struct TextureCreateInfo {
 	VkImageTiling ImageTilling{ VK_IMAGE_TILING_OPTIMAL };
 	VkImageUsageFlagBits ImageUsageFlags{ VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT };
 	VkMemoryPropertyFlagBits MemoryPropertyFlags{VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+	VkImageLayout initLayout{VK_IMAGE_LAYOUT_UNDEFINED};
+	VkImageAspectFlagBits imageAspect{VK_IMAGE_ASPECT_COLOR_BIT};
 	uint32_t Width{};
 	uint32_t Height{};
 	uint32_t ChannelCount{};
 	void* Pixels{};
 };
-enum class TextureType{UNDIFINED,Texture,TextureAtlas,ColorAttachment,DepthStencilAttachment,SwapChainImage};
+enum class TextureType{UNDIFINED,Custom,Texture,TextureAtlas,ColorAttachment,DepthStencilAttachment,SwapChainImage};
 enum class TextureCreateFlagBits {
 	DEFAULT=0,CREATEATLAS=2,
 };

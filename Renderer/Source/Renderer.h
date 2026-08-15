@@ -91,7 +91,7 @@ public:
     void QueueShaderChange(Asset<Shader> shaderAsset);
     void RemoveShader(const ShaderType& shaderType);
 
-    Buffer* GetCustomBuffer(uint32_t index) { return m_PickingImageBuffer; }
+    Buffer* GetPickingBuffer(uint32_t index) { return m_PickingImageBuffer[index]; }
     Buffer* GetViewportWithID();
 
     VkExtent2D GetViewPortExtent() { return m_SwapChain->GetExtent(); }
@@ -286,7 +286,7 @@ private:
     
 
     //TEMP(Testing)
-    Buffer* m_PickingImageBuffer{};
+    Buffer* m_PickingImageBuffer[MAX_FRAME_DRAWS];
 
     //FrameBuffer stuffs
     Float4 m_ClearColor{};

@@ -14,8 +14,8 @@ void RendererLoop(Renderer* renderer,GUIRenderer* gui,Render* render){
             double start = Time::GetTimeNs();
             renderer->BeginFrame(render->GetCameraPos(),render->GetCameraSize(),render->GetViewProj());
 
+            gui->BeginGUI();
             
-
             render->EndFrame();
             renderer->EndFrame();
             gui->EndGUI();

@@ -55,6 +55,10 @@ uint32_t CalculateBytesPerPixel(VkFormat format){
 			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_UNDEFINED,nullptr,VkImageAspectFlagBits(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT));
 				break;
 			}
+			case TextureType::Custom:{
+				CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,createInfo.ImageUsageFlags,createInfo.MemoryPropertyFlags,createInfo.initLayout,createInfo.ImageLayout,createInfo.Pixels);
+				break;
+			}
 			default :{
 				Core::Log(ErrorType::Error,"Texture type doesn't exist.");
 				break;

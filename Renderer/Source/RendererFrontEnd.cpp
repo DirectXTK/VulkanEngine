@@ -95,7 +95,7 @@ void Render::DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GU
     drawData->pos = {pos.x,pos.y};
     drawData->color = color;
     drawData->size = size;
-    drawData->id;
+    drawData->id = id;
     cmd.data = drawData;
     cmd.type = CmdTypes::DRAW;
     m_CommandBuffer[m_CurrentFrame].AddCmd(cmd);
@@ -126,7 +126,7 @@ Render:
         }
         case CmdTypes::DRAWTEXT:{
             DrawTextData* data=(DrawTextData*)cmd.data;
-            m_Renderer->RenderText(data->msg,data->msgLen,data->pos,data->boundingBox,data->fixedPadding,data->charSizeNorm,data->id,data->pointerIndex);
+            m_Renderer->RenderText(data->msg,data->msgLen,data->pos,data->boundingBox,data->fixedPadding,0,data->id,data->pointerIndex);
             delete data;
             break;
         }
@@ -142,7 +142,7 @@ Render:
                 }
             }else{
                     Application::GetApplication()->m_FontSystem->SetCharcterSize(data->charSize);
-                   gui->SetFontSize(data->charSize);
+                   //gui->SetFontSize(data->charSize);
 
             }
         

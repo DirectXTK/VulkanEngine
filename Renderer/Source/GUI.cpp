@@ -29,7 +29,7 @@ void GUIRenderer::BeginGUI()
 	m_CurrentPanel = 0;
 
 	Renderer* renderer =Application::GetRenderer(); 
-	Buffer* buffer = renderer->GetCustomBuffer(0);
+	Buffer* buffer = renderer->GetPickingBuffer(Application::GetRender()->GetRenderedFrame());
 	delete []m_PickBufferData;
 	m_PickBufferData = new Float2[renderer->GetViewPortExtent().width*renderer->GetViewPortExtent().height];
 	buffer->LoadFromBufferToVar(m_PickBufferData,renderer->GetViewPortExtent().width*renderer->GetViewPortExtent().height*sizeof(Float2));
@@ -134,8 +134,8 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 
 	if(CurrentButtonData->IsPressed == true){
 		//if(SavesState)
-			//renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},m_CurrentOutlineData->Color,OutlineSize,0);
-	//	else{
+		//	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},m_CurrentOutlineData->Color,OutlineSize,0);
+		//else{
 		//	Color.r -=0.1f;
 		//	Color.g -=0.1f;
 		//	Color.b -=0.1f;
@@ -311,7 +311,6 @@ void GUIRenderer::Slider(const std::string& strID,  float* number,const  Float2&
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
 		float deltaPos = Application::GetMousePos().x -CurrentSlider->MousePosChange;
 		CurrentSlider->MousePosChange =  Application::GetMousePos().x ;
-		Core::Log("Zykt");
 		*number += deltaPos * SlideAmount;
 		*number=std::clamp(*number,MinMax.x,MinMax.y);
 	}
