@@ -918,17 +918,17 @@ void Renderer::SubmitDrawParticleCommands(){
     vkCmdDrawIndexed(m_CurrentCommandBuffer,draw.VertexCount*1.5f,draw.InstanceCount,0,0,instanceOffset);
     instanceOffset+=draw.InstanceCount;
 
+    m_VertexCountWhole+=draw.VertexCount;
 }
 
+    m_InstanceCountWhole =instanceOffset;
     m_InstanceDrawCommands.resize(0);
 }
 
         void Renderer::EndFrame()
         {
             //update statistics
-            m_VertexCountWhole = m_VertexCountPerFrame;
             m_DrawCallWhole = m_DrawCommandsGeometry.size()+m_DrawCommandsGUI.size()+m_InstanceDrawCommands.size();
-
              
             VkBufferCopy region{};
             region.size = m_ParticleStaggingBuffer->GetBufferDesc().SizeBytes;
@@ -1092,8 +1092,10 @@ void Renderer::SubmitDrawParticleCommands(){
     }
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,int TextureIndex)
     {
-        if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
+        if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size)){
+           
             return;
+        }
         GUUID CurrentTextureHandle{};
         Asset<Texture> TexutreAsset{};
         uint32_t TextureID{};
@@ -1857,7 +1859,9 @@ void Renderer::StopRecordingCommands()
 void Renderer::DrawBatch()
 {
     //Debugging 
-        m_VertexCountPerFrame= 0;
+        m_VertexCountWhole =m_VertexCountPerDrawCall; 
+
+        m_VertexCountPerDrawCall = 0;
 
  
     VkDeviceSize Offset{ 0 };
@@ -1885,6 +1889,7 @@ void Renderer::DrawBatch()
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(DrawCall.VertexCount * 1.5f), 1, 0,0, 0);
         m_VertexCountPerFrame+= DrawCall.VertexCount;
 
+
     }
             SubmitDrawParticleCommands();
             vkCmdBindPipeline(m_CurrentCommandBuffer,VK_PIPELINE_BIND_POINT_GRAPHICS,m_Pipeline);
@@ -1910,13 +1915,13 @@ void Renderer::DrawBatch()
        static  uint32_t uniformBufferIndex{1};
         vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
+        m_VertexCountPerFrame+= m_DrawCommandsGUI[i].VertexCount ;
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGUI[i].VertexCount * 1.5f), 1, 0,0, 0);
-        m_VertexCountPerFrame+= DrawCall.VertexCount;
+
 
     }
+    m_VertexCountPerFrame= 0;
 
-
-    m_VertexCountPerDrawCall = 0;
 }
 
 void Renderer::CreateDescriptorSets(){

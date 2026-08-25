@@ -9,7 +9,7 @@ void ChechCommands(Application* app,std::string Command){
     if(argsStart == (uint64_t)-1){
         argsStart =0;
     }else{
-        Args= Command.substr(argsStart,Command.size()-argsStart);
+        Args= Command.substr(argsStart+1,Command.size()-argsStart-1);
         Command = Command.substr(0,argsStart);
     }
 
@@ -17,7 +17,8 @@ void ChechCommands(Application* app,std::string Command){
         app->GetAssetManager()->DebugStatistics(false);
     }
     else if(Command == "find"){
-        Core::Log(Args);
+        if(Args.size() ==0 || !Core::IsStringNumber(Args))
+            return;
         uint64_t IdOfAsset = std::stoul(Args);
         if(Application::HasAsset(IdOfAsset))
             Core::Log("Has this asset Type:",Core::GetAssetTypeString(Application::GetAssetType(IdOfAsset)));
@@ -226,7 +227,7 @@ Float2 Application::GetMousePosChange(){
     Application* app = GetApplication();
     Float2 MousePos = GetMousePos();
     Float2 rawID{};
-
+    //FIX
     if(!Core::ReadPixel(app->m_PickBuffer,app->m_Renderer->GetViewPortExtent().width,app->m_Renderer->GetViewPortExtent().height,MousePos.x,MousePos.y,&rawID)){
         return GUUID(0);
     }
@@ -250,7 +251,7 @@ void Application::DrawRendererStatistics(){
             gui->PushStyle(GUI::Style::BORDER,&style);
             //Working here making it that font can be changed in render queue/commandbuffer.
             gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(statistics.DrawCallCount),{0.0f,0.90f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-            gui->Text("TriangleCount","TRIANGLE: "+std::to_string(statistics.VertexCount/3.f),{0.0f,0.70f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+            gui->Text("TriangleCount","TRIANGLE: "+std::to_string(uint32_t(statistics.VertexCount/3.f)),{0.0f,0.70f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
             gui->Text("VertexCount","VERTEX: "+std::to_string(statistics.VertexCount),{0.0f,0.50f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
             gui->Text("Instance","INSTANCE: "+std::to_string(statistics.InstanceCount),{0.0f,0.30f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
 
@@ -348,6 +349,10 @@ void Application::UpdateRendererStatistics(){
     std::thread InputThread(RunCommandLineInputTemp,app,std::ref(ThreadRunning));
     app->m_RendererThread = new std::thread(RendererLoop,app->m_Renderer,app->m_GUIRenderer,app->m_Render);
 
+    //temp
+    float updatePerSec{40};
+    float updateInterval{1000/updatePerSec};
+
     while(!glfwWindowShouldClose(app->m_Window->GetHandle())&& app->m_Running){
         //TEMP
         app->UpdateRendererStatistics();
@@ -357,6 +362,9 @@ void Application::UpdateRendererStatistics(){
 
         app->m_DeltaTime = Time::GetTimeMs() - app->m_LastFrameTime;
         app->m_LastFrameTime = Time::GetTimeMs();
+        std::this_thread::sleep_for(std::chrono::microseconds(uint64_t((updateInterval-app->m_DeltaTime)*1000)));
+
+       
         app->m_Renderer->SetApplicationThreadFrameTime(app->m_DeltaTime);
 
        // if(app->m_Specs.AppDebugging)
@@ -368,20 +376,21 @@ void Application::UpdateRendererStatistics(){
         app->m_LayerController.UpdateLayers(app->m_DeltaTime);
 
 
-        if(app->m_Render->GetReadyFrameCount() != MAX_FRAME_DRAWS){
-
+        if(app->m_Render->GetReadyFrameCount() < MAX_FRAME_DRAWS){
              app->m_Render->StartQueue(*Application::GetCurrentCamera());
-             app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,true);
-
+             
              app->m_LayerController.RenderLayers(app->m_DeltaTime);
              app->m_Render->StartGUIQueue();
-        if(app->m_RendererDebugging){
-            DrawRendererStatistics();
-        }
-        app->m_LayerController.UpdateGUILayers();
-        app->m_Render->FinishQueue();
+             if(app->m_RendererDebugging){
+                 DrawRendererStatistics();
+            }
+            app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,true);
+            app->m_LayerController.UpdateGUILayers();
+            gui->EndGUI();
+            app->m_Render->FinishQueue();
+
      }else{
-      //  app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,false);
+        app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,false);
      }
 
 

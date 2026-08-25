@@ -27,6 +27,7 @@
     }
     void MultiThreadingLayer::OnUpdate(double deltaTime){
           // m_Animation[0].Update(deltaTime);
+          
         
     }
     void MultiThreadingLayer::OnRender(double delaTime){
@@ -54,14 +55,15 @@
         Application::GetApplication()->m_FontSystem->Text("L","HOLETTHEDOGSOUTHOOF   .",{0.0,0.5},{0.3f,0.2f});
     }
     void MultiThreadingLayer::OnEvent(Event& event){
-        //if(event.GetEventType() == EventType::MOUSE)
-           // OnMouseEvent((MouseEvent&)event);
-      //  else if(event.GetEventType() == EventType::KEYBOARD)
-        //    OnKeyboardEvent((KeyBoardEvent&)event);
+        if(event.GetEventType() == EventType::MOUSE)
+            OnMouseEvent((MouseEvent&)event);
+        else if(event.GetEventType() == EventType::KEYBOARD)
+           OnKeyboardEvent((KeyBoardEvent&)event);
 
     }
     void MultiThreadingLayer::OnMouseEvent(MouseEvent& event){
         if(event.Code == MouseCodes::LEFT && event.State == EventState::PRESSED){
+            return;
             Render* render = Application::GetRender();
            ParticleProps props{};
            props.Pos = Application::GetWorldMousePos();
@@ -69,6 +71,8 @@
            props.Size = {0.2f,0.2f};
            props.Alive = true;
            props.LifeTime = SEC(30.0f);
+           props.TextureID = Core::GetStringHash("Particles/Fire");
+
            Application::GetParticleSystem().DrawParticle(props);
            Application::GetParticleSystem().DrawParticle(props);
            Application::GetParticleSystem().DrawParticle(props);
@@ -77,7 +81,21 @@
         }
           if(event.Code == MouseCodes::RIGHT && event.State == EventState::PRESSED){
 
-            m_OBJ.push_back(Application::GetWorldMousePos());
+               Render* render = Application::GetRender();
+           ParticleProps props{};
+           props.Pos = Application::GetWorldMousePos();
+           props.Color = {1.0f,1.0f,1.0f,1.0f};
+           props.Size = {0.2f,0.2f};
+           props.Alive = true;
+           props.LifeTime = SEC(30.0f);
+           props.Animation = *Application::GetAsset<Animator>("TOWN_HALL").GetData();
+
+           //Working on instanced rendering!!!
+           Application::GetParticleSystem().DrawParticle(props);
+           Application::GetParticleSystem().DrawParticle(props);
+           Application::GetParticleSystem().DrawParticle(props);
+           Application::GetParticleSystem().DrawParticle(props);
+           Application::GetParticleSystem().DrawParticle(props);
         }
     }
     void MultiThreadingLayer::OnKeyboardEvent(KeyBoardEvent& event){

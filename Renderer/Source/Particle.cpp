@@ -24,7 +24,7 @@ void ParticleSystem::UpdateAndDraw(double deltaTime,bool draw){
                 if(prop.TextureID !=0)
                     renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID,prop.TextureID,prop.TextureIndex);
                 else if(prop.Animation){
-                    renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID,prop.Animation);
+                    renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID,prop.Animation.GetCurrentTexture().GetID(),prop.Animation.GetTextureIndex());
                     prop.Animation.Update(deltaTime);
                 }else{
                     renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID,0,-1);

@@ -26,7 +26,6 @@ GUIRenderer::GUIRenderer(Application* app,bool SaveState): m_Application(app),m_
 }
 void GUIRenderer::BeginGUI()
 {
-	m_CurrentPanel = 0;
 
 	Renderer* renderer =Application::GetRenderer(); 
 	Buffer* buffer = renderer->GetPickingBuffer(Application::GetRender()->GetRenderedFrame());
@@ -90,9 +89,9 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 	ApplyCurrentStyles(m_PanelIDs[id].Position,Size,Color,ID);
 
 	if(TextureHandle !=0)
-		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y,0.0f }, Color, Size,TextureHandle, m_PanelIDs[id].ID.ID,0);
+		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y }, Color, Size,TextureHandle, m_PanelIDs[id].ID.ID,0);
 	else
-		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y,0.0f },Color, Size,m_PanelIDs[id].ID);
+		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y },Color, Size,m_PanelIDs[id].ID);
 	m_PanelDepth++;
 }
 void GUIRenderer::Tooltip(const std::string& tooltip,const Float2& maxSize,const Float2& posOffset,const Float4& backGroundColor,const Float4& borderColor,GUUID id){
@@ -145,9 +144,9 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 
 
 	if(TextureHandle ==0)
-		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, CurrentButtonID.ID);
+		renderer->DrawQuad({ LPosition.x,LPosition.y}, Color, Size, CurrentButtonID.ID);
 	else
-		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size,  CurrentButtonID.ID,TextureHandle,0 );
+		renderer->DrawQuad({ LPosition.x,LPosition.y }, Color, Size,  CurrentButtonID.ID,TextureHandle,0 );
 
 	//draw text
 	if (Text.size() != 0) {
@@ -202,7 +201,7 @@ void GUIRenderer::Quad(const Float2& position,const Float2& size,const Float4& c
 		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y-RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
 	}
 	ApplyCurrentStyles(LPosition,RSize,rColor);
-	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},rColor,RSize,0,textureID,-1);
+	renderer->DrawQuad({LPosition.x,LPosition.y},rColor,RSize,0,textureID,-1);
 }
 
 bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture){
@@ -237,11 +236,12 @@ bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Fl
 		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
 	}
 	ApplyCurrentStyles(LPosition,RSize,rColor,CurrentButtonID);
-
-	if(currentCheckBoxData->IsClicked)
-		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,CurrentButtonID.ID,Core::GetStringHash("GUI/CheckBoxTrue"),-1);
-	else
-		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,CurrentButtonID.ID,Core::GetStringHash("GUI/CheckBoxFalse"),-1);
+	if(currentCheckBoxData->IsClicked){
+		renderer->DrawQuad({LPosition.x,LPosition.y},color,RSize,CurrentButtonID.ID,Core::GetStringHash("GUI/CheckBoxTrue"),-1);
+	}
+	else{
+		renderer->DrawQuad({LPosition.x,LPosition.y},color,RSize,CurrentButtonID.ID,Core::GetStringHash("GUI/CheckBoxFalse"),-1);
+	}
 	return currentCheckBoxData->IsClicked;
 }
 void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size) {
@@ -262,8 +262,8 @@ void GUIRenderer::DrawBorder(const Float2& Position, const Float2& Size, const F
 	Float2 BorderSize{ Size.x+ BorderWidth,Size.y+ BorderWidth };
 	Float2 RealPosition= {Position.x,Position.y};
 	
-	renderer->DrawQuad({ RealPosition.x,RealPosition.y,0.0f }, BorderColor, BorderSize, 0);
-	renderer->DrawQuad({ RealPosition.x,RealPosition.y,0.0f }, BackGroundColor, Size, 0);
+	renderer->DrawQuad({ RealPosition.x,RealPosition.y }, BorderColor, BorderSize, 0);
+	renderer->DrawQuad({ RealPosition.x,RealPosition.y }, BackGroundColor, Size, 0);
 }
 void GUIRenderer::Slider(const std::string& strID,  float* number,const  Float2& Position,const Float4& color,const  Float2& Size,const  float SlideAmount,const Float2& MinMax,const  uint32_t DecimalPlaces)
 {
@@ -417,9 +417,9 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 
 		m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize,m_InputTextData[id].LineStarts[lineIndex]);
 
-		renderer->DrawQuad({lPosition.x+rSize.x-rSize.x*0.1f,lPosition.y,0.0f},sliderBarColor,{rSize.x*0.05f,rSize.y},0);
+		renderer->DrawQuad({lPosition.x+rSize.x-rSize.x*0.1f,lPosition.y},sliderBarColor,{rSize.x*0.05f,rSize.y},0);
 
-		renderer->DrawQuad({lPosition.x+rSize.x-rSize.x*0.1f,logicalPosY,0.0f},sliderButtonColor,{rSize.x*0.05f,rSize.y/totalLogicalPosYSize},0);
+		renderer->DrawQuad({lPosition.x+rSize.x-rSize.x*0.1f,logicalPosY},sliderButtonColor,{rSize.x*0.05f,rSize.y/totalLogicalPosYSize},0);
 
 
 
@@ -449,8 +449,8 @@ void GUIRenderer::ApplyCurrentStyles( Float2& position, Float2& size, Float4& co
 				GUI::BorderStyle& border = *(GUI::BorderStyle*)container.StyleData;
 
 				if(border.DrawBorder)
-					renderer->DrawQuad({position.x,position.y,0.0f},border.BorderColor,{size.x+border.BorderWidth,size.y+border.BorderWidth},id.ID);
-				renderer->DrawQuad({position.x,position.y,0.5f},border.BackGroundColor,{size.x,size.y},id.ID);
+					renderer->DrawQuad({position.x,position.y},border.BorderColor,{size.x+border.BorderWidth,size.y+border.BorderWidth},id.ID);
+				renderer->DrawQuad({position.x,position.y},border.BackGroundColor,{size.x,size.y},id.ID);
 				break;
 			}
 			case GUI::Style::TOOLTIP:{
@@ -494,7 +494,9 @@ void GUIRenderer::ResetGUIData(){
 	m_PanelIDs.clear();
 }
 void GUIRenderer::SetFont(const std::string& strID){
-	m_FontSystem->SetFont(strID);
+	Asset<Font> newFont = m_FontSystem->LoadFont(strID);
+	Render* render = Application::GetRender();
+	render->SetFont(newFont,0);
 }
 void GUIRenderer::SetFont(GUUID id){
 	m_FontSystem->SetFont(id);
@@ -585,10 +587,10 @@ void GUIRenderer::DrawTooltips(){
 		TooltipBackEndData& data = m_TooltipStack.top();
 		//Draw border
 		if(data.BorderColor.a != 0.0f)
-			renderer->DrawQuad({data.Pos.x,data.Pos.y,0.0f},data.BorderColor,{data.Size.x+0.01f,data.Size.y+0.01f},data.ID.ID);
+			renderer->DrawQuad({data.Pos.x,data.Pos.y},data.BorderColor,{data.Size.x+0.01f,data.Size.y+0.01f},data.ID.ID);
 		//Draw background
 		if(data.BackGroundColor.a !=0.0f)
-			renderer->DrawQuad({data.Pos.x,data.Pos.y,0.0f},data.BackGroundColor,data.Size,data.ID.ID);
+			renderer->DrawQuad({data.Pos.x,data.Pos.y},data.BackGroundColor,data.Size,data.ID.ID);
 		m_FontSystem->Text(data.ID,data.tooltip.c_str(),data.Pos,data.Size);
 		m_TooltipStack.pop();
 
@@ -601,6 +603,7 @@ void GUIRenderer::EndGUI()
 	m_Scroll = 0.0f;
 	m_SelectedObjID = 0;
 	//Update the dragged panel/button
+	m_CurrentPanel = 0;
 
 	//delete button that hasn't been used.
 }

@@ -6,9 +6,9 @@ struct DrawData{
     Float2 pos{};
     Float2 size{};
     Float4 color{};
-    GUUID id{};
-    uint32_t textureIndex{};//TODO remove use index inside texture
-    Asset<Texture> textureAsset{};
+    GUUID id{0};
+    int32_t textureIndex{-1};//TODO remove use index inside texture
+    GUUID textureID{0};
 };
 struct DrawTextData{
     char* msg{};
@@ -17,7 +17,7 @@ struct DrawTextData{
     Float2 boundingBox[4];
     float fixedPadding{};
     float charSizeNorm{};
-    GUUID id{};
+    GUUID id{0};
     int64_t pointerIndex{};
     Float4 color{};
     ~DrawTextData(){
@@ -30,7 +30,13 @@ struct CmdChangeFontData{
     
 };
 struct DrawDataInstanced{
-    uint32_t m_InstanceCount{};
+    Float2 size{};
+    Float4 color{};
+    GUUID id{};
+    int32_t textureIndex{-1};//TODO remove use index inside texture
+    GUUID textureID{0};
+    //Dynamic data
+    std::vector<Float2> positions{};
 
 };
 Render::Render(Renderer* renderer,void* guiRenderer): m_Renderer(renderer),m_GUI(guiRenderer){
@@ -57,16 +63,38 @@ void Render::SetShader(Asset<Shader> asset){
 void Render::StartGUIQueue(){
    m_CommandBufferGUIBeginIndex = m_CommandBuffer[m_CurrentFrame].Size();
 }
-void Render::DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GUUID id,Animator animation){
-    Core::Log(ErrorType::Warning,"Not implemented");
-
+void Render::DrawQuad(const Float2& pos,const Float4& color,const Float2&size,GUUID id,Animator animation){
+     DrawQuad(pos,color,size,id,animation.GetCurrentTexture().GetID(),animation.GetTextureIndex());
 }
 void Render::DrawInstance(const Float2& pos,const Float4& color,const Float2& size,GUUID id,GUUID textureID ,int32_t textureIndex){
-    Core::Log(ErrorType::Warning,"Not implemented");
+    CmdCommand cmd{};
 
+    if(m_CommandBuffer[m_CurrentFrame].Size() !=0){
+        CmdCommand lastCmd = m_CommandBuffer[m_CurrentFrame].Last();
+        if(lastCmd.type == CmdTypes::DRAWINSTANCED){
+            DrawDataInstanced* lastDrawData = (DrawDataInstanced*)lastCmd.data;
+            if(lastDrawData->color == color && lastDrawData->size == size&& lastDrawData->textureID == textureID ){
+                lastDrawData->positions.push_back(pos);
+                return;
+            }
+
+        }
+    }
+    DrawDataInstanced* drawData = new DrawDataInstanced();
+    drawData->color = color;
+    drawData->size = size;
+    drawData->id = id;
+    drawData->positions.push_back(pos);
+    drawData->textureID = textureID;
+    drawData->textureIndex = textureIndex;
+    //TODO complete the draw list
+
+    cmd.data = drawData;
+    cmd.type = CmdTypes::DRAWINSTANCED;
+    m_CommandBuffer[m_CurrentFrame].AddCmd(cmd);
 }
 void Render::DrawInstance(const Float2& pos,const Float4& color,const Float2& size,GUUID id,Animator animation){
-    Core::Log(ErrorType::Warning,"Not implemented");
+    DrawInstance(pos,color,size,id,animation.GetCurrentTexture().GetID(),animation.GetTextureIndex());
 }
 void Render::DrawText(const char* Message,uint64_t bufferSize, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex){
     char* msg = new char[strlen(Message)*sizeof(char)];
@@ -89,19 +117,23 @@ void Render::DrawText(const char* Message,uint64_t bufferSize, Float2 Position, 
     cmd.type = CmdTypes::DRAWTEXT;
     m_CommandBuffer[m_CurrentFrame].AddCmd(cmd);
 }
-void Render::DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GUUID id){
+void Render::DrawQuad(const Float2& pos,const Float4& color,const Float2&size,GUUID id){
+  
+    DrawQuad(pos,color,size,id,GUUID(0),-1);
+
+}
+void Render::DrawQuad(const Float2& pos,const Float4& color,const Float2&size,GUUID id,GUUID textureID,int textureIndex){
     CmdCommand cmd{};
     DrawData* drawData = new DrawData();
     drawData->pos = {pos.x,pos.y};
     drawData->color = color;
     drawData->size = size;
     drawData->id = id;
+    drawData->textureID = textureID;
+    drawData->textureIndex = textureIndex;
     cmd.data = drawData;
     cmd.type = CmdTypes::DRAW;
     m_CommandBuffer[m_CurrentFrame].AddCmd(cmd);
-}
-void Render::DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GUUID id,GUUID textureID,int textureIndex){
-           Core::Log(ErrorType::Warning,"Not implemented");
 }   
 void Render::RunCommands(){
     CmdBuffer& cmdB = m_CommandBuffer[m_RenderedFrameIndex];
@@ -119,7 +151,7 @@ Render:
     switch(cmd.type){
         case CmdTypes::DRAW:{
             DrawData* data=(DrawData*)cmd.data;
-            m_Renderer->DrawQuad({data->pos.x,data->pos.y,0.0f},data->color,data->size,data->id.ID);
+            m_Renderer->DrawQuad({data->pos.x,data->pos.y,0.0f},data->color,data->size,data->textureID,data->id.ID,data->textureIndex);
             delete data;
 
             break;
@@ -146,6 +178,13 @@ Render:
 
             }
         
+            delete data;
+            break;
+        }
+        case CmdTypes::DRAWINSTANCED:{
+            DrawDataInstanced* data=(DrawDataInstanced*)cmd.data;
+            for(uint32_t i=0;i < data->positions.size();i++)
+                m_Renderer->DrawInstance(data->positions[i],data->color,data->size,data->id.ID,data->textureID,data->textureIndex);
             delete data;
             break;
         }

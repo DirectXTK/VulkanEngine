@@ -8,9 +8,9 @@ class Render{
     void StartQueue(Camera2D& camera){m_ViewProj[m_CurrentFrame] = camera.GetViewProj();m_CameraPos[m_CurrentFrame] = camera.GetPosition(); m_CameraSize[m_CurrentFrame] = camera.GetScale();}
     void StartGUIQueue();
     
-    void DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GUUID id,Animator animation);
-    void DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GUUID id,GUUID textureID,int32_t textureIndex);
-    void DrawQuad(const Float3& pos,const Float4& color,const Float2&size,GUUID id);
+    void DrawQuad(const Float2& pos,const Float4& color,const Float2&size,GUUID id,Animator animation);
+    void DrawQuad(const Float2& pos,const Float4& color,const Float2&size,GUUID id,GUUID textureID,int32_t textureIndex);
+    void DrawQuad(const Float2& pos,const Float4& color,const Float2&size,GUUID id);
     void DrawInstance(const Float2& pos,const Float4& color,const Float2& size,GUUID id,GUUID textureID ,int32_t textureIndex);
     void DrawInstance(const Float2& pos,const Float4& color,const Float2& size,GUUID id,Animator animation);
     
@@ -63,6 +63,13 @@ class Render{
             
             
             return m_Commands[m_CurrentCmdIndex];
+        }
+        CmdCommand& Last(){
+            #ifdef DEBUG
+                if(m_Commands.size() ==0)
+                    Core::Log(ErrorType::Error,"Command buffer is empty {CmdBuffer::Last()}.");
+            #endif    
+            return m_Commands[m_Commands.size()-1];
         }
         void Next(){   m_CurrentCmdIndex++; }
         void ResetBuffer(){
@@ -123,6 +130,8 @@ class Render{
     glm::mat4 m_ViewProj[MAX_FRAME_DRAWS];
     Float2 m_CameraSize[MAX_FRAME_DRAWS];
     Float2 m_CameraPos[MAX_FRAME_DRAWS];
+
+    
 
     std::vector<ShaderType> m_RemovedShaders[MAX_FRAME_DRAWS];
     std::vector<Asset<Shader>> m_AddedShaders[MAX_FRAME_DRAWS];

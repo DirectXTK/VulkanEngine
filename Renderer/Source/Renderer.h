@@ -46,7 +46,7 @@ struct DrawCommand {
 enum class RenderMode{SOLID,WIREFRAME};
 
 struct RendererDesc{
-    uint32_t VertexCountPerDrawCall{100};
+    uint32_t VertexCountPerDrawCall{1000};
     Float4 ClearColor{};
     RenderMode Rendermode{RenderMode::SOLID};
     bool Blending{true};
@@ -238,11 +238,11 @@ private:
 
     //Debug
     VkDebugUtilsMessengerEXT m_Messenger{};
-    uint32_t m_VertexCountWhole{};
+    uint64_t m_VertexCountWhole{};
     uint32_t m_InstanceCountWhole{};
     uint32_t m_DrawCallWhole{};
     //all the rendered vertecies of the frame.
-    uint64_t m_VertexCountPerFrame{};
+    uint64_t m_VertexCountPerFrame{0};
     void CreateDebugger();
 
 

@@ -64,7 +64,7 @@ void GUITestingLayer::OnUpdate(double deltatime)
 {
 	Renderer* renderer = Application::GetRenderer();
 
-	DefaultCameraControlls(Application::GetCurrentCamera());
+	//DefaultCameraControlls(Application::GetCurrentCamera());
 	static Float2 pos{0.0f,0.0f};
 
 	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
@@ -133,9 +133,9 @@ void GUITestingLayer::OnUpdate(double deltatime)
 
 }
 void GUITestingLayer::OnRender(double deltime){
-   Renderer* renderer = Application::GetRenderer();
+   Render* renderer = Application::GetRender();
 
-   renderer->DrawQuad({0.0f,-0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+   renderer->DrawQuad({0.0f,-0.5f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
 	//renderer->DrawParticle(Application::GetWorldMousePos(),{0.9f,0.1f,0.1f,1.0f},{0.01f,0.01f},0);
 }
 void GUITestingLayer::OnEvent(Event& event){
@@ -148,27 +148,27 @@ void GUITestingLayer::OnEvent(Event& event){
 	}
 }
 void GUITestingLayer::OnKeyBoardEvent(KeyBoardEvent& event){
-	Renderer* renderer= Application::GetRenderer();
+	Render* renderer= Application::GetRender();
 	if(event.State == EventState::PRESSED){
 	if(event.Key == KeyCodes::P){
 		auto frag = Application::GetAsset<Shader>("Shaders/ParticleF");
    	if(frag)
-  		renderer->QueueShaderChange(frag);
+  		renderer->SetShader(frag);
 
 		auto vert= Application::GetAsset<Shader>("Shaders/ParticleV");
   	 if(vert)
-   		renderer->QueueShaderChange(vert);
+   		renderer->SetShader(vert);
 	}
 	}
 	if(event.State == EventState::PRESSED){
 	if(event.Key == KeyCodes::O){
 		auto frag = Application::GetAsset<Shader>("Shaders/DefaultPixel");
    		if(frag)
-  		renderer->QueueShaderChange(frag);
+  		renderer->SetShader(frag);
 
 		auto vert= Application::GetAsset<Shader>("Shaders/DefaultVertex");
   	 	if(vert)
-   		renderer->QueueShaderChange(vert);
+   		renderer->SetShader(vert);
 	}
 	}
 }
@@ -216,7 +216,7 @@ void GUITestingLayer::OnGUI()
 	gui->Slider("Borderr",&borderColor.r,{-0.1f,0.8f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("Borderg",&borderColor.g,{-0.1f,0.6f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("Borderb",&borderColor.b,{-0.1f,0.4f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
-
+	//15219296786176995281 this font is missing and causes flickering !!!!
 	
 	gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
 	gui->InputText("UserName",username,ARRAYSIZE(username),{0.0f,-0.5f},{0.5f,0.2f},true);
@@ -232,12 +232,14 @@ void GUITestingLayer::OnGUI()
 	if(gui->IsObjectHovered("CheckTooltip")){
 		gui->Tooltip("AND WATER PARTICLES",{0.3f,0.1f},{0.0f,0.5f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
 	}
+
 	if(gui->CheckBox("Check",{0.5f,0.0f},{0.2f,0.2f},{1.0f,1.0f,1.0f,1.0f}))
 		m_SpawningEnabled = true;
 	else 
 		m_SpawningEnabled = false;
-	gui->SetFont("EngineResources/Fonts/Daydream.ttf");
+	//gui->SetFont("EngineResources/Fonts/Daydream.ttf");
 	gui->EndPanel();
+
 
 
 	//Application::GetAssetManager()->DebugStatistics(true);
