@@ -12,7 +12,6 @@ void GUITestingLayer::OnCreate() {
 	sliderdata.FillOn = true;
 	sliderdata.StructSize = sizeof(GUI::SliderStyle);
 	sliderdata.FillColor = {0.0f,0.0f,1.0f,1.0f};
-
 	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/",AssetType::NONE);
 	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/Examples/Animation/",AssetType::ANIMATION);
 
@@ -22,7 +21,9 @@ void GUITestingLayer::OnCreate() {
 			animator.SetStage("WALK");
 		}
 
-
+	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/Sacrifice.ttf");
+	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/Daydream.ttf");
+	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
 	auto asset2 = Application::GetAsset<Texture>("FontTexture"+std::to_string(Application::GetGUIRenderer()->GetFontSize()));
 	if(asset2){
 		asset2.GetData()->WriteToFile("OutputTexture.png");
@@ -62,18 +63,23 @@ void ParticleVelocityAdd(ParticleProps& props){
 }
 void GUITestingLayer::OnUpdate(double deltatime)
 {
-	Renderer* renderer = Application::GetRenderer();
+	return;
+	
 
+}
+void GUITestingLayer::temp(){
+//FIX no rendering on update make somekind of a safe guard.
+	Render* renderer = Application::GetRender();
 	//DefaultCameraControlls(Application::GetCurrentCamera());
 	static Float2 pos{0.0f,0.0f};
 
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
 
 	if(Application::IsKeyPressed(KeyCodes::ARROWRIGHT))
 	{
@@ -94,12 +100,11 @@ void GUITestingLayer::OnUpdate(double deltatime)
 
    if(animator)
    {
-   		renderer->DrawQuad({0.0f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},animator,0);
-   		animator.Update(deltatime);
+   	//	renderer->DrawQuad({0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0,animator);
+   		//animator.Update(deltatime);
    }
 	if(m_SpawnParticles&&m_SpawningEnabled){
 		ParticleProps prop{};
-		prop.LifeTime = Core::RandomFloat(SEC(3.3f),SEC(8.0f));
 		//prop.LifeTime = SEC(3.f);
 		prop.Color = {1.0f,1.0f,1.0f,1.0f};
 		prop.Pos = Application::GetWorldMousePos();
@@ -112,6 +117,8 @@ void GUITestingLayer::OnUpdate(double deltatime)
 		for(uint32_t i=0;i < 10;i++){
 		prop.Velocity.x = Core::RandomFloat(-0.005f,0.005f);
 		prop.Velocity.y = Core::RandomFloat(-0.005f,0.0050f);
+		prop.LifeTime = Core::RandomFloat(SEC(3.3f),SEC(8.0f));
+
 		Application::GetParticleSystem().DrawParticle(prop);
 
 		}
@@ -119,6 +126,7 @@ void GUITestingLayer::OnUpdate(double deltatime)
 			for(uint32_t i=0;i < 10;i++){
 		prop.Velocity.x = Core::RandomFloat(-0.0015f,0.0010f);
 		prop.Velocity.y = Core::RandomFloat(-0.0015f,0.0010f);
+		prop.LifeTime = Core::RandomFloat(SEC(3.3f),SEC(8.0f));
 		prop.Size = {0.012f,0.012f};
 		prop.CustomFunction = ParticleFire;
 		FireParticleData* data = (FireParticleData*)malloc(sizeof(FireParticleData));
@@ -130,12 +138,12 @@ void GUITestingLayer::OnUpdate(double deltatime)
 		}
 	}
  
-
 }
 void GUITestingLayer::OnRender(double deltime){
    Render* renderer = Application::GetRender();
+   renderer->DrawQuad({0.0f,-0.5f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},2);
+   temp();
 
-   renderer->DrawQuad({0.0f,-0.5f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
 	//renderer->DrawParticle(Application::GetWorldMousePos(),{0.9f,0.1f,0.1f,1.0f},{0.01f,0.01f},0);
 }
 void GUITestingLayer::OnEvent(Event& event){
@@ -190,14 +198,11 @@ void GUITestingLayer::OnMouseEvent(MouseEvent& event){
 void GUITestingLayer::OnGUI()
 {
 	GUIRenderer* gui = Application::GetGUIRenderer();
-	
-
 	static Float4 panelColor{1.0f,1.0f,1.0f,1.0f};
 	static Float4 borderColor{1.0f,1.0f,1.0f,1.0f};
 	static char username[50]{};
 	static float timeHovered{};
 
-	gui->SetFontSize((uint32_t)12);
 
 	Application::GetRenderer()->ChangeArrowColor({1.0f,0.0f,0.0f,1.0f});
 	GUI::BorderStyle border{};
@@ -205,20 +210,21 @@ void GUITestingLayer::OnGUI()
 	border.BorderWidth = 0.01f;
 	border.DrawBorder = true;
 	border.BackGroundColor = {0.5f,0.5f,0.5f,1.0f};
+	//gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf",13);
+	
 	
 	gui->PushStyle(GUI::Style::BORDER,&border);
 	gui->Panel("Panel",{0.0f,0.0f},panelColor,{0.3f,0.3f},0,true);
-
+	
 	gui->Slider("PanelColorr",&panelColor.r,{-0.5f,0.8f},{1.0,1.0f,0.0f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("PanelColorg",&panelColor.g,{-0.5f,0.6f},{1.0,1.0f,0.0f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("PanelColorb",&panelColor.b,{-0.5f,0.4f},{1.0,1.0f,0.0f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
-
+	
 	gui->Slider("Borderr",&borderColor.r,{-0.1f,0.8f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("Borderg",&borderColor.g,{-0.1f,0.6f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("Borderb",&borderColor.b,{-0.1f,0.4f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
-	//15219296786176995281 this font is missing and causes flickering !!!!
-	
-	gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
+
+
 	gui->InputText("UserName",username,ARRAYSIZE(username),{0.0f,-0.5f},{0.5f,0.2f},true);
 	
 	gui->PopStyle();
@@ -237,7 +243,7 @@ void GUITestingLayer::OnGUI()
 		m_SpawningEnabled = true;
 	else 
 		m_SpawningEnabled = false;
-	//gui->SetFont("EngineResources/Fonts/Daydream.ttf");
+	//gui->SetFont("EngineResources/Fonts/Daydream.ttf",13);
 	gui->EndPanel();
 
 

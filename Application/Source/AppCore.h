@@ -91,6 +91,9 @@ struct GUUID {
     GUUID(uint64_t a) {
         ID = a;
     }
+    GUUID(int64_t a) {
+        ID = a;
+    }
     GUUID(const std::string& str) {
         ID = (uint64_t)std::hash<std::string>{}(str);
     }

@@ -105,7 +105,7 @@ private:
 	Texture* m_Texture1{};
 	float m_Padding{ 0.1f };
 	float m_PaddingY{0.1f};
-	uint32_t m_CharacterSize{4};
+	uint32_t m_CharacterSize{14};
 
 	uint32_t m_FontAtlasSize{};
 	Texture* m_FontTexture{};
@@ -152,6 +152,7 @@ private:
 	Asset<Font> m_CurrentFont;
 	std::unordered_map<GUUID, TextData> m_StoredData{};
 	//float m_FixedPadding{ 0.1018f  };
+	//Cache
 
 };
 

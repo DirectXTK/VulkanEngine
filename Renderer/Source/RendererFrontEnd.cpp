@@ -170,11 +170,20 @@ Render:
                     Core::Log("Invalid asset Render::RunCommands");
 
                 }else{
-                    
+		            m_Renderer->SetCurrentFont(data->fontAsset);
                 }
             }else{
-                    Application::GetApplication()->m_FontSystem->SetCharcterSize(data->charSize);
-                   //gui->SetFontSize(data->charSize);
+                std::string& name = m_Renderer->GetCurrentFont().GetData()->FontName;
+                GUUID id = FONTID(name,data->charSize);
+                Asset<Font> newFont = Application::GetAsset<Font>(id);
+                if(newFont){
+                    
+		            m_Renderer->SetCurrentFont(newFont);
+
+                }else{
+                    Core::Log("Need to recreate");
+                }
+
 
             }
         
@@ -198,8 +207,8 @@ Render:
     }   
     }
 end:
-    m_Renderer->BeginGUIFrame();
-    if(!guiRender){
+if(!guiRender){
+        m_Renderer->BeginGUIFrame();
         cmdBufferOffset = cmdBufferEnd;
         cmdBufferEnd= cmdB.Size();
         guiRender = true;

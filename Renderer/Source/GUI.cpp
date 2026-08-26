@@ -26,7 +26,7 @@ GUIRenderer::GUIRenderer(Application* app,bool SaveState): m_Application(app),m_
 }
 void GUIRenderer::BeginGUI()
 {
-
+	
 	Renderer* renderer =Application::GetRenderer(); 
 	Buffer* buffer = renderer->GetPickingBuffer(Application::GetRender()->GetRenderedFrame());
 	delete []m_PickBufferData;
@@ -493,13 +493,23 @@ void GUIRenderer::ResetGUIData(){
 	m_InputTextData.clear();
 	m_PanelIDs.clear();
 }
-void GUIRenderer::SetFont(const std::string& strID){
-	Asset<Font> newFont = m_FontSystem->LoadFont(strID);
+void GUIRenderer::SetFont(const std::string& strID,uint32_t fontSize){
+	//m_FontSystem->SetCharcterSize(14);
+	//Asset<Font> newFont = m_FontSystem->LoadFont(strID);
+	std::string name =Core::GetFileName(strID);
+	if(fontSize ==0){
+		fontSize = Application::GetRenderer()->GetCurrentFont().GetData()->FontSize;
+	}
+
+	auto newFont = Application::GetAsset<Font>(FONTID(name,fontSize));
 	Render* render = Application::GetRender();
-	render->SetFont(newFont,0);
+	render->SetFont(newFont,fontSize);
 }
-void GUIRenderer::SetFont(GUUID id){
-	m_FontSystem->SetFont(id);
+void GUIRenderer::SetFont(GUUID id,uint32_t fontSize){
+	//m_FontSystem->SetCharcterSize(14);
+	Asset<Font> newFont = Application::GetAsset<Font>(id);
+	Render* render = Application::GetRender();
+	render->SetFont(newFont,fontSize);
 }
 void GUIRenderer::EndPanel()
 {
@@ -520,12 +530,6 @@ void GUIRenderer::PopStyle() {
 	if(!m_StylesInQueue[(uint32_t)m_LastAddedStyle-1].empty())
 		m_StylesInQueue[(uint32_t)m_LastAddedStyle-1].pop();
 	
-}
-void GUIRenderer::SetFontSize(uint32_t Size)
-{	
-		Render& render = *Application::GetRender();
-		Size = std::clamp((int)Size,1,96);
-		render.SetFont(Asset<Font>(),Size);
 }
 uint32_t GUIRenderer::GetFontSize() {
 	return m_FontSystem->GetFontSize();

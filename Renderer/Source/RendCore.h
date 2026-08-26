@@ -17,7 +17,10 @@
 #include <set>
 
 #define VULKANDEBUG(x,y) x== VK_SUCCESS? (void)0: Core::Log(ErrorType::Error,y,": ",(int64_t)x) 
+//x is name and y is the char size
+#define FONTID(x,y) Core::GetStringHash("FONT"+x+std::to_string(y))
 #define MAX_FRAME_DRAWS 3
+
 
 
 class Image;

@@ -20,6 +20,11 @@ FontSystem::FontSystem()
 	m_Renderer->SetCurrentFont(m_CurrentFont);
 }
 Asset<Font> FontSystem::LoadFont(const std::string& filePath){
+	std::string Name = Core::GetFileName(filePath);
+	GUUID fontID = Core::GetStringHash("FONT"+Name+std::to_string(m_CharacterSize));
+	if(Application::HasAsset(fontID)){
+		return Application::GetAsset<Font>(fontID);
+	}
 	//loads the font
 	FT_Error error = FT_New_Face(m_Library, filePath.c_str(), 0, &m_Face);
 	if (error == FT_Err_Unknown_File_Format) {
@@ -29,9 +34,9 @@ Asset<Font> FontSystem::LoadFont(const std::string& filePath){
 		Core::Log(ErrorType::Error, "Failed to open/read or the font is broken ");
 		return Asset<Font>();
 	}
-
-	std::string Name = Core::GetFileName(filePath);
+	
 	Asset<Font> asset= ReRenderFaces("FONT"+Name+std::to_string(m_CharacterSize),Core::GetFileName(filePath));
+	
 	//LASTERROR
 	//FT_Done_Face(m_Face);
 	return asset;
@@ -44,6 +49,7 @@ void FontSystem::Run(void* app,void* iRenderer)
 
 void FontSystem::SetCharcterSize(uint32_t CharSize)
 {
+	Core::Log("Old");
 	if (CharSize == m_CharacterSize)
 		return;
 

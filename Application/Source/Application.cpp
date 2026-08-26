@@ -239,8 +239,11 @@ void Application::DrawRendererStatistics(){
        GUIRenderer* gui = (GUIRenderer*)Application::GetGUIRenderer();
         RendererStatistics& statistics = Application::GetApplication()->m_RendererStatistics;    
   
-       //Convert this to render compatible 
-        Application::GetRender()->SetFont(Asset<Font>(),13);
+       // Asset<Font> font = Application::GetAsset<Font>("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
+       // if(!font){
+          //  return;            
+        //}
+              //Application::GetRender()->SetFont(Asset<Font>(),14);
             gui->Panel("GuiStatistics",{-0.7f,0.7f},{1.0f,1.0f,0.5f,1.0f},{0.3f,0.3f});
 
             GUI::BorderStyle style{sizeof(GUI::BorderStyle)};
@@ -249,7 +252,6 @@ void Application::DrawRendererStatistics(){
             style.BorderColor = {1.0f,0.0f,0.0f,1.0f};
             style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
             gui->PushStyle(GUI::Style::BORDER,&style);
-            //Working here making it that font can be changed in render queue/commandbuffer.
             gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(statistics.DrawCallCount),{0.0f,0.90f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
             gui->Text("TriangleCount","TRIANGLE: "+std::to_string(uint32_t(statistics.VertexCount/3.f)),{0.0f,0.70f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
             gui->Text("VertexCount","VERTEX: "+std::to_string(statistics.VertexCount),{0.0f,0.50f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});

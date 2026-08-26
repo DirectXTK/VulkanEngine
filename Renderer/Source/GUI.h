@@ -39,9 +39,10 @@ public:
 
 	void PopStyle();
 
-	void SetFontSize(uint32_t Size);
-	void SetFont(const std::string& strID);
-	void SetFont(GUUID id);
+	//fontsize = 0 means kep the last one if strId is empty then use the last font
+	void SetFont(const std::string& strID,uint32_t fontSize=0);
+	//fontsize = 0 means kep the last one if id is 0 then use the last font
+	void SetFont(GUUID id,uint32_t fontSize=0);
 
 	bool IsObjectHovered(GUUID objID);
 	bool IsObjectHovered(const std::string& strID);

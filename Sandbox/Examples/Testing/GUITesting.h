@@ -16,6 +16,8 @@ private:
     void OnKeyBoardEvent(KeyBoardEvent& event);
     void OnMouseEvent(MouseEvent& event);
 
+    void temp();
+
     bool m_SpawnParticles{false};
     bool m_SpawningEnabled{false};
     Animator* m_Anim{};
