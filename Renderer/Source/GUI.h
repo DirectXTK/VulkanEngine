@@ -134,7 +134,6 @@ private:
 	GUUID m_SelectedObjID{0};
 	//Currently selected obj.
 	GUUID m_CurrentlySelectedObject{0};
-	Float2* m_PickBufferData{};
 
 	uint32_t m_PanelDepth{};
 	PanelData* m_CurrenPanelParent{};

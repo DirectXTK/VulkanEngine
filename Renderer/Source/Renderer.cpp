@@ -104,6 +104,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     colorAttachTextureInfo.ImageUsageFlags = VkImageUsageFlagBits(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
     colorAttachTextureInfo.MemoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     colorAttachTextureInfo.SharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    colorAttachTextureInfo.Format = VK_FORMAT_R32G32_UINT;
 
     m_ColorAttachments.resize(MAX_FRAME_DRAWS);
     m_DepthStencilAttachments.resize(MAX_FRAME_DRAWS);

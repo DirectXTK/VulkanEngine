@@ -228,6 +228,7 @@ Float2 Application::GetMousePosChange(){
     Float2 MousePos = GetMousePos();
     Float2 rawID{};
     //FIX
+    return GUUID(0);
     if(!Core::ReadPixel(app->m_PickBuffer,app->m_Renderer->GetViewPortExtent().width,app->m_Renderer->GetViewPortExtent().height,MousePos.x,MousePos.y,&rawID)){
         return GUUID(0);
     }
@@ -314,6 +315,23 @@ void Application::RunCollisionAsync(void* objData,uint32_t posOffset,uint32_t si
 void Application::RunAStar(){
 
 }
+void Application::UpdateContent(uint32_t index){
+
+    Buffer* buffer = Application::GetRenderer()->GetPickingBuffer(index);
+    Application* app = Application::GetApplication();
+    if(buffer->GetBufferDesc().SizeBytes != app->m_PickBufferSize){
+        //delete[] app->m_PickBuffer;
+
+       // Core::Log("old size",app->m_PickBufferSize);
+       // app->m_PickBufferSize = Application::GetRenderer()->GetViewPortExtent().height*Application::GetRenderer()->GetViewPortExtent().width*sizeof(GUUID);   
+      //  app->m_PickBuffer = new Float2[Application::GetRenderer()->GetViewPortExtent().height*Application::GetRenderer()->GetViewPortExtent().width];
+        //Core::Log("new size",app->m_PickBufferSize);
+    }
+        //Core::Log("new sizedwadwad",Application::GetRenderer()->GetViewPortExtent().height*Application::GetRenderer()->GetViewPortExtent().width );
+
+    buffer->LoadFromBufferToVar(Application::GetApplication()->m_PickBuffer,Application::GetApplication()->m_PickBufferSize);
+
+}
 void Application::UpdateRendererStatistics(){
         RendererStatistics& statistics = Application::GetApplication()->m_RendererStatistics;    
         const float updatePeriod{SEC(0.15f)};
@@ -352,7 +370,7 @@ void Application::UpdateRendererStatistics(){
     app->m_RendererThread = new std::thread(RendererLoop,app->m_Renderer,app->m_GUIRenderer,app->m_Render);
 
     //temp
-    float updatePerSec{40};
+    float updatePerSec{100};
     float updateInterval{1000/updatePerSec};
 
     while(!glfwWindowShouldClose(app->m_Window->GetHandle())&& app->m_Running){
@@ -367,6 +385,8 @@ void Application::UpdateRendererStatistics(){
         std::this_thread::sleep_for(std::chrono::microseconds(uint64_t((updateInterval-app->m_DeltaTime)*1000)));
 
        
+   
+
         app->m_Renderer->SetApplicationThreadFrameTime(app->m_DeltaTime);
 
        // if(app->m_Specs.AppDebugging)
@@ -383,11 +403,12 @@ void Application::UpdateRendererStatistics(){
              
              app->m_LayerController.RenderLayers(app->m_DeltaTime);
              app->m_Render->StartGUIQueue();
-             if(app->m_RendererDebugging){
-                 DrawRendererStatistics();
-            }
+           
             app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,true);
             app->m_LayerController.UpdateGUILayers();
+              if(app->m_RendererDebugging){
+                 DrawRendererStatistics();
+            }
             gui->EndGUI();
             app->m_Render->FinishQueue();
 

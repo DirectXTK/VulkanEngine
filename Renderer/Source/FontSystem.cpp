@@ -153,6 +153,7 @@ uint64_t FontSystem::FindMousePosInText(const Float2& mousePos,char* Buffer,uint
 	return 0;
 }
 void FontSystem::OnMouseEvent(MouseEvent& event){
+
 	if(event.State == EventState::PRESSED && event.Code == MouseCodes::LEFT){
 
 		GUUID selectedID = Application::GetCurrentlyHoveredPixelID();
@@ -179,7 +180,7 @@ void FontSystem::OnMouseEvent(MouseEvent& event){
 void FontSystem::OnTextEvent(TextEvent& event){
 	char insertedChar= event.KeyChar;
 			
-			
+		Core::Log("dwada");
 		if(m_CurrentlySelectedInputData !=0){
 			auto it = m_InputTextData.find(m_CurrentlySelectedInputData);
 			if(it != m_InputTextData.end()){
@@ -283,6 +284,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	//Draw the invisible barrier that  provides the selecting 
 
 	if(m_CurrentlySelectedInputData == SelectID){
+
 		m_PointerCooldown -= Application::GetDeltaTime();
 		if(!m_IsArrowActive){
 			if(m_PointerCooldown <=0.0f)

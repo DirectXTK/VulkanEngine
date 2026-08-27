@@ -12,7 +12,7 @@ void GUITestingLayer::OnCreate() {
 	sliderdata.FillOn = true;
 	sliderdata.StructSize = sizeof(GUI::SliderStyle);
 	sliderdata.FillColor = {0.0f,0.0f,1.0f,1.0f};
-	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/",AssetType::NONE);
+	//Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/",AssetType::NONE);
 	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/Examples/Animation/",AssetType::ANIMATION);
 
 	  Asset<Animator> asset= Application::GetAsset<Animator>("PEASawdaawdANT");
@@ -210,7 +210,7 @@ void GUITestingLayer::OnGUI()
 	border.BorderWidth = 0.01f;
 	border.DrawBorder = true;
 	border.BackGroundColor = {0.5f,0.5f,0.5f,1.0f};
-	//gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf",13);
+	gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf",14);
 	
 	
 	gui->PushStyle(GUI::Style::BORDER,&border);
@@ -243,7 +243,8 @@ void GUITestingLayer::OnGUI()
 		m_SpawningEnabled = true;
 	else 
 		m_SpawningEnabled = false;
-	//gui->SetFont("EngineResources/Fonts/Daydream.ttf",13);
+	gui->SetFont("EngineResources/Fonts/Daydream.ttf",14);
+
 	gui->EndPanel();
 
 

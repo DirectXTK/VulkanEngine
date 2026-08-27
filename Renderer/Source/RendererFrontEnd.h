@@ -5,7 +5,7 @@ class Render{
     public:
 
     Render(Renderer* renderer,void* guiRenderer);
-    void StartQueue(Camera2D& camera){m_ViewProj[m_CurrentFrame] = camera.GetViewProj();m_CameraPos[m_CurrentFrame] = camera.GetPosition(); m_CameraSize[m_CurrentFrame] = camera.GetScale();}
+    void StartQueue(Camera2D& camera);
     void StartGUIQueue();
     
     void DrawQuad(const Float2& pos,const Float4& color,const Float2&size,GUUID id,Animator animation);
@@ -35,6 +35,9 @@ class Render{
 
     Float2 GetCameraSize(){return m_CameraSize[m_RenderedFrameIndex];}
     Float2 GetCameraPos(){return m_CameraPos[m_RenderedFrameIndex];}
+
+    //make this protected
+    void UpdateContent();
 
     ~Render();
 

@@ -103,6 +103,9 @@ public:
     static void SetRendererThreadFrameTime(const float& frameTime){Application::GetApplication()->m_RendererThreadFrameTime = frameTime;}
     static float GetRendererThreadFrameTime(){return Application::GetApplication()->m_RendererThreadFrameTime;}
 
+    //make this private/protected
+    static void UpdateContent(uint32_t index);
+
     ~Application();
 private:
     //has to be non static

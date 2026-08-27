@@ -28,10 +28,7 @@ void GUIRenderer::BeginGUI()
 {
 	
 	Renderer* renderer =Application::GetRenderer(); 
-	Buffer* buffer = renderer->GetPickingBuffer(Application::GetRender()->GetRenderedFrame());
-	delete []m_PickBufferData;
-	m_PickBufferData = new Float2[renderer->GetViewPortExtent().width*renderer->GetViewPortExtent().height];
-	buffer->LoadFromBufferToVar(m_PickBufferData,renderer->GetViewPortExtent().width*renderer->GetViewPortExtent().height*sizeof(Float2));
+	
 }
 
 
@@ -558,12 +555,10 @@ void GUIRenderer::OnKeyBoardEvent(KeyBoardEvent& event){
 }
 void GUIRenderer::OnMouseEvent(MouseEvent& event){
 	Renderer* renderer = Application::GetRenderer();
-	Float2 data{};
-	bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
-
 	if(event.Code == MouseCodes::LEFT && event.State == EventState::PRESSED){
-		if(succeded){
-			m_SelectedObjID = *(uint64_t*)&data;
+		GUUID id =Application::GetCurrentlyHoveredPixelID();	
+		if(id.ID !=0 ){
+			m_SelectedObjID = id;
 			m_CurrentlySelectedObject = m_SelectedObjID;
 			m_DraggedPanel = m_SelectedObjID;
 		}
@@ -613,6 +608,5 @@ void GUIRenderer::EndGUI()
 }
 	GUIRenderer::~GUIRenderer(){
 
-		delete[] m_PickBufferData;
 	}
 

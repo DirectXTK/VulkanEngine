@@ -217,6 +217,13 @@ if(!guiRender){
     m_CommandBufferGUIBeginIndex=0;
     cmdB.ResetBuffer();
 }
+void Render::StartQueue(Camera2D& camera){
+    Application::UpdateContent(m_CurrentFrame);
+    m_ViewProj[m_CurrentFrame] = camera.GetViewProj();
+    m_CameraPos[m_CurrentFrame] = camera.GetPosition();
+    m_CameraSize[m_CurrentFrame] = camera.GetScale();
+}
+
 void Render::EndFrame(){
 
     RunCommands();
