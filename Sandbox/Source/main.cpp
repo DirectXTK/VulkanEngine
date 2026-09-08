@@ -17,7 +17,7 @@ int main() {
 	specs.ApplicationVersion = 0.001f;
 	specs.AppDebugging = false;
 	Application::InitApplication(specs);
-	Application::AddLayer<GUITestingLayer>();
+	Application::AddLayer<ExampleMenu>();
 	
 	Application::Run();
 	

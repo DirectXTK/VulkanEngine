@@ -79,6 +79,7 @@ public:
     static float GetScroll();
     static Float2 GetMousePos();
     static Float2 GetMousePosChange();
+    static Float2 GetMousePosChangeNorm();
     static Float2 GetMousePosNorm();
     static Float2 GetWorldMousePos();
     //Assets

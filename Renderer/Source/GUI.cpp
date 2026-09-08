@@ -65,21 +65,15 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 	m_CurrenPanelParent = &m_PanelIDs[id];
 
 	if (Dragable) {
-		if (inputSystem->IsMouseClicked(MouseCodes::LEFT, false)){
-			m_PanelIDs[id].Offset.x = m_PanelIDs[id].Position.x-m_Application->GetMousePosNorm().x;
-			m_PanelIDs[id].Offset.y =m_PanelIDs[id].Position.y -m_Application->GetMousePosNorm().y;
-		}
 		
 		
 		if (m_DraggedPanel == id) 
 		{	
-			Float2 Pos = m_Application->GetMousePosNorm();
-			Float2 Dis = { Pos.x - m_PanelIDs[m_DraggedPanel].Position.x,Pos.y - m_PanelIDs[m_DraggedPanel].Position.y };
-			Dis.x += m_PanelIDs[m_DraggedPanel].Offset.x;
-			Dis.y += m_PanelIDs[m_DraggedPanel].Offset.y;
-
-			m_PanelIDs[m_DraggedPanel].Position.x += Pos.x- m_PanelIDs[m_DraggedPanel].Position.x+ m_PanelIDs[m_DraggedPanel].Offset.x;
-			m_PanelIDs[m_DraggedPanel].Position.y += Pos.y - m_PanelIDs[m_DraggedPanel].Position.y + m_PanelIDs[m_DraggedPanel].Offset.y;
+			Float2 Pos = Application::GetMousePosNorm();
+			
+			m_PanelIDs[m_DraggedPanel].Position.x += Pos.x-m_PanelIDs[id].Offset.x;
+			m_PanelIDs[m_DraggedPanel].Position.y += Pos.y-m_PanelIDs[id].Offset.y;
+			m_PanelIDs[id].Offset = Pos;
 
 		}
 	}
@@ -346,15 +340,18 @@ void GUIRenderer::Slider(const std::string& strID, int* number,const  Float2& Po
 	}
 
 }
-void GUIRenderer::UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,float lineSizeX){
+uint32_t GUIRenderer::UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,uint64_t arrowPosition){
 	lineStarts.clear();
 	lineStarts.push_back(0);
+	uint32_t increment{};
+
 	for(uint32_t i=0 ;i < bufferSize;i++){
 		if(buffer[i] =='\0')
 			break;
 		if(buffer[i] == '\n')
 			lineStarts.push_back(i+1);
 	}
+	return increment;
 }
 void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size,bool scrollable) {
 	Float2 rSize{Size};
@@ -378,7 +375,7 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 	ApplyCurrentStyles(lPosition,rSize,color,id);
 	if(scrollable){
 		
-
+		int64_t lineIndex = m_InputTextData[id].ScrollYIndex;
 		float totalLogicalPosYSize{rSize.y};
 		float logicalPosY{};
 
@@ -400,12 +397,12 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 		}
 		if(m_InputTextInputEvent){
 
-		UpdateLineStarts(m_InputTextData[id].LineStarts,Buffer,BufferSize,0);
+		UpdateLineStarts(m_InputTextData[id].LineStarts,Buffer,BufferSize,m_FontSystem->GetArrowPosition());
+		
 		//make the pointer functional again with added scrolling.
 		m_InputTextInputEvent = false;
 		}
 		//calculate how much chars fit in this window 
-		int64_t lineIndex = m_InputTextData[id].ScrollYIndex;
 
 		if(lineIndex+1 >= m_InputTextData[id].LineStarts.size())
 		lineIndex =m_InputTextData[id].LineStarts.size()-1;
@@ -540,6 +537,7 @@ void GUIRenderer::OnEvent(Event& event){
 		OnInputTextEvent((InputTextEvent&)event);
 }
 void GUIRenderer::OnInputTextEvent(InputTextEvent& event){
+	Core::Log("Here");
 	if(m_CurrentlySelectedObject !=0){
 		auto it = m_InputTextData.find(m_CurrentlySelectedObject);
 		if(it != m_InputTextData.end()){
@@ -561,6 +559,11 @@ void GUIRenderer::OnMouseEvent(MouseEvent& event){
 			m_SelectedObjID = id;
 			m_CurrentlySelectedObject = m_SelectedObjID;
 			m_DraggedPanel = m_SelectedObjID;
+		}
+		if(m_PanelIDs.find(m_DraggedPanel) != m_PanelIDs.end()){
+			m_PanelIDs[id].Offset.x = m_Application->GetMousePosNorm().x;
+			m_PanelIDs[id].Offset.y =m_Application->GetMousePosNorm().y;
+
 		}
 
 

@@ -56,9 +56,6 @@ void LayerController::RunQueue(){
 		return;
 	//wait for rendering to complete
 	if(m_CommandQueue.size() != 0){
-		while(Application::GetRender()->GetReadyFrameCount() !=0){
-			Core::Log("StillWaiting");
-		}
 		Application::GetRenderer()->WaitForIdle();
 	}
 	if(!m_CommandQueue.empty()){

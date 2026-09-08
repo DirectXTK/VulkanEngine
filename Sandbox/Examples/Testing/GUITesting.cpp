@@ -224,7 +224,8 @@ void GUITestingLayer::OnGUI()
 	gui->Slider("Borderg",&borderColor.g,{-0.1f,0.6f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("Borderb",&borderColor.b,{-0.1f,0.4f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 
-
+	
+	
 	gui->InputText("UserName",username,ARRAYSIZE(username),{0.0f,-0.5f},{0.5f,0.2f},true);
 	
 	gui->PopStyle();
@@ -243,7 +244,6 @@ void GUITestingLayer::OnGUI()
 		m_SpawningEnabled = true;
 	else 
 		m_SpawningEnabled = false;
-	gui->SetFont("EngineResources/Fonts/Daydream.ttf",14);
 
 	gui->EndPanel();
 

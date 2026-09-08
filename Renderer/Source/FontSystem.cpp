@@ -179,17 +179,18 @@ void FontSystem::OnMouseEvent(MouseEvent& event){
 }
 void FontSystem::OnTextEvent(TextEvent& event){
 	char insertedChar= event.KeyChar;
+	//when filling the text buffer to the max when deleting it creates the last character every time it delete one
+	//After a few lines some font chars get distorted
 			
-		Core::Log("dwada");
 		if(m_CurrentlySelectedInputData !=0){
 			auto it = m_InputTextData.find(m_CurrentlySelectedInputData);
 			if(it != m_InputTextData.end()){
 			InputTextData data = it->second;
-
-			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
+			if(m_ArrowPosition == data.bufferSize)
+				return;
+			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition-1);
 			data.buffer[m_ArrowPosition] = insertedChar;
-			if(m_ArrowPosition != data.bufferSize-1)
-				m_ArrowPosition++;
+			m_ArrowPosition++;
 			InputTextEvent event{};
 			event.AddedChar = insertedChar;
 			Application::DispatchEvent(event);
@@ -218,11 +219,12 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 			if(m_ArrowPosition != 0)
 			{
 				InputTextEvent event{};
-				event.RemovedChar = data.buffer[m_ArrowPosition-1];
-				memccpy(data.buffer+m_ArrowPosition-1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
+				//event.RemovedChar = data.buffer[m_ArrowPosition-1];
 				m_ArrowPosition--;
+				memccpy(data.buffer+m_ArrowPosition,data.buffer+m_ArrowPosition+1,0,data.bufferSize-m_ArrowPosition);
+				//data.buffer[m_ArrowPosition+1] = 0;
 
-				Application::DispatchEvent(event);
+				//Application::DispatchEvent(event);
 			}
 		}else if(event.Key == KeyCodes::ENTER){
 			char insertedChar = '\n';
@@ -390,7 +392,7 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 
 	//DrawBorder(Position, Size, SelectID);
 
-	renderer->DrawText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
+	renderer->DrawText(Message,strlen(Message)+1, { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
 
 }
 void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)

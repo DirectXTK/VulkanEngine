@@ -58,7 +58,7 @@ void KeyCallBack(GLFWwindow* window,int Key,int ScanCode,int action,int mods){
             : XKB_KEY_UP
     );
 
-    if (action != GLFW_PRESS)
+    if (action == GLFW_RELEASE )
         return;
 
     char buf[2];

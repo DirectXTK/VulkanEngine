@@ -66,7 +66,8 @@ private:
 
 	void ApplyCurrentStyles( Float2& position, Float2& size, Float4& color,GUUID id =0);
 
-	void UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,float lineSizeX);
+	//returns offset for current line is more characters are added
+	uint32_t UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,uint64_t arrowPosition);
 
 	void DrawTooltips();
 	friend Application;

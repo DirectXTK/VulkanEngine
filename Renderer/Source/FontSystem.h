@@ -40,6 +40,7 @@ public:
 
 	uint32_t GetWidthOfChar();
 	uint32_t GetHeightOfChar();
+	uint64_t GetArrowPosition(){return m_ArrowPosition;}
 
 	Texture* GetFontAtlas();
 
@@ -53,7 +54,7 @@ public:
 	// MaxCharacters 0 means unlimited.
 	//Returns true then max characters has been reached.
 	void InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size,uint64_t stringOffset=0);
-
+	
 
 	void Text(const char* StrID,const char* Message, Float2 Position, Float2 MaxSize = {0.f,0.f});
 	void Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize = { 0.f,0.f });

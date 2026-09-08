@@ -199,6 +199,10 @@ Float2 Application::GetMousePosChange(){
     Application* app = Application::GetApplication();
     return app->m_InputSystem.GetMousePosChange();
 }
+Float2 Application::GetMousePosChangeNorm(){
+    Application* app = Application::GetApplication();
+    return { (app->m_InputSystem.GetMousePosChange().x/app->m_Renderer->GetViewPortExtent().width*0.f),(app->m_InputSystem.GetMousePosChange().y / app->m_Renderer->GetViewPortExtent().height)};
+}
     uint64_t Application::GetAssetCount(const AssetType& type){
         Application* app = Application::GetApplication();
         return app->m_AssetManager.GetAssetCount(type);
@@ -227,8 +231,6 @@ Float2 Application::GetMousePosChange(){
     Application* app = GetApplication();
     Float2 MousePos = GetMousePos();
     Float2 rawID{};
-    //FIX
-    return GUUID(0);
     if(!Core::ReadPixel(app->m_PickBuffer,app->m_Renderer->GetViewPortExtent().width,app->m_Renderer->GetViewPortExtent().height,MousePos.x,MousePos.y,&rawID)){
         return GUUID(0);
     }
@@ -240,11 +242,8 @@ void Application::DrawRendererStatistics(){
        GUIRenderer* gui = (GUIRenderer*)Application::GetGUIRenderer();
         RendererStatistics& statistics = Application::GetApplication()->m_RendererStatistics;    
   
-       // Asset<Font> font = Application::GetAsset<Font>("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
-       // if(!font){
-          //  return;            
-        //}
-              //Application::GetRender()->SetFont(Asset<Font>(),14);
+      //  Asset<Font> font = Application::GetAsset<Font>("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
+              gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf",0);
             gui->Panel("GuiStatistics",{-0.7f,0.7f},{1.0f,1.0f,0.5f,1.0f},{0.3f,0.3f});
 
             GUI::BorderStyle style{sizeof(GUI::BorderStyle)};
@@ -253,9 +252,18 @@ void Application::DrawRendererStatistics(){
             style.BorderColor = {1.0f,0.0f,0.0f,1.0f};
             style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
             gui->PushStyle(GUI::Style::BORDER,&style);
+
+            if(gui->IsObjectHovered("DrawCallCount"))
+                gui->Tooltip("Last frame total\ndraw call count",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f},Core::GetStringHash("DrawCallCount"));
             gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(statistics.DrawCallCount),{0.0f,0.90f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+            if(gui->IsObjectHovered("TriangleCount"))
+                gui->Tooltip("Last frame \ntotal triangle count",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f},Core::GetStringHash("TriangleCount"));
             gui->Text("TriangleCount","TRIANGLE: "+std::to_string(uint32_t(statistics.VertexCount/3.f)),{0.0f,0.70f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+            if(gui->IsObjectHovered("VertexCount"))
+                gui->Tooltip("Last frame total vertex count",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f},Core::GetStringHash("VertexCount"));
             gui->Text("VertexCount","VERTEX: "+std::to_string(statistics.VertexCount),{0.0f,0.50f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+               if(gui->IsObjectHovered("Instance"))
+                gui->Tooltip("Last frame total instance count",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f},Core::GetStringHash("Instance"));
             gui->Text("Instance","INSTANCE: "+std::to_string(statistics.InstanceCount),{0.0f,0.30f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
 
             std::string deltatimeString = std::to_string(statistics.ApplicationThreadFrameTime);
@@ -263,12 +271,16 @@ void Application::DrawRendererStatistics(){
             uint64_t Index = deltatimeString.find_last_of(".");
             uint32_t Prec = 3;
             deltatimeString = deltatimeString.substr(0,Index+Prec);
+            if(gui->IsObjectHovered("Frametime"))
+                gui->Tooltip("Last frame time for the main thread",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f},Core::GetStringHash("Frametime"));
             gui->Text("Frametime","FRAMETIME: "+deltatimeString,{0.0f,0.10f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
 
             deltatimeString = std::to_string(statistics.RendererThreadFrameTime);
             Index = deltatimeString.find_last_of(".");
             deltatimeString = deltatimeString.substr(0,Index+Prec);
-            gui->Text("RendererThread time:","FRAMETIMERENDER"+deltatimeString,{0.0f,-0.1f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+            if(gui->IsObjectHovered("RenderThreadTime"))
+                gui->Tooltip("Last frame time \nfor the renderer\n thread",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f});
+            gui->Text("RenderThreadTime","FRAMETIMERENDER"+deltatimeString,{0.0f,-0.1f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
 
             gui->PopStyle();
             gui->EndPanel();
@@ -319,16 +331,7 @@ void Application::UpdateContent(uint32_t index){
 
     Buffer* buffer = Application::GetRenderer()->GetPickingBuffer(index);
     Application* app = Application::GetApplication();
-    if(buffer->GetBufferDesc().SizeBytes != app->m_PickBufferSize){
-        //delete[] app->m_PickBuffer;
-
-       // Core::Log("old size",app->m_PickBufferSize);
-       // app->m_PickBufferSize = Application::GetRenderer()->GetViewPortExtent().height*Application::GetRenderer()->GetViewPortExtent().width*sizeof(GUUID);   
-      //  app->m_PickBuffer = new Float2[Application::GetRenderer()->GetViewPortExtent().height*Application::GetRenderer()->GetViewPortExtent().width];
-        //Core::Log("new size",app->m_PickBufferSize);
-    }
-        //Core::Log("new sizedwadwad",Application::GetRenderer()->GetViewPortExtent().height*Application::GetRenderer()->GetViewPortExtent().width );
-
+  
     buffer->LoadFromBufferToVar(Application::GetApplication()->m_PickBuffer,Application::GetApplication()->m_PickBufferSize);
 
 }
