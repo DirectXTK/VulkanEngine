@@ -179,8 +179,6 @@ void FontSystem::OnMouseEvent(MouseEvent& event){
 }
 void FontSystem::OnTextEvent(TextEvent& event){
 	char insertedChar= event.KeyChar;
-	//when filling the text buffer to the max when deleting it creates the last character every time it delete one
-	//After a few lines some font chars get distorted
 			
 		if(m_CurrentlySelectedInputData !=0){
 			auto it = m_InputTextData.find(m_CurrentlySelectedInputData);
@@ -219,19 +217,19 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 			if(m_ArrowPosition != 0)
 			{
 				InputTextEvent event{};
-				//event.RemovedChar = data.buffer[m_ArrowPosition-1];
+				event.RemovedChar = data.buffer[m_ArrowPosition-1];
 				m_ArrowPosition--;
 				memccpy(data.buffer+m_ArrowPosition,data.buffer+m_ArrowPosition+1,0,data.bufferSize-m_ArrowPosition);
 				//data.buffer[m_ArrowPosition+1] = 0;
 
-				//Application::DispatchEvent(event);
+				Application::DispatchEvent(event);
 			}
 		}else if(event.Key == KeyCodes::ENTER){
 			char insertedChar = '\n';
 
 			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
 			data.buffer[m_ArrowPosition] = insertedChar;
-			if(m_ArrowPosition != data.bufferSize-1)
+			if(m_ArrowPosition <= data.bufferSize-2)
 				m_ArrowPosition++;
 			InputTextEvent event{};
 			event.AddedChar = insertedChar;
@@ -267,6 +265,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	GUUID SelectID = Core::GetStringHash(ID);
 	bool ScrollableBoundBox{};
 	Render* render = Application::GetRender();
+	static float copyMsgDuration{};
 
 
 	Float2 BoundingBox[4];
@@ -276,8 +275,13 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	BoundingBox[3] = { Position.x + Size.x,Position.y - Size.y};
 	
 	if(m_CopyTriggered&&m_CurrentlySelectedInputData == SelectID){
+		copyMsgDuration = SEC(1.0f); 
 		Application::CopyToClipBoard(std::string_view(Buffer,BufferSize));
 		m_CopyTriggered = false;
+	}
+	if(copyMsgDuration>0.0f){
+		render->DrawText("Copied",ARRAYSIZE("Copied"),Position,BoundingBox,m_Padding,m_CharacterSize,0,-1);
+		copyMsgDuration -=Application::GetDeltaTime();
 	}
 
 	m_InputTextData[SelectID] = {BufferSize,Buffer,Size};
@@ -292,10 +296,10 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 			if(m_PointerCooldown <=0.0f)
 				m_IsArrowActive = true;
 		}
-		//fins the pos according to mouse pos
+		//pins the pos according to mouse pos
 		if(m_ArrowPosition == std::numeric_limits<uint64_t>::max()){
 
-			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[0].y},Size)+m_ArrowPositionOffset;
+			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[0].y},Size);
 		}
 
 
@@ -305,7 +309,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 				m_IsArrowActive = false;
 				
 			}
-			render->DrawText(Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition-m_ArrowPositionOffset);
+			render->DrawText(Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition-stringOffset);
 			return;
 		}
 	}
@@ -542,7 +546,7 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 			return asset;
 	}
 
-
+	//Fix the blurred text for example check ! 
 	FT_Error error = FT_Set_Char_Size(m_Face, 0, (m_CharacterSize)*64, (uint32_t)dpi, (uint32_t)dpi);
 	if (error) {
 		Core::Log(ErrorType::Error, "Failed to set the font char size");

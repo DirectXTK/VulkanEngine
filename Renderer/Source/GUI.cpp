@@ -375,7 +375,6 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 	ApplyCurrentStyles(lPosition,rSize,color,id);
 	if(scrollable){
 		
-		int64_t lineIndex = m_InputTextData[id].ScrollYIndex;
 		float totalLogicalPosYSize{rSize.y};
 		float logicalPosY{};
 
@@ -389,7 +388,7 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 				it->second.ScrollYIndex -= m_Scroll;
 				
 			}
-			it->second.ScrollYIndex = std::clamp(it->second.ScrollYIndex ,(int64_t)0,(int64_t)m_InputTextData[id].LineStarts.size()-1);
+			it->second.ScrollYIndex =std::clamp(it->second.ScrollYIndex ,(int64_t)0,(int64_t)m_InputTextData[id].LineStarts.size()-1);
 			totalLogicalPosYSize =m_InputTextData[id].LineStarts.size();
 			if(m_Scroll !=0.0f && m_CurrentlySelectedObject == id){
 					m_FontSystem->ChangeArrowOffset(m_InputTextData[id].LineStarts[it->second.ScrollYIndex]);
@@ -403,6 +402,7 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 		m_InputTextInputEvent = false;
 		}
 		//calculate how much chars fit in this window 
+		int64_t lineIndex = m_InputTextData[id].ScrollYIndex;
 
 		if(lineIndex+1 >= m_InputTextData[id].LineStarts.size())
 		lineIndex =m_InputTextData[id].LineStarts.size()-1;
@@ -536,20 +536,33 @@ void GUIRenderer::OnEvent(Event& event){
 	else if(event.GetEventType() == EventType::INPUTTEXTEVENT)
 		OnInputTextEvent((InputTextEvent&)event);
 }
+void GUIRenderer::CalculateInputTextScrollYIndex(GUIRenderer::InputTextData& data,InputTextEvent& event){
+	if(event.AddedChar == '\n')
+	{
+		data.ScrollYIndex++;
+		return;
+	}
+
+	if(data.ScrollYIndex !=0){
+		if(event.RemovedChar !=0){
+			uint64_t beginCharIndex =data.LineStarts[data.ScrollYIndex];
+			uint64_t penPos = m_FontSystem->GetArrowPosition();
+			if(penPos < beginCharIndex)
+				data.ScrollYIndex--;
+		}
+	}
+}
 void GUIRenderer::OnInputTextEvent(InputTextEvent& event){
-	Core::Log("Here");
 	if(m_CurrentlySelectedObject !=0){
 		auto it = m_InputTextData.find(m_CurrentlySelectedObject);
 		if(it != m_InputTextData.end()){
+			CalculateInputTextScrollYIndex(it->second,event);
 			m_InputTextInputEvent = true;
 		}
 
 	}
-
-
 }
 void GUIRenderer::OnKeyBoardEvent(KeyBoardEvent& event){
-
 }
 void GUIRenderer::OnMouseEvent(MouseEvent& event){
 	Renderer* renderer = Application::GetRenderer();

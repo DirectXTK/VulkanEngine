@@ -97,6 +97,11 @@ private:
 	struct CheckBoxData{
 		bool IsClicked{false};
 	};
+
+	void CalculateInputTextScrollYIndex(GUIRenderer::InputTextData& data,InputTextEvent& event);
+
+
+
 	std::unordered_map<std::string, ButtonData> m_Buttons{};
 	std::unordered_map<std::string, PanelData> m_Panels{};
 	std::unordered_map<std::string, SliderData> m_Sliders{};

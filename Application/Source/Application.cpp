@@ -278,9 +278,9 @@ void Application::DrawRendererStatistics(){
             deltatimeString = std::to_string(statistics.RendererThreadFrameTime);
             Index = deltatimeString.find_last_of(".");
             deltatimeString = deltatimeString.substr(0,Index+Prec);
-            if(gui->IsObjectHovered("RenderThreadTime"))
-                gui->Tooltip("Last frame time \nfor the renderer\n thread",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f});
-            gui->Text("RenderThreadTime","FRAMETIMERENDER"+deltatimeString,{0.0f,-0.1f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+         //   if(gui->IsObjectHovered("RenderThreadTime"))
+           //     gui->Tooltip("Last frame time \nfor the renderer\n thread",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f});
+         //   gui->Text("RenderThreadTime","FRAMETIMERENDER"+deltatimeString,{0.0f,-0.1f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
 
             gui->PopStyle();
             gui->EndPanel();

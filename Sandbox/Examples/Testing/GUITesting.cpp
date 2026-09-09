@@ -23,10 +23,11 @@ void GUITestingLayer::OnCreate() {
 
 	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/Sacrifice.ttf");
 	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/Daydream.ttf");
-	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
+	auto asset3 =Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
 	auto asset2 = Application::GetAsset<Texture>("FontTexture"+std::to_string(Application::GetGUIRenderer()->GetFontSize()));
-	if(asset2){
-		asset2.GetData()->WriteToFile("OutputTexture.png");
+
+	if(asset3){
+		asset3.GetData()->TextureAsset.GetData()->WriteToFile("OutputTexture.png");
 	}
 
    Renderer* renderer = Application::GetRenderer();
@@ -232,7 +233,7 @@ void GUITestingLayer::OnGUI()
 
 	//Wierd placement when using multuple tooltips.
 	if(gui->IsObjectHovered("Check") || timeHovered >SEC(1.0f)){
-			timeHovered+=Application::GetDeltaTime();
+		timeHovered+=Application::GetDeltaTime();
 		gui->Tooltip("SPAWNS FIREPARTICLES",{0.1f,0.1f},{0.0f,0.2f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f},Core::GetStringHash("CheckTooltip"));
 
 	}
