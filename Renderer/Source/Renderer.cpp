@@ -1333,7 +1333,7 @@ void Renderer::SubmitDrawParticleCommands(){
    
     }
     float Renderer::GetFONTDPI(){
-        return 96;
+        return 72;
     }
     void Renderer::RenderText(const char* Message,uint64_t bufferSize, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
     {

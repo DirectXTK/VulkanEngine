@@ -184,7 +184,7 @@ void FontSystem::OnTextEvent(TextEvent& event){
 			auto it = m_InputTextData.find(m_CurrentlySelectedInputData);
 			if(it != m_InputTextData.end()){
 			InputTextData data = it->second;
-			if(m_ArrowPosition == data.bufferSize)
+			if(m_ArrowPosition+1 >= data.bufferSize)
 				return;
 			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition-1);
 			data.buffer[m_ArrowPosition] = insertedChar;
@@ -220,11 +220,14 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 				event.RemovedChar = data.buffer[m_ArrowPosition-1];
 				m_ArrowPosition--;
 				memccpy(data.buffer+m_ArrowPosition,data.buffer+m_ArrowPosition+1,0,data.bufferSize-m_ArrowPosition);
-				//data.buffer[m_ArrowPosition+1] = 0;
+
+				data.buffer[m_ArrowPosition+1] = 0;
 
 				Application::DispatchEvent(event);
 			}
 		}else if(event.Key == KeyCodes::ENTER){
+
+			
 			char insertedChar = '\n';
 
 			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);

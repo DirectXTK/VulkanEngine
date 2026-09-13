@@ -377,8 +377,8 @@ void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTilin
 	//Maybe something with the spacing or placing of the quad that houses the texture.
 	//Create Sampler //TEMP
 	VkSamplerCreateInfo samplercreateinfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-	samplercreateinfo.minFilter = VK_FILTER_NEAREST;
-	samplercreateinfo.magFilter = VK_FILTER_NEAREST;
+	samplercreateinfo.minFilter = VK_FILTER_LINEAR;
+	samplercreateinfo.magFilter = VK_FILTER_LINEAR;
 	samplercreateinfo.anisotropyEnable = false;
 	samplercreateinfo.maxAnisotropy = Anisotropy;
 	samplercreateinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

@@ -26,12 +26,8 @@ void GUITestingLayer::OnCreate() {
 	auto asset3 =Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
 	auto asset2 = Application::GetAsset<Texture>("FontTexture"+std::to_string(Application::GetGUIRenderer()->GetFontSize()));
 
-	if(asset3){
-		asset3.GetData()->TextureAsset.GetData()->WriteToFile("OutputTexture.png");
-	}
 
    Renderer* renderer = Application::GetRenderer();
-
 
 }
 struct FireParticleData{
