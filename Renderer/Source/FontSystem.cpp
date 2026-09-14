@@ -110,20 +110,39 @@ uint64_t FontSystem::FindMousePosInText(const Float2& mousePos,char* Buffer,uint
 	float arrowPixelY = Core::ToScreenPixels(mousePos).y;
 	float smallestDist{std::numeric_limits<float>::max()};
 	uint32_t currentLine{0};
-	Float2 sizeInPixels = Core::ToScreenPixels(	{size.x,size.y});
+	Float2 sizeInPixels = {	size.x*Application::GetRenderer()->GetViewPortExtent().width,size.y*Application::GetRenderer()->GetViewPortExtent().height};
+	sizeInPixels.x +=arrowPos.x;
+	sizeInPixels.y +=arrowPos.y;
+	float pixelSize=size.y*Application::GetRenderer()->GetViewPortExtent().height;
 	
 
-	arrowPixelY = std::fabs(arrowPixelY-arrowPos.y);
-	arrowPixelY = size.y*Application::GetRenderer()->GetViewPortExtent().height/m_CurrentFont.GetData()->NewLineSize;
-	
-	arrowPixelY -=(((arrowPos.y-Core::ToScreenPixels(mousePos).y))/m_CurrentFont.GetData()->NewLineSize); 
-
+	//arrowPixelY = std::fabs(arrowPixelY-arrowPos.y);
+	arrowPixelY = pixelSize/m_CurrentFont.GetData()->NewLineSize;
 	arrowPixelY = std::floor(arrowPixelY);
+
+	//Somehow the mouse can go outside the y coordinate of the inputtext window
+	if(mousePos.y > Position.y || mousePos.y < Position.y-size.y-size.y){
+		Core::Log(ErrorType::Warning,"Out of bounds");
+		return 0;
+	}
+
+	arrowPixelY =std::fabs(Position.y - mousePos.y);
+	arrowPixelY =(arrowPixelY*0.5f*Application::GetRenderer()->GetViewPortExtent().height)/m_CurrentFont.GetData()->NewLineSize;
+	arrowPixelY = std::floor(arrowPixelY); 
+
+
+
+
+
+	arrowPos.x +=m_Padding;
+
+
 	for(uint32_t i =0;i < BufferSize;i++){
 
 		if(Buffer[i] == '\0'){
 			return i;
 		}
+		//jump to next line if new line char of if character got beyond bounds and then draw on the other line.
 		if(Buffer[i] == '\n'||arrowPos.x+m_CurrentFont.GetData()->Advance[Buffer[i]].x >= sizeInPixels.x){
 			if(currentLine == arrowPixelY){
 				return i;
@@ -131,8 +150,10 @@ uint64_t FontSystem::FindMousePosInText(const Float2& mousePos,char* Buffer,uint
 			arrowPos = Core::ToScreenPixels(Position);
 			currentLine++;
 		}
-		arrowPos.x += m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
 		
+		//half char size	
+		float charHalfWidth = m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
+		arrowPos.x += charHalfWidth;
 		if(currentLine == arrowPixelY){
 			
 		
@@ -140,12 +161,17 @@ uint64_t FontSystem::FindMousePosInText(const Float2& mousePos,char* Buffer,uint
 		//arrowPos.y +=m_CurrentFont.GetData()->Advance[Buffer[i]].y;
 
 		Float2 normArrowPos = Core::ToNDC(arrowPos);
+		Core::Log(arrowPos);
 		float temp = std::fabs(normArrowPos.x-mousePos.x);
-		if(mousePos.x < normArrowPos.x){
+		Core::Log(normArrowPos,",",mousePos,"Index",i);
+		if(normArrowPos.x>= mousePos.x){
+		Core::Log("Returned",normArrowPos,",",mousePos,"index ",i);
+
 			return i;
 		}
 		}
-		arrowPos.x += m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
+		arrowPos.x += charHalfWidth;
+
 
 
 		
@@ -302,7 +328,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		//pins the pos according to mouse pos
 		if(m_ArrowPosition == std::numeric_limits<uint64_t>::max()){
 
-			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[0].y},Size);
+			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[1].y},Size);
 		}
 
 

@@ -1453,12 +1453,7 @@ void Renderer::SubmitDrawParticleCommands(){
             }
  
 
-            float RemainingOffset{};
-
-            RemainingOffset = CharSizePixels - font->Coords[LetterIndex].Width;
-            if (RemainingOffset > 0)
-                OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
-
+   
             MaxCord = font->MaxCord[LetterIndex];
             MinCord = font->MinCord[LetterIndex];
             advance = font->Advance[LetterIndex];
@@ -1472,10 +1467,10 @@ void Renderer::SubmitDrawParticleCommands(){
             MinCord.y = baselineY+MinCord.y;
             MaxCord.y = baselineY+MaxCord.y;
 
-            MinCord.x = penPosX;
-            MaxCord.x = penPosX+advance.x;
+            MinCord.x += penPosX;
+            MaxCord.x += penPosX;
 
-        
+            //Here here Somehow if using character which advance is bigger then the input text selecting is disturbed even more .
 
             Float2 glyphPosPixelMin = Core::ToNDC(MinCord);
             Float2 glyphPosPixelMax =Core::ToNDC(MaxCord);
@@ -1520,11 +1515,7 @@ void Renderer::SubmitDrawParticleCommands(){
           penPosX += advance.x;
           //penPosY -= advance.y;
 
-            if (RemainingOffset > 0)
-                OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
-    
-
-
+         
      
 
           
