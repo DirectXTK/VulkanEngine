@@ -132,9 +132,8 @@ uint64_t FontSystem::FindMousePosInText(const Float2& mousePos,char* Buffer,uint
 
 
 
+	//fix the not being able to select other lines when scrolling remember Buffer+ has offset.
 
-
-	arrowPos.x +=m_Padding;
 
 
 	for(uint32_t i =0;i < BufferSize;i++){
@@ -143,29 +142,23 @@ uint64_t FontSystem::FindMousePosInText(const Float2& mousePos,char* Buffer,uint
 			return i;
 		}
 		//jump to next line if new line char of if character got beyond bounds and then draw on the other line.
-		if(Buffer[i] == '\n'||arrowPos.x+m_CurrentFont.GetData()->Advance[Buffer[i]].x >= sizeInPixels.x){
+		if(Buffer[i] == '\n'||arrowPos.x >= sizeInPixels.x){
 			if(currentLine == arrowPixelY){
 				return i;
 			}
+
 			arrowPos = Core::ToScreenPixels(Position);
 			currentLine++;
 		}
-		
 		//half char size	
 		float charHalfWidth = m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
 		arrowPos.x += charHalfWidth;
 		if(currentLine == arrowPixelY){
 			
-		
-
-		//arrowPos.y +=m_CurrentFont.GetData()->Advance[Buffer[i]].y;
 
 		Float2 normArrowPos = Core::ToNDC(arrowPos);
-		Core::Log(arrowPos);
 		float temp = std::fabs(normArrowPos.x-mousePos.x);
-		Core::Log(normArrowPos,",",mousePos,"Index",i);
 		if(normArrowPos.x>= mousePos.x){
-		Core::Log("Returned",normArrowPos,",",mousePos,"index ",i);
 
 			return i;
 		}
@@ -328,7 +321,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		//pins the pos according to mouse pos
 		if(m_ArrowPosition == std::numeric_limits<uint64_t>::max()){
 
-			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[1].y},Size);
+			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[1].y},Size)+stringOffset;
 		}
 
 

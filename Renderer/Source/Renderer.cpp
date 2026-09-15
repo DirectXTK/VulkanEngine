@@ -1385,7 +1385,7 @@ void Renderer::SubmitDrawParticleCommands(){
             m_TextureStorageBufferLoadedTextures[m_CurrentFrame][TextureHandle]= {0,m_CurrentTextureDescriptorSetOffset};
             m_CurrentTextureDescriptorSetOffset++;
         }
-
+        //Draw pointer
         if(stringLen == 0 && PointerIndex != -1){
                    Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY-(CharSizePixels*0.25f)});
                 Float2 sizeNDC = {(float)m_CurrentFont.GetData()->FontSize/(float)GetViewPortExtent().width*0.15f,(float)m_CurrentFont.GetData()->FontSize/GetViewPortExtent().height*1.25f};

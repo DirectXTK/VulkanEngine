@@ -171,13 +171,14 @@ Render:
 
                 }else{
 		            m_Renderer->SetCurrentFont(data->fontAsset);
+                    Application::GetApplication()->m_FontSystem->SetFont(data->fontAsset.GetID());
                 }
             }else{
                 std::string& name = m_Renderer->GetCurrentFont().GetData()->FontName;
                 GUUID id = FONTID(name,data->charSize);
                 Asset<Font> newFont = Application::GetAsset<Font>(id);
                 if(newFont){
-                    
+                    Application::GetApplication()->m_FontSystem->SetFont(newFont.GetID());
 		            m_Renderer->SetCurrentFont(newFont);
 
                 }else{
