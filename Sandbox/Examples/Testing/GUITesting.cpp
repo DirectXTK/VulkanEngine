@@ -198,6 +198,7 @@ void GUITestingLayer::OnGUI()
 	static Float4 panelColor{1.0f,1.0f,1.0f,1.0f};
 	static Float4 borderColor{1.0f,1.0f,1.0f,1.0f};
 	static char username[50]{};
+	username[49] = '\0';
 	static float timeHovered{};
 
 
@@ -244,6 +245,11 @@ void GUITestingLayer::OnGUI()
 
 	gui->EndPanel();
 
+
+	static char assets[1000]{};
+	//The pointer can get past the last char and disappear.
+	Application::GetAssetManager()->DebugStatistics(true);
+	//gui->InputText("UserName",assets,ARRAYSIZE(assets),{0.0f,-0.5f},{0.5f,0.2f},true);
 
 
 	//Application::GetAssetManager()->DebugStatistics(true);

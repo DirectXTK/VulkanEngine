@@ -353,7 +353,7 @@ uint32_t GUIRenderer::UpdateLineStarts(std::vector<uint64_t>& lineStarts,const c
 	}
 	return increment;
 }
-void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size,bool scrollable) {
+void GUIRenderer::InputText(const char* ID,const char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size,bool scrollable) {
 	Float2 rSize{Size};
 	Float2 lPosition{Position};
 	GUUID id = Core::GetStringHash(ID);
@@ -363,7 +363,7 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 	Float4 sliderButtonColor{0.35f,0.4,0.4f,0.9f};
 	
 	
-	BufferSize-=1;
+	//BufferSize-=1;
 
 	if (m_CurrenPanelParent) {
 		lPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
@@ -413,11 +413,11 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 		//logicalPosY= (lPosition.y+(Size.y*0.5f*0.1f/totalLogicalPosYSize));
 		logicalPosY = lPosition.y+rSize.y-(lineIndex*rSize.y/totalLogicalPosYSize*2.0f)-rSize.y/totalLogicalPosYSize;
 
-		m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize,m_InputTextData[id].LineStarts[lineIndex]);
+		m_FontSystem->InputText(ID, (char*)Buffer, BufferSize, lPosition, rSize,m_InputTextData[id].LineStarts[lineIndex]);
 
 		//scroll bar
 		Float2 scrollbarBarSize{rSize.x*0.05f,rSize.y};
-		float scrollBarOffsetFromSideX{0};
+		float scrollBarOffsetFromSideX{scrollbarBarSize.x};
 
 
 		renderer->DrawQuad({lPosition.x+rSize.x+scrollBarOffsetFromSideX,lPosition.y},sliderBarColor,scrollbarBarSize,0);
@@ -428,7 +428,7 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 
 
 	}else{
-		m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize);
+		m_FontSystem->InputText(ID, (char*)Buffer, BufferSize, lPosition, rSize);
 	}
 
 

@@ -1393,6 +1393,7 @@ void Renderer::SubmitDrawParticleCommands(){
         //Do this for every letter
         float Max{};
         float Min{};
+        Core::Log("Size",stringLen);
         for (uint32_t i = 0; i <= stringLen; i++) {
             Float2 SubTextureSize{};
             Float2 Size{};

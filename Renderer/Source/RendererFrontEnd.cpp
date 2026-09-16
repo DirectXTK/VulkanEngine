@@ -97,7 +97,9 @@ void Render::DrawInstance(const Float2& pos,const Float4& color,const Float2& si
     DrawInstance(pos,color,size,id,animation.GetCurrentTexture().GetID(),animation.GetTextureIndex());
 }
 void Render::DrawText(const char* Message,uint64_t bufferSize, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex){
-    char* msg = new char[bufferSize*sizeof(char)];
+    char* msg = new char[bufferSize*sizeof(char)+1];
+    
+    msg[bufferSize] =0;
     strcpy(msg,Message);
     DrawTextData* data= new DrawTextData();
     data->msg = msg;

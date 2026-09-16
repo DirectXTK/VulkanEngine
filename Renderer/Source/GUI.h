@@ -28,7 +28,7 @@ public:
 	//returns true if checkbox is currently checked
 	bool CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture = 0);
 
-	void InputText(const char* ID, char* Buffer, uint64_t BufferSize, Float2 Position, Float2 Size,bool scrollable = false);
+	void InputText(const char* ID,const char* Buffer, uint64_t BufferSize, Float2 Position, Float2 Size,bool scrollable = false);
 
 	//Applies this only to the next object/item.Size is dependent on on char count and font size.
 	void Tooltip(const std::string& tooltip,const Float2& maxSize,const Float2& posOffset={0.0f,0.0f},const Float4& backGroundColor={0.0f,0.0f,0.0f,0.0f},const Float4& borderColor={0.0f,0.0f,0.0f,0.0f},GUUID id =0);
