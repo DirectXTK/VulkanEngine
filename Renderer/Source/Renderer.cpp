@@ -1346,7 +1346,6 @@ void Renderer::SubmitDrawParticleCommands(){
             Core::Log(ErrorType::Error, "Invalid type must be font{",(uint32_t)m_CurrentFont.GetType(),"}");
             return;
         }
-
         auto& textures = m_TextureStorageBuffer[m_CurrentFrame];
         Font* font = (Font*)m_CurrentFont.GetData();
         Texture* FontAtlasTexture{};
@@ -1391,7 +1390,6 @@ void Renderer::SubmitDrawParticleCommands(){
                 Float2 sizeNDC = {(float)m_CurrentFont.GetData()->FontSize/(float)GetViewPortExtent().width*0.15f,(float)m_CurrentFont.GetData()->FontSize/GetViewPortExtent().height*1.25f};
                 DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, m_ArrowColor, sizeNDC, 0);
         }
-
         //Do this for every letter
         float Max{};
         float Min{};
@@ -1405,7 +1403,9 @@ void Renderer::SubmitDrawParticleCommands(){
             if(PointerIndex ==i  ){
                 Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY-(CharSizePixels*0.25f)});
                 Float2 sizeNDC = {(float)m_CurrentFont.GetData()->FontSize/(float)GetViewPortExtent().width*0.15f,(float)m_CurrentFont.GetData()->FontSize/GetViewPortExtent().height*1.25f};
-                DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, m_ArrowColor, sizeNDC, 0);
+                //if out of bounds
+                if(ndcPenPos.y > BoundingBox[0].y)
+                    DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, m_ArrowColor, sizeNDC, 0);
             }
             if(LetterIndex >= font->GlyphCount)
                 continue;
@@ -1485,7 +1485,7 @@ void Renderer::SubmitDrawParticleCommands(){
                 MinCord = font->MinCord[LetterIndex];
 
                 penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
-                penPosY += 1.0f*+m_CurrentFont.GetData()->FontSize;
+                penPosY += 1.25f*+m_CurrentFont.GetData()->FontSize;
 
                 baselineY = penPosY;
 

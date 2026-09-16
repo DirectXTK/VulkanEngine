@@ -359,8 +359,11 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 	GUUID id = Core::GetStringHash(ID);
 	Render* renderer  = Application::GetRender();
 	Float4 color{};
-	Float4 sliderBarColor{0.5f,0.5,0.5f,0.9f};
+	Float4 sliderBarColor{0.3f,0.45,0.39f,0.9f};
 	Float4 sliderButtonColor{0.35f,0.4,0.4f,0.9f};
+	
+	
+	BufferSize-=1;
 
 	if (m_CurrenPanelParent) {
 		lPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
@@ -374,6 +377,7 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 	}
 	ApplyCurrentStyles(lPosition,rSize,color,id);
 	if(scrollable){
+
 		
 		float totalLogicalPosYSize{rSize.y};
 		float logicalPosY{};
@@ -411,9 +415,15 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 
 		m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize,m_InputTextData[id].LineStarts[lineIndex]);
 
-		renderer->DrawQuad({lPosition.x+rSize.x-rSize.x*0.1f,lPosition.y},sliderBarColor,{rSize.x*0.05f,rSize.y},0);
+		//scroll bar
+		Float2 scrollbarBarSize{rSize.x*0.05f,rSize.y};
+		float scrollBarOffsetFromSideX{0};
 
-		renderer->DrawQuad({lPosition.x+rSize.x-rSize.x*0.1f,logicalPosY},sliderButtonColor,{rSize.x*0.05f,rSize.y/totalLogicalPosYSize},0);
+
+		renderer->DrawQuad({lPosition.x+rSize.x+scrollBarOffsetFromSideX,lPosition.y},sliderBarColor,scrollbarBarSize,0);
+
+		//scroll bar button itself
+		renderer->DrawQuad({lPosition.x+rSize.x+scrollBarOffsetFromSideX,logicalPosY},sliderButtonColor,{scrollbarBarSize.x,scrollbarBarSize.y/totalLogicalPosYSize},0);
 
 
 
@@ -549,6 +559,23 @@ void GUIRenderer::CalculateInputTextScrollYIndex(GUIRenderer::InputTextData& dat
 			uint64_t penPos = m_FontSystem->GetArrowPosition();
 			if(penPos < beginCharIndex)
 				data.ScrollYIndex--;
+		}
+	}
+	uint32_t addedCharIndex{};
+	uint32_t lineIndex{0};
+	for(uint32_t i=0 ;i < data.LineStarts.size();i++){
+		if(addedCharIndex >data.LineStarts[i])
+		{
+			if(i ==0){
+				lineIndex =0;
+				break;
+			}
+			if(i ==data.LineStarts.size()-1){
+				lineIndex = data.LineStarts.size()-1;
+				break;
+			}
+			lineIndex = data.LineStarts[i-1];
+			break;
 		}
 	}
 }

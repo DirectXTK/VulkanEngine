@@ -205,9 +205,11 @@ void FontSystem::OnTextEvent(TextEvent& event){
 			InputTextData data = it->second;
 			if(m_ArrowPosition+1 >= data.bufferSize)
 				return;
-			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition-1);
+			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition-1-1);
 			data.buffer[m_ArrowPosition] = insertedChar;
 			m_ArrowPosition++;
+			Core::Log("m_ArrowPosition",m_ArrowPosition);
+
 			InputTextEvent event{};
 			event.AddedChar = insertedChar;
 			Application::DispatchEvent(event);
@@ -228,7 +230,6 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 				m_ArrowPosition++;
 		}
 		else if(event.Key == KeyCodes::ARROWUP){
-
 		}
 		else if(event.Key == KeyCodes::ARROWDOWN){
 			
@@ -237,10 +238,17 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 			{
 				InputTextEvent event{};
 				event.RemovedChar = data.buffer[m_ArrowPosition-1];
-				m_ArrowPosition--;
-				memccpy(data.buffer+m_ArrowPosition,data.buffer+m_ArrowPosition+1,0,data.bufferSize-m_ArrowPosition);
+				if(m_ArrowPosition+1 == data.bufferSize)
+				{
+					m_ArrowPosition--;
+					data.buffer[m_ArrowPosition] = 0;
 
-				data.buffer[m_ArrowPosition+1] = 0;
+				}else{
+
+					m_ArrowPosition--;
+					memccpy(data.buffer+m_ArrowPosition,data.buffer+m_ArrowPosition+1,0,data.bufferSize-m_ArrowPosition-1);
+				}
+
 
 				Application::DispatchEvent(event);
 			}
