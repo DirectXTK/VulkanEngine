@@ -33,6 +33,10 @@ public:
 	//Applies this only to the next object/item.Size is dependent on on char count and font size.
 	void Tooltip(const std::string& tooltip,const Float2& maxSize,const Float2& posOffset={0.0f,0.0f},const Float4& backGroundColor={0.0f,0.0f,0.0f,0.0f},const Float4& borderColor={0.0f,0.0f,0.0f,0.0f},GUUID id =0);
 
+	//returns true if drop down menu is extended
+	bool DropDownMenu(const std::string& strID, Float2 position, Float4 color, Float2 size);
+	void DropDownMenuItem(const std::string& strID,const Float2 offset,const Float4& color,const Float2& size);
+
 	void EndPanel();
 
 	void PushStyle(const GUI::Style& style,void* Data);
@@ -97,6 +101,12 @@ private:
 	struct CheckBoxData{
 		bool IsClicked{false};
 	};
+	struct DropDownMenuData{
+		bool IsExtended{false};
+		Float2 pos{};
+		Float2 size{};
+		Float2 offset{};
+	};
 
 	void CalculateInputTextScrollYIndex(GUIRenderer::InputTextData& data,InputTextEvent& event);
 
@@ -107,6 +117,7 @@ private:
 	std::unordered_map<std::string, SliderData> m_Sliders{};
 	std::unordered_map<std::string, CheckBoxData> m_CheckBoxes{};
 	std::unordered_map<GUUID, InputTextData> m_InputTextData{};
+	std::unordered_map<GUUID, DropDownMenuData> m_DropDownMenu{};
 
 	bool m_InputTextInputEvent{false};
 
@@ -140,6 +151,8 @@ private:
 	GUUID m_SelectedObjID{0};
 	//Currently selected obj.
 	GUUID m_CurrentlySelectedObject{0};
+
+	DropDownMenuData* m_CurrentDropDownMenu{};
 
 	uint32_t m_PanelDepth{};
 	PanelData* m_CurrenPanelParent{};

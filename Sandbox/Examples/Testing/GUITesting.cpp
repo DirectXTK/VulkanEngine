@@ -226,7 +226,6 @@ void GUITestingLayer::OnGUI()
 	
 	gui->InputText("UserName",username,ARRAYSIZE(username),{0.0f,-0.5f},{0.5f,0.2f},true);
 	
-	gui->PopStyle();
 
 	//Wierd placement when using multuple tooltips.
 	if(gui->IsObjectHovered("Check") || timeHovered >SEC(1.0f)){
@@ -243,12 +242,21 @@ void GUITestingLayer::OnGUI()
 	else 
 		m_SpawningEnabled = false;
 
+	gui->PopStyle();
+
+	
 	gui->EndPanel();
+	//gui->Panel("DropDoPanel",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},0,true);
+	gui->DropDownMenu("DropDownMenu",{0.0f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.3f,0.3f});
+	gui->DropDownMenuItem("Zykt35123123123123",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f});
+	gui->DropDownMenuItem("Zykt",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f});
+	gui->DropDownMenuItem("Zykt2",{0.2f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f});
 
 
-	static char assets[1000]{};
+	
+
 	//The pointer can get past the last char and disappear.
-	Application::GetAssetManager()->DebugStatistics(true);
+	//Application::GetAssetManager()->DebugStatistics(true);
 	//gui->InputText("UserName",assets,ARRAYSIZE(assets),{0.0f,-0.5f},{0.5f,0.2f},true);
 
 

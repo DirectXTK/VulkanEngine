@@ -85,6 +85,75 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y },Color, Size,m_PanelIDs[id].ID);
 	m_PanelDepth++;
 }
+bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4 color, Float2 size){
+	Render* renderer = Application::GetRender();
+	GUUID id =Core::GetStringHash(strID);
+	Float2 LPosition{};
+	DropDownMenuData* currentMenuData{};
+
+	if(m_DropDownMenu.find(id) == m_DropDownMenu.end()){
+		m_DropDownMenu[id] = {false};
+		currentMenuData = &m_DropDownMenu[id];
+	}else{
+		currentMenuData = &m_DropDownMenu[id];
+	}
+	if (m_CurrenPanelParent) {
+		LPosition = { (position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		size = {size.x*m_CurrenPanelParent->Size.x,size.y*m_CurrenPanelParent->Size.y};
+		size.x = std::clamp(size.x,0.0f,m_CurrenPanelParent->Size.x);
+		size.y = std::clamp(size.y,0.0f,m_CurrenPanelParent->Size.y);
+
+		LPosition.x = std::clamp(LPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x+size.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-size.x);
+		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+size.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-size.y);
+	}
+
+	m_CurrentDropDownMenu = currentMenuData;
+	currentMenuData->pos = LPosition;
+	currentMenuData->size = size;
+	currentMenuData->offset = {0.0f,0.0f};
+
+	ApplyCurrentStyles(position,size,color,GUUID(0));
+	
+	//Draw window
+
+	float aspectRation{};
+	Float2 arrowSize{size.x*0.20f,size.y*0.20f};
+	float arrowOffsetYFromTop{arrowSize.y*0.15f};
+	Float2 arrowPos{LPosition.x+size.x-(arrowSize.x*1.5f),(LPosition.y+size.y-arrowSize.y-arrowOffsetYFromTop)};
+	//draw menu arrow
+	if(currentMenuData->IsExtended){
+		renderer->DrawQuad(LPosition,color,size,0);
+		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,id,Core::GetStringHash("GUI/SCROLLBUTTON"),-1);
+
+	}
+	else{
+		size = {size.x,arrowSize.y+arrowOffsetYFromTop};
+		renderer->DrawQuad({LPosition.x,arrowPos.y},color,size,0);
+		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,id,Core::GetStringHash("GUI/DropDownMenu"),-1);
+	}
+	return currentMenuData->IsExtended;
+}
+void GUIRenderer::DropDownMenuItem(const std::string& strID,const Float2 offset,const Float4& color,const Float2& size){
+	DropDownMenuData* currentMenuData{};
+	Float2 topPos{};
+	Float2 realSize{size};
+
+	if(!m_CurrentDropDownMenu|| !m_CurrentDropDownMenu->IsExtended)
+		return;
+	realSize.x = m_CurrentDropDownMenu->size.x;
+	realSize.y *= m_CurrentDropDownMenu->size.y;
+
+	topPos = {m_CurrentDropDownMenu->pos.x,m_CurrentDropDownMenu->pos.y};
+	topPos.x +=offset.x;
+	topPos.y +=offset.y;
+
+	topPos.y +=m_CurrentDropDownMenu->offset.y;
+	//topPos.x +=m_CurrentDropDownMenu->offset.x;
+
+	Text(strID,strID,topPos,{1.0f,1.0f,1.0f,1.0f},realSize);
+	m_CurrentDropDownMenu->offset.y -=realSize.y;
+}
 void GUIRenderer::Tooltip(const std::string& tooltip,const Float2& maxSize,const Float2& posOffset,const Float4& backGroundColor,const Float4& borderColor,GUUID id){
 	TooltipData* data = new TooltipData(tooltip);
 	data->MaxSize = maxSize;
@@ -606,7 +675,14 @@ void GUIRenderer::OnMouseEvent(MouseEvent& event){
 
 		}
 
+		if(m_DropDownMenu.find(id) != m_DropDownMenu.end()){
+			if(m_DropDownMenu[id].IsExtended)
+				m_DropDownMenu[id].IsExtended = false;
+			else 
+				m_DropDownMenu[id].IsExtended = true;
 
+
+		}
 	}
 
 	if(event.Code == MouseCodes::LEFT && event.State == EventState::RELEASED){
@@ -646,7 +722,7 @@ void GUIRenderer::EndGUI()
 	m_SelectedObjID = 0;
 	//Update the dragged panel/button
 	m_CurrentPanel = 0;
-
+	m_CurrentDropDownMenu = nullptr;
 	//delete button that hasn't been used.
 }
 	GUIRenderer::~GUIRenderer(){

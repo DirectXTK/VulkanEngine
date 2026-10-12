@@ -279,7 +279,6 @@ TBuiltInResource DefaultTBuiltInResource = {
 
         std::vector<uint32_t> spirv{};
         glslang::GlslangToSpv(*program.getIntermediate(type),spirv);
-        //Core::Log("Size",spirv.size(),outputPath);
         
         std::ofstream output(outputPath,std::ios::binary);
         output.write((char*)spirv.data(),spirv.size()*4);

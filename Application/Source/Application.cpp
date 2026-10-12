@@ -376,6 +376,7 @@ void Application::UpdateRendererStatistics(){
     float updatePerSec{100};
     double updateInterval{1000/updatePerSec};
 
+
     while(!glfwWindowShouldClose(app->m_Window->GetHandle())&& app->m_Running){
         //TEMP
         app->UpdateRendererStatistics();

@@ -387,7 +387,7 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 	DrawBorder(Position, Size, SelectID);
 
 
-	render->DrawText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
+	render->DrawText(Message,strlen(Message)+1, { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
 
 }
 void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
@@ -406,7 +406,6 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 	}
 	else {
 		Size.x = CharacterSizeNorm.x * (strlen(Message)+2)*4;
-		Core::Log("Sizex",Size.x,",",CharacterSizeNorm.x);
 	}
 
 	if (MaxSize.y != 0.0f) {
@@ -415,7 +414,6 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 	}
 	else {
 		Size.y = CharacterSizeNorm.y * strlen(Message);
-		Core::Log("SizeY",Size.y,",",CharacterSizeNorm.y);
 	}
 
 	Float2 BoundingBox[4];
