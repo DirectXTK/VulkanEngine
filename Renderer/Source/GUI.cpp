@@ -85,7 +85,7 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y },Color, Size,m_PanelIDs[id].ID);
 	m_PanelDepth++;
 }
-bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4 color, Float2 size){
+bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4 color, Float2 size,DropDowmMenuCustomSpecs* specs){
 	Render* renderer = Application::GetRender();
 	GUUID id =Core::GetStringHash(strID);
 	GUUID idButton =Core::GetStringHash(strID+"Button");
@@ -94,6 +94,8 @@ bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4
 
 	if(m_DropDownMenu.find(idButton) == m_DropDownMenu.end()){
 		m_DropDownMenu[idButton] = {false};
+		if(specs)
+			m_DropDownMenu[idButton].selectionCount = specs->maxSelectedCheckBoxes;
 		currentMenuData = &m_DropDownMenu[idButton];
 	}else{
 		currentMenuData = &m_DropDownMenu[idButton];
@@ -110,11 +112,12 @@ bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4
 	}
 
 	m_CurrentDropDownMenu = currentMenuData;
+
 	currentMenuData->pos = LPosition;
 	currentMenuData->size = size;
 	currentMenuData->offset = {0.0f,0.0f};
 
-	ApplyCurrentStyles(position,size,color,id);
+	ApplyCurrentStyles(LPosition,size,color,id);
 	
 	//Draw window
 
@@ -135,15 +138,25 @@ bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4
 	}
 	return currentMenuData->IsExtended;
 }
-void GUIRenderer::DropDownMenuItem(const std::string& strID,const Float2 offset,const Float4& color,const Float2& size){
+void CheckBoxCallback(bool ret,void* currentDropDownMenu){
+	uint32_t* selectedCount = (uint32_t*)currentDropDownMenu;
+	if(ret)
+		*selectedCount+=1;
+	else
+		*selectedCount-=1;
+}
+bool GUIRenderer::DropDownMenuItem(const std::string& strID,const Float2& offset,const Float4& color,const Float2& size,const DropDownMenuItemType& type){
 	DropDownMenuData* currentMenuData{};
 	Float2 topPos{};
 	Float2 realSize{size};
+	Float2 basePadding{};
+	bool result{false};
 
 	if(!m_CurrentDropDownMenu|| !m_CurrentDropDownMenu->IsExtended)
-		return;
-	realSize.x = m_CurrentDropDownMenu->size.x;
+		return false;
+	realSize.x *= m_CurrentDropDownMenu->size.x;
 	realSize.y *= m_CurrentDropDownMenu->size.y;
+
 
 	topPos = {m_CurrentDropDownMenu->pos.x,m_CurrentDropDownMenu->pos.y};
 	topPos.x +=offset.x;
@@ -152,8 +165,36 @@ void GUIRenderer::DropDownMenuItem(const std::string& strID,const Float2 offset,
 	topPos.y +=m_CurrentDropDownMenu->offset.y;
 	topPos.x +=m_CurrentDropDownMenu->offset.x;
 
-	Text(strID,strID,topPos,{1.0f,1.0f,1.0f,1.0f},realSize);
+	basePadding.y=m_CurrentDropDownMenu->size.y*0.05f;
+
+	switch (type)
+	{
+	case DropDownMenuItemType::TEXT:{
+		realSize.x = m_CurrentDropDownMenu->size.x;
+		Text(strID,strID,topPos,{1.0f,1.0f,1.0f,1.0f},realSize);
+		break;
+	}	
+	case DropDownMenuItemType::INPUTTEXT:{
+		Core::Log(ErrorType::Warning,"Not implemented");
+		break;
+	}
+	case DropDownMenuItemType::CHECKBOX:{
+		if(m_CurrentDropDownMenu->currentlySelected >=m_CurrentDropDownMenu->selectionCount&& m_CurrentDropDownMenu->selectionCount !=0){
+			result = CheckBox(strID,topPos,{realSize.x,realSize.y},color,0,true,CheckBoxCallback,&m_CurrentDropDownMenu->currentlySelected);
+
+		}else{
+			result = CheckBox(strID,topPos,{realSize.x,realSize.y},color,0,false,CheckBoxCallback,&m_CurrentDropDownMenu->currentlySelected);
+		}
 	m_CurrentDropDownMenu->offset.y -=realSize.y;
+
+		break;
+	}
+	default:
+		break;
+	}
+
+	m_CurrentDropDownMenu->offset.y -=realSize.y+basePadding.y;
+	return result;
 }
 void GUIRenderer::Tooltip(const std::string& tooltip,const Float2& maxSize,const Float2& posOffset,const Float4& backGroundColor,const Float4& borderColor,GUUID id){
 	TooltipData* data = new TooltipData(tooltip);
@@ -265,7 +306,7 @@ void GUIRenderer::Quad(const Float2& position,const Float2& size,const Float4& c
 	renderer->DrawQuad({LPosition.x,LPosition.y},rColor,RSize,0,textureID,-1);
 }
 
-bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture){
+bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture,bool disableTurningOn,void(*OnClickCallback)(bool,void*),void* customCallbackData){
 	Render* renderer = m_Application->GetRender();
 	Float2 LPosition{ position };
 	Float2 RSize{size};
@@ -280,10 +321,19 @@ bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Fl
 	CurrentButtonID = Core::GetStringHash(id);
 
 	if(m_SelectedObjID == CurrentButtonID){
-		if(currentCheckBoxData->IsClicked)
+		if(currentCheckBoxData->IsClicked){
 			currentCheckBoxData->IsClicked = false;
-		else 
-			currentCheckBoxData->IsClicked = true;
+			if(OnClickCallback)
+				OnClickCallback(currentCheckBoxData->IsClicked,customCallbackData);
+		}
+		else {
+			if(!disableTurningOn){
+				currentCheckBoxData->IsClicked = true;
+				if(OnClickCallback)
+					OnClickCallback(currentCheckBoxData->IsClicked,customCallbackData);
+			}
+		}
+	
 	}
 
 	if (m_CurrenPanelParent) {
@@ -398,7 +448,6 @@ void GUIRenderer::Slider(const std::string& strID, int* number,const  Float2& Po
 
 		}
 	}
-		Core::Log(ErrorType::Error,"Lafa");
 
 	
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
@@ -772,6 +821,7 @@ void GUIRenderer::EndGUI()
 	//Update the dragged panel/button
 	m_CurrentPanel = 0;
 	m_CurrentDropDownMenu = nullptr;
+
 	//delete button that hasn't been used.
 }
 	GUIRenderer::~GUIRenderer(){

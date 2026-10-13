@@ -5,6 +5,11 @@
 #define GUI_HEADER
 class Application;
 class FontSystem;
+enum class DropDownMenuItemType{NONE,TEXT,INPUTTEXT,CHECKBOX};
+struct DropDowmMenuCustomSpecs{
+	//0 means unlimited.
+	uint32_t maxSelectedCheckBoxes{0};
+};
 class GUIRenderer
 {
 public:
@@ -26,7 +31,7 @@ public:
 	void Quad(const Float2& position,const Float2& size,const Float4& color,GUUID textureID=0);
 
 	//returns true if checkbox is currently checked
-	bool CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture = 0);
+	bool CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture = 0,bool disableTurningOn= false,void(*OnClickCallback)(bool,void*) = nullptr,void* customCallbackData = nullptr);
 
 	void InputText(const char* ID,const char* Buffer, uint64_t BufferSize, Float2 Position, Float2 Size,bool scrollable = false);
 
@@ -34,8 +39,9 @@ public:
 	void Tooltip(const std::string& tooltip,const Float2& maxSize,const Float2& posOffset={0.0f,0.0f},const Float4& backGroundColor={0.0f,0.0f,0.0f,0.0f},const Float4& borderColor={0.0f,0.0f,0.0f,0.0f},GUUID id =0);
 
 	//returns true if drop down menu is extended
-	bool DropDownMenu(const std::string& strID, Float2 position, Float4 color, Float2 size);
-	void DropDownMenuItem(const std::string& strID,const Float2 offset,const Float4& color,const Float2& size);
+	bool DropDownMenu(const std::string& strID,  Float2 position, Float4 color, Float2 size,DropDowmMenuCustomSpecs* specs = nullptr);
+	//returns according to itemType like for checkbox returns true if checked.
+	bool DropDownMenuItem(const std::string& strID,const Float2& offset,const Float4& color,const Float2& size,const DropDownMenuItemType& type=DropDownMenuItemType::TEXT);
 
 	void EndPanel();
 
@@ -107,6 +113,9 @@ private:
 		Float2 pos{};
 		Float2 size{};
 		Float2 offset{};
+		//max number of selection .0- means all
+		uint32_t selectionCount{};
+		uint32_t currentlySelected{0};
 	};
 
 	void CalculateInputTextScrollYIndex(GUIRenderer::InputTextData& data,InputTextEvent& event);
