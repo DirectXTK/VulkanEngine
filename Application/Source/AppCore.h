@@ -152,6 +152,7 @@ namespace Core {
     GUUID GetStringHash(const std::string& Path);
     std::string GetFileExtension(const std::string& File);
 
+    enum class Operations{NONE,ADD,SUBTRACT,MULTI,DIVIDE};
 }
 inline bool operator==(const GUUID& l, const GUUID& r) {
     if (l.ID == r.ID)

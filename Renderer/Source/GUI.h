@@ -50,7 +50,8 @@ public:
 
 	bool IsObjectHovered(GUUID objID);
 	bool IsObjectHovered(const std::string& strID);
-
+	bool IsObjectHovered(const Float2& objPos,const Float2& size);
+	
 	uint32_t GetFontSize();
 
 	void EndGUI();

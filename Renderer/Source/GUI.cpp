@@ -88,14 +88,15 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4 color, Float2 size){
 	Render* renderer = Application::GetRender();
 	GUUID id =Core::GetStringHash(strID);
+	GUUID idButton =Core::GetStringHash(strID+"Button");
 	Float2 LPosition{};
 	DropDownMenuData* currentMenuData{};
 
-	if(m_DropDownMenu.find(id) == m_DropDownMenu.end()){
-		m_DropDownMenu[id] = {false};
-		currentMenuData = &m_DropDownMenu[id];
+	if(m_DropDownMenu.find(idButton) == m_DropDownMenu.end()){
+		m_DropDownMenu[idButton] = {false};
+		currentMenuData = &m_DropDownMenu[idButton];
 	}else{
-		currentMenuData = &m_DropDownMenu[id];
+		currentMenuData = &m_DropDownMenu[idButton];
 	}
 	if (m_CurrenPanelParent) {
 		LPosition = { (position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
@@ -113,7 +114,7 @@ bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4
 	currentMenuData->size = size;
 	currentMenuData->offset = {0.0f,0.0f};
 
-	ApplyCurrentStyles(position,size,color,GUUID(0));
+	ApplyCurrentStyles(position,size,color,id);
 	
 	//Draw window
 
@@ -123,14 +124,14 @@ bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4
 	Float2 arrowPos{LPosition.x+size.x-(arrowSize.x*1.5f),(LPosition.y+size.y-arrowSize.y-arrowOffsetYFromTop)};
 	//draw menu arrow
 	if(currentMenuData->IsExtended){
-		renderer->DrawQuad(LPosition,color,size,0);
-		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,id,Core::GetStringHash("GUI/SCROLLBUTTON"),-1);
+		renderer->DrawQuad(LPosition,color,size,id);
+		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,idButton,Core::GetStringHash("GUI/SCROLLBUTTON"),-1);
 
 	}
 	else{
 		size = {size.x,arrowSize.y+arrowOffsetYFromTop};
-		renderer->DrawQuad({LPosition.x,arrowPos.y},color,size,0);
-		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,id,Core::GetStringHash("GUI/DropDownMenu"),-1);
+		renderer->DrawQuad({LPosition.x,arrowPos.y},color,size,id);
+		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,idButton,Core::GetStringHash("GUI/DropDownMenu"),-1);
 	}
 	return currentMenuData->IsExtended;
 }
@@ -149,7 +150,7 @@ void GUIRenderer::DropDownMenuItem(const std::string& strID,const Float2 offset,
 	topPos.y +=offset.y;
 
 	topPos.y +=m_CurrentDropDownMenu->offset.y;
-	//topPos.x +=m_CurrentDropDownMenu->offset.x;
+	topPos.x +=m_CurrentDropDownMenu->offset.x;
 
 	Text(strID,strID,topPos,{1.0f,1.0f,1.0f,1.0f},realSize);
 	m_CurrentDropDownMenu->offset.y -=realSize.y;
@@ -511,6 +512,14 @@ bool GUIRenderer::IsObjectHovered(GUUID objID){
 		return true;
 	return false;
 }
+bool GUIRenderer::IsObjectHovered(const Float2& objPos,const Float2& size){
+	Float2 mouseWorldPos = Application::GetWorldMousePos();
+	if(mouseWorldPos.x >= objPos.x - size.x&& mouseWorldPos.x <= objPos.x +size.x){
+		if(mouseWorldPos.y >= objPos.y - size.y&& mouseWorldPos.y <= objPos.y +size.y)
+			return true;
+	}
+	return false;
+}
 void GUIRenderer::ApplyCurrentStyles( Float2& position, Float2& size, Float4& color,GUUID id){
 	Render* renderer= Application::GetRender();
 	for(uint32_t i=0 ; i < m_StylesInQueue.size();i++){
@@ -544,6 +553,46 @@ void GUIRenderer::ApplyCurrentStyles( Float2& position, Float2& size, Float4& co
 
 			
 				delete &tooltip;
+				}
+				break;
+			}
+			case GUI::Style::HIGHLIGHTWHENHOVERED:{
+				GUI::HighLightCoveredStyle& highlight = *(GUI::HighLightCoveredStyle*)container.StyleData;
+				if(IsObjectHovered(position,size)){
+					switch(highlight.colorOpera){
+						case Core::Operations::ADD:{
+							color.r+= highlight.colorChange.r;
+							color.g+= highlight.colorChange.g;
+							color.b+= highlight.colorChange.b;
+							color.a+= highlight.colorChange.a;
+							break;
+						}
+						case Core::Operations::MULTI:{
+							color.r*= highlight.colorChange.r;
+							color.g*= highlight.colorChange.g;
+							color.b*= highlight.colorChange.b;
+							color.a*= highlight.colorChange.a;
+							break;
+						}
+						case Core::Operations::DIVIDE:{
+							color.r/= highlight.colorChange.r;
+							color.g/= highlight.colorChange.g;
+							color.b/= highlight.colorChange.b;
+							color.a/= highlight.colorChange.a;
+							break;
+						}
+						case Core::Operations::SUBTRACT:{
+							color.r-= highlight.colorChange.r;
+							color.g-= highlight.colorChange.g;
+							color.b-= highlight.colorChange.b;
+							color.a-= highlight.colorChange.a;
+							break;
+						}
+						default:{
+							Core::Log(ErrorType::Warning,"GUIRenderer::ApplyCurrentStyles() invalid highlight color operation ",(int32_t)highlight.colorOpera);
+							break;
+						}
+					}
 				}
 				break;
 			}

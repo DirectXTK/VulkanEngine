@@ -247,13 +247,29 @@ void GUITestingLayer::OnGUI()
 	
 	gui->EndPanel();
 	//gui->Panel("DropDoPanel",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},0,true);
+
+	GUI::HighLightCoveredStyle data{}; 
+	data.colorChange = {0.4f,0.4f,0.3f,1.0f};
+	data.colorOpera = Core::Operations::ADD;
+
+	//Add checkboxes to drop down menu item andd make the ability to check for example only one or a few.
+	if(gui->CheckBox("Mult",{-0.4f,0.2f},{0.1f,0.1f},{1.0f,1.0f,1.0f,1.0f}))
+		data.colorOpera = Core::Operations::MULTI;
+	if(gui->CheckBox("ADd",{-0.4f,-0.2f},{0.1f,0.1f},{1.0f,1.0f,1.0f,1.0f}))
+		data.colorOpera = Core::Operations::ADD;
+	if(gui->CheckBox("Sub",{-0.4f,-0.4f},{0.1f,0.1f},{1.0f,1.0f,1.0f,1.0f}))
+		data.colorOpera = Core::Operations::SUBTRACT;
+	if(gui->CheckBox("Div",{-0.4f,-0.6f},{0.1f,0.1f},{1.0f,1.0f,1.0f,1.0f}))
+		data.colorOpera = Core::Operations::DIVIDE;
+
+	
+	gui->PushStyle(GUI::Style::HIGHLIGHTWHENHOVERED,&data);
 	gui->DropDownMenu("DropDownMenu",{0.0f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.3f,0.3f});
 	gui->DropDownMenuItem("Zykt35123123123123",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f});
 	gui->DropDownMenuItem("Zykt",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f});
 	gui->DropDownMenuItem("Zykt2",{0.2f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f});
+	gui->PopStyle();
 
-
-	
 
 	//The pointer can get past the last char and disappear.
 	//Application::GetAssetManager()->DebugStatistics(true);
