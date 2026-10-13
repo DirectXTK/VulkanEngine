@@ -89,7 +89,7 @@ bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4
 	Render* renderer = Application::GetRender();
 	GUUID id =Core::GetStringHash(strID);
 	GUUID idButton =Core::GetStringHash(strID+"Button");
-	Float2 LPosition{};
+	Float2 LPosition{position};
 	DropDownMenuData* currentMenuData{};
 
 	if(m_DropDownMenu.find(idButton) == m_DropDownMenu.end()){
@@ -117,7 +117,6 @@ bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4
 	currentMenuData->size = size;
 	currentMenuData->offset = {0.0f,0.0f};
 
-	ApplyCurrentStyles(LPosition,size,color,id);
 	
 	//Draw window
 
@@ -127,12 +126,15 @@ bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4
 	Float2 arrowPos{LPosition.x+size.x-(arrowSize.x*1.5f),(LPosition.y+size.y-arrowSize.y-arrowOffsetYFromTop)};
 	//draw menu arrow
 	if(currentMenuData->IsExtended){
+		ApplyCurrentStyles(LPosition,size,color,id);
 		renderer->DrawQuad(LPosition,color,size,id);
 		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,idButton,Core::GetStringHash("GUI/SCROLLBUTTON"),-1);
 
 	}
 	else{
 		size = {size.x,arrowSize.y+arrowOffsetYFromTop};
+		LPosition.y = arrowPos.y;
+		ApplyCurrentStyles(LPosition,size,color,id);
 		renderer->DrawQuad({LPosition.x,arrowPos.y},color,size,id);
 		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,idButton,Core::GetStringHash("GUI/DropDownMenu"),-1);
 	}
@@ -145,12 +147,13 @@ void CheckBoxCallback(bool ret,void* currentDropDownMenu){
 	else
 		*selectedCount-=1;
 }
-bool GUIRenderer::DropDownMenuItem(const std::string& strID,const Float2& offset,const Float4& color,const Float2& size,const DropDownMenuItemType& type){
+bool GUIRenderer::DropDownMenuItem(const std::string& strID,const Float2& offset,const Float4& inColor,const Float2& size,const DropDownMenuItemType& type){
 	DropDownMenuData* currentMenuData{};
 	Float2 topPos{};
 	Float2 realSize{size};
 	Float2 basePadding{};
 	bool result{false};
+	Float4 color = inColor; 
 
 	if(!m_CurrentDropDownMenu|| !m_CurrentDropDownMenu->IsExtended)
 		return false;
@@ -166,6 +169,8 @@ bool GUIRenderer::DropDownMenuItem(const std::string& strID,const Float2& offset
 	topPos.x +=m_CurrentDropDownMenu->offset.x;
 
 	basePadding.y=m_CurrentDropDownMenu->size.y*0.05f;
+
+	ApplyCurrentStyles(topPos,realSize,color,Core::GetStringHash(strID));
 
 	switch (type)
 	{
@@ -591,6 +596,8 @@ void GUIRenderer::ApplyCurrentStyles( Float2& position, Float2& size, Float4& co
 				TooltipData& tooltip = *(TooltipData*)m_StylesInQueue[(uint32_t)GUI::Style::TOOLTIP-1].top().StyleData;
 				m_StylesInQueue[(uint32_t)GUI::Style::TOOLTIP-1].pop();
 				
+				if(!IsObjectHovered(position,size))
+					continue;
 				backEndData.tooltip = tooltip.tooltip;
 				backEndData.Pos = {position.x+tooltip.PosOffset.x,position.y+tooltip.PosOffset.y};
 				backEndData.Size = tooltip.MaxSize;

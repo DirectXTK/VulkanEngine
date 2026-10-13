@@ -242,7 +242,6 @@ void GUITestingLayer::OnGUI()
 	else 
 		m_SpawningEnabled = false;
 
-	gui->PopStyle();
 
 	
 	gui->EndPanel();
@@ -252,24 +251,29 @@ void GUITestingLayer::OnGUI()
 	data.colorChange = {0.4f,0.4f,0.3f,1.0f};
 	data.colorOpera = ops;
 
-	//Add checkboxes to drop down menu item andd make the ability to check for example only one or a few.
-
+	//TODO :Issue is then placing popstyle to another location it interferes with DebugStatistic window.
+	//TODO issue then providing no maxsize to tooltip the text position is then gets thrown off.
 	DropDowmMenuCustomSpecs custom{};
 	custom.maxSelectedCheckBoxes = 3;
 	
 	gui->PushStyle(GUI::Style::HIGHLIGHTWHENHOVERED,&data);
-	gui->DropDownMenu("DropDownMenu",{0.0f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.3f,0.3f},&custom);
+	gui->DropDownMenu("DropDownMenu",{-0.5f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.3f,0.3f},&custom);
 	//gui->DropDownMenuItem("Zykt",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f},DropDownMenuItemType::TEXT);
 	//gui->DropDownMenuItem("Zykt444",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f},DropDownMenuItemType::TEXT);
 	//gui->DropDownMenuItem("Zykt6",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f},DropDownMenuItemType::TEXT);
+	gui->Tooltip("Mult",{0.0f,0.0f},{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f});
 	if(gui->DropDownMenuItem("Zykt2",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX))
 		ops = Core::Operations::MULTI;
+	gui->Tooltip("Add",{0.0f,0.0f});
 	if(gui->DropDownMenuItem("Zykt3",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX))
 		ops= Core::Operations::ADD;
+		gui->Tooltip("Kep laurys sep",{0.3f,0.1f},{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{1.0f,1.0f,0.0f,1.0f});
 		gui->DropDownMenuItem("Zykt46",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX);
+		gui->Tooltip("Ai pizdon jegu sitep",{0.0f,0.0f});
 		gui->DropDownMenuItem("Zykt16",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX);
 	gui->PopStyle();
 
+	gui->PopStyle();
 
 	//The pointer can get past the last char and disappear.
 	//Application::GetAssetManager()->DebugStatistics(true);
