@@ -253,16 +253,12 @@ void GUITestingLayer::OnGUI()
 
 	//gui->Panel("DropDoPanel",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},0,true);
 
-	//TODO fix the input text so it goes to next line if need be.
 
 	DropDowmMenuCustomSpecs custom{};
 	custom.maxSelectedCheckBoxes = 1;
 	
 
 	if(gui->DropDownMenu("DropDownMenu",{-0.5f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.3f,0.3f},&custom)){
-	//gui->DropDownMenuItem("Zykt",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f},DropDownMenuItemType::TEXT);
-	//gui->DropDownMenuItem("Zykt444",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f},DropDownMenuItemType::TEXT);
-	//gui->DropDownMenuItem("Zykt6",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f},DropDownMenuItemType::TEXT);
 	gui->Tooltip("Mult",{0.0f,0.0f},{0.0f,0.1f},{1.0f,1.0f,1.0f,1.0f});
 	if(gui->DropDownMenuItem("Zykt2",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX))
 		ops = Core::Operations::MULTI;
