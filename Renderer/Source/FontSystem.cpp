@@ -390,6 +390,37 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 	render->DrawText(Message,strlen(Message)+1, { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
 
 }
+Float2 FontSystem::CalculateRecSizeWithText(const char* str,uint32_t strSize,const Float2& initSize){
+	Float2 ret{initSize};
+	Float2 CharacterSizeNorm = { m_CurrentFont.GetData()->Advance[(uint32_t)' '].x/Application::GetRenderer()->GetViewPortExtent().width,m_CharacterSize*1.25f/Application::GetRenderer()->GetViewPortExtent().height};
+	uint32_t inc{2};
+	if(initSize.y ==0.0f)
+	{
+		if(initSize.x ==0.0f){
+			for(uint32_t i=0 ;i < strSize;i++)
+			{
+				if(str[i] == '\n')
+					inc++;
+			}
+			ret.y =CharacterSizeNorm.y*inc;
+		}
+		else{
+				ret.y = CharacterSizeNorm.y * strlen(str);
+		}
+
+	}
+
+	if(initSize.x == 0.0f)
+	for(uint32_t i=0 ; i < strSize;i++){
+			ret.x += (m_CurrentFont.GetData()->Advance[(uint32_t)str[i]].x+m_Padding)/Application::GetRenderer()->GetViewPortExtent().width;
+
+	}
+
+	return ret;
+}
+
+
+
 void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
 {
 	Render* renderer = Application::GetRender();
@@ -405,7 +436,10 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 		Size.x = MaxSize.x;
 	}
 	else {
-		Size.x = CharacterSizeNorm.x * (strlen(Message)+2)*4;
+		for(uint32_t i=0;i < strlen(Message);i++){
+			Size.x += (m_CurrentFont.GetData()->Advance[(uint32_t)Message[i]].x+m_Padding)/Application::GetRenderer()->GetViewPortExtent().width;
+
+		}
 	}
 
 	if (MaxSize.y != 0.0f) {
@@ -413,7 +447,10 @@ void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 Max
 
 	}
 	else {
-		Size.y = CharacterSizeNorm.y * strlen(Message);
+		if(MaxSize.x == 0.0f)
+			Size.y = CharacterSizeNorm.y * 2;
+		else
+			Size.y = CharacterSizeNorm.y * strlen(Message);
 	}
 
 	Float2 BoundingBox[4];

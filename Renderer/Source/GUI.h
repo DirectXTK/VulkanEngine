@@ -119,6 +119,7 @@ private:
 	};
 
 	void CalculateInputTextScrollYIndex(GUIRenderer::InputTextData& data,InputTextEvent& event);
+	Float2 CalculateRecSizeWithText(const char* str,uint32_t strSize,const Float2& initSize);
 
 
 
@@ -142,7 +143,7 @@ private:
 		void* StyleData{};
 	};
 	std::vector<std::stack<StyleContainer>> m_StylesInQueue{};
-	GUI::Style m_LastAddedStyle{};
+	std::stack<GUI::Style> m_AddedStylesStack{};
 
 	struct TooltipBackEndData{
 		std::string tooltip{};

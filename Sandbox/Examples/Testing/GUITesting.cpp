@@ -209,7 +209,12 @@ void GUITestingLayer::OnGUI()
 	border.DrawBorder = true;
 	border.BackGroundColor = {0.5f,0.5f,0.5f,1.0f};
 	gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf",14);
-	
+		static Core::Operations ops{};
+	GUI::HighLightCoveredStyle data{}; 
+	data.colorChange = {0.4f,0.4f,0.3f,1.0f};
+	data.colorOpera = ops;
+
+	gui->PushStyle(GUI::Style::HIGHLIGHTWHENHOVERED,&data);
 	
 	gui->PushStyle(GUI::Style::BORDER,&border);
 	gui->Panel("Panel",{0.0f,0.0f},panelColor,{0.3f,0.3f},0,true);
@@ -245,35 +250,35 @@ void GUITestingLayer::OnGUI()
 
 	
 	gui->EndPanel();
-	//gui->Panel("DropDoPanel",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},0,true);
-	static Core::Operations ops{};
-	GUI::HighLightCoveredStyle data{}; 
-	data.colorChange = {0.4f,0.4f,0.3f,1.0f};
-	data.colorOpera = ops;
 
-	//TODO :Issue is then placing popstyle to another location it interferes with DebugStatistic window.
-	//TODO issue then providing no maxsize to tooltip the text position is then gets thrown off.
+	//gui->Panel("DropDoPanel",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},0,true);
+
+	//TODO fix the input text so it goes to next line if need be.
+
 	DropDowmMenuCustomSpecs custom{};
-	custom.maxSelectedCheckBoxes = 3;
+	custom.maxSelectedCheckBoxes = 1;
 	
-	gui->PushStyle(GUI::Style::HIGHLIGHTWHENHOVERED,&data);
-	gui->DropDownMenu("DropDownMenu",{-0.5f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.3f,0.3f},&custom);
+
+	if(gui->DropDownMenu("DropDownMenu",{-0.5f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.3f,0.3f},&custom)){
 	//gui->DropDownMenuItem("Zykt",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f},DropDownMenuItemType::TEXT);
 	//gui->DropDownMenuItem("Zykt444",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f},DropDownMenuItemType::TEXT);
 	//gui->DropDownMenuItem("Zykt6",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.0f,0.1f},DropDownMenuItemType::TEXT);
-	gui->Tooltip("Mult",{0.0f,0.0f},{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f});
+	gui->Tooltip("Mult",{0.0f,0.0f},{0.0f,0.1f},{1.0f,1.0f,1.0f,1.0f});
 	if(gui->DropDownMenuItem("Zykt2",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX))
 		ops = Core::Operations::MULTI;
-	gui->Tooltip("Add",{0.0f,0.0f});
+	gui->Tooltip("Add",{0.0f,0.0f},{0.0f,0.1f},{1.0f,1.0f,1.0f,1.0f});
 	if(gui->DropDownMenuItem("Zykt3",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX))
 		ops= Core::Operations::ADD;
-		gui->Tooltip("Kep laurys sep",{0.3f,0.1f},{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{1.0f,1.0f,0.0f,1.0f});
-		gui->DropDownMenuItem("Zykt46",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX);
-		gui->Tooltip("Ai pizdon jegu sitep",{0.0f,0.0f});
-		gui->DropDownMenuItem("Zykt16",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX);
+	gui->Tooltip("Subtract",{0.3f,0.1f},{0.0f,0.1f},{1.0f,1.0f,1.0f,1.0f},{1.0f,1.0f,0.0f,1.0f});
+	if(gui->DropDownMenuItem("Zykt46",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX))
+		ops = Core::Operations::SUBTRACT;
+	gui->Tooltip("Ai pizdon jegu sitep",{0.0f,0.0f},{0.0f,0.1f},{1.0f,1.0f,1.0f,1.0f});
+	if(gui->DropDownMenuItem("Zykt16",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX))
+		ops = Core::Operations::DIVIDE;	
+	}
+	gui->PopStyle();
 	gui->PopStyle();
 
-	gui->PopStyle();
 
 	//The pointer can get past the last char and disappear.
 	//Application::GetAssetManager()->DebugStatistics(true);

@@ -700,13 +700,16 @@ void GUIRenderer::EndPanel()
 void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 {
 	m_StylesInQueue[(uint32_t)style-1].push({style,Data});
-	m_LastAddedStyle = style;
+	m_AddedStylesStack.push(style);
 
 
 }
 void GUIRenderer::PopStyle() {
-	if(!m_StylesInQueue[(uint32_t)m_LastAddedStyle-1].empty())
-		m_StylesInQueue[(uint32_t)m_LastAddedStyle-1].pop();
+	GUI::Style lastAdded = m_AddedStylesStack.top();
+	m_AddedStylesStack.pop();
+
+	if(!m_StylesInQueue[(uint32_t)lastAdded-1].empty())
+		m_StylesInQueue[(uint32_t)lastAdded-1].pop();
 	
 }
 uint32_t GUIRenderer::GetFontSize() {
@@ -803,18 +806,20 @@ void GUIRenderer::OnMouseEvent(MouseEvent& event){
 
 
 }
+
 void GUIRenderer::DrawTooltips(){
 	Render* renderer = Application::GetRender();
 
 	for(uint32_t i=0;i < m_TooltipStack.size();){
 		TooltipBackEndData& data = m_TooltipStack.top();
+		Float2 size = m_FontSystem->CalculateRecSizeWithText(data.tooltip.c_str(),data.tooltip.size(),data.Size);
 		//Draw border
 		if(data.BorderColor.a != 0.0f)
-			renderer->DrawQuad({data.Pos.x,data.Pos.y},data.BorderColor,{data.Size.x+0.01f,data.Size.y+0.01f},data.ID.ID);
+			renderer->DrawQuad({data.Pos.x,data.Pos.y},data.BorderColor,{size.x+0.01f,size.y+0.01f},data.ID.ID);
 		//Draw background
 		if(data.BackGroundColor.a !=0.0f)
-			renderer->DrawQuad({data.Pos.x,data.Pos.y},data.BackGroundColor,data.Size,data.ID.ID);
-		m_FontSystem->Text(data.ID,data.tooltip.c_str(),data.Pos,data.Size);
+			renderer->DrawQuad({data.Pos.x,data.Pos.y},data.BackGroundColor,size,data.ID.ID);
+		m_FontSystem->Text(data.ID,data.tooltip.c_str(),data.Pos,size);
 		m_TooltipStack.pop();
 
 	}

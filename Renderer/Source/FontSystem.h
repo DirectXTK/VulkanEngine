@@ -66,6 +66,8 @@ public:
 
 	void OnEvent(Event& event);
 
+	Float2 CalculateRecSizeWithText(const char* str,uint32_t strSize,const Float2& initSize);
+
 	void ChangeArrowOffset(int32_t offset);
 
 	~FontSystem();
