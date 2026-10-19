@@ -20,8 +20,10 @@
 #include "Animator.h"
 #include "AssetManager.h"
 #include "FontSystem.h"
+#include "RendererSettings.h"
 
 #include "Particle.h"
+
 
 class InputSystem;
 class AssetManager;
@@ -44,7 +46,7 @@ struct DrawCommand {
 enum class RenderMode{SOLID,WIREFRAME};
 
 struct RendererDesc{
-    uint32_t VertexCountPerDrawCall{100};
+    uint32_t VertexCountPerDrawCall{1000};
     Float4 ClearColor{};
     RenderMode Rendermode{RenderMode::SOLID};
     bool Blending{true};
@@ -62,7 +64,7 @@ public:
     Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsystem, AssetManager* assetManager);
     void InitializePipeline(uint64_t MaxTextureCount);
     //
-    void BeginFrame(Camera2D* camera,float deltaTime);
+    void BeginFrame(const Float2& cameraPos,const Float2& cameraSize,glm::mat4 viewproj);
     void BeginGUIFrame();
 
 
@@ -87,9 +89,9 @@ public:
     void SetRenderDesc(const RendererDesc& desc);
     void QueueShaderChange(const std::string& path);
     void QueueShaderChange(Asset<Shader> shaderAsset);
+    void RemoveShader(const ShaderType& shaderType);
 
-
-    Buffer* GetCustomBuffer(uint32_t index) { return m_PickingImageBuffer; }
+    Buffer* GetPickingBuffer(uint32_t index) { return m_PickingImageBuffer[index]; }
     Buffer* GetViewportWithID();
 
     VkExtent2D GetViewPortExtent() { return m_SwapChain->GetExtent(); }
@@ -112,9 +114,25 @@ public:
     void Shutdown();
     float GetFONTDPI();
     void ChangeArrowColor(const Float4& color){m_ArrowColor = color;}
+    //Statistics
+    uint32_t GetVertexCount(){return m_VertexCountWhole;}
+    uint32_t GetInstanceCount(){return m_InstanceCountWhole;}
+    uint32_t GetDrawCall(){return m_DrawCallWhole;}
+    //Multithreading functions
+    void MarkSubmitAsReady();
+    void SetRendererThreadFrameTime(float renderThreadTime){m_RenderThreadFrameTime = renderThreadTime;}
+    void SetApplicationThreadFrameTime(float deltaTime);
+    void WaitForIdle();
+
+    bool IsShuttingDown(){return m_IsShuttingDown;}
+    uint32_t FrameInFlight(){return m_FrameInFlight;}
+
+    void OnEvent(Event& event);
 
     ~Renderer();
 private:
+    void OnAppShutDown(AppShutdownEvent& event);
+
     void InitRenderDesc(const RendererDesc& desc);
     void ResizeWindow();
     bool CompileShaders();
@@ -220,8 +238,11 @@ private:
 
     //Debug
     VkDebugUtilsMessengerEXT m_Messenger{};
+    uint64_t m_VertexCountWhole{};
+    uint32_t m_InstanceCountWhole{};
+    uint32_t m_DrawCallWhole{};
     //all the rendered vertecies of the frame.
-    uint64_t m_VertexCountPerFrame{};
+    uint64_t m_VertexCountPerFrame{0};
     void CreateDebugger();
 
 
@@ -265,7 +286,7 @@ private:
     
 
     //TEMP(Testing)
-    Buffer* m_PickingImageBuffer{};
+    Buffer* m_PickingImageBuffer[MAX_FRAME_DRAWS];
 
     //FrameBuffer stuffs
     Float4 m_ClearColor{};
@@ -288,6 +309,8 @@ private:
     uint32_t m_CurrentTextureDescriptorSetOffset{1};
     uint32_t m_CurrentCameraDescriptorSetOffset{};
     //Camera
+    Float2 m_CameraPos{};
+    Float2 m_CameraSize{};
     UniformCameraBufferData m_UniformCameraData{};
 
     //Text
@@ -324,7 +347,6 @@ private:
     std::array<Asset<Texture>,1000> m_TextureStorageBuffer[MAX_FRAME_DRAWS];
     std::unordered_map<GUUID,BatchInfo> m_TextureStorageBufferLoadedTextures[MAX_FRAME_DRAWS];
 
-    Camera2D m_Camera{};
     //Texturing
     uint32_t m_TextureSlotCount{ 64};
     Texture* m_BlankWhiteTexture{};
@@ -355,6 +377,13 @@ private:
     bool m_ShutDown{false};
     //Queue changes
     std::vector<Asset<Shader>> m_QueuedShaders{};
+    std::vector<ShaderType> m_RemovedShaders{};
+    
+
+    //MultiThreading
+    float m_RenderThreadFrameTime{};
+    uint32_t m_FrameInFlight{0};
+    bool m_IsShuttingDown{false};
 
 
     AssetManager* m_AssetManager{}; 

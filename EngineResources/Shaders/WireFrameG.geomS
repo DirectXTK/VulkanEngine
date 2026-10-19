@@ -1,0 +1,52 @@
+#version 460
+
+layout(triangles) in;
+layout(line_strip, max_vertices = 4) out;
+
+// Vertex shader outputs
+layout(location = 0) in vec4 InFragColor[];
+layout(location = 1) flat in uvec2 InPickID[];
+layout(location = 2) in vec2 InTexCoords[];
+layout(location = 3) flat in uint InTexID[];
+
+// Fragment shader outputs
+layout(location = 0) out vec4 OutFragColor;
+layout(location = 1) flat out uvec2 OutPickID;
+layout(location = 2) out vec2 OutTexCoords;
+layout(location = 3) flat out uint OutTexID;
+
+void main()
+{
+    // Edge 0 → 1
+    gl_Position = gl_in[0].gl_Position;
+    OutFragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    OutPickID = InPickID[0];
+    OutTexCoords = InTexCoords[0];
+    OutTexID = InTexID[0];
+    EmitVertex();
+
+    gl_Position = gl_in[1].gl_Position;
+    OutFragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    OutPickID = InPickID[1];
+    OutTexCoords = InTexCoords[1];
+    OutTexID = InTexID[1];
+    EmitVertex();
+
+    // Edge 1 → 2
+    gl_Position = gl_in[2].gl_Position;
+    OutFragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    OutPickID = InPickID[2];
+    OutTexCoords = InTexCoords[2];
+    OutTexID = InTexID[2];
+    EmitVertex();
+
+    // Edge 2 → 0
+    gl_Position = gl_in[0].gl_Position;
+    OutFragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    OutPickID = InPickID[0];
+    OutTexCoords = InTexCoords[0];
+    OutTexID = InTexID[0];
+    EmitVertex();
+
+    EndPrimitive();
+}

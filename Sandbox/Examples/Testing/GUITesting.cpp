@@ -12,8 +12,7 @@ void GUITestingLayer::OnCreate() {
 	sliderdata.FillOn = true;
 	sliderdata.StructSize = sizeof(GUI::SliderStyle);
 	sliderdata.FillColor = {0.0f,0.0f,1.0f,1.0f};
-
-	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/",AssetType::NONE);
+	//Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/",AssetType::NONE);
 	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/Examples/Animation/",AssetType::ANIMATION);
 
 	  Asset<Animator> asset= Application::GetAsset<Animator>("PEASawdaawdANT");
@@ -22,14 +21,13 @@ void GUITestingLayer::OnCreate() {
 			animator.SetStage("WALK");
 		}
 
-
+	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/Sacrifice.ttf");
+	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/Daydream.ttf");
+	auto asset3 =Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
 	auto asset2 = Application::GetAsset<Texture>("FontTexture"+std::to_string(Application::GetGUIRenderer()->GetFontSize()));
-	if(asset2){
-		asset2.GetData()->WriteToFile("OutputTexture.png");
-	}
+
 
    Renderer* renderer = Application::GetRenderer();
-
 
 }
 struct FireParticleData{
@@ -62,18 +60,23 @@ void ParticleVelocityAdd(ParticleProps& props){
 }
 void GUITestingLayer::OnUpdate(double deltatime)
 {
-	Renderer* renderer = Application::GetRenderer();
+	return;
+	
 
-	DefaultCameraControlls(Application::GetCurrentCamera());
+}
+void GUITestingLayer::temp(){
+//FIX no rendering on update make somekind of a safe guard.
+	Render* renderer = Application::GetRender();
+	//DefaultCameraControlls(Application::GetCurrentCamera());
 	static Float2 pos{0.0f,0.0f};
 
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
-	renderer->DrawQuad({pos.x,pos.y,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
+	renderer->DrawQuad({pos.x,pos.y},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
 
 	if(Application::IsKeyPressed(KeyCodes::ARROWRIGHT))
 	{
@@ -94,12 +97,11 @@ void GUITestingLayer::OnUpdate(double deltatime)
 
    if(animator)
    {
-   		renderer->DrawQuad({0.0f,0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},animator,0);
-   		animator.Update(deltatime);
+   	//	renderer->DrawQuad({0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0,animator);
+   		//animator.Update(deltatime);
    }
 	if(m_SpawnParticles&&m_SpawningEnabled){
 		ParticleProps prop{};
-		prop.LifeTime = Core::RandomFloat(SEC(3.3f),SEC(8.0f));
 		//prop.LifeTime = SEC(3.f);
 		prop.Color = {1.0f,1.0f,1.0f,1.0f};
 		prop.Pos = Application::GetWorldMousePos();
@@ -112,6 +114,8 @@ void GUITestingLayer::OnUpdate(double deltatime)
 		for(uint32_t i=0;i < 10;i++){
 		prop.Velocity.x = Core::RandomFloat(-0.005f,0.005f);
 		prop.Velocity.y = Core::RandomFloat(-0.005f,0.0050f);
+		prop.LifeTime = Core::RandomFloat(SEC(3.3f),SEC(8.0f));
+
 		Application::GetParticleSystem().DrawParticle(prop);
 
 		}
@@ -119,6 +123,7 @@ void GUITestingLayer::OnUpdate(double deltatime)
 			for(uint32_t i=0;i < 10;i++){
 		prop.Velocity.x = Core::RandomFloat(-0.0015f,0.0010f);
 		prop.Velocity.y = Core::RandomFloat(-0.0015f,0.0010f);
+		prop.LifeTime = Core::RandomFloat(SEC(3.3f),SEC(8.0f));
 		prop.Size = {0.012f,0.012f};
 		prop.CustomFunction = ParticleFire;
 		FireParticleData* data = (FireParticleData*)malloc(sizeof(FireParticleData));
@@ -130,12 +135,12 @@ void GUITestingLayer::OnUpdate(double deltatime)
 		}
 	}
  
-
 }
 void GUITestingLayer::OnRender(double deltime){
-   Renderer* renderer = Application::GetRenderer();
+   Render* renderer = Application::GetRender();
+   renderer->DrawQuad({0.0f,-0.5f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},2);
+   temp();
 
-   renderer->DrawQuad({0.0f,-0.5f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},0);
 	//renderer->DrawParticle(Application::GetWorldMousePos(),{0.9f,0.1f,0.1f,1.0f},{0.01f,0.01f},0);
 }
 void GUITestingLayer::OnEvent(Event& event){
@@ -148,27 +153,27 @@ void GUITestingLayer::OnEvent(Event& event){
 	}
 }
 void GUITestingLayer::OnKeyBoardEvent(KeyBoardEvent& event){
-	Renderer* renderer= Application::GetRenderer();
+	Render* renderer= Application::GetRender();
 	if(event.State == EventState::PRESSED){
 	if(event.Key == KeyCodes::P){
 		auto frag = Application::GetAsset<Shader>("Shaders/ParticleF");
    	if(frag)
-  		renderer->QueueShaderChange(frag);
+  		renderer->SetShader(frag);
 
 		auto vert= Application::GetAsset<Shader>("Shaders/ParticleV");
   	 if(vert)
-   		renderer->QueueShaderChange(vert);
+   		renderer->SetShader(vert);
 	}
 	}
 	if(event.State == EventState::PRESSED){
 	if(event.Key == KeyCodes::O){
 		auto frag = Application::GetAsset<Shader>("Shaders/DefaultPixel");
    		if(frag)
-  		renderer->QueueShaderChange(frag);
+  		renderer->SetShader(frag);
 
 		auto vert= Application::GetAsset<Shader>("Shaders/DefaultVertex");
   	 	if(vert)
-   		renderer->QueueShaderChange(vert);
+   		renderer->SetShader(vert);
 	}
 	}
 }
@@ -190,14 +195,12 @@ void GUITestingLayer::OnMouseEvent(MouseEvent& event){
 void GUITestingLayer::OnGUI()
 {
 	GUIRenderer* gui = Application::GetGUIRenderer();
-	
-
 	static Float4 panelColor{1.0f,1.0f,1.0f,1.0f};
 	static Float4 borderColor{1.0f,1.0f,1.0f,1.0f};
 	static char username[50]{};
+	username[49] = '\0';
 	static float timeHovered{};
 
-	gui->SetFontSize((uint32_t)12);
 
 	Application::GetRenderer()->ChangeArrowColor({1.0f,0.0f,0.0f,1.0f});
 	GUI::BorderStyle border{};
@@ -205,39 +208,77 @@ void GUITestingLayer::OnGUI()
 	border.BorderWidth = 0.01f;
 	border.DrawBorder = true;
 	border.BackGroundColor = {0.5f,0.5f,0.5f,1.0f};
+	gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf",14);
+		static Core::Operations ops{};
+	GUI::HighLightCoveredStyle data{}; 
+	data.colorChange = {0.4f,0.4f,0.3f,1.0f};
+	data.colorOpera = ops;
+
+	gui->PushStyle(GUI::Style::HIGHLIGHTWHENHOVERED,&data);
 	
 	gui->PushStyle(GUI::Style::BORDER,&border);
 	gui->Panel("Panel",{0.0f,0.0f},panelColor,{0.3f,0.3f},0,true);
-
+	
 	gui->Slider("PanelColorr",&panelColor.r,{-0.5f,0.8f},{1.0,1.0f,0.0f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("PanelColorg",&panelColor.g,{-0.5f,0.6f},{1.0,1.0f,0.0f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("PanelColorb",&panelColor.b,{-0.5f,0.4f},{1.0,1.0f,0.0f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
-
+	
 	gui->Slider("Borderr",&borderColor.r,{-0.1f,0.8f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("Borderg",&borderColor.g,{-0.1f,0.6f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 	gui->Slider("Borderb",&borderColor.b,{-0.1f,0.4f},{1.0,1.0f,0.3f,1.0f},{0.2f,0.1f},0.01f,{0.0f,1.0f});
 
 	
-	gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
+	
 	gui->InputText("UserName",username,ARRAYSIZE(username),{0.0f,-0.5f},{0.5f,0.2f},true);
 	
-	gui->PopStyle();
 
 	//Wierd placement when using multuple tooltips.
 	if(gui->IsObjectHovered("Check") || timeHovered >SEC(1.0f)){
-			timeHovered+=Application::GetDeltaTime();
+		timeHovered+=Application::GetDeltaTime();
 		gui->Tooltip("SPAWNS FIREPARTICLES",{0.1f,0.1f},{0.0f,0.2f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f},Core::GetStringHash("CheckTooltip"));
 
 	}
 	if(gui->IsObjectHovered("CheckTooltip")){
 		gui->Tooltip("AND WATER PARTICLES",{0.3f,0.1f},{0.0f,0.5f},{1.0f,0.0f,0.0f,0.5f},{0.0f,1.0f,0.0f,0.3f});
 	}
+
 	if(gui->CheckBox("Check",{0.5f,0.0f},{0.2f,0.2f},{1.0f,1.0f,1.0f,1.0f}))
 		m_SpawningEnabled = true;
 	else 
 		m_SpawningEnabled = false;
-	gui->SetFont("EngineResources/Fonts/Daydream.ttf");
+
+
+	
 	gui->EndPanel();
+
+	//gui->Panel("DropDoPanel",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.2f,0.2f},0,true);
+
+
+	DropDowmMenuCustomSpecs custom{};
+	custom.maxSelectedCheckBoxes = 1;
+	
+
+	if(gui->DropDownMenu("DropDownMenu",{-0.5f,0.0f},{0.0f,0.0f,1.0f,1.0f},{0.3f,0.3f},&custom)){
+	gui->Tooltip("Mult",{0.0f,0.0f},{0.0f,0.1f},{1.0f,1.0f,1.0f,1.0f});
+	if(gui->DropDownMenuItem("Zykt2",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX))
+		ops = Core::Operations::MULTI;
+	gui->Tooltip("Add",{0.0f,0.0f},{0.0f,0.1f},{1.0f,1.0f,1.0f,1.0f});
+	if(gui->DropDownMenuItem("Zykt3",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX))
+		ops= Core::Operations::ADD;
+	gui->Tooltip("Subtract",{0.3f,0.1f},{0.0f,0.1f},{1.0f,1.0f,1.0f,1.0f},{1.0f,1.0f,0.0f,1.0f});
+	if(gui->DropDownMenuItem("Zykt46",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX))
+		ops = Core::Operations::SUBTRACT;
+	gui->Tooltip("Ai pizdon jegu sitep",{0.0f,0.0f},{0.0f,0.1f},{1.0f,1.0f,1.0f,1.0f});
+	if(gui->DropDownMenuItem("Zykt16",{0.0f,0.0f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},DropDownMenuItemType::CHECKBOX))
+		ops = Core::Operations::DIVIDE;	
+	}
+	gui->PopStyle();
+	gui->PopStyle();
+
+
+	//The pointer can get past the last char and disappear.
+	//Application::GetAssetManager()->DebugStatistics(true);
+	//gui->InputText("UserName",assets,ARRAYSIZE(assets),{0.0f,-0.5f},{0.5f,0.2f},true);
 
 
 	//Application::GetAssetManager()->DebugStatistics(true);

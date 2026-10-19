@@ -1,8 +1,8 @@
 #pragma once
 #include "RendCore.h"
-enum class ShaderType{Pixel,Vertex,Geometry,Task,Compute,Mesh};
+enum class ShaderType{None,Pixel,Vertex,Geometry,Task,Compute,Mesh};
 struct ShaderDesc {
-    ShaderType Type{};
+    ShaderType Type{ShaderType::None};
 
     //if binary = true when its compiled if false it compiles it.
     bool binary{false};

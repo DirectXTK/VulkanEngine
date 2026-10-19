@@ -5,6 +5,11 @@
 #define GUI_HEADER
 class Application;
 class FontSystem;
+enum class DropDownMenuItemType{NONE,TEXT,INPUTTEXT,CHECKBOX};
+struct DropDowmMenuCustomSpecs{
+	//0 means unlimited.
+	uint32_t maxSelectedCheckBoxes{0};
+};
 class GUIRenderer
 {
 public:
@@ -26,12 +31,17 @@ public:
 	void Quad(const Float2& position,const Float2& size,const Float4& color,GUUID textureID=0);
 
 	//returns true if checkbox is currently checked
-	bool CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture = 0);
+	bool CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture = 0,bool disableTurningOn= false,void(*OnClickCallback)(bool,void*) = nullptr,void* customCallbackData = nullptr);
 
-	void InputText(const char* ID, char* Buffer, uint64_t BufferSize, Float2 Position, Float2 Size,bool scrollable = false);
+	void InputText(const char* ID,const char* Buffer, uint64_t BufferSize, Float2 Position, Float2 Size,bool scrollable = false);
 
 	//Applies this only to the next object/item.Size is dependent on on char count and font size.
 	void Tooltip(const std::string& tooltip,const Float2& maxSize,const Float2& posOffset={0.0f,0.0f},const Float4& backGroundColor={0.0f,0.0f,0.0f,0.0f},const Float4& borderColor={0.0f,0.0f,0.0f,0.0f},GUUID id =0);
+
+	//returns true if drop down menu is extended
+	bool DropDownMenu(const std::string& strID,  Float2 position, Float4 color, Float2 size,DropDowmMenuCustomSpecs* specs = nullptr);
+	//returns according to itemType like for checkbox returns true if checked.
+	bool DropDownMenuItem(const std::string& strID,const Float2& offset,const Float4& color,const Float2& size,const DropDownMenuItemType& type=DropDownMenuItemType::TEXT);
 
 	void EndPanel();
 
@@ -39,13 +49,15 @@ public:
 
 	void PopStyle();
 
-	void SetFontSize(uint32_t Size);
-	void SetFont(const std::string& strID);
-	void SetFont(GUUID id);
+	//fontsize = 0 means kep the last one if strId is empty then use the last font
+	void SetFont(const std::string& strID,uint32_t fontSize=0);
+	//fontsize = 0 means kep the last one if id is 0 then use the last font
+	void SetFont(GUUID id,uint32_t fontSize=0);
 
 	bool IsObjectHovered(GUUID objID);
 	bool IsObjectHovered(const std::string& strID);
-
+	bool IsObjectHovered(const Float2& objPos,const Float2& size);
+	
 	uint32_t GetFontSize();
 
 	void EndGUI();
@@ -65,7 +77,8 @@ private:
 
 	void ApplyCurrentStyles( Float2& position, Float2& size, Float4& color,GUUID id =0);
 
-	void UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,float lineSizeX);
+	//returns offset for current line is more characters are added
+	uint32_t UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,uint64_t arrowPosition);
 
 	void DrawTooltips();
 	friend Application;
@@ -95,11 +108,27 @@ private:
 	struct CheckBoxData{
 		bool IsClicked{false};
 	};
+	struct DropDownMenuData{
+		bool IsExtended{false};
+		Float2 pos{};
+		Float2 size{};
+		Float2 offset{};
+		//max number of selection .0- means all
+		uint32_t selectionCount{};
+		uint32_t currentlySelected{0};
+	};
+
+	void CalculateInputTextScrollYIndex(GUIRenderer::InputTextData& data,InputTextEvent& event);
+	Float2 CalculateRecSizeWithText(const char* str,uint32_t strSize,const Float2& initSize);
+
+
+
 	std::unordered_map<std::string, ButtonData> m_Buttons{};
 	std::unordered_map<std::string, PanelData> m_Panels{};
 	std::unordered_map<std::string, SliderData> m_Sliders{};
 	std::unordered_map<std::string, CheckBoxData> m_CheckBoxes{};
 	std::unordered_map<GUUID, InputTextData> m_InputTextData{};
+	std::unordered_map<GUUID, DropDownMenuData> m_DropDownMenu{};
 
 	bool m_InputTextInputEvent{false};
 
@@ -114,7 +143,7 @@ private:
 		void* StyleData{};
 	};
 	std::vector<std::stack<StyleContainer>> m_StylesInQueue{};
-	GUI::Style m_LastAddedStyle{};
+	std::stack<GUI::Style> m_AddedStylesStack{};
 
 	struct TooltipBackEndData{
 		std::string tooltip{};
@@ -133,7 +162,8 @@ private:
 	GUUID m_SelectedObjID{0};
 	//Currently selected obj.
 	GUUID m_CurrentlySelectedObject{0};
-	Float2* m_PickBufferData{};
+
+	DropDownMenuData* m_CurrentDropDownMenu{};
 
 	uint32_t m_PanelDepth{};
 	PanelData* m_CurrenPanelParent{};

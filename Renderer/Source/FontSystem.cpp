@@ -20,6 +20,11 @@ FontSystem::FontSystem()
 	m_Renderer->SetCurrentFont(m_CurrentFont);
 }
 Asset<Font> FontSystem::LoadFont(const std::string& filePath){
+	std::string Name = Core::GetFileName(filePath);
+	GUUID fontID = Core::GetStringHash("FONT"+Name+std::to_string(m_CharacterSize));
+	if(Application::HasAsset(fontID)){
+		return Application::GetAsset<Font>(fontID);
+	}
 	//loads the font
 	FT_Error error = FT_New_Face(m_Library, filePath.c_str(), 0, &m_Face);
 	if (error == FT_Err_Unknown_File_Format) {
@@ -29,9 +34,9 @@ Asset<Font> FontSystem::LoadFont(const std::string& filePath){
 		Core::Log(ErrorType::Error, "Failed to open/read or the font is broken ");
 		return Asset<Font>();
 	}
-
-	std::string Name = Core::GetFileName(filePath);
+	
 	Asset<Font> asset= ReRenderFaces("FONT"+Name+std::to_string(m_CharacterSize),Core::GetFileName(filePath));
+	
 	//LASTERROR
 	//FT_Done_Face(m_Face);
 	return asset;
@@ -44,6 +49,7 @@ void FontSystem::Run(void* app,void* iRenderer)
 
 void FontSystem::SetCharcterSize(uint32_t CharSize)
 {
+	Core::Log("Old");
 	if (CharSize == m_CharacterSize)
 		return;
 
@@ -104,42 +110,61 @@ uint64_t FontSystem::FindMousePosInText(const Float2& mousePos,char* Buffer,uint
 	float arrowPixelY = Core::ToScreenPixels(mousePos).y;
 	float smallestDist{std::numeric_limits<float>::max()};
 	uint32_t currentLine{0};
-	Float2 sizeInPixels = Core::ToScreenPixels(	{size.x,size.y});
+	Float2 sizeInPixels = {	size.x*Application::GetRenderer()->GetViewPortExtent().width,size.y*Application::GetRenderer()->GetViewPortExtent().height};
+	sizeInPixels.x +=arrowPos.x;
+	sizeInPixels.y +=arrowPos.y;
+	float pixelSize=size.y*Application::GetRenderer()->GetViewPortExtent().height;
 	
 
-	arrowPixelY = std::fabs(arrowPixelY-arrowPos.y);
-	arrowPixelY = size.y*Application::GetRenderer()->GetViewPortExtent().height/m_CurrentFont.GetData()->NewLineSize;
-	
-	arrowPixelY -=(((arrowPos.y-Core::ToScreenPixels(mousePos).y))/m_CurrentFont.GetData()->NewLineSize); 
-
+	//arrowPixelY = std::fabs(arrowPixelY-arrowPos.y);
+	arrowPixelY = pixelSize/m_CurrentFont.GetData()->NewLineSize;
 	arrowPixelY = std::floor(arrowPixelY);
+
+	//Somehow the mouse can go outside the y coordinate of the inputtext window
+	if(mousePos.y > Position.y || mousePos.y < Position.y-size.y-size.y){
+		Core::Log(ErrorType::Warning,"Out of bounds");
+		return 0;
+	}
+
+	arrowPixelY =std::fabs(Position.y - mousePos.y);
+	arrowPixelY =(arrowPixelY*0.5f*Application::GetRenderer()->GetViewPortExtent().height)/m_CurrentFont.GetData()->NewLineSize;
+	arrowPixelY = std::floor(arrowPixelY); 
+
+
+
+	//fix the not being able to select other lines when scrolling remember Buffer+ has offset.
+
+
+
 	for(uint32_t i =0;i < BufferSize;i++){
 
 		if(Buffer[i] == '\0'){
 			return i;
 		}
-		if(Buffer[i] == '\n'||arrowPos.x+m_CurrentFont.GetData()->Advance[Buffer[i]].x >= sizeInPixels.x){
+		//jump to next line if new line char of if character got beyond bounds and then draw on the other line.
+		if(Buffer[i] == '\n'||arrowPos.x >= sizeInPixels.x){
 			if(currentLine == arrowPixelY){
 				return i;
 			}
+
 			arrowPos = Core::ToScreenPixels(Position);
 			currentLine++;
 		}
-		arrowPos.x += m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
-		
+		//half char size	
+		float charHalfWidth = m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
+		arrowPos.x += charHalfWidth;
 		if(currentLine == arrowPixelY){
 			
-		
-
-		//arrowPos.y +=m_CurrentFont.GetData()->Advance[Buffer[i]].y;
 
 		Float2 normArrowPos = Core::ToNDC(arrowPos);
 		float temp = std::fabs(normArrowPos.x-mousePos.x);
-		if(mousePos.x < normArrowPos.x){
+		if(normArrowPos.x>= mousePos.x){
+
 			return i;
 		}
 		}
-		arrowPos.x += m_CurrentFont.GetData()->Advance[Buffer[i]].x*0.5f;
+		arrowPos.x += charHalfWidth;
+
 
 
 		
@@ -147,6 +172,7 @@ uint64_t FontSystem::FindMousePosInText(const Float2& mousePos,char* Buffer,uint
 	return 0;
 }
 void FontSystem::OnMouseEvent(MouseEvent& event){
+
 	if(event.State == EventState::PRESSED && event.Code == MouseCodes::LEFT){
 
 		GUUID selectedID = Application::GetCurrentlyHoveredPixelID();
@@ -173,16 +199,17 @@ void FontSystem::OnMouseEvent(MouseEvent& event){
 void FontSystem::OnTextEvent(TextEvent& event){
 	char insertedChar= event.KeyChar;
 			
-			
 		if(m_CurrentlySelectedInputData !=0){
 			auto it = m_InputTextData.find(m_CurrentlySelectedInputData);
 			if(it != m_InputTextData.end()){
 			InputTextData data = it->second;
-
-			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
+			if(m_ArrowPosition+1 >= data.bufferSize)
+				return;
+			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition-1-1);
 			data.buffer[m_ArrowPosition] = insertedChar;
-			if(m_ArrowPosition != data.bufferSize-1)
-				m_ArrowPosition++;
+			m_ArrowPosition++;
+			Core::Log("m_ArrowPosition",m_ArrowPosition);
+
 			InputTextEvent event{};
 			event.AddedChar = insertedChar;
 			Application::DispatchEvent(event);
@@ -203,7 +230,6 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 				m_ArrowPosition++;
 		}
 		else if(event.Key == KeyCodes::ARROWUP){
-
 		}
 		else if(event.Key == KeyCodes::ARROWDOWN){
 			
@@ -212,17 +238,28 @@ void FontSystem::OnKeyBoardEvent(KeyBoardEvent& event){
 			{
 				InputTextEvent event{};
 				event.RemovedChar = data.buffer[m_ArrowPosition-1];
-				memccpy(data.buffer+m_ArrowPosition-1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
-				m_ArrowPosition--;
+				if(m_ArrowPosition+1 == data.bufferSize)
+				{
+					m_ArrowPosition--;
+					data.buffer[m_ArrowPosition] = 0;
+
+				}else{
+
+					m_ArrowPosition--;
+					memccpy(data.buffer+m_ArrowPosition,data.buffer+m_ArrowPosition+1,0,data.bufferSize-m_ArrowPosition-1);
+				}
+
 
 				Application::DispatchEvent(event);
 			}
 		}else if(event.Key == KeyCodes::ENTER){
+
+			
 			char insertedChar = '\n';
 
 			memccpy(data.buffer+m_ArrowPosition+1,data.buffer+m_ArrowPosition,0,data.bufferSize-m_ArrowPosition);
 			data.buffer[m_ArrowPosition] = insertedChar;
-			if(m_ArrowPosition != data.bufferSize-1)
+			if(m_ArrowPosition <= data.bufferSize-2)
 				m_ArrowPosition++;
 			InputTextEvent event{};
 			event.AddedChar = insertedChar;
@@ -257,6 +294,8 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 {
 	GUUID SelectID = Core::GetStringHash(ID);
 	bool ScrollableBoundBox{};
+	Render* render = Application::GetRender();
+	static float copyMsgDuration{};
 
 
 	Float2 BoundingBox[4];
@@ -266,8 +305,13 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	BoundingBox[3] = { Position.x + Size.x,Position.y - Size.y};
 	
 	if(m_CopyTriggered&&m_CurrentlySelectedInputData == SelectID){
+		copyMsgDuration = SEC(1.0f); 
 		Application::CopyToClipBoard(std::string_view(Buffer,BufferSize));
 		m_CopyTriggered = false;
+	}
+	if(copyMsgDuration>0.0f){
+		render->DrawText("Copied",ARRAYSIZE("Copied"),Position,BoundingBox,m_Padding,m_CharacterSize,0,-1);
+		copyMsgDuration -=Application::GetDeltaTime();
 	}
 
 	m_InputTextData[SelectID] = {BufferSize,Buffer,Size};
@@ -276,15 +320,16 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 	//Draw the invisible barrier that  provides the selecting 
 
 	if(m_CurrentlySelectedInputData == SelectID){
+
 		m_PointerCooldown -= Application::GetDeltaTime();
 		if(!m_IsArrowActive){
 			if(m_PointerCooldown <=0.0f)
 				m_IsArrowActive = true;
 		}
-		//fins the pos according to mouse pos
+		//pins the pos according to mouse pos
 		if(m_ArrowPosition == std::numeric_limits<uint64_t>::max()){
 
-			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[0].y},Size)+m_ArrowPositionOffset;
+			m_ArrowPosition = FindMousePosInText(Application::GetMousePosNorm(),Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[1].y},Size)+stringOffset;
 		}
 
 
@@ -294,15 +339,16 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 				m_IsArrowActive = false;
 				
 			}
-			m_Renderer->RenderText(Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition-m_ArrowPositionOffset);
+			render->DrawText(Buffer,BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID, m_ArrowPosition-stringOffset);
 			return;
 		}
 	}
-	m_Renderer->RenderText(Buffer, BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	render->DrawText(Buffer, BufferSize,{BoundingBox[0].x,BoundingBox[1].y}, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
 }
 void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Float2 MaxSize)
 {
 
+	Render* render = Application::GetRender();
 	Renderer* renderer = Application::GetRenderer();
 
 	GUUID SelectID = Core::GetStringHash(StrId);
@@ -341,12 +387,43 @@ void FontSystem::Text(const char* StrId,const char* Message, Float2 Position,Flo
 	DrawBorder(Position, Size, SelectID);
 
 
-	renderer->RenderText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	render->DrawText(Message,strlen(Message)+1, { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
 
 }
-void FontSystem:: Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
+Float2 FontSystem::CalculateRecSizeWithText(const char* str,uint32_t strSize,const Float2& initSize){
+	Float2 ret{initSize};
+	Float2 CharacterSizeNorm = { m_CurrentFont.GetData()->Advance[(uint32_t)' '].x/Application::GetRenderer()->GetViewPortExtent().width,m_CharacterSize*1.25f/Application::GetRenderer()->GetViewPortExtent().height};
+	uint32_t inc{2};
+	if(initSize.y ==0.0f)
+	{
+		if(initSize.x ==0.0f){
+			for(uint32_t i=0 ;i < strSize;i++)
+			{
+				if(str[i] == '\n')
+					inc++;
+			}
+			ret.y =CharacterSizeNorm.y*inc;
+		}
+		else{
+				ret.y = CharacterSizeNorm.y * strlen(str);
+		}
+
+	}
+
+	if(initSize.x == 0.0f)
+	for(uint32_t i=0 ; i < strSize;i++){
+			ret.x += (m_CurrentFont.GetData()->Advance[(uint32_t)str[i]].x+m_Padding)/Application::GetRenderer()->GetViewPortExtent().width;
+
+	}
+
+	return ret;
+}
+
+
+
+void FontSystem::Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize)
 {
-	Renderer* renderer = Application::GetRenderer();
+	Render* renderer = Application::GetRender();
 	
 	GUUID SelectID =id;
 	Float2 CharacterSizeNorm = { m_CurrentFont.GetData()->Advance[(uint32_t)' '].x/Application::GetRenderer()->GetViewPortExtent().width,m_CharacterSize*1.25f/Application::GetRenderer()->GetViewPortExtent().height};
@@ -359,8 +436,10 @@ void FontSystem:: Text(GUUID id, const char* Message, Float2 Position, Float2 Ma
 		Size.x = MaxSize.x;
 	}
 	else {
-		Size.x = CharacterSizeNorm.x * (strlen(Message)+2)*4;
-		Core::Log("Sizex",Size.x,",",CharacterSizeNorm.x);
+		for(uint32_t i=0;i < strlen(Message);i++){
+			Size.x += (m_CurrentFont.GetData()->Advance[(uint32_t)Message[i]].x+m_Padding)/Application::GetRenderer()->GetViewPortExtent().width;
+
+		}
 	}
 
 	if (MaxSize.y != 0.0f) {
@@ -368,8 +447,10 @@ void FontSystem:: Text(GUUID id, const char* Message, Float2 Position, Float2 Ma
 
 	}
 	else {
-		Size.y = CharacterSizeNorm.y * strlen(Message);
-		Core::Log("SizeY",Size.y,",",CharacterSizeNorm.y);
+		if(MaxSize.x == 0.0f)
+			Size.y = CharacterSizeNorm.y * 2;
+		else
+			Size.y = CharacterSizeNorm.y * strlen(Message);
 	}
 
 	Float2 BoundingBox[4];
@@ -380,16 +461,13 @@ void FontSystem:: Text(GUUID id, const char* Message, Float2 Position, Float2 Ma
 
 	//DrawBorder(Position, Size, SelectID);
 
-
-	renderer->RenderText(Message,strlen(Message), { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID);
+	renderer->DrawText(Message,strlen(Message)+1, { BoundingBox[0].x,BoundingBox[1].y }, BoundingBox, m_Padding, m_CharacterSize, SelectID,-1);
 
 }
 void FontSystem::DrawBorder(Float2& Position,Float2& Size,GUUID ID)
 {
-	Renderer* renderer = Application::GetRenderer();
-
-	
-		renderer->DrawQuad({ Position.x ,Position.y ,0.0f }, { 1.0f,1.0f,1.0f,1.0f }, { Size.x ,Size.y  }, ID.ID);
+	Render* renderer = Application::GetRender();
+		renderer->DrawQuad({ Position.x ,Position.y}, { 1.0f,1.0f,1.0f,1.0f }, { Size.x ,Size.y  }, ID.ID);
 }
 
 
@@ -533,7 +611,7 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 			return asset;
 	}
 
-
+	//Fix the blurred text for example check ! 
 	FT_Error error = FT_Set_Char_Size(m_Face, 0, (m_CharacterSize)*64, (uint32_t)dpi, (uint32_t)dpi);
 	if (error) {
 		Core::Log(ErrorType::Error, "Failed to set the font char size");

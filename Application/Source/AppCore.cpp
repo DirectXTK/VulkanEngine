@@ -65,7 +65,14 @@ namespace Core {
 		return std::sqrt(std::pow(pos1.x-pos2.x,2)+std::pow(pos1.y-pos2.y,2));
 	}
 
-
+bool IsStringNumber(const std::string& string){
+    for(uint64_t i=0;i < string.size();i++){
+        if(string[i] < '0' ||string[i] > '9')
+            return false;
+        
+    }
+    return true;
+}
  std::string GetCurrentExecutablePath(){
 	
 	    #if defined(_WIN32)

@@ -1,7 +1,7 @@
 #pragma once
 #include "AppCore.h"
 namespace GUI {
-	enum class Style { NONE, COLOR, BORDER ,SLIDER,OUTLINE,TOOLTIP,NUMOFSTYLES};
+	enum class Style { NONE, COLOR, BORDER ,SLIDER,OUTLINE,TOOLTIP,HIGHLIGHTWHENHOVERED,NUMOFSTYLES};
 	struct ColorStyle {
 		//used for debbuging
 		uint8_t StructSize{};
@@ -12,6 +12,11 @@ namespace GUI {
 		bool FunctionDiv{false};
 		bool FunctionEq{false};
 		
+	};
+	struct HighLightCoveredStyle{
+		Float4 colorChange{};
+		Core::Operations colorOpera{Core::Operations::ADD};
+		//Function like enum add minus mult or divide for how is color changed on hovered object.
 	};
 	struct BorderStyle {
 		uint8_t StructSize{};

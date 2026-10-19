@@ -1,7 +1,7 @@
 #include "Particle.h"
 #include "Application.h"
-void ParticleSystem::UpdateAndDraw(double deltaTime){
-    Renderer* renderer = Application::GetRenderer();
+void ParticleSystem::UpdateAndDraw(double deltaTime,bool draw){
+    Render* renderer = Application::GetRender();
     for(uint32_t i=0;i < MAXPARTICLECOUNT;i++){
         if(m_ParticleProps[i].Alive){
             m_ParticleProps[i].LifeTime -=deltaTime;
@@ -17,16 +17,17 @@ void ParticleSystem::UpdateAndDraw(double deltaTime){
             }else{
                 //Draw and update velocity
                 ParticleProps& prop = m_ParticleProps[i];
-            
+                if(!draw)
+                    continue;
                 if(prop.CustomFunction)
                     prop.CustomFunction(prop);
                 if(prop.TextureID !=0)
                     renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID,prop.TextureID,prop.TextureIndex);
                 else if(prop.Animation){
-                    renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID,prop.Animation);
+                    renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID,prop.Animation.GetCurrentTexture().GetID(),prop.Animation.GetTextureIndex());
                     prop.Animation.Update(deltaTime);
                 }else{
-                    renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID);
+                    renderer->DrawInstance(prop.Pos,prop.Color,prop.Size,prop.ID,0,-1);
                 }
             }
         }

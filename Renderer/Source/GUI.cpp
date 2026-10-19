@@ -26,23 +26,18 @@ GUIRenderer::GUIRenderer(Application* app,bool SaveState): m_Application(app),m_
 }
 void GUIRenderer::BeginGUI()
 {
-	m_CurrentPanel = 0;
-
+	
 	Renderer* renderer =Application::GetRenderer(); 
-	Buffer* buffer = renderer->GetCustomBuffer(0);
-	delete []m_PickBufferData;
-	m_PickBufferData = new Float2[renderer->GetViewPortExtent().width*renderer->GetViewPortExtent().height];
-	buffer->LoadFromBufferToVar(m_PickBufferData,renderer->GetViewPortExtent().width*renderer->GetViewPortExtent().height*sizeof(Float2));
-	//Core::Log("Size",renderer->GetViewPortExtent().height," ", renderer->GetViewPortExtent().width);
+	
 }
 
 
 void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Float2 Size, GUUID TextureHandle, bool Dragable)
 {
 	InputSystem* inputSystem = &m_Application->m_InputSystem;
-	Renderer* renderer = m_Application->m_Renderer;
+	Render* renderer = m_Application->GetRender();
 	GUUID id(ID);
-
+	
 	if (m_PanelIDs.find(id) == m_PanelIDs.end()) {
 		m_PanelIDs[id] = { Position,Size,id };
 	}
@@ -70,31 +65,141 @@ void GUIRenderer::Panel(const std::string& ID,Float2 Position, Float4 Color, Flo
 	m_CurrenPanelParent = &m_PanelIDs[id];
 
 	if (Dragable) {
-		if (inputSystem->IsMouseClicked(MouseCodes::LEFT, false)){
-			m_PanelIDs[id].Offset.x = m_PanelIDs[id].Position.x-m_Application->GetMousePosNorm().x;
-			m_PanelIDs[id].Offset.y =m_PanelIDs[id].Position.y -m_Application->GetMousePosNorm().y;
-		}
 		
 		
 		if (m_DraggedPanel == id) 
 		{	
-			Float2 Pos = m_Application->GetMousePosNorm();
-			Float2 Dis = { Pos.x - m_PanelIDs[m_DraggedPanel].Position.x,Pos.y - m_PanelIDs[m_DraggedPanel].Position.y };
-			Dis.x += m_PanelIDs[m_DraggedPanel].Offset.x;
-			Dis.y += m_PanelIDs[m_DraggedPanel].Offset.y;
-
-			m_PanelIDs[m_DraggedPanel].Position.x += Pos.x- m_PanelIDs[m_DraggedPanel].Position.x+ m_PanelIDs[m_DraggedPanel].Offset.x;
-			m_PanelIDs[m_DraggedPanel].Position.y += Pos.y - m_PanelIDs[m_DraggedPanel].Position.y + m_PanelIDs[m_DraggedPanel].Offset.y;
+			Float2 Pos = Application::GetMousePosNorm();
+			
+			m_PanelIDs[m_DraggedPanel].Position.x += Pos.x-m_PanelIDs[id].Offset.x;
+			m_PanelIDs[m_DraggedPanel].Position.y += Pos.y-m_PanelIDs[id].Offset.y;
+			m_PanelIDs[id].Offset = Pos;
 
 		}
 	}
 	ApplyCurrentStyles(m_PanelIDs[id].Position,Size,Color,ID);
 
 	if(TextureHandle !=0)
-		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y,0.0f }, Color, Size,TextureHandle, m_PanelIDs[id].ID.ID,0);
+		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y }, Color, Size,TextureHandle, m_PanelIDs[id].ID.ID,0);
 	else
-		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y,0.0f },Color, Size,m_PanelIDs[id].ID.ID);
+		renderer->DrawQuad({ m_PanelIDs[id].Position.x,m_PanelIDs[id].Position.y },Color, Size,m_PanelIDs[id].ID);
 	m_PanelDepth++;
+}
+bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4 color, Float2 size,DropDowmMenuCustomSpecs* specs){
+	Render* renderer = Application::GetRender();
+	GUUID id =Core::GetStringHash(strID);
+	GUUID idButton =Core::GetStringHash(strID+"Button");
+	Float2 LPosition{position};
+	DropDownMenuData* currentMenuData{};
+
+	if(m_DropDownMenu.find(idButton) == m_DropDownMenu.end()){
+		m_DropDownMenu[idButton] = {false};
+		if(specs)
+			m_DropDownMenu[idButton].selectionCount = specs->maxSelectedCheckBoxes;
+		currentMenuData = &m_DropDownMenu[idButton];
+	}else{
+		currentMenuData = &m_DropDownMenu[idButton];
+	}
+	if (m_CurrenPanelParent) {
+		LPosition = { (position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
+		
+		size = {size.x*m_CurrenPanelParent->Size.x,size.y*m_CurrenPanelParent->Size.y};
+		size.x = std::clamp(size.x,0.0f,m_CurrenPanelParent->Size.x);
+		size.y = std::clamp(size.y,0.0f,m_CurrenPanelParent->Size.y);
+
+		LPosition.x = std::clamp(LPosition.x,m_CurrenPanelParent->Position.x-m_CurrenPanelParent->Size.x+size.x,m_CurrenPanelParent->Position.x+m_CurrenPanelParent->Size.x-size.x);
+		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+size.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-size.y);
+	}
+
+	m_CurrentDropDownMenu = currentMenuData;
+
+	currentMenuData->pos = LPosition;
+	currentMenuData->size = size;
+	currentMenuData->offset = {0.0f,0.0f};
+
+	
+	//Draw window
+
+	float aspectRation{};
+	Float2 arrowSize{size.x*0.20f,size.y*0.20f};
+	float arrowOffsetYFromTop{arrowSize.y*0.15f};
+	Float2 arrowPos{LPosition.x+size.x-(arrowSize.x*1.5f),(LPosition.y+size.y-arrowSize.y-arrowOffsetYFromTop)};
+	//draw menu arrow
+	if(currentMenuData->IsExtended){
+		ApplyCurrentStyles(LPosition,size,color,id);
+		renderer->DrawQuad(LPosition,color,size,id);
+		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,idButton,Core::GetStringHash("GUI/SCROLLBUTTON"),-1);
+
+	}
+	else{
+		size = {size.x,arrowSize.y+arrowOffsetYFromTop};
+		LPosition.y = arrowPos.y;
+		ApplyCurrentStyles(LPosition,size,color,id);
+		renderer->DrawQuad({LPosition.x,arrowPos.y},color,size,id);
+		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,idButton,Core::GetStringHash("GUI/DropDownMenu"),-1);
+	}
+	return currentMenuData->IsExtended;
+}
+void CheckBoxCallback(bool ret,void* currentDropDownMenu){
+	uint32_t* selectedCount = (uint32_t*)currentDropDownMenu;
+	if(ret)
+		*selectedCount+=1;
+	else
+		*selectedCount-=1;
+}
+bool GUIRenderer::DropDownMenuItem(const std::string& strID,const Float2& offset,const Float4& inColor,const Float2& size,const DropDownMenuItemType& type){
+	DropDownMenuData* currentMenuData{};
+	Float2 topPos{};
+	Float2 realSize{size};
+	Float2 basePadding{};
+	bool result{false};
+	Float4 color = inColor; 
+
+	if(!m_CurrentDropDownMenu|| !m_CurrentDropDownMenu->IsExtended)
+		return false;
+	realSize.x *= m_CurrentDropDownMenu->size.x;
+	realSize.y *= m_CurrentDropDownMenu->size.y;
+
+
+	topPos = {m_CurrentDropDownMenu->pos.x,m_CurrentDropDownMenu->pos.y};
+	topPos.x +=offset.x;
+	topPos.y +=offset.y;
+
+	topPos.y +=m_CurrentDropDownMenu->offset.y;
+	topPos.x +=m_CurrentDropDownMenu->offset.x;
+
+	basePadding.y=m_CurrentDropDownMenu->size.y*0.05f;
+
+	ApplyCurrentStyles(topPos,realSize,color,Core::GetStringHash(strID));
+
+	switch (type)
+	{
+	case DropDownMenuItemType::TEXT:{
+		realSize.x = m_CurrentDropDownMenu->size.x;
+		Text(strID,strID,topPos,{1.0f,1.0f,1.0f,1.0f},realSize);
+		break;
+	}	
+	case DropDownMenuItemType::INPUTTEXT:{
+		Core::Log(ErrorType::Warning,"Not implemented");
+		break;
+	}
+	case DropDownMenuItemType::CHECKBOX:{
+		if(m_CurrentDropDownMenu->currentlySelected >=m_CurrentDropDownMenu->selectionCount&& m_CurrentDropDownMenu->selectionCount !=0){
+			result = CheckBox(strID,topPos,{realSize.x,realSize.y},color,0,true,CheckBoxCallback,&m_CurrentDropDownMenu->currentlySelected);
+
+		}else{
+			result = CheckBox(strID,topPos,{realSize.x,realSize.y},color,0,false,CheckBoxCallback,&m_CurrentDropDownMenu->currentlySelected);
+		}
+	m_CurrentDropDownMenu->offset.y -=realSize.y;
+
+		break;
+	}
+	default:
+		break;
+	}
+
+	m_CurrentDropDownMenu->offset.y -=realSize.y+basePadding.y;
+	return result;
 }
 void GUIRenderer::Tooltip(const std::string& tooltip,const Float2& maxSize,const Float2& posOffset,const Float4& backGroundColor,const Float4& borderColor,GUUID id){
 	TooltipData* data = new TooltipData(tooltip);
@@ -108,7 +213,7 @@ void GUIRenderer::Tooltip(const std::string& tooltip,const Float2& maxSize,const
 }
 bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Position,Float4 Color,Float2 Size,MouseCodes mousecode,GUUID TextureHandle,bool SavesState, bool Dragable,bool** IsPressed)
 {
-	Renderer* renderer = m_Application->m_Renderer;
+	Render* renderer = m_Application->GetRender();
 	InputSystem* inputsystem = &m_Application->m_InputSystem;
 	Float2 LPosition{ Position };
 	ButtonData* CurrentButtonData{};
@@ -135,8 +240,8 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 
 	if(CurrentButtonData->IsPressed == true){
 		//if(SavesState)
-			//renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},m_CurrentOutlineData->Color,OutlineSize,0);
-	//	else{
+		//	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},m_CurrentOutlineData->Color,OutlineSize,0);
+		//else{
 		//	Color.r -=0.1f;
 		//	Color.g -=0.1f;
 		//	Color.b -=0.1f;
@@ -146,9 +251,9 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 
 
 	if(TextureHandle ==0)
-		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, CurrentButtonID.ID);
+		renderer->DrawQuad({ LPosition.x,LPosition.y}, Color, Size, CurrentButtonID.ID);
 	else
-		renderer->DrawQuad({ LPosition.x,LPosition.y,0.0f }, Color, Size, TextureHandle, CurrentButtonID.ID,0 );
+		renderer->DrawQuad({ LPosition.x,LPosition.y }, Color, Size,  CurrentButtonID.ID,TextureHandle,0 );
 
 	//draw text
 	if (Text.size() != 0) {
@@ -185,7 +290,7 @@ bool GUIRenderer::Button(const std::string& ID,const std::string& Text,Float2 Po
 }
 void GUIRenderer::Quad(const Float2& position,const Float2& size,const Float4& color,GUUID textureID){
 
-	Renderer* renderer = m_Application->m_Renderer;
+	Render* renderer = m_Application->GetRender();
 	Float2 LPosition{ position };
 	Float2 RSize{size};
 	ButtonData* CurrentButtonData{};
@@ -203,11 +308,11 @@ void GUIRenderer::Quad(const Float2& position,const Float2& size,const Float4& c
 		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y-RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
 	}
 	ApplyCurrentStyles(LPosition,RSize,rColor);
-	renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},rColor,RSize,textureID,0);
+	renderer->DrawQuad({LPosition.x,LPosition.y},rColor,RSize,0,textureID,-1);
 }
 
-bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture){
-	Renderer* renderer = m_Application->m_Renderer;
+bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Float2& size,const Float4& color,GUUID customCheckBoxTexture,bool disableTurningOn,void(*OnClickCallback)(bool,void*),void* customCallbackData){
+	Render* renderer = m_Application->GetRender();
 	Float2 LPosition{ position };
 	Float2 RSize{size};
 	CheckBoxData* currentCheckBoxData{};
@@ -221,10 +326,19 @@ bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Fl
 	CurrentButtonID = Core::GetStringHash(id);
 
 	if(m_SelectedObjID == CurrentButtonID){
-		if(currentCheckBoxData->IsClicked)
+		if(currentCheckBoxData->IsClicked){
 			currentCheckBoxData->IsClicked = false;
-		else 
-			currentCheckBoxData->IsClicked = true;
+			if(OnClickCallback)
+				OnClickCallback(currentCheckBoxData->IsClicked,customCallbackData);
+		}
+		else {
+			if(!disableTurningOn){
+				currentCheckBoxData->IsClicked = true;
+				if(OnClickCallback)
+					OnClickCallback(currentCheckBoxData->IsClicked,customCallbackData);
+			}
+		}
+	
 	}
 
 	if (m_CurrenPanelParent) {
@@ -238,11 +352,12 @@ bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Fl
 		LPosition.y = std::clamp(LPosition.y,m_CurrenPanelParent->Position.y-m_CurrenPanelParent->Size.y+RSize.y,m_CurrenPanelParent->Position.y+m_CurrenPanelParent->Size.y-RSize.y);
 	}
 	ApplyCurrentStyles(LPosition,RSize,rColor,CurrentButtonID);
-
-	if(currentCheckBoxData->IsClicked)
-		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,Core::GetStringHash("GUI/CheckBoxTrue"),CurrentButtonID.ID);
-	else
-		renderer->DrawQuad({LPosition.x,LPosition.y,0.0f},color,RSize,Core::GetStringHash("GUI/CheckBoxFalse"),CurrentButtonID.ID);
+	if(currentCheckBoxData->IsClicked){
+		renderer->DrawQuad({LPosition.x,LPosition.y},color,RSize,CurrentButtonID.ID,Core::GetStringHash("GUI/CheckBoxTrue"),-1);
+	}
+	else{
+		renderer->DrawQuad({LPosition.x,LPosition.y},color,RSize,CurrentButtonID.ID,Core::GetStringHash("GUI/CheckBoxFalse"),-1);
+	}
 	return currentCheckBoxData->IsClicked;
 }
 void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2 Position, Float4 Color, Float2 Size) {
@@ -259,17 +374,17 @@ void GUIRenderer::Text(const std::string& strID, const std::string& Text, Float2
 	}
 }
 void GUIRenderer::DrawBorder(const Float2& Position, const Float2& Size, const Float4& BorderColor,const Float4& BackGroundColor, float BorderWidth) {
-	Renderer* renderer = m_Application->m_Renderer;
+	Render* renderer = m_Application->GetRender();
 	Float2 BorderSize{ Size.x+ BorderWidth,Size.y+ BorderWidth };
 	Float2 RealPosition= {Position.x,Position.y};
 	
-	renderer->DrawQuad({ RealPosition.x,RealPosition.y,0.0f }, BorderColor, BorderSize, 0);
-	renderer->DrawQuad({ RealPosition.x,RealPosition.y,0.0f }, BackGroundColor, Size, 0);
+	renderer->DrawQuad({ RealPosition.x,RealPosition.y }, BorderColor, BorderSize, 0);
+	renderer->DrawQuad({ RealPosition.x,RealPosition.y }, BackGroundColor, Size, 0);
 }
 void GUIRenderer::Slider(const std::string& strID,  float* number,const  Float2& Position,const Float4& color,const  Float2& Size,const  float SlideAmount,const Float2& MinMax,const  uint32_t DecimalPlaces)
 {
 	Float4 Color{color};
-	Renderer* renderer= m_Application->m_Renderer;
+	Render* renderer= m_Application->GetRender();
 	std::string StringNumber = std::to_string(*number);
 	SliderData* CurrentSlider = &m_Sliders[strID];
 	 float sliderClickedColorMin{.2f};
@@ -309,11 +424,9 @@ void GUIRenderer::Slider(const std::string& strID,  float* number,const  Float2&
 
 
 	
-	
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
 		float deltaPos = Application::GetMousePos().x -CurrentSlider->MousePosChange;
 		CurrentSlider->MousePosChange =  Application::GetMousePos().x ;
-
 		*number += deltaPos * SlideAmount;
 		*number=std::clamp(*number,MinMax.x,MinMax.y);
 	}
@@ -340,7 +453,6 @@ void GUIRenderer::Slider(const std::string& strID, int* number,const  Float2& Po
 
 		}
 	}
-		Core::Log(ErrorType::Error,"Lafa");
 
 	
 	if (CurrentSlider->IsClicked == true && m_Application->m_InputSystem.IsMouseClicked(MouseCodes::LEFT, true)) {
@@ -352,24 +464,30 @@ void GUIRenderer::Slider(const std::string& strID, int* number,const  Float2& Po
 	}
 
 }
-void GUIRenderer::UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,float lineSizeX){
+uint32_t GUIRenderer::UpdateLineStarts(std::vector<uint64_t>& lineStarts,const char* buffer,uint64_t bufferSize,uint64_t arrowPosition){
 	lineStarts.clear();
 	lineStarts.push_back(0);
+	uint32_t increment{};
+
 	for(uint32_t i=0 ;i < bufferSize;i++){
 		if(buffer[i] =='\0')
 			break;
 		if(buffer[i] == '\n')
 			lineStarts.push_back(i+1);
 	}
+	return increment;
 }
-void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size,bool scrollable) {
+void GUIRenderer::InputText(const char* ID,const char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size,bool scrollable) {
 	Float2 rSize{Size};
 	Float2 lPosition{Position};
 	GUUID id = Core::GetStringHash(ID);
-	Renderer* renderer  = Application::GetRenderer();
+	Render* renderer  = Application::GetRender();
 	Float4 color{};
-	Float4 sliderBarColor{0.5f,0.5,0.5f,0.9f};
+	Float4 sliderBarColor{0.3f,0.45,0.39f,0.9f};
 	Float4 sliderButtonColor{0.35f,0.4,0.4f,0.9f};
+	
+	
+	//BufferSize-=1;
 
 	if (m_CurrenPanelParent) {
 		lPosition = { (Position.x * m_CurrenPanelParent->Size.x) + m_CurrenPanelParent->Position.x,(Position.y * m_CurrenPanelParent->Size.y) + m_CurrenPanelParent->Position.y };
@@ -383,8 +501,8 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 	}
 	ApplyCurrentStyles(lPosition,rSize,color,id);
 	if(scrollable){
-		
 
+		
 		float totalLogicalPosYSize{rSize.y};
 		float logicalPosY{};
 
@@ -398,7 +516,7 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 				it->second.ScrollYIndex -= m_Scroll;
 				
 			}
-			it->second.ScrollYIndex = std::clamp(it->second.ScrollYIndex ,(int64_t)0,(int64_t)m_InputTextData[id].LineStarts.size()-1);
+			it->second.ScrollYIndex =std::clamp(it->second.ScrollYIndex ,(int64_t)0,(int64_t)m_InputTextData[id].LineStarts.size()-1);
 			totalLogicalPosYSize =m_InputTextData[id].LineStarts.size();
 			if(m_Scroll !=0.0f && m_CurrentlySelectedObject == id){
 					m_FontSystem->ChangeArrowOffset(m_InputTextData[id].LineStarts[it->second.ScrollYIndex]);
@@ -406,7 +524,8 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 		}
 		if(m_InputTextInputEvent){
 
-		UpdateLineStarts(m_InputTextData[id].LineStarts,Buffer,BufferSize,0);
+		UpdateLineStarts(m_InputTextData[id].LineStarts,Buffer,BufferSize,m_FontSystem->GetArrowPosition());
+		
 		//make the pointer functional again with added scrolling.
 		m_InputTextInputEvent = false;
 		}
@@ -418,16 +537,22 @@ void GUIRenderer::InputText(const char* ID,char* Buffer,uint64_t BufferSize,Floa
 		//logicalPosY= (lPosition.y+(Size.y*0.5f*0.1f/totalLogicalPosYSize));
 		logicalPosY = lPosition.y+rSize.y-(lineIndex*rSize.y/totalLogicalPosYSize*2.0f)-rSize.y/totalLogicalPosYSize;
 
-		m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize,m_InputTextData[id].LineStarts[lineIndex]);
+		m_FontSystem->InputText(ID, (char*)Buffer, BufferSize, lPosition, rSize,m_InputTextData[id].LineStarts[lineIndex]);
 
-		renderer->DrawQuad({lPosition.x+rSize.x-rSize.x*0.1f,lPosition.y,0.0f},sliderBarColor,{rSize.x*0.05f,rSize.y},0);
+		//scroll bar
+		Float2 scrollbarBarSize{rSize.x*0.05f,rSize.y};
+		float scrollBarOffsetFromSideX{scrollbarBarSize.x};
 
-		renderer->DrawQuad({lPosition.x+rSize.x-rSize.x*0.1f,logicalPosY,0.0f},sliderButtonColor,{rSize.x*0.05f,rSize.y/totalLogicalPosYSize},0);
+
+		renderer->DrawQuad({lPosition.x+rSize.x+scrollBarOffsetFromSideX,lPosition.y},sliderBarColor,scrollbarBarSize,0);
+
+		//scroll bar button itself
+		renderer->DrawQuad({lPosition.x+rSize.x+scrollBarOffsetFromSideX,logicalPosY},sliderButtonColor,{scrollbarBarSize.x,scrollbarBarSize.y/totalLogicalPosYSize},0);
 
 
 
 	}else{
-		m_FontSystem->InputText(ID, Buffer, BufferSize, lPosition, rSize);
+		m_FontSystem->InputText(ID, (char*)Buffer, BufferSize, lPosition, rSize);
 	}
 
 
@@ -441,8 +566,16 @@ bool GUIRenderer::IsObjectHovered(GUUID objID){
 		return true;
 	return false;
 }
+bool GUIRenderer::IsObjectHovered(const Float2& objPos,const Float2& size){
+	Float2 mouseWorldPos = Application::GetWorldMousePos();
+	if(mouseWorldPos.x >= objPos.x - size.x&& mouseWorldPos.x <= objPos.x +size.x){
+		if(mouseWorldPos.y >= objPos.y - size.y&& mouseWorldPos.y <= objPos.y +size.y)
+			return true;
+	}
+	return false;
+}
 void GUIRenderer::ApplyCurrentStyles( Float2& position, Float2& size, Float4& color,GUUID id){
-	Renderer* renderer= Application::GetRenderer();
+	Render* renderer= Application::GetRender();
 	for(uint32_t i=0 ; i < m_StylesInQueue.size();i++){
 		if(m_StylesInQueue[i].empty())
 			continue;
@@ -452,8 +585,8 @@ void GUIRenderer::ApplyCurrentStyles( Float2& position, Float2& size, Float4& co
 				GUI::BorderStyle& border = *(GUI::BorderStyle*)container.StyleData;
 
 				if(border.DrawBorder)
-					renderer->DrawQuad({position.x,position.y,0.0f},border.BorderColor,{size.x+border.BorderWidth,size.y+border.BorderWidth},id.ID);
-				renderer->DrawQuad({position.x,position.y,0.5f},border.BackGroundColor,{size.x,size.y},id.ID);
+					renderer->DrawQuad({position.x,position.y},border.BorderColor,{size.x+border.BorderWidth,size.y+border.BorderWidth},id.ID);
+				renderer->DrawQuad({position.x,position.y},border.BackGroundColor,{size.x,size.y},id.ID);
 				break;
 			}
 			case GUI::Style::TOOLTIP:{
@@ -463,6 +596,8 @@ void GUIRenderer::ApplyCurrentStyles( Float2& position, Float2& size, Float4& co
 				TooltipData& tooltip = *(TooltipData*)m_StylesInQueue[(uint32_t)GUI::Style::TOOLTIP-1].top().StyleData;
 				m_StylesInQueue[(uint32_t)GUI::Style::TOOLTIP-1].pop();
 				
+				if(!IsObjectHovered(position,size))
+					continue;
 				backEndData.tooltip = tooltip.tooltip;
 				backEndData.Pos = {position.x+tooltip.PosOffset.x,position.y+tooltip.PosOffset.y};
 				backEndData.Size = tooltip.MaxSize;
@@ -474,6 +609,46 @@ void GUIRenderer::ApplyCurrentStyles( Float2& position, Float2& size, Float4& co
 
 			
 				delete &tooltip;
+				}
+				break;
+			}
+			case GUI::Style::HIGHLIGHTWHENHOVERED:{
+				GUI::HighLightCoveredStyle& highlight = *(GUI::HighLightCoveredStyle*)container.StyleData;
+				if(IsObjectHovered(position,size)){
+					switch(highlight.colorOpera){
+						case Core::Operations::ADD:{
+							color.r+= highlight.colorChange.r;
+							color.g+= highlight.colorChange.g;
+							color.b+= highlight.colorChange.b;
+							color.a+= highlight.colorChange.a;
+							break;
+						}
+						case Core::Operations::MULTI:{
+							color.r*= highlight.colorChange.r;
+							color.g*= highlight.colorChange.g;
+							color.b*= highlight.colorChange.b;
+							color.a*= highlight.colorChange.a;
+							break;
+						}
+						case Core::Operations::DIVIDE:{
+							color.r/= highlight.colorChange.r;
+							color.g/= highlight.colorChange.g;
+							color.b/= highlight.colorChange.b;
+							color.a/= highlight.colorChange.a;
+							break;
+						}
+						case Core::Operations::SUBTRACT:{
+							color.r-= highlight.colorChange.r;
+							color.g-= highlight.colorChange.g;
+							color.b-= highlight.colorChange.b;
+							color.a-= highlight.colorChange.a;
+							break;
+						}
+						default:{
+							Core::Log(ErrorType::Warning,"GUIRenderer::ApplyCurrentStyles() invalid highlight color operation ",(int32_t)highlight.colorOpera);
+							break;
+						}
+					}
 				}
 				break;
 			}
@@ -496,11 +671,23 @@ void GUIRenderer::ResetGUIData(){
 	m_InputTextData.clear();
 	m_PanelIDs.clear();
 }
-void GUIRenderer::SetFont(const std::string& strID){
-	m_FontSystem->SetFont(strID);
+void GUIRenderer::SetFont(const std::string& strID,uint32_t fontSize){
+	//m_FontSystem->SetCharcterSize(14);
+	//Asset<Font> newFont = m_FontSystem->LoadFont(strID);
+	std::string name =Core::GetFileName(strID);
+	if(fontSize ==0){
+		fontSize = Application::GetRenderer()->GetCurrentFont().GetData()->FontSize;
+	}
+
+	auto newFont = Application::GetAsset<Font>(FONTID(name,fontSize));
+	Render* render = Application::GetRender();
+	render->SetFont(newFont,fontSize);
 }
-void GUIRenderer::SetFont(GUUID id){
-	m_FontSystem->SetFont(id);
+void GUIRenderer::SetFont(GUUID id,uint32_t fontSize){
+	//m_FontSystem->SetCharcterSize(14);
+	Asset<Font> newFont = Application::GetAsset<Font>(id);
+	Render* render = Application::GetRender();
+	render->SetFont(newFont,fontSize);
 }
 void GUIRenderer::EndPanel()
 {
@@ -513,20 +700,17 @@ void GUIRenderer::EndPanel()
 void GUIRenderer::PushStyle(const GUI::Style& style, void* Data)
 {
 	m_StylesInQueue[(uint32_t)style-1].push({style,Data});
-	m_LastAddedStyle = style;
+	m_AddedStylesStack.push(style);
 
 
 }
 void GUIRenderer::PopStyle() {
-	if(!m_StylesInQueue[(uint32_t)m_LastAddedStyle-1].empty())
-		m_StylesInQueue[(uint32_t)m_LastAddedStyle-1].pop();
+	GUI::Style lastAdded = m_AddedStylesStack.top();
+	m_AddedStylesStack.pop();
+
+	if(!m_StylesInQueue[(uint32_t)lastAdded-1].empty())
+		m_StylesInQueue[(uint32_t)lastAdded-1].pop();
 	
-}
-void GUIRenderer::SetFontSize(uint32_t Size)
-{	
-	
-		Size = std::clamp((int)Size,1,96);
-		m_FontSystem->SetCharcterSize(Size);
 }
 uint32_t GUIRenderer::GetFontSize() {
 	return m_FontSystem->GetFontSize();
@@ -539,33 +723,74 @@ void GUIRenderer::OnEvent(Event& event){
 	else if(event.GetEventType() == EventType::INPUTTEXTEVENT)
 		OnInputTextEvent((InputTextEvent&)event);
 }
+void GUIRenderer::CalculateInputTextScrollYIndex(GUIRenderer::InputTextData& data,InputTextEvent& event){
+	if(event.AddedChar == '\n')
+	{
+		data.ScrollYIndex++;
+		return;
+	}
+
+	if(data.ScrollYIndex !=0){
+		if(event.RemovedChar !=0){
+			uint64_t beginCharIndex =data.LineStarts[data.ScrollYIndex];
+			uint64_t penPos = m_FontSystem->GetArrowPosition();
+			if(penPos < beginCharIndex)
+				data.ScrollYIndex--;
+		}
+	}
+	uint32_t addedCharIndex{};
+	uint32_t lineIndex{0};
+	for(uint32_t i=0 ;i < data.LineStarts.size();i++){
+		if(addedCharIndex >data.LineStarts[i])
+		{
+			if(i ==0){
+				lineIndex =0;
+				break;
+			}
+			if(i ==data.LineStarts.size()-1){
+				lineIndex = data.LineStarts.size()-1;
+				break;
+			}
+			lineIndex = data.LineStarts[i-1];
+			break;
+		}
+	}
+}
 void GUIRenderer::OnInputTextEvent(InputTextEvent& event){
 	if(m_CurrentlySelectedObject !=0){
 		auto it = m_InputTextData.find(m_CurrentlySelectedObject);
 		if(it != m_InputTextData.end()){
+			CalculateInputTextScrollYIndex(it->second,event);
 			m_InputTextInputEvent = true;
 		}
 
 	}
-
-
 }
 void GUIRenderer::OnKeyBoardEvent(KeyBoardEvent& event){
-
 }
 void GUIRenderer::OnMouseEvent(MouseEvent& event){
 	Renderer* renderer = Application::GetRenderer();
-	Float2 data{};
-	bool succeded = Core::ReadPixel(m_PickBufferData,renderer->GetViewPortExtent().width,renderer->GetViewPortExtent().height,Application::GetMousePos().x,Application::GetMousePos().y,&data);
-
 	if(event.Code == MouseCodes::LEFT && event.State == EventState::PRESSED){
-		if(succeded){
-			m_SelectedObjID = *(uint64_t*)&data;
+		GUUID id =Application::GetCurrentlyHoveredPixelID();	
+		if(id.ID !=0 ){
+			m_SelectedObjID = id;
 			m_CurrentlySelectedObject = m_SelectedObjID;
 			m_DraggedPanel = m_SelectedObjID;
 		}
+		if(m_PanelIDs.find(m_DraggedPanel) != m_PanelIDs.end()){
+			m_PanelIDs[id].Offset.x = m_Application->GetMousePosNorm().x;
+			m_PanelIDs[id].Offset.y =m_Application->GetMousePosNorm().y;
+
+		}
+
+		if(m_DropDownMenu.find(id) != m_DropDownMenu.end()){
+			if(m_DropDownMenu[id].IsExtended)
+				m_DropDownMenu[id].IsExtended = false;
+			else 
+				m_DropDownMenu[id].IsExtended = true;
 
 
+		}
 	}
 
 	if(event.Code == MouseCodes::LEFT && event.State == EventState::RELEASED){
@@ -581,18 +806,20 @@ void GUIRenderer::OnMouseEvent(MouseEvent& event){
 
 
 }
+
 void GUIRenderer::DrawTooltips(){
-	Renderer* renderer = Application::GetRenderer();
+	Render* renderer = Application::GetRender();
 
 	for(uint32_t i=0;i < m_TooltipStack.size();){
 		TooltipBackEndData& data = m_TooltipStack.top();
+		Float2 size = m_FontSystem->CalculateRecSizeWithText(data.tooltip.c_str(),data.tooltip.size(),data.Size);
 		//Draw border
 		if(data.BorderColor.a != 0.0f)
-			renderer->DrawQuad({data.Pos.x,data.Pos.y,0.0f},data.BorderColor,{data.Size.x+0.01f,data.Size.y+0.01f},data.ID.ID);
+			renderer->DrawQuad({data.Pos.x,data.Pos.y},data.BorderColor,{size.x+0.01f,size.y+0.01f},data.ID.ID);
 		//Draw background
 		if(data.BackGroundColor.a !=0.0f)
-			renderer->DrawQuad({data.Pos.x,data.Pos.y,0.0f},data.BackGroundColor,data.Size,data.ID.ID);
-		m_FontSystem->Text(data.ID,data.tooltip.c_str(),data.Pos,data.Size);
+			renderer->DrawQuad({data.Pos.x,data.Pos.y},data.BackGroundColor,size,data.ID.ID);
+		m_FontSystem->Text(data.ID,data.tooltip.c_str(),data.Pos,size);
 		m_TooltipStack.pop();
 
 	}
@@ -604,11 +831,12 @@ void GUIRenderer::EndGUI()
 	m_Scroll = 0.0f;
 	m_SelectedObjID = 0;
 	//Update the dragged panel/button
+	m_CurrentPanel = 0;
+	m_CurrentDropDownMenu = nullptr;
 
 	//delete button that hasn't been used.
 }
 	GUIRenderer::~GUIRenderer(){
 
-		delete[] m_PickBufferData;
 	}
 

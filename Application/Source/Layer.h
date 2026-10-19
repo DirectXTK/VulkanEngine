@@ -36,6 +36,7 @@ class LayerController{
         void UpdateGUILayers();
         void DestroyLayers();
         void OnEvent(Event& event);
+        uint64_t GetLayerCount(){return m_Layers.size();}
 
         template<typename LAYER>
         LAYER* GetLayer()const{

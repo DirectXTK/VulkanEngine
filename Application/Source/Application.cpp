@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "AppTime.h"
 #include "AssetManager.h"
+#include "RendererThreadLoop.h"
  Application* Application::m_Application = nullptr;
 void ChechCommands(Application* app,std::string Command){
     uint64_t argsStart = Command.find(" ");
@@ -8,7 +9,7 @@ void ChechCommands(Application* app,std::string Command){
     if(argsStart == (uint64_t)-1){
         argsStart =0;
     }else{
-        Args= Command.substr(argsStart,Command.size()-argsStart);
+        Args= Command.substr(argsStart+1,Command.size()-argsStart-1);
         Command = Command.substr(0,argsStart);
     }
 
@@ -16,7 +17,8 @@ void ChechCommands(Application* app,std::string Command){
         app->GetAssetManager()->DebugStatistics(false);
     }
     else if(Command == "find"){
-        Core::Log(Args);
+        if(Args.size() ==0 || !Core::IsStringNumber(Args))
+            return;
         uint64_t IdOfAsset = std::stoul(Args);
         if(Application::HasAsset(IdOfAsset))
             Core::Log("Has this asset Type:",Core::GetAssetTypeString(Application::GetAssetType(IdOfAsset)));
@@ -45,6 +47,7 @@ std::string Application::GetClipBoardString(){
 void Application::LoadAllAssets(const std::string& path,const AssetType& typeToLoad){
     Application* app = Application::GetApplication();
     app->m_AssetManager.LoadAllAssets(path,typeToLoad);
+    app->m_Renderer->WaitForIdle();
 }
 
 void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning){
@@ -167,10 +170,11 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
      m_AssetManager.DebugStatistics(false);
      m_Renderer->InitializePipeline(500);
-
+     
      m_FontSystem = new FontSystem();
-
+     
      m_GUIRenderer = new GUIRenderer(this, false);
+     m_Render = new Render(m_Renderer,m_GUIRenderer);
 
    
 
@@ -194,6 +198,10 @@ PathAgentHandle Application::CreatePathAgent(const Float2& position,const Float2
 Float2 Application::GetMousePosChange(){
     Application* app = Application::GetApplication();
     return app->m_InputSystem.GetMousePosChange();
+}
+Float2 Application::GetMousePosChangeNorm(){
+    Application* app = Application::GetApplication();
+    return { (app->m_InputSystem.GetMousePosChange().x/app->m_Renderer->GetViewPortExtent().width*0.f),(app->m_InputSystem.GetMousePosChange().y / app->m_Renderer->GetViewPortExtent().height)};
 }
     uint64_t Application::GetAssetCount(const AssetType& type){
         Application* app = Application::GetApplication();
@@ -223,7 +231,6 @@ Float2 Application::GetMousePosChange(){
     Application* app = GetApplication();
     Float2 MousePos = GetMousePos();
     Float2 rawID{};
-
     if(!Core::ReadPixel(app->m_PickBuffer,app->m_Renderer->GetViewPortExtent().width,app->m_Renderer->GetViewPortExtent().height,MousePos.x,MousePos.y,&rawID)){
         return GUUID(0);
     }
@@ -231,7 +238,56 @@ Float2 Application::GetMousePosChange(){
      return GUUID(*ID);
  }
 
+void Application::DrawRendererStatistics(){
+       GUIRenderer* gui = (GUIRenderer*)Application::GetGUIRenderer();
+        RendererStatistics& statistics = Application::GetApplication()->m_RendererStatistics;    
+  
+      //  Asset<Font> font = Application::GetAsset<Font>("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
+              gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf",0);
+            gui->Panel("GuiStatistics",{-0.7f,0.7f},{1.0f,1.0f,0.5f,1.0f},{0.3f,0.3f});
 
+            GUI::BorderStyle style{sizeof(GUI::BorderStyle)};
+            style.BorderWidth = 0.01f;
+            style.DrawBorder = true;
+            style.BorderColor = {1.0f,0.0f,0.0f,1.0f};
+            style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
+            gui->PushStyle(GUI::Style::BORDER,&style);
+
+            if(gui->IsObjectHovered("DrawCallCount"))
+                gui->Tooltip("Last frame total\ndraw call count",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f},Core::GetStringHash("DrawCallCount"));
+            gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(statistics.DrawCallCount),{0.0f,0.90f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+            if(gui->IsObjectHovered("TriangleCount"))
+                gui->Tooltip("Last frame \ntotal triangle count",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f},Core::GetStringHash("TriangleCount"));
+            gui->Text("TriangleCount","TRIANGLE: "+std::to_string(uint32_t(statistics.VertexCount/3.f)),{0.0f,0.70f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+            if(gui->IsObjectHovered("VertexCount"))
+                gui->Tooltip("Last frame total vertex count",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f},Core::GetStringHash("VertexCount"));
+            gui->Text("VertexCount","VERTEX: "+std::to_string(statistics.VertexCount),{0.0f,0.50f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+               if(gui->IsObjectHovered("Instance"))
+                gui->Tooltip("Last frame total instance count",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f},Core::GetStringHash("Instance"));
+            gui->Text("Instance","INSTANCE: "+std::to_string(statistics.InstanceCount),{0.0f,0.30f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+
+            std::string deltatimeString = std::to_string(statistics.ApplicationThreadFrameTime);
+
+            uint64_t Index = deltatimeString.find_last_of(".");
+            uint32_t Prec = 3;
+            deltatimeString = deltatimeString.substr(0,Index+Prec);
+            if(gui->IsObjectHovered("Frametime"))
+                gui->Tooltip("Last frame time for the main thread",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f},Core::GetStringHash("Frametime"));
+            gui->Text("Frametime","FRAMETIME: "+deltatimeString,{0.0f,0.10f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+
+            deltatimeString = std::to_string(statistics.RendererThreadFrameTime);
+            Index = deltatimeString.find_last_of(".");
+            deltatimeString = deltatimeString.substr(0,Index+Prec);
+           if(gui->IsObjectHovered("RenderThreadTime"))
+                gui->Tooltip("Last frame time \nfor the renderer\n thread",{0.2f,0.07f},{0.1f,-0.1f},{1.0f,1.0f,1.0f,0.9f},{0.0f,0.0f,0.0f,0.0f});
+           gui->Text("RenderThreadTime","FRAMETIMERENDER"+deltatimeString,{0.0f,-0.1f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
+
+            gui->PopStyle();
+            gui->EndPanel();
+
+
+
+}
 void Application::Shutdown(){
     Application* app = GetApplication();
     
@@ -239,6 +295,9 @@ void Application::Shutdown(){
     tcsetattr(STDIN_FILENO,TCSANOW,&app->m_DefaultConsoleSett);
     std::cout << "\033[0m"<<std::flush;
     std::cout << "Shutting Down...\n";
+
+    app->m_RendererThread->join();
+    delete app->m_Render;
 
     app->m_LayerController.DestroyLayers();
     app->m_Running = false;
@@ -268,6 +327,27 @@ void Application::RunCollisionAsync(void* objData,uint32_t posOffset,uint32_t si
 void Application::RunAStar(){
 
 }
+void Application::UpdateContent(uint32_t index){
+
+    Buffer* buffer = Application::GetRenderer()->GetPickingBuffer(index);
+    Application* app = Application::GetApplication();
+  
+    buffer->LoadFromBufferToVar(Application::GetApplication()->m_PickBuffer,Application::GetApplication()->m_PickBufferSize);
+
+}
+void Application::UpdateRendererStatistics(){
+        RendererStatistics& statistics = Application::GetApplication()->m_RendererStatistics;    
+        const float updatePeriod{SEC(0.15f)};
+        m_RendererStatisticsUpdate -= m_DeltaTime;
+       if(m_RendererStatisticsUpdate <=0.0f){
+            statistics.RendererThreadFrameTime = Application::GetRendererThreadFrameTime();
+            statistics.ApplicationThreadFrameTime = Application::GetDeltaTime();
+            statistics.VertexCount = Application::GetRenderer()->GetVertexCount();
+            statistics.InstanceCount = Application::GetRenderer()->GetInstanceCount();
+            statistics.DrawCallCount = Application::GetRenderer()->GetDrawCall();
+            m_RendererStatisticsUpdate = updatePeriod;
+        }
+}
  void Application::DispatchEvent(Event& event){
     Application* app = Application::GetApplication();
 
@@ -279,25 +359,37 @@ void Application::RunAStar(){
 
     app->m_GUIRenderer->OnEvent(event);
     app->m_FontSystem->OnEvent(event);
+    app->m_Renderer->OnEvent(event);
     app->m_LayerController.OnEvent(event);
  }
 
  void Application::Run(){
     std::atomic<bool> ThreadRunning(true);
     Application* app = GetApplication();
+    GUIRenderer* gui = app->m_GUIRenderer;
     app->m_Running = true;
 
     std::thread InputThread(RunCommandLineInputTemp,app,std::ref(ThreadRunning));
+    app->m_RendererThread = new std::thread(RendererLoop,app->m_Renderer,app->m_GUIRenderer,app->m_Render);
+
+    //temp
+    float updatePerSec{100};
+    double updateInterval{1000/updatePerSec};
+
 
     while(!glfwWindowShouldClose(app->m_Window->GetHandle())&& app->m_Running){
-
-        app->m_Renderer->GetCustomBuffer(0)->LoadFromBufferToVar(app->m_PickBuffer,app->m_PickBufferSize,0);
-
+        //TEMP
+        app->UpdateRendererStatistics();
+      
+        app->m_LayerController.RunQueue();
         app->m_InputSystem.ResetMouseChange();
 
         app->m_DeltaTime = Time::GetTimeMs() - app->m_LastFrameTime;
         app->m_LastFrameTime = Time::GetTimeMs();
-        app->m_Renderer->BeginFrame(&app->m_Camera,app->m_DeltaTime);
+        double start = Time::GetTimeNs();
+   
+
+        app->m_Renderer->SetApplicationThreadFrameTime(app->m_DeltaTime);
 
        // if(app->m_Specs.AppDebugging)
            // app->m_PathFinderSystem->RenderGrid();
@@ -306,20 +398,27 @@ void Application::RunAStar(){
         
      //   app->m_PathFinderSystem->ResetGrid();
         app->m_LayerController.UpdateLayers(app->m_DeltaTime);
-        app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime);
-        app->m_LayerController.RenderLayers(app->m_DeltaTime);
 
-        app->m_GUIRenderer->BeginGUI();
-        app->m_Renderer->BeginGUIFrame();
 
-        app->m_LayerController.UpdateGUILayers();
-        
-          if(app->m_RendererDebugging){
-            app->m_Renderer->Statistics(true,app->m_GUIRenderer);
-        }
+        if(app->m_Render->GetReadyFrameCount() < MAX_FRAME_DRAWS){
+             app->m_Render->StartQueue(*Application::GetCurrentCamera());
+             
+             app->m_LayerController.RenderLayers(app->m_DeltaTime);
+             app->m_Render->StartGUIQueue();
+           
+            app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,true);
+            app->m_LayerController.UpdateGUILayers();
+              if(app->m_RendererDebugging){
+                 DrawRendererStatistics();
+            }
+            gui->EndGUI();
+            app->m_Render->FinishQueue();
 
-        app->m_GUIRenderer->EndGUI();
-        app->m_Renderer->EndFrame();
+     }else{
+        app->m_ParticleSystem.UpdateAndDraw(app->m_DeltaTime,false);
+     }
+
+
     }
 
       
@@ -328,10 +427,15 @@ void Application::RunAStar(){
 
         glfwSwapBuffers(app->m_Window->GetHandle());
         glfwPollEvents();
-        
-        app->m_LayerController.RunQueue();
-        app->m_Renderer->RunRendererChangeQueue();
+    
+        double end = Time::GetTimeNs();
+        std::this_thread::sleep_for(std::chrono::nanoseconds(uint64_t((updateInterval*1000*1000)-(end-start))));
+
+
     }
+    AppShutdownEvent event{};
+    DispatchEvent(event);
+
     ThreadRunning.store(false);
     app->m_Running = false;
     InputThread.join();

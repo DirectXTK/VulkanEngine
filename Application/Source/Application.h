@@ -9,6 +9,7 @@
 #include "FontSystem.h"
 #include "Collider.h"
 #include "Event.h"
+#include "RendererFrontEnd.h"
 
 #include "PathAgent.h"
 
@@ -48,6 +49,7 @@ public:
     static AssetManager* GetAssetManager() { return &GetApplication()->m_AssetManager; }
     static Camera2D* GetCurrentCamera(){return &Application::GetApplication()->m_Camera;}
     static Renderer* GetRenderer(){return GetApplication()->m_Renderer;}
+    static Render* GetRender(){return GetApplication()->m_Render;}
     static GUIRenderer* GetGUIRenderer(){return GetApplication()->m_GUIRenderer;}
 
     static ApplicationSpecs& GetApplicationSpecs(){ return Application::GetApplication()->m_Specs;}
@@ -77,6 +79,7 @@ public:
     static float GetScroll();
     static Float2 GetMousePos();
     static Float2 GetMousePosChange();
+    static Float2 GetMousePosChangeNorm();
     static Float2 GetMousePosNorm();
     static Float2 GetWorldMousePos();
     //Assets
@@ -95,12 +98,22 @@ public:
     static Application* GetApplication(){return m_Application;}
     static ParticleSystem& GetParticleSystem(){return m_Application->m_ParticleSystem;}
     static bool DeleteApplication();
+
+    static void DrawRendererStatistics();
+
+    static void SetRendererThreadFrameTime(const float& frameTime){Application::GetApplication()->m_RendererThreadFrameTime = frameTime;}
+    static float GetRendererThreadFrameTime(){return Application::GetApplication()->m_RendererThreadFrameTime;}
+
+    //make this private/protected
+    static void UpdateContent(uint32_t index);
+
     ~Application();
 private:
     //has to be non static
      bool InitApplicationBackEnd(ApplicationSpecs specs);
     static void OpenTerminalAndAttachToStream();
 
+    void UpdateRendererStatistics();
     static void Shutdown();
 
     //Debug
@@ -118,6 +131,11 @@ private:
     ColliderSystem m_CollisionSystem{};
     //multithreading
     std::vector<std::thread> m_ThreadPool{};
+    std::thread* m_RendererThread{};
+    float m_RendererThreadFrameTime{};
+
+    Render* m_Render{};
+    float m_RendererStatisticsUpdate{};
 
     ParticleSystem m_ParticleSystem{};
 
@@ -133,6 +151,7 @@ public:
     bool m_Running{};
     //Debugging
     bool m_RendererDebugging{false};
+    RendererStatistics m_RendererStatistics{};
     ApplicationSpecs m_Specs{};
     //console
     termios m_DefaultConsoleSett{};

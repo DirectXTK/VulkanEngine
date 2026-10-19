@@ -40,6 +40,7 @@ public:
 
 	uint32_t GetWidthOfChar();
 	uint32_t GetHeightOfChar();
+	uint64_t GetArrowPosition(){return m_ArrowPosition;}
 
 	Texture* GetFontAtlas();
 
@@ -53,7 +54,7 @@ public:
 	// MaxCharacters 0 means unlimited.
 	//Returns true then max characters has been reached.
 	void InputText(const char* ID,char* Buffer,uint64_t BufferSize,Float2 Position,Float2 Size,uint64_t stringOffset=0);
-
+	
 
 	void Text(const char* StrID,const char* Message, Float2 Position, Float2 MaxSize = {0.f,0.f});
 	void Text(GUUID id, const char* Message, Float2 Position, Float2 MaxSize = { 0.f,0.f });
@@ -64,6 +65,8 @@ public:
 	Asset<Font> LoadFont(const std::string& filePath);
 
 	void OnEvent(Event& event);
+
+	Float2 CalculateRecSizeWithText(const char* str,uint32_t strSize,const Float2& initSize);
 
 	void ChangeArrowOffset(int32_t offset);
 
@@ -89,10 +92,10 @@ private:
 		Float2 Size{};
 	};
 
-
 	//coeficient used for normalizing char size.
 	const float m_CharSizeNormCoe{ 0.000043f };
 
+	
 	Renderer* m_Renderer{};
 	Float2 m_TextureSize{};
 	Asset<Font> ReRenderFaces(GUUID fontID,const std::string& fontName);
@@ -105,7 +108,7 @@ private:
 	Texture* m_Texture1{};
 	float m_Padding{ 0.1f };
 	float m_PaddingY{0.1f};
-	uint32_t m_CharacterSize{4};
+	uint32_t m_CharacterSize{14};
 
 	uint32_t m_FontAtlasSize{};
 	Texture* m_FontTexture{};
@@ -152,6 +155,7 @@ private:
 	Asset<Font> m_CurrentFont;
 	std::unordered_map<GUUID, TextData> m_StoredData{};
 	//float m_FixedPadding{ 0.1018f  };
+	//Cache
 
 };
 

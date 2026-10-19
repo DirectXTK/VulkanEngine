@@ -104,13 +104,18 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
     colorAttachTextureInfo.ImageUsageFlags = VkImageUsageFlagBits(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
     colorAttachTextureInfo.MemoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     colorAttachTextureInfo.SharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
+    colorAttachTextureInfo.Format = VK_FORMAT_R32G32_UINT;
 
     m_ColorAttachments.resize(MAX_FRAME_DRAWS);
     m_DepthStencilAttachments.resize(MAX_FRAME_DRAWS);
-    for (int i = 0; i < m_ColorAttachments.size(); i++) {
-        m_ColorAttachments[i] =new Texture(m_Context,colorAttachTextureInfo,TextureType::ColorAttachment);
-    }
+    VkCommandBuffer singleCommandBuffer = CommandBuffer::StartSingleUseCommandBuffer(m_Context,m_GraphicsPool.GetCommandPool());
+            for(uint32_t i =0;i < m_ColorAttachments.size();i++){
+                delete m_ColorAttachments[i];
+
+                m_ColorAttachments[i] = new Texture(m_Context,colorAttachTextureInfo,TextureType::Custom);
+                m_ColorAttachments[i]->TrasitionFormat(true,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,singleCommandBuffer);
+            }
+    CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_GraphicsPool.GetCommandPool(),singleCommandBuffer);
     //change creat info for depth buffer
     colorAttachTextureInfo.ImageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
     colorAttachTextureInfo.ImageUsageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
@@ -208,17 +213,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
 
 // m_FrameImageIndexed = new Image(m_PhysicalDevice,m_Device,format2,VK_SHARING_MODE_EXCLUSIVE,VK_IMAGE_USAGE_STORAGE_BIT,  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT           ,VK_IMAGE_TILING_OPTIMAL,m_SwapChain->GetExtent().width,m_SwapChain->GetExtent().height);
 
-    BufferDesc PickingImageBufferDesc{};
-    PickingImageBufferDesc.SizeBytes = m_ColorAttachments[0]->GetByteSize();
-    PickingImageBufferDesc.Usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    PickingImageBufferDesc.Sharingmode = VK_SHARING_MODE_EXCLUSIVE;
-    PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
-    PickingImageBufferDesc.Device = m_Device;
-    PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-
-
-    m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
-
+    CreatePickingImage();
  
 
    
@@ -246,7 +241,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
         m_NewWindowSize ={(float)width,(float)height};
     }
 void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 size,GUUID ID,Animator animation){
-    if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,pos,size))
+    if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,pos,size))
         return; 
     if(m_InstanceOffset+1 >= m_MaxInstanceCount||m_CurrentInstanceVertexIndex+4 >= m_MaxInstanceVertexCount){
         #ifdef DEBUG
@@ -357,7 +352,7 @@ void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 si
     m_InstanceCount++;
 }
 void Renderer::DrawInstance(const Float2& pos,const Float4 color,const Float2 size,GUUID ID,GUUID textureID,int textureIndex){
-    if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,pos,size))
+    if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,pos,size))
             return;
     if(m_InstanceOffset+1 >= m_MaxInstanceCount||m_CurrentInstanceVertexIndex+4 >= m_MaxInstanceVertexCount){
         #ifdef DEBUG
@@ -553,12 +548,11 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
     delete[] m_PipelineDesc.ShaderModules;
  }
     void Renderer::ResizeWindow(){
-            vkDeviceWaitIdle(m_Device);
+             vkDeviceWaitIdle(m_Device);
             vkWaitForFences(m_Device,1,&m_DrawFences[m_CurrentFrame],false,1000*1000*1000);
                 for(uint32_t i=0;i < m_SwapChain->GetSwapChainImageCount();i++){
             }
 
-            m_Camera.SetViewportSize({(float)m_NewWindowSize.x,(float)m_NewWindowSize.y});
 
                 m_FrameBuffers.clear();
 
@@ -575,7 +569,8 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
            
             InitRenderDesc(m_RendererDesc);
 
-            delete m_PickingImageBuffer;
+            for(uint32_t i=0 ;i < ARRAYSIZE(m_PickingImageBuffer);i++)
+                delete m_PickingImageBuffer[i];
             CreatePickingImage();
 
             
@@ -600,6 +595,13 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
 
             CommandBuffer::EndSingleUseCommandBuffer(m_Context,m_GraphicsPool.GetCommandPool(),singleCommandBuffer);
 
+    }
+    void Renderer::SetApplicationThreadFrameTime(float deltaTime){
+     if(m_StatisticsCurrentTime <=.0f){
+            m_DeltaTime = deltaTime;
+            m_StatisticsCurrentTime = m_StatisticsUpdateInterval;
+        }
+        m_StatisticsCurrentTime-= deltaTime;
     }
     void Renderer::ResetFrameData(){
             m_DrawCallCountGUI = 0;
@@ -632,14 +634,10 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
             m_VerticesGUI = temp;
 
     }
-    void Renderer::BeginFrame(Camera2D* camera,float deltaTime){    
+    void Renderer::BeginFrame(const Float2& cameraPos,const Float2& cameraSize,glm::mat4 viewproj){    
     
         ResetFrameData();
-        if(m_StatisticsCurrentTime <=.0f){
-            m_DeltaTime = deltaTime;
-            m_StatisticsCurrentTime = m_StatisticsUpdateInterval;
-        }
-        m_StatisticsCurrentTime-= deltaTime;
+       
         
         m_CurrentCommandBuffer = m_CommandBuffers[m_CurrentFrame];
         m_Context->TransferCommandBuffer = m_TransferCommandBuffers[m_CurrentFrame];
@@ -657,10 +655,10 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
 
 
 
-            m_Camera = *camera;
-
-              m_UniformCameraData.GeometryCamera = m_Camera.GetViewProj();
-              m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
+            m_CameraPos = cameraPos;
+            m_CameraSize = cameraSize;
+            m_UniformCameraData.GeometryCamera = viewproj;
+            m_UniformCameraData.GUICamera = glm::identity<glm::mat4>();
             m_UniformBuffer[m_CurrentFrame]->UploadToBuffer(m_Device, &m_UniformCameraData, sizeof(UniformCameraBufferData));
 
             VkSwapchainKHR swapchain = m_SwapChain->GetSwapChain();
@@ -709,14 +707,7 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
             copyregion.imageSubresource.baseArrayLayer = 0;
             copyregion.imageSubresource.layerCount = 1;
 
-
-
-
-            if (m_CurrentFrame ==1){
-                vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0]->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer->GetBuffer(), 1, &copyregion);
-            }
-            
-       
+            vkCmdCopyImageToBuffer(m_CurrentCommandBuffer, m_ColorAttachments[0]->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *m_PickingImageBuffer[m_CurrentFrame]->GetBuffer(), 1, &copyregion);
 
     }
     void Renderer::CreatePickingImage(){
@@ -727,7 +718,9 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
         PickingImageBufferDesc.Physdevice = m_PhysicalDevice;
         PickingImageBufferDesc.Device = m_Device;
         PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-        m_PickingImageBuffer = new Buffer(PickingImageBufferDesc);
+
+        for(uint32_t i =0;i < ARRAYSIZE(m_PickingImageBuffer);i++)
+            m_PickingImageBuffer[i] = new Buffer(PickingImageBufferDesc);
     }
     void Renderer::BeginGUIFrame()
     {
@@ -926,13 +919,17 @@ void Renderer::SubmitDrawParticleCommands(){
     vkCmdDrawIndexed(m_CurrentCommandBuffer,draw.VertexCount*1.5f,draw.InstanceCount,0,0,instanceOffset);
     instanceOffset+=draw.InstanceCount;
 
+    m_VertexCountWhole+=draw.VertexCount;
 }
 
+    m_InstanceCountWhole =instanceOffset;
     m_InstanceDrawCommands.resize(0);
 }
 
         void Renderer::EndFrame()
         {
+            //update statistics
+            m_DrawCallWhole = m_DrawCommandsGeometry.size()+m_DrawCommandsGUI.size()+m_InstanceDrawCommands.size();
              
             VkBufferCopy region{};
             region.size = m_ParticleStaggingBuffer->GetBufferDesc().SizeBytes;
@@ -1001,7 +998,6 @@ void Renderer::SubmitDrawParticleCommands(){
     
             DrawBatch();
 
-            SubmitDrawParticleCommands();
             vkCmdEndRenderPass(m_CurrentCommandBuffer);
             StopRecordingCommands();
 
@@ -1089,14 +1085,18 @@ void Renderer::SubmitDrawParticleCommands(){
              }
 
             
-      
+             m_FrameInFlight--;
         }
     
-
+    void Renderer::MarkSubmitAsReady(){
+        m_FrameInFlight++;
+    }
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, GUUID TextureHandle, uint64_t ID,int TextureIndex)
     {
-        if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
+        if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size)){
+           
             return;
+        }
         GUUID CurrentTextureHandle{};
         Asset<Texture> TexutreAsset{};
         uint32_t TextureID{};
@@ -1175,7 +1175,7 @@ void Renderer::SubmitDrawParticleCommands(){
                 m_VerticesQuad[m_VertexPointerQuad + 1].TextureID = TextureID;
                 m_VerticesQuad[m_VertexPointerQuad + 2].TextureID = TextureID;
                 m_VerticesQuad[m_VertexPointerQuad + 3].TextureID = TextureID;
-        }
+        }   
               
          if(TextureHandle != 0&&m_CurrentTextureDescriptorSetOffset ==0)
             Core::Log("NOt zero ",m_CurrentTextureDescriptorSetOffset);
@@ -1210,7 +1210,7 @@ void Renderer::SubmitDrawParticleCommands(){
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, Animator Animation, uint64_t ID)
     {
-         if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
+         if(!m_GUIRendering&&Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
             return;
         //texture map gets current container
         auto& textures = m_TextureStorageBuffer[m_CurrentFrame];
@@ -1286,7 +1286,7 @@ void Renderer::SubmitDrawParticleCommands(){
 
     void Renderer::DrawQuad(Float3 Position, Float4 Color, Float2 Size, uint64_t ID)
     {
-        if(!m_GUIRendering&&Core::IsFrustomCullable(m_Camera.GetPosition(),m_Camera.GetScale(),GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
+        if(!m_GUIRendering&& Core::IsFrustomCullable(m_CameraPos,m_CameraSize,GetViewPortExtent().width/GetViewPortExtent().height,{Position.x,Position.y},Size))
             return;
         if (m_VertexPointerQuad + 4 > m_VertexCount)
             FlushGeometry();
@@ -1337,13 +1337,15 @@ void Renderer::SubmitDrawParticleCommands(){
     }
     void Renderer::RenderText(const char* Message,uint64_t bufferSize, Float2 Position, Float2 BoundingBox[4], float FixedPadding,float CharSizePixels,GUUID id,int64_t PointerIndex)
     {
+        //TEMP 
+        CharSizePixels = m_CurrentFont.GetData()->FontSize;
+
         //Char being edited index
         if (m_CurrentFont.GetType() != AssetType::FONT)
         {
             Core::Log(ErrorType::Error, "Invalid type must be font{",(uint32_t)m_CurrentFont.GetType(),"}");
             return;
         }
-
         auto& textures = m_TextureStorageBuffer[m_CurrentFrame];
         Font* font = (Font*)m_CurrentFont.GetData();
         Texture* FontAtlasTexture{};
@@ -1382,13 +1384,12 @@ void Renderer::SubmitDrawParticleCommands(){
             m_TextureStorageBufferLoadedTextures[m_CurrentFrame][TextureHandle]= {0,m_CurrentTextureDescriptorSetOffset};
             m_CurrentTextureDescriptorSetOffset++;
         }
-
+        //Draw pointer
         if(stringLen == 0 && PointerIndex != -1){
                    Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY-(CharSizePixels*0.25f)});
                 Float2 sizeNDC = {(float)m_CurrentFont.GetData()->FontSize/(float)GetViewPortExtent().width*0.15f,(float)m_CurrentFont.GetData()->FontSize/GetViewPortExtent().height*1.25f};
                 DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, m_ArrowColor, sizeNDC, 0);
         }
-
         //Do this for every letter
         float Max{};
         float Min{};
@@ -1396,13 +1397,15 @@ void Renderer::SubmitDrawParticleCommands(){
             Float2 SubTextureSize{};
             Float2 Size{};
             int32_t LetterIndex = Message[i];
-
+    
           
                //draw pointer
             if(PointerIndex ==i  ){
                 Float2 ndcPenPos = Core::ToNDC({penPosX,penPosY-(CharSizePixels*0.25f)});
                 Float2 sizeNDC = {(float)m_CurrentFont.GetData()->FontSize/(float)GetViewPortExtent().width*0.15f,(float)m_CurrentFont.GetData()->FontSize/GetViewPortExtent().height*1.25f};
-                DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, m_ArrowColor, sizeNDC, 0);
+                //if out of bounds
+                if(ndcPenPos.y > BoundingBox[0].y)
+                    DrawQuad({ndcPenPos.x,ndcPenPos.y,0.0f}, m_ArrowColor, sizeNDC, 0);
             }
             if(LetterIndex >= font->GlyphCount)
                 continue;
@@ -1450,12 +1453,7 @@ void Renderer::SubmitDrawParticleCommands(){
             }
  
 
-            float RemainingOffset{};
-
-            RemainingOffset = CharSizePixels - font->Coords[LetterIndex].Width;
-            if (RemainingOffset > 0)
-                OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
-
+   
             MaxCord = font->MaxCord[LetterIndex];
             MinCord = font->MinCord[LetterIndex];
             advance = font->Advance[LetterIndex];
@@ -1469,8 +1467,10 @@ void Renderer::SubmitDrawParticleCommands(){
             MinCord.y = baselineY+MinCord.y;
             MaxCord.y = baselineY+MaxCord.y;
 
-            MinCord.x = penPosX;
-            MaxCord.x = penPosX+advance.x;
+            MinCord.x += penPosX;
+            MaxCord.x += penPosX;
+
+            //Here here Somehow if using character which advance is bigger then the input text selecting is disturbed even more .
 
             Float2 glyphPosPixelMin = Core::ToNDC(MinCord);
             Float2 glyphPosPixelMax =Core::ToNDC(MaxCord);
@@ -1485,7 +1485,7 @@ void Renderer::SubmitDrawParticleCommands(){
                 MinCord = font->MinCord[LetterIndex];
 
                 penPosX = (Position.x * 0.5f + 0.5f) * GetViewPortExtent().width;
-                penPosY += 1.0f*+m_CurrentFont.GetData()->FontSize;
+                penPosY += 1.25f*+m_CurrentFont.GetData()->FontSize;
 
                 baselineY = penPosY;
 
@@ -1515,11 +1515,7 @@ void Renderer::SubmitDrawParticleCommands(){
           penPosX += advance.x;
           //penPosY -= advance.y;
 
-            if (RemainingOffset > 0)
-                OffsetX += (RemainingOffset * 0.5f) / FontAtlasTexture->GetWidth();
-    
-
-
+         
      
 
           
@@ -1703,40 +1699,7 @@ void Renderer::SubmitDrawParticleCommands(){
     }
  
     void Renderer::Statistics(bool renderGui,void* guiRenderer){
-        GUIRenderer* gui = (GUIRenderer*)guiRenderer;
-        if(renderGui){
-
-            gui->Panel("GuiStatistics",{-0.7f,0.7f},{1.0f,1.0f,0.5f,1.0f},{0.3f,0.3f});
-
-            GUI::BorderStyle style{sizeof(GUI::BorderStyle)};
-            style.BorderWidth = 0.01f;
-            style.DrawBorder = true;
-            style.BorderColor = {1.0f,0.0f,0.0f,1.0f};
-            style.BackGroundColor = {0.0f,1.0f,1.0f,1.0f};
-            gui->PushStyle(GUI::Style::BORDER,&style);
-            gui->SetFontSize(8);
-            gui->Text("DrawCallCount","DRAWCALL: "+std::to_string(m_DrawCallCountGeometry+m_DrawCallCountGUI+m_ParticleDrawCallCount),{0.0f,0.90f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-
-            gui->Text("TriangleCount","TRIANGLE: "+std::to_string(m_VertexCountPerFrame/3),{0.0f,0.70f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-            gui->Text("VertexCount","VERTEX: "+std::to_string(m_VertexCountPerFrame+m_CurrentInstanceVertexIndex),{0.0f,0.50f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-            gui->Text("Instance","INSTANCE: "+std::to_string(m_InstanceOffset),{0.0f,0.30f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-
-            std::string deltatimeString = std::to_string(m_DeltaTime);
-
-            uint64_t Index = deltatimeString.find_last_of(".");
-            uint32_t Prec = 3;
-            deltatimeString = deltatimeString.substr(0,Index+Prec);
-            gui->Text("Frametime","FRAMETIME: "+deltatimeString,{0.0f,0.10f},{1.0f,1.0f,1.0f,1.0f},{1.0f,0.10f});
-
-            gui->PopStyle();
-            gui->EndPanel();
-
-
-
-        }else{
-
-            Core::Log(ErrorType::Info,"Draw call count",m_DrawCallCountGeometry+m_DrawCallCountGUI+m_DrawCallCountOutlines);
-        }
+     
     }
 
     Texture* Renderer::LoadTexture(std::string Path,TextureType type)
@@ -1773,7 +1736,7 @@ void Renderer::SubmitDrawParticleCommands(){
                     Indices[i+1]=Offset+1;
                     Indices[i+2] = Offset+2;
                     Indices[i+3]=Offset+2;
-                    Indices[i+4] = Offset+3;
+                    Indices[i+4] = Offset+3;    
                     Indices[i+5]=Offset;
                     Offset+=4;
                 }
@@ -1845,10 +1808,20 @@ void Renderer::SubmitDrawParticleCommands(){
    }
 
 
-
+void Renderer::WaitForIdle(){
+    vkDeviceWaitIdle(m_Device);
+}
 Renderer::~Renderer(){
     Shutdown();
 }
+void Renderer::OnEvent(Event& event){
+    if(event.GetEventType() == EventType::APPSHUTDOWN)
+        OnAppShutDown((AppShutdownEvent&)event);
+}
+void Renderer::OnAppShutDown(AppShutdownEvent& event){
+    m_IsShuttingDown = true;
+}
+
 
 void Renderer::StartRecordingCommands()
 {
@@ -1878,7 +1851,9 @@ void Renderer::StopRecordingCommands()
 void Renderer::DrawBatch()
 {
     //Debugging 
-        m_VertexCountPerFrame= 0;
+        m_VertexCountWhole =m_VertexCountPerDrawCall; 
+
+        m_VertexCountPerDrawCall = 0;
 
  
     VkDeviceSize Offset{ 0 };
@@ -1902,11 +1877,15 @@ void Renderer::DrawBatch()
         vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
 
-        
+
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(DrawCall.VertexCount * 1.5f), 1, 0,0, 0);
         m_VertexCountPerFrame+= DrawCall.VertexCount;
 
+
     }
+            SubmitDrawParticleCommands();
+            vkCmdBindPipeline(m_CurrentCommandBuffer,VK_PIPELINE_BIND_POINT_GRAPHICS,m_Pipeline);
+
 
    
     for (uint32_t i = 0; i < m_DrawCommandsGUI.size(); i++) {
@@ -1928,14 +1907,13 @@ void Renderer::DrawBatch()
        static  uint32_t uniformBufferIndex{1};
         vkCmdPushConstants(m_CurrentCommandBuffer,m_PipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(uint32_t),&uniformBufferIndex);
         vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, DescriptorSets, 0, nullptr);
-
+        m_VertexCountPerFrame+= m_DrawCommandsGUI[i].VertexCount ;
         vkCmdDrawIndexed(m_CurrentCommandBuffer, uint32_t(m_DrawCommandsGUI[i].VertexCount * 1.5f), 1, 0,0, 0);
-        m_VertexCountPerFrame+= DrawCall.VertexCount;
+
 
     }
+    m_VertexCountPerFrame= 0;
 
-
-    m_VertexCountPerDrawCall = 0;
 }
 
 void Renderer::CreateDescriptorSets(){
@@ -1976,6 +1954,7 @@ void Renderer::CreateDescriptorSets(){
     }
 
     }
+
 void Renderer::QueueShaderChange(const std::string& path){
     if(m_QueuedShaders.capacity() == m_QueuedShaders.size())
     {
@@ -2069,20 +2048,62 @@ void Renderer::CreateParticlePipeline(){
 
      delete[] m_ParticlePipelineDesc.VertexStageInput;
 }
+void Renderer::RemoveShader(const ShaderType& shaderType){
+    if(m_RemovedShaders.size() > 20)
+    {
+        Core::Log(ErrorType::Warning,"Reached maximum queued shader.{Renderer::RemoveShader}",m_RemovedShaders.capacity(),m_RemovedShaders.size());
+        return;
+    }
+    m_RemovedShaders.push_back(shaderType);
+}
 void Renderer::RunRendererChangeQueue(){
-    if(m_QueuedShaders.size() == 0)
+    if(m_QueuedShaders.size() == 0&& m_RemovedShaders.size()==0)
         return;
     vkDeviceWaitIdle(m_Device);
 
-    m_CurrentlyLoadedShaders.clear();
+    for(uint32_t i=0 ;i < m_QueuedShaders.size();i++){
+        for(uint32_t j=0;j < m_CurrentlyLoadedShaders.size();j++){
 
-    m_PipelineDesc.ShaderCount =m_QueuedShaders.size();
-    m_PipelineDesc.ShaderModules = new VkShaderModule[m_QueuedShaders.size()];
-    m_PipelineDesc.ShaderStages = new VkShaderStageFlagBits[m_QueuedShaders.size()];
-    for(uint32_t i=0;i < m_QueuedShaders.size();i++){
-        m_PipelineDesc.ShaderModules[i] =m_QueuedShaders[i].GetData()->GetShaderModule();
-        m_PipelineDesc.ShaderStages[i] = m_QueuedShaders[i].GetData()->GetShaderStage();
-        m_CurrentlyLoadedShaders.push_back(m_QueuedShaders[i]);
+            if(!m_QueuedShaders[i])
+                continue;
+
+            if(m_CurrentlyLoadedShaders[j].GetData()->GetType() == m_QueuedShaders[i].GetData()->GetType()){
+                m_CurrentlyLoadedShaders[j] = m_QueuedShaders[i];
+
+                m_QueuedShaders[i] =Asset<Shader>();
+
+            }
+            
+        }
+
+    }
+
+    for(uint32_t i=0 ;i < m_QueuedShaders.size();i++){
+        if(!m_QueuedShaders[i])
+            continue;
+        if(m_QueuedShaders[i].GetData()->GetType() != ShaderType::None){
+            m_CurrentlyLoadedShaders.push_back(m_QueuedShaders[i]);
+        }
+    }
+    for(uint32_t i=0 ;i < m_RemovedShaders.size();i++){
+        for(int32_t j=0;j < m_CurrentlyLoadedShaders.size();j++){
+            if(m_RemovedShaders[i] == m_CurrentlyLoadedShaders[j].GetData()->GetType()){
+                m_CurrentlyLoadedShaders.erase(m_CurrentlyLoadedShaders.begin()+j);
+                j--;
+            }
+
+        }
+    }
+  
+
+    m_PipelineDesc.ShaderCount =m_CurrentlyLoadedShaders.size();
+    m_PipelineDesc.ShaderModules = new VkShaderModule[m_CurrentlyLoadedShaders.size()];
+    m_PipelineDesc.ShaderStages = new VkShaderStageFlagBits[m_CurrentlyLoadedShaders.size()];
+
+
+    for(uint32_t i=0;i < m_CurrentlyLoadedShaders.size();i++){
+        m_PipelineDesc.ShaderModules[i] =m_CurrentlyLoadedShaders[i].GetData()->GetShaderModule();
+        m_PipelineDesc.ShaderStages[i] = m_CurrentlyLoadedShaders[i].GetData()->GetShaderStage();
     }
 
     ReCreatePipeline(m_PipelineDesc);
@@ -2090,6 +2111,7 @@ void Renderer::RunRendererChangeQueue(){
 
 
     m_QueuedShaders.clear();
+    m_RemovedShaders.clear();
     m_QueuedShaderPaths.clear();
     m_QueuedShaders.reserve(20);
    delete[] m_PipelineDesc.ShaderModules;
@@ -2097,8 +2119,12 @@ void Renderer::RunRendererChangeQueue(){
 }
 
 void Renderer::Shutdown(){
-    if(m_ShutDown)
+    if(m_ShutDown){
+        #ifdef DEBUG
+        Core::Log("It is already shutdown(Renderer::Shutdown).");
+        #endif
         return; 
+    }
     m_ShutDown = true;
     vkDeviceWaitIdle(m_Device);
 
@@ -2127,7 +2153,8 @@ void Renderer::Shutdown(){
     for(uint32_t i =0;i < m_UniformBuffer.size();i++)
         delete m_UniformBuffer[i];
 
-    delete m_PickingImageBuffer;
+    for(uint32_t i=0 ;i < ARRAYSIZE(m_PickingImageBuffer);i++)
+        delete m_PickingImageBuffer[i];
 
     delete m_ParticleInstanceBuffer;
     delete m_ParticleStaggingBuffer;

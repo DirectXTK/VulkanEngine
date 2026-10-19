@@ -175,7 +175,7 @@ VkPipeline Pipeline::CreatePipeline(const PipelineDesc& desc,VkDevice device)
 
     //Depth stencil
     VkStencilOpState FrontState{};
-    FrontState.compareOp = VK_COMPARE_OP_ALWAYS;
+    FrontState.compareOp = VK_COMPARE_OP_NEVER;
     FrontState.failOp = VK_STENCIL_OP_REPLACE;
     FrontState.passOp = VK_STENCIL_OP_REPLACE;
     FrontState.writeMask = 0x00;

@@ -55,6 +55,10 @@ uint32_t CalculateBytesPerPixel(VkFormat format){
 			CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,createInfo.MemoryPropertyFlags,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_UNDEFINED,nullptr,VkImageAspectFlagBits(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT));
 				break;
 			}
+			case TextureType::Custom:{
+				CreateTexture(createInfo.Format,createInfo.SharingMode,createInfo.ImageTilling,createInfo.ImageUsageFlags,createInfo.MemoryPropertyFlags,createInfo.initLayout,createInfo.ImageLayout,createInfo.Pixels);
+				break;
+			}
 			default :{
 				Core::Log(ErrorType::Error,"Texture type doesn't exist.");
 				break;
@@ -373,8 +377,8 @@ void Texture::CreateTexture(VkFormat format,VkSharingMode shareMode,VkImageTilin
 	//Maybe something with the spacing or placing of the quad that houses the texture.
 	//Create Sampler //TEMP
 	VkSamplerCreateInfo samplercreateinfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-	samplercreateinfo.minFilter = VK_FILTER_NEAREST;
-	samplercreateinfo.magFilter = VK_FILTER_NEAREST;
+	samplercreateinfo.minFilter = VK_FILTER_LINEAR;
+	samplercreateinfo.magFilter = VK_FILTER_LINEAR;
 	samplercreateinfo.anisotropyEnable = false;
 	samplercreateinfo.maxAnisotropy = Anisotropy;
 	samplercreateinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

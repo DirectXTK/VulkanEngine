@@ -91,6 +91,9 @@ struct GUUID {
     GUUID(uint64_t a) {
         ID = a;
     }
+    GUUID(int64_t a) {
+        ID = a;
+    }
     GUUID(const std::string& str) {
         ID = (uint64_t)std::hash<std::string>{}(str);
     }
@@ -149,6 +152,7 @@ namespace Core {
     GUUID GetStringHash(const std::string& Path);
     std::string GetFileExtension(const std::string& File);
 
+    enum class Operations{NONE,ADD,SUBTRACT,MULTI,DIVIDE};
 }
 inline bool operator==(const GUUID& l, const GUUID& r) {
     if (l.ID == r.ID)
@@ -219,6 +223,7 @@ inline std::ostream& operator<<(std::ostream& os, const Float2& obj){
     os <<"{"<<obj.x<<","<<obj.y<<"}";
     return os;
 }
+
 inline bool operator==(const Float2& l, const Float2& r) {
     if (l.x == r.x&& l.y == r.y)
         return true;
@@ -277,6 +282,14 @@ struct Float4 {
         return false;
     }
 };
+inline std::ostream& operator<<(std::ostream& os, const Float3& obj){
+    os <<"{"<<obj.x<<","<<obj.y<<","<<obj.z<<"}";
+    return os;
+}
+inline std::ostream& operator<<(std::ostream& os, const Float4& obj){
+    os <<"{"<<obj.x<<","<<obj.y<<","<<obj.z<<","<<obj.x<<"}";
+    return os;
+}
 namespace Core {
     //works if this is ractangle
     bool IsWithinRectRegion(const Float2& PointPos, const Float2& ObjPos, const Float2& ObjSize);
@@ -292,6 +305,7 @@ namespace Core {
     float CalculateDistance(const Float2& pos1,const Float2& pos2);
 
     std::string GetFileName(const std::string& path);
+    bool IsStringNumber(const std::string& string);
 
 
 

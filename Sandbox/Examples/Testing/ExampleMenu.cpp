@@ -5,6 +5,7 @@
 #include "CollisionTestingLayer.h"
 #include "SerializationTesting.h"
 #include "FontTestingLayer.h"
+#include "MultiThreadingLayer.h"
 ExampleMenu::ExampleMenu(): Layer("ExampleMenu")
 {
 }
@@ -42,6 +43,8 @@ void ExampleMenu::OnGUI()
     }
     else if(gui->Button("FontTestingLayer","FontTestingLayer",{0.0f,-0.2f},{1.0f,1.0f,1.0f,1.0f},{0.15f,0.1f})){
         TransitionLayer<FontTestingLayer>();
+    } else if(gui->Button("MultiThreadingLayer","MultiThreadingLayer",{0.0f,-0.45f},{1.0f,1.0f,1.0f,1.0f},{0.15f,0.1f})){
+        TransitionLayer<MultiThreadingLayer>();
     }
 
 

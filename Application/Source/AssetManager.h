@@ -20,7 +20,7 @@ struct AssetHandle{
 	//only use for perma handles once.
 	void FreePermaHandle();
 	AssetType GetType(){return Type;}
-	GUUID ID{};
+	GUUID ID{0};
 	uint32_t RefCount{};
 	AssetManager* Manager{};
 	AssetType Type{};

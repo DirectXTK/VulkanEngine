@@ -7,7 +7,7 @@ FontTestingLayer::FontTestingLayer(): Layer("FontTestingLayer")
 void FontTestingLayer::OnCreate()
 {
 	GUIRenderer* guiRenderer= Application::GetGUIRenderer();
-	guiRenderer->SetFontSize(46.0f);
+	guiRenderer->SetFont("",46);
 	//Application::m_AssetManager.LoadAsset(fontatlas, AssetType::TEXTURE, "FONTAtlas");
 
 	//Application::m_Renderer->SetCurrentFont(fontatlas);
@@ -55,7 +55,8 @@ void FontTestingLayer::OnGUI()
 	BorderStyle.BorderColor = { 0.0f,0.0f,1.0f,1.0f };
 	BorderStyle.BackGroundColor = { 0.0f,0.0f,0.7f,1.0f };
 	BorderStyle.BorderWidth = 0.007f;
-	guiRenderer->SetFontSize(FontSize);
+
+	guiRenderer->SetFont("",FontSize);
 
 	guiRenderer->Text("FrameTime",std::to_string(Application::GetDeltaTime()),{-0.8f,-0.8f},{0.0f,0.0f,0.0f,1.0f},{0.1f,0.1f});
 
