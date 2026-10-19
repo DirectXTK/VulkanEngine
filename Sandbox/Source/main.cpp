@@ -2,6 +2,7 @@
 #include  "../Examples/Testing/CollisionTestingLayer.h"
 #include  "../Examples/Testing/GUITesting.h"
 #include "../Examples/Testing/TestingLayer.h"
+#include "../Examples/Testing/DLLLoadingLayer.h"
 int main() {
 	
 	ApplicationSpecs specs{};
@@ -14,7 +15,7 @@ int main() {
 	specs.ApplicationVersion = 0.001f;
 	specs.AppDebugging = true;
 	Application::InitApplication(specs);
-	Application::AddLayer<TestingLayer>();
+	Application::AddLayer<DLLLoadingLayer>();
 
 	Application::Run();
 	
