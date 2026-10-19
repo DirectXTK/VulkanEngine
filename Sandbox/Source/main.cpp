@@ -5,6 +5,7 @@
 #include "../Examples/Testing/AnimationTestingLayer.h"
 #include "../Examples/Testing/ExampleMenu.h"
 #include "../Examples/Testing/MultiThreadingLayer.h"
+#include "../Examples/Testing/DLLLoadingLayer.h"
 int main() {
 	
 	ApplicationSpecs specs{};
