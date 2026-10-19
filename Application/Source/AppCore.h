@@ -149,6 +149,12 @@ namespace Core {
         private:
         uint64_t m_Start{};
     };
+
+    #ifdef DEBUG
+    const std::string& GetStringPathFromGUUID(GUUID id);
+    #endif
+
+    const std::string GenerateFontFullName(uint32_t charSize,const std::string& name);
     GUUID GetStringHash(const std::string& Path);
     std::string GetFileExtension(const std::string& File);
 

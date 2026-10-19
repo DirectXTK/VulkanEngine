@@ -165,13 +165,19 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
      //Init a* path finding algorith system
     // m_PathFinderSystem = new PathSystem(1000,1000,{0.025f,0.025f});
 
-    m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::TEXTURE);
+    //m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::TEXTURE);
     m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::SHADER);
 
      m_AssetManager.DebugStatistics(false);
      m_Renderer->InitializePipeline(500);
      
      m_FontSystem = new FontSystem();
+
+     const std::string defaultFont{"FONTJetBrainsMono-Bold14"};
+
+     Application::GetAssetManager()->LoadAllAssets("EngineResources/Fonts/",AssetType::FONT);
+     m_FontSystem->SetFont(Core::GetStringHash(defaultFont));
+     
      
      m_GUIRenderer = new GUIRenderer(this, false);
      m_Render = new Render(m_Renderer,m_GUIRenderer);
@@ -183,7 +189,7 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 
      if(specs.AppDebugging)
         LogSystemAndAppInformation();
-
+     
      return true;
 
  }
@@ -241,7 +247,7 @@ Float2 Application::GetMousePosChangeNorm(){
 void Application::DrawRendererStatistics(){
        GUIRenderer* gui = (GUIRenderer*)Application::GetGUIRenderer();
         RendererStatistics& statistics = Application::GetApplication()->m_RendererStatistics;    
-  
+        
       //  Asset<Font> font = Application::GetAsset<Font>("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
               gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf",0);
             gui->Panel("GuiStatistics",{-0.7f,0.7f},{1.0f,1.0f,0.5f,1.0f},{0.3f,0.3f});

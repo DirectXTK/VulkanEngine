@@ -2,12 +2,12 @@
 #include "Renderer.h"
 #include "Application.h"
 #include "Animator.h"
-
+#include "DLLLoading.h"
   
 
 
 void ASSETLOADASSET(AssetHandle* data){
-			data->Manager->UnloadAsset(data->ID,data->Type);
+			data->Manager->UnloadAsset(data->ID);
 }
 void AssetHandle::FreePermaHandle(){
 	RefCount--;
@@ -19,6 +19,7 @@ void AssetHandle::FreePermaHandle(){
 		case AssetType::TEXTUREATLAS: {delete (Texture*)Data;break;}	
 		case AssetType::ANIMATION: {delete (Animator*)Data;break;}	
 		case AssetType::SHADER: {delete (Shader*)Data;break;}	
+		case AssetType::DLL: {delete (DLLLoading*)Data;break;}	
 	
 		default : {Core::Log("FreePermaHandle type ",(uint32_t)Type," not implemented.");}
 		}
@@ -111,15 +112,43 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		}
 		break;
 	}
+	case AssetType::FONT:{
+		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
+			std::string currentFile = dir_entry.path().string();
+			std::string fileExtension = Core::GetFileExtension(currentFile);	
+			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+
+			if(fileExtension == "ttf"){
+				LoadFont(currentFile,fileName);
+			}
+
+		}
+		break;
+	}
+	case AssetType::DLL:{
+		for(auto const& dir : std::filesystem::recursive_directory_iterator(FolderPath)){
+			std::string currentFile = dir.path().string();
+			std::string fileExtension = Core::GetFileExtension(currentFile);
+			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+			if(fileExtension == "dll"|| fileExtension == "so")
+				LoadDLL(currentFile,fileName);
+		}
+		break;
+	}
 
 	default: {
-		Core::Log(ErrorType::Error, "Invalid AssetType.");
+		Core::Log(ErrorType::Error, "Invalid AssetType ",(uint32_t)TypesToLoad," AssetManager::LoadAllAssets()");
 		break;
 	}
 	}
 	
 }
+void AssetManager::LoadDLL(const std::string& filePath,const std::string& fileName){
+	DLLLoading* loading = new DLLLoading();
+	loading->Init(filePath);
+	LoadAssetPerma<DLLLoading>(loading,AssetType::DLL,fileName);
 
+}
 void AssetManager::LoadShader(const std::string& filePath,const std::string& fileName){
 	auto it = m_Resources.find(fileName);
 	if(it != m_Resources.end())
@@ -179,6 +208,11 @@ void AssetManager::DebugStatistics(bool GUI){
 
 				break;
 			}
+				case AssetType::DLL:{
+					Core::Log("DLL ID{",handle.ID.ID,"}"+debugStuff);
+					
+					break;
+				}
 			default:{
 				Core::Log("Not implemented or invalid type{",(uint32_t)handle.GetType(),"}"+debugStuff);
 				break;
@@ -208,7 +242,7 @@ void AssetManager::DebugStatistics(bool GUI){
 
 }
 void AssetManager::LoadFont(const std::string& FilePath,const std::string& fileName){
-	//Application::GetApplication()->m_FontSystem.LoadFont();
+	Application::GetApplication()->m_FontSystem->LoadFont(FilePath);
 		auto it = m_Resources.find(fileName);
 			if(it != m_Resources.end())
 				return;

@@ -18,7 +18,7 @@ int main() {
 	specs.ApplicationVersion = 0.001f;
 	specs.AppDebugging = false;
 	Application::InitApplication(specs);
-	Application::AddLayer<ExampleMenu>();
+	Application::AddLayer<DLLLoadingLayer>();
 	
 	Application::Run();
 	

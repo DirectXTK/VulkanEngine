@@ -26,11 +26,20 @@ void main()
     EmitVertex();
 
     gl_Position = gl_in[1].gl_Position;
+    EmitVertex();
+    EndPrimitive();
+
+
+    gl_Position = gl_in[1].gl_Position;
     OutFragColor = vec4(1.0, 1.0, 1.0, 1.0);
     OutPickID = InPickID[1];
     OutTexCoords = InTexCoords[1];
     OutTexID = InTexID[1];
     EmitVertex();
+    gl_Position = gl_in[2].gl_Position;
+    EmitVertex();
+    EndPrimitive();
+
 
     // Edge 1 → 2
     gl_Position = gl_in[2].gl_Position;
@@ -39,14 +48,9 @@ void main()
     OutTexCoords = InTexCoords[2];
     OutTexID = InTexID[2];
     EmitVertex();
-
-    // Edge 2 → 0
-    gl_Position = gl_in[0].gl_Position;
-    OutFragColor = vec4(1.0, 1.0, 1.0, 1.0);
-    OutPickID = InPickID[0];
-    OutTexCoords = InTexCoords[0];
-    OutTexID = InTexID[0];
+      gl_Position = gl_in[0].gl_Position;
     EmitVertex();
+
 
     EndPrimitive();
 }

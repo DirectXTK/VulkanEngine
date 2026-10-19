@@ -1,7 +1,7 @@
 #pragma once
 #include "AppCore.h"
 
-enum class AssetType{NONE,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER,AI,ANIMATION,FONT,NUMOFASSETTYPES,ASSETTYPECOUNT};
+enum class AssetType{NONE,TEXTURE,TEXTUREATLAS,TEXTUREMETADATA,SHADER,AI,ANIMATION,FONT,DLL=8,NUMOFASSETTYPES,ASSETTYPECOUNT};
 class Texture;
 class Application;
 class AssetManager;
@@ -182,13 +182,14 @@ public:
 	uint64_t GetAssetCount(AssetType type) { return m_ResourceCount[type];}
 	uint64_t GetAssetCount() { return m_Resources.size();}
 
-	void UnloadAsset(GUUID handle,AssetType type){
+	void UnloadAsset(GUUID handle){
 
 		auto Index = m_Resources.find(handle);
 		if(Index != m_Resources.end()){
+			m_ResourceCount[Index->second.Type]--;
+			Index->second.FreePermaHandle();
 			m_Resources.erase(Index);
 
-			m_ResourceCount[type]--;
 		}
 	}
 	bool HasAsset(GUUID Handle) {
@@ -221,6 +222,7 @@ public:
 		return Asset<T>(&Index->second);
 	}
 
+	
 	AssetType GetAssetType(GUUID id){
 		if (m_Resources.find(id) == m_Resources.end()) {
 			Core::Log(ErrorType::Warning, "Resources wasn't found (ID", id.ID,")");
@@ -246,6 +248,8 @@ private:
 	void LoadTexture(const std::string& filePath,const std::string& fileName);
 	void LoadTextureAtlas(const std::string& filePath,const std::string& fileName);
 	void LoadShader(const std::string& filePath,const std::string& fileName);
+	void LoadDLL(const std::string& filePath,const std::string& fileName);
+
 
 	std::unordered_map<GUUID, AssetHandle> m_Resources{};
 	std::vector<GUUID> m_PermaAssets{};

@@ -1,5 +1,14 @@
 #include "AppCore.h"
 namespace Core {
+    #ifdef DEBUG
+        static std::unordered_map<GUUID,std::string> GlobalStringHashes{};
+        const std::string& GetStringPathFromGUUID(GUUID id){
+            return GlobalStringHashes[id];
+        }
+
+    #endif
+
+
         ScopedTimer::ScopedTimer(){
 			auto now = std::chrono::system_clock::now();
 			m_Start = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
@@ -21,7 +30,17 @@ namespace Core {
 			return end;
 		}
 	
-	GUUID GetStringHash(const std::string& Path) {return (uint64_t)std::hash<std::string>{}(Path); }
+	GUUID GetStringHash(const std::string& Path) {
+        #ifdef DEBUG
+            GlobalStringHashes[GUUID((uint64_t)std::hash<std::string>{}(Path))] = Path;
+        #endif
+        
+        return (uint64_t)std::hash<std::string>{}(Path);
+    
+    }
+    const std::string GenerateFontFullName(uint32_t charSize,const std::string& name){
+        return "FONT"+name+std::to_string(charSize);
+    }
     std::string GetFileName(const std::string& path){
 		uint64_t offset = path.find_last_of("/");
 		if(offset ==(uint64_t)-1)

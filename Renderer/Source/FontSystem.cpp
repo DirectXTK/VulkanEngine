@@ -11,13 +11,6 @@ FontSystem::FontSystem()
 	FT_Error error = FT_Init_FreeType(&m_Library);
 	if (error) 
 		Core::Log(ErrorType::Error, "Failed to initialize FreeType.");
-
-	//try to load any font or a default one
-	const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Sacrifice.ttf";
-	//const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Daydream.ttf";
-	//Day dream causes crashes.
-	m_CurrentFont = LoadFont(FontPath);
-	m_Renderer->SetCurrentFont(m_CurrentFont);
 }
 Asset<Font> FontSystem::LoadFont(const std::string& filePath){
 	std::string Name = Core::GetFileName(filePath);
@@ -605,8 +598,9 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 	AssetManager* manager = Application::GetAssetManager();
 	float dpi = Application::GetRenderer()->GetFONTDPI();
 	//check if font is already loaded and renderer
-	Asset<Font> asset = manager->GetAsset<Font>(fontID);
-	if(asset){
+	Asset<Font> asset{};
+	if(manager->HasAsset(fontID)){
+		asset = manager->GetAsset<Font>(fontID);
 		if(asset.GetData()->FontSize == m_CharacterSize)
 			return asset;
 	}
@@ -772,7 +766,7 @@ Asset<Font> FontSystem::ReRenderFaces(GUUID fontID,const std::string& fontName)
 
 	Texture* texture = new Texture(Application::GetRenderer()->GetContext(),textureCreateInfo,TextureType::Texture);
 	font->TextureAsset = manager->LoadAsset<Texture>(texture, AssetType::TEXTURE, "FontTexture:"+std::to_string(m_CharacterSize)+":"+fontName);
-	asset = manager->LoadAssetPerma<Font>(font, AssetType::FONT, fontID);
+	asset = manager->LoadAssetPerma<Font>(font, AssetType::FONT,"FONT"+fontName+std::to_string(m_CharacterSize));
 	}else{
 		Texture* texture = asset.GetData()->TextureAsset.GetData();
 		Context context = m_Renderer->GetContext();
