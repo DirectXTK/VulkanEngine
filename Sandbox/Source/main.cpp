@@ -11,6 +11,7 @@ int main() {
 	//FIX the working dir and freetype and glfw as submodule in vendor and compile it yourself to avoid erros with runtime libraries
 	std::ofstream output{"TESTLAFA.txt"};
 	output << "CIKT";
+	output.close();
 	ApplicationSpecs specs{};
 	specs.WindowTitle = "Example";
 	specs.WindowHeight = 800;

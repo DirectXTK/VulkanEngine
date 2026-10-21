@@ -53,7 +53,6 @@ void Application::LoadAllAssets(const std::string& path,const AssetType& typeToL
 void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning){
     std::string input{};
     while(threadRunning.load()){
-        continue;
         input =Core::ReadInputFromConsole(threadRunning);
 
         ChechCommands(inapp,input);
@@ -375,7 +374,7 @@ void Application::UpdateRendererStatistics(){
     app->m_RendererThread = new std::thread(RendererLoop,app->m_Renderer,app->m_GUIRenderer,app->m_Render);
 
     //temp
-    float updatePerSec{100};
+    float updatePerSec{200};
     double updateInterval{1000/updatePerSec};
 
 

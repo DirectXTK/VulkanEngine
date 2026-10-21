@@ -30,7 +30,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
    //Create vulkan instance
 
     InstanceDesc instancedesc{};
-    instancedesc.ApiVersion = VK_API_VERSION_1_2;
+    instancedesc.ApiVersion = VK_API_VERSION_1_3;
     instancedesc.ValidationLayersEnabled = true;
     m_Instance = VulkanInstance::CreateInstance(instancedesc, &m_Messenger);
 

@@ -13,14 +13,14 @@ void GUITestingLayer::OnCreate() {
 	sliderdata.StructSize = sizeof(GUI::SliderStyle);
 	sliderdata.FillColor = {0.0f,0.0f,1.0f,1.0f};
 	//Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/",AssetType::NONE);
-	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/Examples/Animation/", AssetType::ANIMATION);
+	Application::LoadAllAssets("EngineResources/Examples/Animation/", AssetType::ANIMATION);
 
-	  Asset<Animator> asset= Application::GetAsset<Animator>("PEASawdaawdANT");
-		if(asset){
-			animator = *asset.GetData();
-			animator.SetStage("WALK");
-		}
-
+	//  Asset<Animator> asset= Application::GetAsset<Animator>("PEASawdaawdANT");
+		//if(asset){
+		//	animator = *asset.GetData();
+		//	animator.SetStage("WALK");
+		//}
+	Core::Log(ErrorType::Warning,std::filesystem::current_path().string());
 	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/Sacrifice.ttf");
 	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/Daydream.ttf");
 	auto asset3 =Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
@@ -109,7 +109,7 @@ void GUITestingLayer::temp(){
 		prop.CustomFunction= ParticleVelocityAdd;
 		prop.Animation = *Application::GetAsset<Animator>("FireAnim").GetData();
 		prop.Animation.SetStage("BURN");
-		prop.TextureID = Core::GetStringHash("Particles/Water");
+		prop.TextureID = Core::GetStringHash("/Particles/Water");
 		for(uint32_t i=0;i < 10;i++){
 		prop.Velocity.x = Core::RandomFloat(-0.005f,0.005f);
 		prop.Velocity.y = Core::RandomFloat(-0.005f,0.0050f);
@@ -128,7 +128,7 @@ void GUITestingLayer::temp(){
 		FireParticleData* data = (FireParticleData*)malloc(sizeof(FireParticleData));
 		*data = FireParticleData();
 		prop.CustomData = data;
-		prop.TextureID = Core::GetStringHash("Particles/Fire");
+		prop.TextureID = Core::GetStringHash("/Particles/Fire");
 		Application::GetParticleSystem().DrawParticle(prop);
 
 		}
@@ -138,7 +138,7 @@ void GUITestingLayer::temp(){
 void GUITestingLayer::OnRender(double deltime){
    Render* renderer = Application::GetRender();
    renderer->DrawQuad({0.0f,-0.5f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},2);
-  // temp();
+   temp();
 
 	//renderer->DrawParticle(Application::GetWorldMousePos(),{0.9f,0.1f,0.1f,1.0f},{0.01f,0.01f},0);
 }
@@ -208,7 +208,9 @@ void GUITestingLayer::OnGUI()
 	border.DrawBorder = true;
 	border.BackGroundColor = {0.5f,0.5f,0.5f,1.0f};
 	gui->SetFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf",14);
-		static Core::Operations ops{};
+
+	static Core::Operations ops{Core::Operations::SUBTRACT};
+	
 	GUI::HighLightCoveredStyle data{}; 
 	data.colorChange = {0.4f,0.4f,0.3f,1.0f};
 	data.colorOpera = ops;

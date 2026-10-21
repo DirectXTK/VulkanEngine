@@ -4,9 +4,10 @@
 namespace Core{
 
     std::string ReadInputFromConsole(std::atomic<bool>& threadRunning){
+        std::string temp{};
+        std::cin >> temp;
 
-
-        return "";
+        return temp;
     }
 }
 

@@ -5,7 +5,7 @@ project "Sandbox"
 
     targetdir("../bin".. outputdir.."/%{prj.name}")
     objdir("../bin-int".. outputdir.."/%{prj.name}")
-    debugdir "%{wks.location}/../"
+    debugdir "%{wks.location}/"
 
     TargetDirVar= "../bin".. outputdir.."/%{prj.name}"
 
