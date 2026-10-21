@@ -14,7 +14,7 @@
 *.spv
 *.sln
 *.o
-/Libs
+Libs/*
 Makefile
 vgcore*
 ExeLocation
