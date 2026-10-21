@@ -154,7 +154,14 @@ public:
     RendererStatistics m_RendererStatistics{};
     ApplicationSpecs m_Specs{};
     //console
+//linux specific
+#ifdef LINUX
     termios m_DefaultConsoleSett{};
+#endif
+//windows specific
+#ifdef WINDOWS
+
+#endif
 
 #ifdef GUI_HEADER
     FontSystem* m_FontSystem{};

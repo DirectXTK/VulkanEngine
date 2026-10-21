@@ -53,7 +53,7 @@ void Application::LoadAllAssets(const std::string& path,const AssetType& typeToL
 void RunCommandLineInputTemp(Application* inapp,std::atomic<bool>& threadRunning){
     std::string input{};
     while(threadRunning.load()){
-
+        continue;
         input =Core::ReadInputFromConsole(threadRunning);
 
         ChechCommands(inapp,input);
@@ -126,7 +126,7 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
         OpenTerminalAndAttachToStream();
     m_ThreadPool.resize(Core::GetCPUThreadCount());
 
-    tcgetattr(STDIN_FILENO,&m_DefaultConsoleSett);
+    //tcgetattr(STDIN_FILENO,&m_DefaultConsoleSett);
 
      Core::EmptyLogFile();
 
@@ -136,8 +136,9 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
 #ifdef LINUXWAYLAND
     glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
 #endif
-    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
-
+#ifdef WINDOWS
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WIN32);
+#endif
      glfwInit();
      glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
      glfwWindowHint(GLFW_RESIZABLE, specs.IsWindowResizable);
@@ -165,8 +166,8 @@ bool Application::InitApplicationBackEnd(ApplicationSpecs specs){
      //Init a* path finding algorith system
     // m_PathFinderSystem = new PathSystem(1000,1000,{0.025f,0.025f});
 
-    m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::TEXTURE);
-    m_AssetManager.LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/",AssetType::SHADER);
+    m_AssetManager.LoadAllAssets("C:/Repos/VulkanEngine/EngineResources", AssetType::TEXTURE);
+    m_AssetManager.LoadAllAssets("C:/Repos/VulkanEngine/EngineResources",AssetType::SHADER);
 
      m_AssetManager.DebugStatistics(false);
      m_Renderer->InitializePipeline(500);
@@ -292,7 +293,8 @@ void Application::Shutdown(){
     Application* app = GetApplication();
     
     //set the  font color of cout to default.
-    tcsetattr(STDIN_FILENO,TCSANOW,&app->m_DefaultConsoleSett);
+    
+    //tcsetattr(STDIN_FILENO,TCSANOW,&app->m_DefaultConsoleSett);
     std::cout << "\033[0m"<<std::flush;
     std::cout << "Shutting Down...\n";
 
@@ -440,7 +442,7 @@ void Application::UpdateRendererStatistics(){
     app->m_Running = false;
     InputThread.join();
     
-    tcsetattr(STDIN_FILENO,TCSANOW,&app->m_DefaultConsoleSett);
+   // tcsetattr(STDIN_FILENO,TCSANOW,&app->m_DefaultConsoleSett);
     Shutdown();
 
 }

@@ -78,7 +78,7 @@ bool IsStringNumber(const std::string& string){
 	    #if defined(_WIN32)
 	    char path[MAX_PATH];
 	    GetModuleFileNameA(nullptr, path, MAX_PATH);
-	    return wstd::string(path);
+	    return std::string(path);
 	#elif defined(__linux__)
 	   char buffer[PATH_MAX];
 	    ssize_t count = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
@@ -130,7 +130,7 @@ bool os_avx_support()
 #endif
 }
 
-#ifdef __linux__
+#ifdef LINUX
 std::string GetCPUName(){
     std::ifstream input("/proc/cpuinfo");
     std::string line{};
@@ -252,7 +252,7 @@ uint64_t GetTotalAmountOfRam(){
 
     return 0;
 }
-#elif __win32__
+#elif WINDOWS
 std::string GetCPUName(){
     int cpuInfo[4] = {0};
     char cpuBrand[0x40] = {};
@@ -321,13 +321,16 @@ uint64_t GetTotalAmountOfRam(){
 
     return status.ullTotalPhys; // bytes
 }
+CPUFeatures GetCPUSupportedInscrutionSets() {
+    return {};
+}
 #endif
 
 #ifdef DEBUG
 std::string GetBuildConfiguration(){return "DEBUG";}
-#elif RELEASE
+#elif defined(RELEASE)
 std::string GetBuildConfiguration(){return "RELEASE";}
-#elif DISTRIB
+#elif defined(DISTRIB)
 std::string GetBuildConfiguration(){return "DISTRIB";}
 #endif
 

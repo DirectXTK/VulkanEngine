@@ -1,22 +1,23 @@
-#include "InputSystem.h"
-#include "Application.h"
-
 #ifdef WINDOWS
-#include <Window.h>
+#include <Windows.h>
 #endif
 #ifdef LINUX
 #include <xkbcommon/xkbcommon.h>
 struct Keyboard {
-    xkb_context* ctx;
-    xkb_keymap* keymap;
-    xkb_state* state;
+	xkb_context* ctx;
+	xkb_keymap* keymap;
+	xkb_state* state;
 };
 void HandleKey();
-#endif
-
 Keyboard g_Keyboard{};
-void InitKeyboard(){
+#endif
+#include "InputSystem.h"
+#include "Application.h"
 
+
+
+void InitKeyboard(){
+#ifdef LINUX
     g_Keyboard.ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     g_Keyboard.keymap = xkb_keymap_new_from_names(
         g_Keyboard.ctx,
@@ -24,7 +25,7 @@ void InitKeyboard(){
         XKB_KEYMAP_COMPILE_NO_FLAGS
     );
     g_Keyboard.state = xkb_state_new(g_Keyboard.keymap);
-
+#endif
 }
 double scrollx,scrolly;
 InputSystem* g_InputSystem{};
@@ -45,11 +46,12 @@ void KeyCallBack(GLFWwindow* window,int Key,int ScanCode,int action,int mods){
 	event.State = (EventState)action;
 	assert(g_InputSystem != nullptr);
 	g_InputSystem->DispatchEvent(event);
+	return;
 
 	TextEvent textEvent{};
 	textEvent.KeyUint = ScanCode;
 	textEvent.State = (EventState)action;
-
+#ifdef LINUX
 	xkb_state_update_key(
         g_Keyboard.state,
         textEvent.KeyUint,
@@ -57,18 +59,38 @@ void KeyCallBack(GLFWwindow* window,int Key,int ScanCode,int action,int mods){
             ? XKB_KEY_DOWN
             : XKB_KEY_UP
     );
-
+#endif
     if (action == GLFW_RELEASE )
         return;
-
-    char buf[2];
-    int len = xkb_state_key_get_utf8(
-    g_Keyboard.state, (xkb_keycode_t)textEvent.KeyUint, buf, ARRAYSIZE(buf));
+	WCHAR output[8]{};
+	char buf[2];
+	int len{};
+#ifdef LINUX
+    len = xkb_state_key_get_utf8(
+    g_Keyboard.state, (xkb_keycode_t)textEvent.KeyUint, buf, Core::ArraySize(buf));
+#endif
+#ifdef WINDOWS
+	HKL layout = GetKeyboardLayout(0);
+	len = ToUnicodeEx(Key, ScanCode, (BYTE*)&action, (LPWSTR)output, 1, 0, layout);
+	if (len < 0)
+		Core::Log("PIZDA MNE");
+	Core::Log("BNleyt", (int)output[0]);
+	Core::Log("BNleytChar", buf[0]);
+#endif
 	if(len > 0){
 		textEvent.KeyUint = buf[0];
 		if(textEvent.KeyUint >15)
 			g_InputSystem->DispatchEvent(textEvent);
 	}
+
+}
+void TextCallback(GLFWwindow* window, uint32_t codepoint) {
+	TextEvent textEvent{};
+	textEvent.State = EventState::PRESSED;
+	textEvent.KeyUint = codepoint;
+	textEvent.KeyChar = codepoint;
+	g_InputSystem->DispatchEvent(textEvent);
+
 }
 void ScrollCallback(GLFWwindow* window,double offsetX,double offsetY){
 	MouseEvent event{};
@@ -101,6 +123,7 @@ void InputSystem::Init(GLFWwindow* window){
 	glfwSetWindowCloseCallback(m_CurrentWindow, WindowCloseCallback);
 	glfwSetWindowSizeCallback(m_CurrentWindow,WindowResizeCallback);
 	glfwSetScrollCallback(m_CurrentWindow,ScrollCallback);
+	glfwSetCharCallback(m_CurrentWindow, TextCallback);
 
 	InitKeyboard();
 }
@@ -225,6 +248,7 @@ void InputSystem::ResetInput()
 
 }
 InputSystem::~InputSystem(){
+#ifdef LINUX
 	if(g_Keyboard.state)
 		xkb_state_unref(g_Keyboard.state);
 	if(g_Keyboard.keymap)
@@ -236,4 +260,5 @@ InputSystem::~InputSystem(){
 	g_Keyboard.state = nullptr;
 	g_Keyboard.keymap = nullptr;
 	g_Keyboard.ctx = nullptr;
+#endif
 }

@@ -3,7 +3,8 @@
 
 #ifdef __linux__
 
-#elif __win32__
+#endif
+#ifdef WINDOWS
 #include "dxgi1_4.h"
 #pragma comment(lib,"dxgi.lib")
 #endif
@@ -45,10 +46,16 @@
 #include "RandomGenerator.h"
 #include "AppTime.h"
 
-//Debug stuff
-#include <x86intrin.h>
 
-#include "LinuxSpecificCode.h"
+//Debug stuff
+
+//#include <x86intrin.h>
+
+#ifdef LINUX
+    #include "LinuxSpecificCode.h"
+#elif WINDOWS
+    #include "WindowSpecificCode.h"
+#endif
 
 
 #ifdef DEBUG
@@ -65,10 +72,7 @@
 #undef max
 #endif
 
-template<typename T, size_t N>
-constexpr size_t ARRAYSIZE(T (&)[N]) noexcept {
-    return N;
-}
+
 //
 //FORMAT means any format
 enum class Format{NULLFORMAT,INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE,CHAR,STRING,FORMAT};
@@ -149,6 +153,10 @@ namespace Core {
         private:
         uint64_t m_Start{};
     };
+    template<typename T,std::size_t SIZE>
+    constexpr std::size_t ArraySize(T (&)[SIZE]){
+        return SIZE;
+    }
     GUUID GetStringHash(const std::string& Path);
     std::string GetFileExtension(const std::string& File);
 

@@ -13,7 +13,7 @@ FontSystem::FontSystem()
 		Core::Log(ErrorType::Error, "Failed to initialize FreeType.");
 
 	//try to load any font or a default one
-	const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Sacrifice.ttf";
+	const char* FontPath = "C:/Repos/VulkanEngine/EngineResources/Fonts/Sacrifice.ttf";
 	//const char* FontPath = "/users/jimy/Repos/VulkanEngine/Resources/Fonts/Daydream.ttf";
 	//Day dream causes crashes.
 	m_CurrentFont = LoadFont(FontPath);
@@ -21,12 +21,13 @@ FontSystem::FontSystem()
 }
 Asset<Font> FontSystem::LoadFont(const std::string& filePath){
 	std::string Name = Core::GetFileName(filePath);
+	std::string path = std::filesystem::absolute(filePath).generic_string();
 	GUUID fontID = Core::GetStringHash("FONT"+Name+std::to_string(m_CharacterSize));
 	if(Application::HasAsset(fontID)){
 		return Application::GetAsset<Font>(fontID);
 	}
 	//loads the font
-	FT_Error error = FT_New_Face(m_Library, filePath.c_str(), 0, &m_Face);
+	FT_Error error = FT_New_Face(m_Library, path.c_str(), 0, &m_Face);
 	if (error == FT_Err_Unknown_File_Format) {
 		Core::Log(ErrorType::Error, "Unknown file format of font");
 	}
@@ -77,7 +78,7 @@ Texture* FontSystem::GetFontAtlas()
 	return m_FontAtlas;
 }
 void FontSystem::SetFont(const std::string& fontPath){
-	std::string absPath = std::filesystem::absolute(fontPath);
+	std::string absPath = std::filesystem::absolute(fontPath).string();
 	Asset<Font> asset = LoadFont(absPath);
 	if(asset){
 		m_CurrentFont = asset;
@@ -310,7 +311,7 @@ void FontSystem::InputText(const char* ID, char* Buffer,uint64_t BufferSize, Flo
 		m_CopyTriggered = false;
 	}
 	if(copyMsgDuration>0.0f){
-		render->DrawText("Copied",ARRAYSIZE("Copied"),Position,BoundingBox,m_Padding,m_CharacterSize,0,-1);
+		render->DrawText("Copied",Core::ArraySize("Copied"),Position,BoundingBox,m_Padding,m_CharacterSize,0,-1);
 		copyMsgDuration -=Application::GetDeltaTime();
 	}
 

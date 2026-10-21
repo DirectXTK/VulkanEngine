@@ -63,7 +63,7 @@ void FontTestingLayer::OnGUI()
 	guiRenderer->PushStyle(GUI::Style::BORDER, &BorderStyle);
 	guiRenderer->PushStyle(GUI::Style::COLOR, &ColorStyle);
 	guiRenderer->Slider("Slider", &FontSize, { 0.0f,0.0f },{1.0f,1.0f,1.0f,1.0f}, { 0.1f,0.1f }, 1.0f,{0.0f,100.f},1);
-	guiRenderer->InputText("Mkat", Buffer, ARRAYSIZE(Buffer), { 0.0f, -0.5f },{0.5f,0.1f});
+	guiRenderer->InputText("Mkat", Buffer, Core::ArraySize(Buffer), { 0.0f, -0.5f },{0.5f,0.1f});
 	guiRenderer->PopStyle();
 	
 	

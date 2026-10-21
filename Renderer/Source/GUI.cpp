@@ -128,7 +128,7 @@ bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4
 	if(currentMenuData->IsExtended){
 		ApplyCurrentStyles(LPosition,size,color,id);
 		renderer->DrawQuad(LPosition,color,size,id);
-		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,idButton,Core::GetStringHash("GUI/SCROLLBUTTON"),-1);
+		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,idButton,Core::GetStringHash("/GUI/SCROLLBUTTON"),-1);
 
 	}
 	else{
@@ -136,7 +136,7 @@ bool GUIRenderer::DropDownMenu(const std::string& strID, Float2 position, Float4
 		LPosition.y = arrowPos.y;
 		ApplyCurrentStyles(LPosition,size,color,id);
 		renderer->DrawQuad({LPosition.x,arrowPos.y},color,size,id);
-		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,idButton,Core::GetStringHash("GUI/DropDownMenu"),-1);
+		renderer->DrawQuad(arrowPos,{1.0f,1.0f,1.0f,1.0f},arrowSize,idButton,Core::GetStringHash("/GUI/DropDownMenu"),-1);
 	}
 	return currentMenuData->IsExtended;
 }
@@ -353,10 +353,10 @@ bool GUIRenderer::CheckBox(const std::string& id,const Float2& position,const Fl
 	}
 	ApplyCurrentStyles(LPosition,RSize,rColor,CurrentButtonID);
 	if(currentCheckBoxData->IsClicked){
-		renderer->DrawQuad({LPosition.x,LPosition.y},color,RSize,CurrentButtonID.ID,Core::GetStringHash("GUI/CheckBoxTrue"),-1);
+		renderer->DrawQuad({LPosition.x,LPosition.y},color,RSize,CurrentButtonID.ID,Core::GetStringHash("/GUI/CheckBoxTrue"),-1);
 	}
 	else{
-		renderer->DrawQuad({LPosition.x,LPosition.y},color,RSize,CurrentButtonID.ID,Core::GetStringHash("GUI/CheckBoxFalse"),-1);
+		renderer->DrawQuad({LPosition.x,LPosition.y},color,RSize,CurrentButtonID.ID,Core::GetStringHash("/GUI/CheckBoxFalse"),-1);
 	}
 	return currentCheckBoxData->IsClicked;
 }

@@ -14,7 +14,6 @@ project "Renderer"
     }
 
     defines{
-        "linux"
     }
 
     includedirs{
@@ -31,13 +30,23 @@ project "Renderer"
     }
 
     links{
-      "vulkan",
+      "vulkan-1",
       "glfw3",
-      "freetype","z","png16","glslang","SPIRV","OGLCompiler"
+      "freetype",
+      "SPIRV",
+    "glslang",
+    "MachineIndependent",
+    "GenericCodeGen",
+    "OSDependent",
+    "OGLCompiler",
+
+    "SPIRV-Tools",
+    "SPIRV-Tools-opt",
+    "SPIRV-Tools-link",
     }
-    postbuildcommands { 
-      "{MKDIR} "..LibLocation.."",
-      "{COPY} %{cfg.targetdir}/libRenderer.a "..LibLocation..""
+    postbuildcommands {
+    "{MKDIR} %[" .. LibLocation .. "]",
+    "{COPYFILE} %[%{!cfg.buildtarget.abspath}] %[" .. LibLocation .. "]"
     }
 
 
@@ -56,6 +65,6 @@ project "Renderer"
       optimize "Full"          
       symbols "Off"             
       runtime "Release"         
-      staticruntime "On"      
+      staticruntime "off"      
       linktimeoptimization "On"
 

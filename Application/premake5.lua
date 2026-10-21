@@ -30,21 +30,21 @@ project "Application"
     }
 
     links{
-      "vulkan",
+      "vulkan-1",
       "glfw3",
-      "freetype" ,"z","png16",
-      "Renderer",
-      "xkbcommon",
+      "freetype",
+      "Renderer", "glslang","SPIRV-Tools-opt",
+        "SPIRV-Tools",
+        "SPIRV-Tools-link",
     }
 
     defines{
-        "linux"
     }
 
 
-    postbuildcommands { 
-      "{MKDIR} "..LibLocation.."",
-      "{COPY} %{cfg.targetdir}/libApplication.a "..LibLocation..""
+    postbuildcommands {
+    '{MKDIR} "' .. LibLocation .. '"',
+    '{COPYFILE} "%{cfg.buildtarget.abspath}" "' .. LibLocation .. '"'
     }
 
 
@@ -57,13 +57,13 @@ project "Application"
     filter{"configurations:Release"}
       runtime "Release"
       optimize "on"
-      staticruntime "on"
+      staticruntime "off"
     filter{"configurations:Distrib"}
       defines {"DISTRIB"}
       defines { "NDEBUG" }     
       optimize "Full"          
       symbols "Off"             
       runtime "Release"         
-      staticruntime "On"      
+      staticruntime "off"      
       linktimeoptimization "On"
 

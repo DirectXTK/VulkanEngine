@@ -1,6 +1,7 @@
 #include "LinuxSpecificCode.h"
 #include <cstdint>
 #include "Application.h"
+#ifdef LINUX
 namespace Core{
 
     char GetCharFromConsole(int64_t* size){
@@ -51,4 +52,5 @@ namespace Core{
     return "";
 }
 }
+#endif
    

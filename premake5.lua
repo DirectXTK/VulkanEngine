@@ -2,7 +2,7 @@ workspace "VulkanEngine"
     architecture "x64"
     cppdialect "C++17"
     characterset ("Unicode")
-    toolset "clang"
+    toolset "msc"
     buildoptions { "-MP"}
     configurations{
         "Debug",
@@ -18,7 +18,9 @@ workspace "VulkanEngine"
     }
     filter { "system:linux" }
       defines{"LINUX"}
+      system "linux"
     filter { "system:windows"}
+      system "windows"
       defines{"WINDOWS"}
     filter{"configurations:Release"}
       defines {"RELEASE"}
@@ -56,7 +58,7 @@ LibLocation="%{wks.location}/Libs/"
 outputdir = "/%{cfg.buildcfg}/%{cfg.system}/%{cfg.architecture}"
 vulkanSDK = os.getenv("VULKAN_SDK")
 GlobalIncludes = {
-    "%{prj.location}/../Include/FreeType",
+    "%{prj.location}/../Include/FreeType","%{prj.location}/../vendor/glfw-3.4/include/"
 }
 
 include "Application"

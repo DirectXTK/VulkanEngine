@@ -30,7 +30,7 @@ Renderer::Renderer(RendererDesc desc, GLFWwindow* window, InputSystem* inputsyst
    //Create vulkan instance
 
     InstanceDesc instancedesc{};
-    instancedesc.ApiVersion = VK_API_VERSION_1_4;
+    instancedesc.ApiVersion = VK_API_VERSION_1_2;
     instancedesc.ValidationLayersEnabled = true;
     m_Instance = VulkanInstance::CreateInstance(instancedesc, &m_Messenger);
 
@@ -517,10 +517,10 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
      m_PipelineDesc.Viewport.minDepth =0.0f;
      m_PipelineDesc.Viewport.maxDepth =0.0f;
 
-    std::string defaultShaderPaths[] = { {"Shaders/DefaultPixel"},{"Shaders/DefaultVertex"}};
+    std::string defaultShaderPaths[] = { {"/Shaders/DefaultPixel"},{"/Shaders/DefaultVertex"}};
 
 
-    for(uint32_t i=0;i < ARRAYSIZE(defaultShaderPaths);i++){
+    for(uint32_t i=0;i < Core::ArraySize(defaultShaderPaths);i++){
         auto shaderAsset = m_AssetManager->GetAsset<Shader>(defaultShaderPaths[i]);
         if(!shaderAsset){
 
@@ -569,7 +569,7 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
            
             InitRenderDesc(m_RendererDesc);
 
-            for(uint32_t i=0 ;i < ARRAYSIZE(m_PickingImageBuffer);i++)
+            for(uint32_t i=0 ;i < Core::ArraySize(m_PickingImageBuffer);i++)
                 delete m_PickingImageBuffer[i];
             CreatePickingImage();
 
@@ -719,7 +719,7 @@ void Renderer::DrawVertices(Vertex* vertices,uint32_t vertexCount,GUUID textureI
         PickingImageBufferDesc.Device = m_Device;
         PickingImageBufferDesc.Memoryflags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
 
-        for(uint32_t i =0;i < ARRAYSIZE(m_PickingImageBuffer);i++)
+        for(uint32_t i =0;i < Core::ArraySize(m_PickingImageBuffer);i++)
             m_PickingImageBuffer[i] = new Buffer(PickingImageBufferDesc);
     }
     void Renderer::BeginGUIFrame()
@@ -1990,8 +1990,8 @@ void Renderer::CreateParticlePipeline(){
 
     m_ParticleStaggingBuffer = new Buffer(bufferDesc);
 
-    auto frag =m_AssetManager->GetAsset<Shader>("Shaders/ParticleF");
-    auto vert =m_AssetManager->GetAsset<Shader>("Shaders/ParticleV");
+    auto frag =m_AssetManager->GetAsset<Shader>("/Shaders/ParticleF");
+    auto vert =m_AssetManager->GetAsset<Shader>("/Shaders/ParticleV");
 
     shaders[0] = vert.GetData()->GetShaderModule();
     shaderStages[0] = vert.GetData()->GetShaderStage();
@@ -2004,7 +2004,7 @@ void Renderer::CreateParticlePipeline(){
 
         
     m_ParticlePipelineDesc.RenderPass = m_RenderPass;
-    m_ParticlePipelineDesc.PipelineLayout = Pipeline::CreatePipelineLayout(m_Device,descriptorLayouts,ARRAYSIZE(descriptorLayouts));
+    m_ParticlePipelineDesc.PipelineLayout = Pipeline::CreatePipelineLayout(m_Device,descriptorLayouts,Core::ArraySize(descriptorLayouts));
     
     m_ParticlePipelineDesc.ShaderCount = 2;
     m_ParticlePipelineDesc.ShaderModules =shaders;
@@ -2035,7 +2035,7 @@ void Renderer::CreateParticlePipeline(){
 
 
 
-    m_ParticlePipelineDesc.InputBindingCount = ARRAYSIZE(inputBindings);
+    m_ParticlePipelineDesc.InputBindingCount = Core::ArraySize(inputBindings);
     m_ParticlePipelineDesc.InputBindings = inputBindings;
 
     //For now you same viewport.
@@ -2153,7 +2153,7 @@ void Renderer::Shutdown(){
     for(uint32_t i =0;i < m_UniformBuffer.size();i++)
         delete m_UniformBuffer[i];
 
-    for(uint32_t i=0 ;i < ARRAYSIZE(m_PickingImageBuffer);i++)
+    for(uint32_t i=0 ;i < Core::ArraySize(m_PickingImageBuffer);i++)
         delete m_PickingImageBuffer[i];
 
     delete m_ParticleInstanceBuffer;

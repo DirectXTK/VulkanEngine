@@ -40,7 +40,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	switch (TypesToLoad) {
 	case AssetType::TEXTURE: {
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
-			std::string currentFile = dir_entry.path().string();
+			std::string currentFile = dir_entry.path().generic_string();
 			std::string fileExtension = Core::GetFileExtension(currentFile);	
 			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
 
@@ -53,7 +53,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	case AssetType::TEXTUREATLAS: {
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 
-			std::string currentFile = dir_entry.path().string();
+			std::string currentFile = dir_entry.path().generic_string();
 			std::string fileExtension = Core::GetFileExtension(currentFile);	
 			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
 
@@ -68,7 +68,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	case AssetType::ANIMATION: {
 
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
-				std::string currentFile = dir_entry.path().string();
+				std::string currentFile = dir_entry.path().generic_string();
 
 				std::string fileExtension = Core::GetFileExtension(currentFile);
 				std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
@@ -82,7 +82,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	}
 	case AssetType::NONE:{
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
-			std::string currentFile = dir_entry.path().string();
+			std::string currentFile = dir_entry.path().generic_string();
 			std::string fileExtension = Core::GetFileExtension(currentFile);	
 			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
 
@@ -100,7 +100,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	}
 	case AssetType::SHADER:{
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
-			std::string currentFile = dir_entry.path().string();
+			std::string currentFile = dir_entry.path().generic_string();
 			std::string fileExtension = Core::GetFileExtension(currentFile);	
 			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
 

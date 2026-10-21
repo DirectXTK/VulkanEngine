@@ -13,7 +13,7 @@ void GUITestingLayer::OnCreate() {
 	sliderdata.StructSize = sizeof(GUI::SliderStyle);
 	sliderdata.FillColor = {0.0f,0.0f,1.0f,1.0f};
 	//Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/Resources/",AssetType::NONE);
-	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/Examples/Animation/",AssetType::ANIMATION);
+	Application::LoadAllAssets("/users/jimy/Repos/VulkanEngine/EngineResources/Examples/Animation/", AssetType::ANIMATION);
 
 	  Asset<Animator> asset= Application::GetAsset<Animator>("PEASawdaawdANT");
 		if(asset){
@@ -24,9 +24,8 @@ void GUITestingLayer::OnCreate() {
 	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/Sacrifice.ttf");
 	Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/Daydream.ttf");
 	auto asset3 =Application::GetApplication()->m_FontSystem->LoadFont("EngineResources/Fonts/JetBrainsMono-Bold.ttf");
-	auto asset2 = Application::GetAsset<Texture>("FontTexture"+std::to_string(Application::GetGUIRenderer()->GetFontSize()));
 
-
+	Application::GetAssetManager()->DebugStatistics(false);
    Renderer* renderer = Application::GetRenderer();
 
 }
@@ -139,7 +138,7 @@ void GUITestingLayer::temp(){
 void GUITestingLayer::OnRender(double deltime){
    Render* renderer = Application::GetRender();
    renderer->DrawQuad({0.0f,-0.5f},{1.0f,1.0f,1.0f,1.0f},{0.1f,0.1f},2);
-   temp();
+  // temp();
 
 	//renderer->DrawParticle(Application::GetWorldMousePos(),{0.9f,0.1f,0.1f,1.0f},{0.01f,0.01f},0);
 }
@@ -229,7 +228,7 @@ void GUITestingLayer::OnGUI()
 
 	
 	
-	gui->InputText("UserName",username,ARRAYSIZE(username),{0.0f,-0.5f},{0.5f,0.2f},true);
+	gui->InputText("UserName",username,Core::ArraySize(username),{0.0f,-0.5f},{0.5f,0.2f},true);
 	
 
 	//Wierd placement when using multuple tooltips.
@@ -278,7 +277,7 @@ void GUITestingLayer::OnGUI()
 
 	//The pointer can get past the last char and disappear.
 	//Application::GetAssetManager()->DebugStatistics(true);
-	//gui->InputText("UserName",assets,ARRAYSIZE(assets),{0.0f,-0.5f},{0.5f,0.2f},true);
+	//gui->InputText("UserName",assets,Core::ArraySize(assets),{0.0f,-0.5f},{0.5f,0.2f},true);
 
 
 	//Application::GetAssetManager()->DebugStatistics(true);

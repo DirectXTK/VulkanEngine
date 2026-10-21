@@ -33,20 +33,25 @@ project "Sandbox"
 
         
     links{
-      "freetype","z","png16","bz2","brotlidec",
+      "freetype",
       "glfw3",
-      "vulkan",
+      "vulkan-1",
       "Renderer",
       "Application",
-      "xkbcommon",
 
-      "Application","glslang","SPIRV"  ,"OSDependent",
+      "glslang","SPIRV"  ,"OSDependent", "SPIRV-Tools-opt",
+        "SPIRV-Tools",
+        "SPIRV-Tools-link",
     }
 
     defines{
-        "linux"
     }
-    postbuildcommands { "echo lafaf","touch ../ExeLocation","echo "..outputdir.."/%{prj.name} > ../ExeLocation" }
+    filter{"system:linux"}
+        postbuildcommands { "echo lafaf","touch ../ExeLocation","echo "..outputdir.."/%{prj.name} > ../ExeLocation" }
+    filter{"system:linux"}
+        postbuildcommands {
+            'echo %{cfg.targetdir}/%{prj.name}.exe > ../ExeLocation'}
+  
 
     filter{"configurations:Debug"}
       runtime "Debug"
@@ -64,7 +69,7 @@ project "Sandbox"
       optimize "Full"          
       symbols "Off"             
       runtime "Release"         
-      staticruntime "On"      
+      staticruntime "off"      
       linktimeoptimization "On"
 
 
