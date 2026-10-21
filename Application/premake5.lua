@@ -20,6 +20,8 @@ project "Application"
       "%{prj.location}/../Include/vulkan/",
       "%{prj.location}/../Renderer/Source/",
       "%{prj.location}/Source/",
+      "%{prj.location}/../vendor/glfw/include",
+
 
       GlobalIncludes,
     }
@@ -29,7 +31,17 @@ project "Application"
         vulkanSDK.."/Lib/",
     }
 
-    links{
+    filter{"configurations:Debug"}
+         links{
+      "vulkan-1",
+      "glfw3",
+      "freetyped",
+      "Renderer", "glslangd","SPIRV-Tools-optd",
+        "SPIRV-Toolsd",
+        "SPIRV-Tools-linkd",
+    }
+    filter{"configurations:Release"}
+         links{
       "vulkan-1",
       "glfw3",
       "freetype",
@@ -37,6 +49,7 @@ project "Application"
         "SPIRV-Tools",
         "SPIRV-Tools-link",
     }
+   
 
     defines{
     }

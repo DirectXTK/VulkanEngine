@@ -5,6 +5,7 @@ project "Sandbox"
 
     targetdir("../bin".. outputdir.."/%{prj.name}")
     objdir("../bin-int".. outputdir.."/%{prj.name}")
+    debugdir "%{wks.location}/../"
 
     TargetDirVar= "../bin".. outputdir.."/%{prj.name}"
 
@@ -22,6 +23,8 @@ project "Sandbox"
       "%{prj.location}/../Include/vulkan/",
       "%{prj.location}/../Renderer/Source/",
       "%{prj.location}/../Application/Source/",
+      "%{prj.location}/../vendor/glfw/include",
+
       GlobalIncludes,
 
     }
@@ -31,8 +34,20 @@ project "Sandbox"
         vulkanSDK.."/Lib/",
     }
 
-        
-    links{
+    filter{"configurations:Debug"} 
+      links{
+      "freetyped",
+      "glfw3",
+      "vulkan-1",
+      "Renderer",
+      "Application",
+
+      "glslangd","SPIRVd"  ,"OSDependentd", "SPIRV-Tools-optd",
+        "SPIRV-Toolsd",
+        "SPIRV-Tools-linkd",
+       }
+    filter{"configurations:Release"}
+         links{
       "freetype",
       "glfw3",
       "vulkan-1",
@@ -42,7 +57,8 @@ project "Sandbox"
       "glslang","SPIRV"  ,"OSDependent", "SPIRV-Tools-opt",
         "SPIRV-Tools",
         "SPIRV-Tools-link",
-    }
+        }
+   
 
     defines{
     }
@@ -62,6 +78,8 @@ project "Sandbox"
     filter{"configurations:Release"}
       runtime "Release"
       optimize "on"
+      staticruntime "off"
+
 
     filter{"configurations:Distrib"}
       defines {"DISTRIB"}
