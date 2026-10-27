@@ -2,7 +2,7 @@ workspace "VulkanEngine"
     architecture "x64"
     cppdialect "C++17"
     characterset ("Unicode")
-    toolset "msc"
+    toolset "clang"
     buildoptions { "-MP"}
     configurations{
         "Debug",

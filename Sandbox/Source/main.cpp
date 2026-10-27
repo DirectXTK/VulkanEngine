@@ -22,7 +22,6 @@ int main() {
 	Application::AddLayer<ExampleMenu>();
 	
 	Application::Run();
-	
 
 
     return 0;

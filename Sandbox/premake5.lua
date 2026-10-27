@@ -29,7 +29,7 @@ project "Sandbox"
 
     }
 
-    libdirs{
+      libdirs{
         "%{prj.location}/../Libs/",
         vulkanSDK.."/Lib/",
     }

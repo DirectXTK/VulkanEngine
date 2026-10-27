@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "C:/Repos/VulkanEngine/Include/vulkan/glm"
+    "cmake.sourceDirectory": "C:/Repos/VulkanEngine/Include/vulkan/glm",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/compile_commands.json",
 }

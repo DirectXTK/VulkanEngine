@@ -67,7 +67,6 @@
 #ifdef DISTRIB
     #define WORKINGDIR
 #endif
-
 #ifdef max
 #undef max
 #endif
