@@ -44,6 +44,7 @@ project "Renderer"
     "SPIRV-Toolsd",
     "SPIRV-Tools-optd",
     "SPIRV-Tools-linkd",
+    "kernel32", "user32", "gdi32", "shell32", "advapi32", "ole32",
     }
     filter{"configurations:Release"}
                 links{
@@ -60,33 +61,46 @@ project "Renderer"
     "SPIRV-Tools-opt",
     "SPIRV-Tools-link",
     }  
+    local function ThirdPartyBuild(cfg, runtime)
+    local ft, glfw = "../vendor/freetype", "../vendor/glfw"
+    local common = ' -G "Visual Studio 17 2022" -A x64' ..
+                   ' -DCMAKE_MSVC_RUNTIME_LIBRARY=' .. runtime
+    -- freetype appends "d" to the lib name in Debug
+    local ftLib = (cfg == "Debug") and "freetyped.lib" or "freetype.lib"
 
+    return {
+        'cmake -E make_directory "' .. LibLocation .. '"',
+
+        'cmake -S ' .. ft .. ' -B ' .. ft .. '/build/' .. cfg .. common,
+        'cmake --build ' .. ft .. '/build/' .. cfg .. ' --config ' .. cfg,
+        'cmake -E copy "' .. ft .. '/build/' .. cfg .. '/' .. cfg .. '/' .. ftLib .. '" "' .. LibLocation .. '"',
+
+        'cmake -S ' .. glfw .. ' -B ' .. glfw .. '/build/' .. cfg .. common,
+        'cmake --build ' .. glfw .. '/build/' .. cfg .. ' --config ' .. cfg,
+        'cmake -E copy "' .. glfw .. '/build/' .. cfg .. '/src/' .. cfg .. '/glfw3.lib" "' .. LibLocation .. '"',
+    }
+end
  
     postbuildcommands {
     "{MKDIR} %[" .. LibLocation .. "]",
     "{COPYFILE} %[%{!cfg.buildtarget.abspath}] %[" .. LibLocation .. "]"
     }
-    filter{"system:windows"}
-     prebuildcommands {
-      "cd ../vendor/freetype",
-      "{MKDIR} build/%[%{!cfg.buildcfg}]",
-      'cmake -S . -B build/%[%{!cfg.buildcfg}] -G "Unix Makefiles" -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>DLL',
-      'cmake --build build/%[%{!cfg.buildcfg}]',
-      '{COPYFILE} build/%[%{!cfg.buildcfg}]/freetype*.lib %[' .. LibLocation ..']',
-      "cd ../glfw",
-      "{MKDIR} build/%[%{!cfg.buildcfg}]",
-      'cmake -S . -B build/%[%{!cfg.buildcfg}] -G "Unix Makefiles" -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>DLL',
-      'cmake --build build/%[%{!cfg.buildcfg}]',
-      '{COPYFILE} build/%[%{!cfg.buildcfg}]/src/glfw3*.lib %[' .. LibLocation ..']',
-     }
+    filter{"system:windows","configurations:Debug"}
+        prebuildcommands {
+            ThirdPartyBuild("Debug","MultiThreadedDebugDLL")
+        }
+    filter{"system:windows","configurations:Release"}
+        prebuildcommands {
+            ThirdPartyBuild("Release","MultiThreadedDLL")
+        }
 
     filter{"system:linux"}
      prebuildcommands {
       "cd ../vendor/freetype",
-      "{MKDIR} build/%[%{!cfg.buildcfg}]",
+      "mkdir -p build/%[%{!cfg.buildcfg}]",
       'cmake -S . -B build/%[%{!cfg.buildcfg}] -G "Unix Makefiles"',
       'cmake --build build/%[%{!cfg.buildcfg}]',
-      '{COPYFILE} build/%[%{!cfg.buildcfg}]/freetype**.so %[' .. LibLocation ..']'
+      'cp build/%[%{!cfg.buildcfg}]/freetype**.so %[' .. LibLocation ..']'
      }
   
   

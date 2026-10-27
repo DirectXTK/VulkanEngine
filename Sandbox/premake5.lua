@@ -42,9 +42,14 @@ project "Sandbox"
       "Renderer",
       "Application",
 
-      "glslangd","SPIRVd"  ,"OSDependentd", "SPIRV-Tools-optd",
+      "SPIRVd","glslangd" , "MachineIndependentd" ,  "GenericCodeGend",
+        "OSDependentd",
+        "OGLCompilerd",         
+
+        "SPIRV-Tools-optd",
         "SPIRV-Toolsd",
         "SPIRV-Tools-linkd",
+        "kernel32", "user32", "gdi32", "shell32", "advapi32", "ole32",
        }
     filter{"configurations:Release"}
          links{
