@@ -19,7 +19,7 @@ void AssetHandle::FreePermaHandle(){
 		case AssetType::TEXTUREATLAS: {delete (Texture*)Data;break;}	
 		case AssetType::ANIMATION: {delete (Animator*)Data;break;}	
 		case AssetType::SHADER: {delete (Shader*)Data;break;}	
-		case AssetType::DLL: {delete (DLLLoading*)Data;break;}	
+		case AssetType::DLL: {delete (Core::DLL*)Data;break;}	
 	
 		default : {Core::Log("FreePermaHandle type ",(uint32_t)Type," not implemented.");}
 		}
@@ -144,9 +144,9 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 	
 }
 void AssetManager::LoadDLL(const std::string& filePath,const std::string& fileName){
-	DLLLoading* loading = new DLLLoading();
+	Core::DLL* loading = new Core::DLL();
 	loading->Init(filePath);
-	LoadAssetPerma<DLLLoading>(loading,AssetType::DLL,fileName);
+	LoadAssetPerma<Core::DLL>(loading,AssetType::DLL,fileName);
 
 }
 void AssetManager::LoadShader(const std::string& filePath,const std::string& fileName){

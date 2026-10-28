@@ -1,5 +1,53 @@
 #include "DLLLoading.h"
-void DLLLoading::Init(std::string DLLPath)
+namespace Core{
+
+
+void DLLLazy::InitFunction(){
+	if(m_Invalid)
+		return;
+	m_References++;
+}
+void DLLLazy::ReleaseFunction(){
+	Core::Log(ErrorType::Error,"RefCount",m_References.load());
+	m_References--;
+	if(m_References ==0){
+		m_Invalid = true;
+		ShutDown();
+		return;
+	}
+
+
+}
+void DLLLazy::ShutDown(){
+	#ifdef LINUX
+
+	#elif WINDOWS
+
+	#endif
+	if(m_DLL)
+		dlclose(m_DLL);
+	Core::Log(ErrorType::Error,"DELETED");
+}
+void DLLLazy::Init(std::string DLLPath){
+	size_t Count = DLLPath.size();
+	wchar_t* WideChar = new wchar_t[DLLPath.size()+1];
+
+	int flag{};
+	#ifdef DEBUG
+		flag = RTLD_NOW;
+	#else
+		flag = RTLD_LAZY;
+	#endif
+	m_DLL =dlopen(DLLPath.c_str(),RTLD_LAZY);
+
+	if (!m_DLL) {
+		Core::Log(ErrorType::Error, "Failed to load dll.");
+	}
+}
+
+
+
+void DLL::Init(std::string DLLPath)
 {
 	size_t Count = DLLPath.size();
 	wchar_t* WideChar = new wchar_t[DLLPath.size()+1];
@@ -17,8 +65,9 @@ void DLLLoading::Init(std::string DLLPath)
 	}
 }
 
-DLLLoading::~DLLLoading()
+DLL::~DLL()
 {
 	dlclose(m_DLL);
 }
 
+}

@@ -1,12 +1,24 @@
 #include "DLLLoadingLayer.h"
-#include "DLLLoading.h"
 DLLLoadingLayer::DLLLoadingLayer() : Layer("DLLLoadingLayer")
 {
 
 }
 void DLLLoadingLayer::OnCreate() {
+	Core::DLLLazy* loader = new Core::DLLLazy();
+	loader->Init("/users/jimy/Repos/DLLProgram/DLLProject/bin/Debug/libDLLProject.so");
+	auto func = loader->LoadFunction<void(*)(void)>("SimpleLafa");
+	func();
 
+	m_DllAdder= loader->LoadFunction<int(*)(int,int)>("Added");
+	int a =m_DllAdder(15,15);
+m_DllAdder.~DLLFunc();
+	Core::Log("Adder result",a);
+	a =m_DllAdder(15,30);
+	Core::Log("Adder result",a);
 
+	/*
+
+	
 	Application::GetAssetManager()->LoadAllAssets("Resources/DLL/",AssetType::DLL);
 
 	auto asset = Application::GetAsset<DLLLoading>("libDLLProject");
@@ -22,6 +34,7 @@ void DLLLoadingLayer::OnCreate() {
 
 	Application::GetAssetManager()->UnloadAsset((uint64_t)14021025719309637068);
 	Application::GetAssetManager()->UnloadAsset((uint64_t)966090126753073597);
+	*/
 }	
 void DLLLoadingLayer::OnRender(double deltime){
 
@@ -30,7 +43,6 @@ void DLLLoadingLayer::OnRender(double deltime){
 }
 void DLLLoadingLayer::OnUpdate(double deltatime)
 {
-
 
 }
 

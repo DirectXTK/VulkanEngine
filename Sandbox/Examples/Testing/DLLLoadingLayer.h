@@ -1,5 +1,6 @@
 #pragma once
 #include "Application.h"
+#include "DLLLoading.h"
 class DLLLoadingLayer:public Layer
 {
 public:
@@ -11,5 +12,6 @@ public:
 	void OnRender(double deltime)override;
 
 private:
+    Core::DLLFunc<int(*)(int,int)> m_DllAdder;
 };
 
