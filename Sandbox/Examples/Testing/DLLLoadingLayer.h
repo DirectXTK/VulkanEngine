@@ -12,6 +12,8 @@ public:
 	void OnRender(double deltime)override;
 
 private:
-    Core::DLLFunc<int(*)(int,int)> m_DllAdder;
+    Core::DLLLazy m_Loader{};
+    Core::DLLFunc<int(*)(int,int)> m_DllAdder{};
 };
 
+    

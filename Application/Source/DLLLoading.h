@@ -15,7 +15,16 @@ namespace Core{
 class DLLLazy;
 
 template<typename T>
+struct function_traits;
+
+template<typename R,typename...LOTS>
+struct function_traits<R(*)(LOTS...)>{
+	using return_type = R; 
+};
+template<typename T>
 class DLLFunc{
+	
+	using returnType = function_traits<T>::return_type;
 	public:
 		DLLFunc(){};
 		#ifdef DEBUG
@@ -27,11 +36,19 @@ class DLLFunc{
 		DLLFunc& operator=(const DLLFunc& other);
 		template<typename...ARGS>
 		decltype(auto) operator()(ARGS...args){
-				if(m_Func)
-			return m_Func(args...);
+				if constexpr(std::is_void_v<returnType>){
+					if(m_Func)
+						return m_Func(args...);
+					return;
+				}else{
+					if(m_Func)
+						return m_Func(args...);
+					return returnType{};
+				}
 		}
 		~DLLFunc();
 	private:
+		
 		#ifdef DEBUG
 		std::string m_FuncName{"UNSPECIFIED"};
 		#endif
@@ -45,7 +62,9 @@ public:
 	void Init(std::string DLLPath);
 	template<typename T>
 	DLLFunc<T> LoadFunction(std::string FunctionName);
-	~DLLLazy(){}
+	template<typename T>
+	T GetVariable(const std::string& variableName);
+	~DLLLazy();
 protected:
 	template<typename T>
 	friend class DLLFunc;
@@ -60,7 +79,6 @@ private:
 template<typename T>
 DLLFunc<T>::DLLFunc(const DLLFunc& other){
 	this = other;
-	Core::Log("Copied const");
 	if(m_Loader)
 		m_Loader->InitFunction();
 }
@@ -77,6 +95,11 @@ DLLFunc<T>& DLLFunc<T>::operator=(const DLLFunc& other){
 template<typename T>
 inline DLLFunc<T> DLLLazy::LoadFunction(std::string FunctionName)
 {
+	if(m_Invalid)
+	{
+		Core::Log(ErrorType::Error,"The lazy dll loader is deleted");
+		return DLLFunc<T>{};
+	}
 	#ifdef LINUX
 	T proc = (T)dlsym(m_DLL, FunctionName.c_str());
 	if (!proc)
@@ -95,6 +118,22 @@ inline DLLFunc<T> DLLLazy::LoadFunction(std::string FunctionName)
 
 	#endif
 }
+template<typename T>
+T DLLLazy::GetVariable(const std::string& variableName){
+	#ifdef LINUX
+
+	#else
+
+	#endif
+	T* variable = (T*)dlsym(m_DLL,variableName.c_str());
+	if(!variable){
+		Core::Log(ErrorType::Error,"Failed to load variable from a shared lib ",variableName);
+		return T{};
+	}
+	return *variable;
+}
+
+
 template<typename T>
 inline DLLFunc<T>::~DLLFunc(){
 	Core::Log(ErrorType::Info,"Destroyed function",m_FuncName);

@@ -4,18 +4,18 @@ DLLLoadingLayer::DLLLoadingLayer() : Layer("DLLLoadingLayer")
 
 }
 void DLLLoadingLayer::OnCreate() {
-	Core::DLLLazy* loader = new Core::DLLLazy();
-	loader->Init("/users/jimy/Repos/DLLProgram/DLLProject/bin/Debug/libDLLProject.so");
-	auto func = loader->LoadFunction<void(*)(void)>("SimpleLafa");
+	m_Loader.Init("/users/jimy/Repos/DLLProgram/DLLProject/bin/Debug/libDLLProject.so");
+	auto func = m_Loader.LoadFunction<void(*)(void)>("SimpleLafa");
 	func();
 
-	m_DllAdder= loader->LoadFunction<int(*)(int,int)>("Added");
+	m_DllAdder= m_Loader.LoadFunction<int(*)(int,int)>("Added");
 	int a =m_DllAdder(15,15);
-m_DllAdder.~DLLFunc();
 	Core::Log("Adder result",a);
 	a =m_DllAdder(15,30);
 	Core::Log("Adder result",a);
 
+	std::string MyName = m_Loader.GetVariable<std::string>("g_Name");
+	Core::Log("MYNAME IS ",MyName);
 	/*
 
 	

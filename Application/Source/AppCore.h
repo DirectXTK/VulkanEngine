@@ -41,6 +41,7 @@
 #include <cstring>
 #include <atomic>
 #include <mutex>
+#include <type_traits>
 
 #include "RandomGenerator.h"
 #include "AppTime.h"

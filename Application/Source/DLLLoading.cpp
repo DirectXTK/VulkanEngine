@@ -8,7 +8,6 @@ void DLLLazy::InitFunction(){
 	m_References++;
 }
 void DLLLazy::ReleaseFunction(){
-	Core::Log(ErrorType::Error,"RefCount",m_References.load());
 	m_References--;
 	if(m_References ==0){
 		m_Invalid = true;
@@ -26,7 +25,7 @@ void DLLLazy::ShutDown(){
 	#endif
 	if(m_DLL)
 		dlclose(m_DLL);
-	Core::Log(ErrorType::Error,"DELETED");
+	m_DLL = nullptr;
 }
 void DLLLazy::Init(std::string DLLPath){
 	size_t Count = DLLPath.size();
@@ -43,6 +42,14 @@ void DLLLazy::Init(std::string DLLPath){
 	if (!m_DLL) {
 		Core::Log(ErrorType::Error, "Failed to load dll.");
 	}
+}
+DLLLazy::~DLLLazy(){
+	#ifdef DEBUG
+	if(m_References !=0)
+		Core::Log(ErrorType::Error,"DLLLazy was destroyed using destructor it means not all functions got released.");
+	#endif
+	if(m_DLL)
+		dlclose(m_DLL);
 }
 
 
