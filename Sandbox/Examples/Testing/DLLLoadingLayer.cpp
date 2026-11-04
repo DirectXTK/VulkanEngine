@@ -16,8 +16,18 @@ void DLLLoadingLayer::OnCreate() {
 
 	std::string MyName = m_Loader.GetVariable<std::string>("g_Name");
 	Core::Log("MYNAME IS ",MyName);
-	/*
+	std::cout << "FunctionGetName"<<func.GetFunctionName();
 
+	Core::DLL PermDLL{};
+
+	PermDLL.Init(Core::GetCurrentPlaformPathChange("/users/jimy/Repos/DLLProgram/DLLProject/bin/Debug/libDLLProject.so").data());
+	std::string str = PermDLL.GetVariable<std::string>("g_Name");
+	Core::Log("Name under DLL loading not lazy",str);
+	
+
+
+	/*
+	
 	
 	Application::GetAssetManager()->LoadAllAssets("Resources/DLL/",AssetType::DLL);
 

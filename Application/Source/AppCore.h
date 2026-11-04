@@ -42,6 +42,9 @@
 #include <atomic>
 #include <mutex>
 #include <type_traits>
+#include <string_view>
+#include <utility>
+#include <array>
 
 #include "RandomGenerator.h"
 #include "AppTime.h"
@@ -83,15 +86,17 @@ enum class Format{NULLFORMAT,INT16,INT32,INT64,UINT16,UINT32,UINT64,FLOAT,DOUBLE
 
 struct GUUID {
     uint64_t ID{};
+
+     constexpr GUUID(uint64_t v)
+        : ID(v) {}
+
     GUUID() {
         ID = Core::RandomUInt64(1, std::numeric_limits<uint64_t>().max());
     }
     GUUID(int a) {
         ID = a;
     }
-    GUUID(uint64_t a) {
-        ID = a;
-    }
+   
     GUUID(int64_t a) {
         ID = a;
     }
@@ -150,13 +155,65 @@ namespace Core {
         private:
         uint64_t m_Start{};
     };
+    constexpr std::string_view GetCurrentPlatformExtension(std::string_view extension){
+        #ifdef LINUX
+            return extension;
+        #else
+        constexpr std::array<std::pair<std::string_view,std::string_view>,1> map{{
+            {"so","lib"},
+
+        }};
+        for(uint32_t i=0 ;i < map.size();i++){
+            if(map[i].first == extension)
+                return map[i].second;
+        }
+
+        #endif
+        return extension; 
+    }
+    //returns path with corrected extensions according to which plaftorm is defined
+    template <std::size_t N>
+     constexpr auto GetCurrentPlaformPathChange( const char (&path)[N]){
+            std::array<char, N + 30> result{};
+            uint32_t dotLocation{};
+
+            for (std::size_t i = 0; i < N - 1; ++i) {
+                if (path[i] == '.')
+                    dotLocation = i;
+            }
+        
+            std::string_view suffix = GetCurrentPlatformExtension(std::string_view(path+dotLocation+1,N-dotLocation-2));
+            for(uint32_t i=0 ;i < N-(N-dotLocation-2)-1;i++){
+                result[i] = path[i];
+            }
+            for(uint32_t i=0 ;i < suffix.size();i++){
+                    result[N-(N-dotLocation-2)+i-1] = suffix[i];
+            }
+        
+            return result;
+    }
+
 
     #ifdef DEBUG
     const std::string& GetStringPathFromGUUID(GUUID id);
+     GUUID GetStringHash(std::string_view Path);
+    #else
+        constexpr GUUID GetStringHash(std::string_view Path) {
+        uint64_t hash = 14695981039346656037ull;
+
+        for (char c : Path)
+        {
+          hash ^= static_cast<unsigned char>(c);
+         hash *= 1099511628211ull;
+        }
+
+      
+        return  GUUID(hash);
+        }
     #endif
 
     const std::string GenerateFontFullName(uint32_t charSize,const std::string& name);
-    GUUID GetStringHash(const std::string& Path);
+
     std::string GetFileExtension(const std::string& File);
 
     enum class Operations{NONE,ADD,SUBTRACT,MULTI,DIVIDE};

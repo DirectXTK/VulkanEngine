@@ -21,6 +21,7 @@ void DLLLazy::ShutDown(){
 	#ifdef LINUX
 
 	#elif WINDOWS
+		//WINDOWS SPECIFIC
 
 	#endif
 	if(m_DLL)
@@ -40,7 +41,7 @@ void DLLLazy::Init(std::string DLLPath){
 	m_DLL =dlopen(DLLPath.c_str(),RTLD_LAZY);
 
 	if (!m_DLL) {
-		Core::Log(ErrorType::Error, "Failed to load dll.");
+		Core::Log(ErrorType::Error, "Failed to load dll.{",DLLPath,"}");
 	}
 }
 DLLLazy::~DLLLazy(){
@@ -68,12 +69,15 @@ void DLL::Init(std::string DLLPath)
 	m_DLL =dlopen(DLLPath.c_str(),RTLD_LAZY);
 
 	if (!m_DLL) {
-		Core::Log(ErrorType::Error, "Failed to load dll.");
+		Core::Log(ErrorType::Error, "Failed to load dll.{",DLLPath,"}");
 	}
 }
 
 DLL::~DLL()
 {
+	if(!m_DLL)
+		return;
+
 	dlclose(m_DLL);
 }
 

@@ -46,6 +46,11 @@ class DLLFunc{
 					return returnType{};
 				}
 		}
+
+		#ifdef DEBUG
+			//DEBUG ONLYCOMMAND
+			const std::string& GetFunctionName(){return m_FuncName;}
+		#endif
 		~DLLFunc();
 	private:
 		
@@ -113,7 +118,7 @@ inline DLLFunc<T> DLLLazy::LoadFunction(std::string FunctionName)
 
 	#elif WINDOWS
 
-
+		//WINDOWS SPECIFIC
 
 
 	#endif
@@ -123,7 +128,7 @@ T DLLLazy::GetVariable(const std::string& variableName){
 	#ifdef LINUX
 
 	#else
-
+		//WINDOWS SPECIFIC
 	#endif
 	T* variable = (T*)dlsym(m_DLL,variableName.c_str());
 	if(!variable){
@@ -155,11 +160,30 @@ public:
 	void Init(std::string DLLPath);
 	template<typename T>
 	T LoadFunction(std::string FunctionName);
+	template<typename T>
+	T GetVariable(const std::string& variableName);
 	~DLL();
 private:
 	void*  m_DLL{};
 };
 
+
+template<typename T>
+T DLL::GetVariable(const std::string& variableName){
+	if(!m_DLL)
+		return T();
+	#ifdef LINUX
+
+	#else
+		//WINDOWS SPECIFIC
+	#endif
+	T* variable = (T*)dlsym(m_DLL,variableName.c_str());
+	if(!variable){
+		Core::Log(ErrorType::Error,"Failed to load variable from a shared lib ",variableName);
+		return T();
+	}
+	return *variable;
+}
 template<typename T>
 inline T DLL::LoadFunction(std::string FunctionName)
 {
@@ -170,7 +194,7 @@ inline T DLL::LoadFunction(std::string FunctionName)
 
 	return proc;
 	#elif WINDOWS
-
+	//WINDOWS SPECIFIC
 
 
 

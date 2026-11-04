@@ -5,7 +5,20 @@ namespace Core {
         const std::string& GetStringPathFromGUUID(GUUID id){
             return GlobalStringHashes[id];
         }
+     GUUID GetStringHash(std::string_view Path)
+    {
+        uint64_t hash = 14695981039346656037ull;
 
+        for (char c : Path)
+        {
+          hash ^= static_cast<unsigned char>(c);
+         hash *= 1099511628211ull;
+        }
+
+            GlobalStringHashes[GUUID(hash)] = Path;
+      
+        return  GUUID(hash);
+     }
     #endif
 
 
@@ -29,15 +42,7 @@ namespace Core {
 			Core::Log("This function took:", end/1000.f," ms");
 			return end;
 		}
-	
-	GUUID GetStringHash(const std::string& Path) {
-        #ifdef DEBUG
-            GlobalStringHashes[GUUID((uint64_t)std::hash<std::string>{}(Path))] = Path;
-        #endif
-        
-        return (uint64_t)std::hash<std::string>{}(Path);
-    
-    }
+  
     const std::string GenerateFontFullName(uint32_t charSize,const std::string& name){
         return "FONT"+name+std::to_string(charSize);
     }
