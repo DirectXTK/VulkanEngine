@@ -26,11 +26,18 @@ void AssetHandle::FreePermaHandle(){
 	}
 
 }
+
+
+
 void AssetManager::Init(Application* app)
 {
 	m_APP = app;
 }
-
+std::string AssetManager::GetFileNameString(const std::string& folderPath,const std::string& currentFile,const std::string& extension){
+	if(currentFile[0+folderPath.size()] == '/')
+		return  currentFile.substr(folderPath.size()+1,currentFile.size()-folderPath.size()-extension.size()-1-1);
+	return currentFile.substr(folderPath.size(),currentFile.size()-folderPath.size()-extension.size()-1);
+}
 void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 {
 	if(!std::filesystem::exists(FolderPath)){
@@ -43,7 +50,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 			std::string currentFile = dir_entry.path().string();
 			std::string fileExtension = Core::GetFileExtension(currentFile);	
-			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+			std::string fileName = GetFileNameString(FolderPath,currentFile,fileExtension);
 
 			if(fileExtension == "png"){
 				LoadTexture(currentFile,fileName);		}
@@ -56,7 +63,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 
 			std::string currentFile = dir_entry.path().string();
 			std::string fileExtension = Core::GetFileExtension(currentFile);	
-			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+			std::string fileName = GetFileNameString(FolderPath,currentFile,fileExtension);
 
 			 if(fileExtension == "json")
 				LoadTextureAtlas(currentFile,fileName);
@@ -72,7 +79,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 				std::string currentFile = dir_entry.path().string();
 
 				std::string fileExtension = Core::GetFileExtension(currentFile);
-				std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+				std::string fileName = GetFileNameString(FolderPath,currentFile,fileExtension);
 				
 				if (fileExtension != "json")
 					continue;
@@ -85,7 +92,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 			std::string currentFile = dir_entry.path().string();
 			std::string fileExtension = Core::GetFileExtension(currentFile);	
-			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+			std::string fileName = GetFileNameString(FolderPath,currentFile,fileExtension);
 
 			if(fileExtension == "png"){
 				LoadTexture(currentFile,fileName);
@@ -95,6 +102,9 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 			else if(fileExtension == "ttf"){
 				LoadFont(currentFile,fileName);
 			}
+			else if(fileExtension == "dll"||fileExtension == "so"){
+				LoadDLL(currentFile,fileName);
+			}
 
 		}
 		break;
@@ -103,7 +113,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 			std::string currentFile = dir_entry.path().string();
 			std::string fileExtension = Core::GetFileExtension(currentFile);	
-			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+			std::string fileName = GetFileNameString(FolderPath,currentFile,fileExtension);
 
 			if(Core::IsShaderExtension(fileExtension)){
 				LoadShader(currentFile,fileName);
@@ -116,7 +126,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		for (auto const& dir_entry : std::filesystem::recursive_directory_iterator{ FolderPath }) {
 			std::string currentFile = dir_entry.path().string();
 			std::string fileExtension = Core::GetFileExtension(currentFile);	
-			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+			std::string fileName = GetFileNameString(FolderPath,currentFile,fileExtension);
 
 			if(fileExtension == "ttf"){
 				LoadFont(currentFile,fileName);
@@ -129,7 +139,7 @@ void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 		for(auto const& dir : std::filesystem::recursive_directory_iterator(FolderPath)){
 			std::string currentFile = dir.path().string();
 			std::string fileExtension = Core::GetFileExtension(currentFile);
-			std::string fileName = currentFile.substr(FolderPath.size(),currentFile.size()-FolderPath.size()-fileExtension.size()-1);
+			std::string fileName = GetFileNameString(FolderPath,currentFile,fileExtension);
 			if(fileExtension == "dll"|| fileExtension == "so")
 				LoadDLL(currentFile,fileName);
 		}
@@ -166,6 +176,9 @@ void AssetManager::DebugStatistics(bool GUI){
 	//Order it first
 	//the 0 is none asset type
 	uint32_t CurrentType{1};
+
+
+
 	while(idsSorted.size() != m_Resources.size()){
 	for(auto it = m_Resources.begin();it != m_Resources.end();it++){
 		if(idsSorted.size() == m_Resources.size())	
@@ -175,6 +188,11 @@ void AssetManager::DebugStatistics(bool GUI){
 	}
 	CurrentType++;
 	}
+
+
+
+
+
 	for(uint32_t i=0 ;i < idsSorted.size();i++){
 		AssetHandle handle = m_Resources[idsSorted[i]];
 		std::string debugStuff{};

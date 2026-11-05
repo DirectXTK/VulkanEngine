@@ -82,6 +82,8 @@ public:
 			if(!m_Data)Core::Log(ErrorType::Error,"m_Data was nullptr Asset::GetData()"); 
 		#endif
 		return (T*)m_Data->Data;}
+	//Unloads asset be careful if asset was loaded manually and it's shared asset it can cause bugs.
+	void UnloadAsset();
     AssetType GetType(){return m_Data->Type;}
 	uint32_t GetRefCount(){return m_Data->RefCount;}
 	GUUID GetID(){return m_Data->ID;}
@@ -102,8 +104,8 @@ private:
     void CreateAsset(GUUID id,void* resource,const AssetType& type,AssetManager* manager){
 
     
-         m_Data->Data = resource;
-		   m_Data->Manager = manager;
+        m_Data->Data = resource;
+		m_Data->Manager = manager;
         m_Data->Type= type;
 		m_Data->ID = id;
         //*m_RefCount+=1;
@@ -134,6 +136,7 @@ class AssetManager
 public:
 	void Init(Application* app);
 
+	//Loads assets permanently.
 	void LoadAllAssets(std::string FolderPath, AssetType TypesToLoad);
 	template<typename T>
 	Asset<T> LoadAsset(void* Resource, AssetType type,std::string Name){
@@ -183,18 +186,26 @@ public:
 	uint64_t GetAssetCount() { return m_Resources.size();}
 
 	void UnloadAsset(GUUID handle){
-
 		auto Index = m_Resources.find(handle);
 		if(Index != m_Resources.end()){
 			m_ResourceCount[Index->second.Type]--;
 			Index->second.FreePermaHandle();
 			m_Resources.erase(Index);
-
+			return;	
 		}
+		#ifdef DEBUG
+			Core::Log(ErrorType::Warning,"AssetManager::UnloadAsset(GUUID) tried to unload already unloaded asset ID{",handle.ID,"}");
+		#endif
 	}
 	bool HasAsset(GUUID Handle) {
 		if (m_Resources.find(Handle) == m_Resources.end()) {
 			
+			return false;
+		}
+		return true;
+	}
+	 bool HasAsset(const std::string& str) {
+		if (m_Resources.find(Core::GetStringHash(str)) == m_Resources.end()) {
 			return false;
 		}
 		return true;
@@ -204,7 +215,9 @@ public:
 	Asset<T> GetAsset(GUUID Handle) {
 		auto Index = m_Resources.find(Handle);
 		if (Index== m_Resources.end()) {
-			Core::Log(ErrorType::Warning, "Resources wasn't found (ID", Handle.ID,")");
+			#ifdef DEBUG
+				Core::Log(ErrorType::Error, "Resources wasn't found (ID", Handle.ID,") Name:",Core::GetStringPathFromGUUID(Handle));
+			#endif
 			
 			return Asset<T>();
 		}
@@ -215,8 +228,9 @@ public:
 		GUUID id = Core::GetStringHash(strHandle);
 		auto Index = m_Resources.find(id);
 		if (Index == m_Resources.end()) {
-			Core::Log(ErrorType::Warning, "Resources wasn't found (ID", id.ID,")");
-			
+			#ifdef DEBUG
+				Core::Log(ErrorType::Error, "Resources wasn't found (ID", id.ID,") Name:",strHandle);
+			#endif
 			return Asset<T>();
 		}
 		return Asset<T>(&Index->second);
@@ -250,6 +264,8 @@ private:
 	void LoadShader(const std::string& filePath,const std::string& fileName);
 	void LoadDLL(const std::string& filePath,const std::string& fileName);
 
+	std::string GetFileNameString(const std::string& folderPath,const std::string& currentFile,const std::string& extension);
+
 
 	std::unordered_map<GUUID, AssetHandle> m_Resources{};
 	std::vector<GUUID> m_PermaAssets{};
@@ -261,4 +277,10 @@ private:
 
 	Application* m_APP{};
 };
+
+template<typename T>
+void Asset<T>::UnloadAsset(){
+	m_Data->FreePermaHandle();
+}
+
 

@@ -6,6 +6,7 @@
 #include "../Examples/Testing/ExampleMenu.h"
 #include "../Examples/Testing/MultiThreadingLayer.h"
 #include "../Examples/Testing/DLLLoadingLayer.h"
+#include "../Examples/Testing/AssetTestingLayer.h"
 int main() {
 	
 	ApplicationSpecs specs{};
@@ -13,12 +14,12 @@ int main() {
 	specs.WindowHeight = 800;
 	specs.WindowWidth = 800;
 	specs.ClearColor = { 0.5f,0.5f,0.5f,1.0f };
-	specs.RendererDebugging = true;
+	specs.RendererDebugging = false;
 	specs.IsWindowResizable = false;
 	specs.ApplicationVersion = 0.001f;
 	specs.AppDebugging = false;
 	Application::InitApplication(specs);
-	Application::AddLayer<DLLLoadingLayer>();
+	Application::AddLayer<AssetTestingLayer>();
 	
 	Application::Run();
 	

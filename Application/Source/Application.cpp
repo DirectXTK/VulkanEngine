@@ -71,6 +71,11 @@ bool Application::HasAsset(GUUID id){
     Application* app = GetApplication();
     return app->GetAssetManager()->HasAsset(id);
 }
+bool Application::HasAsset(const std::string& str){
+    Application* app = GetApplication();
+    return app->GetAssetManager()->HasAsset(str);
+}
+
 
 bool Application::IsMouseClicked(const MouseCodes& codes,bool hold){
     Application* app = GetApplication();
