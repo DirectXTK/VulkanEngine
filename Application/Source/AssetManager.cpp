@@ -34,9 +34,25 @@ void AssetManager::Init(Application* app)
 	m_APP = app;
 }
 std::string AssetManager::GetFileNameString(const std::string& folderPath,const std::string& currentFile,const std::string& extension){
-	if(currentFile[0+folderPath.size()] == '/')
+	if(currentFile[folderPath.size()] == '/')
 		return  currentFile.substr(folderPath.size()+1,currentFile.size()-folderPath.size()-extension.size()-1-1);
 	return currentFile.substr(folderPath.size(),currentFile.size()-folderPath.size()-extension.size()-1);
+}
+void AssetManager::LoadAssetFromPath(const std::string& path,const std::string& assetName){
+	std::string extension = Core::GetFileExtension(path);
+	if(extension == "png")
+		LoadTexture(path,assetName);
+	else if(extension == "lib")
+		LoadDLL(path,assetName);
+	else if(extension == "so")
+		LoadDLL(path,assetName);
+	else if(extension == "json")
+		LoadTextureAtlas(path,assetName);
+	else if(extension == "ttf")
+		LoadFont(path,assetName);
+	else{
+		Core::Log(ErrorType::Warning,"AssetManager::LoadAssetFromPath() extension is invalid{",extension,"}");
+	}
 }
 void AssetManager::LoadAllAssets(std::string FolderPath, AssetType TypesToLoad)
 {

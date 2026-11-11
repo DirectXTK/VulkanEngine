@@ -33,7 +33,7 @@ void ChechCommands(Application* app,std::string Command){
     }else if(Command == "exit"){
         app->QueueShutDown();
     }else{
-        Core::Log("Invalid command");
+        Core::Log("Invalid command type help for command list");
     }
 }
 void Application::CopyToClipBoard(const std::string_view& str){
@@ -346,6 +346,17 @@ void Application::UpdateContent(uint32_t index){
     buffer->LoadFromBufferToVar(Application::GetApplication()->m_PickBuffer,Application::GetApplication()->m_PickBufferSize);
 
 }
+void Application::SetGlobalTimer(GUUID id,float time,void(*CallbackFn)(void*),void* arg ){
+    Application* app = Application::GetApplication();
+    app->m_GlobalTimers[id] = {time,CallbackFn,arg};
+}
+void Application::EndGlobalTimer(GUUID id){
+    Application* app = Application::GetApplication();
+    auto index = app->m_GlobalTimers.find(id);
+    if(index != app->m_GlobalTimers.end()){
+        app->m_GlobalTimers.erase(index);
+    }
+}
 void Application::UpdateRendererStatistics(){
         RendererStatistics& statistics = Application::GetApplication()->m_RendererStatistics;    
         const float updatePeriod{SEC(0.15f)};
@@ -373,7 +384,28 @@ void Application::UpdateRendererStatistics(){
     app->m_Renderer->OnEvent(event);
     app->m_LayerController.OnEvent(event);
  }
+float Application::GetGlobalTimerTime(GUUID id){
+    Application* app = Application::GetApplication();
+    auto index = app->m_GlobalTimers.find(id);
+    if(index != app->m_GlobalTimers.end())
+        return index->second.TimerTime;
+    return -1;
+}
+void Application::UpdateGlobalTimers(){
+    Application* app = Application::GetApplication();
 
+    float deltaTime = (float)app->m_DeltaTime;
+    for(auto it = app->m_GlobalTimers.begin();it != app->m_GlobalTimers.end();){
+        it->second.TimerTime-=deltaTime;
+        if(it->second.TimerTime <= 0.0f){
+            if(it->second.CallbackFn)
+                it->second.CallbackFn(it->second.Arg);
+            it = app->m_GlobalTimers.erase(it);
+        }else{
+            it++;
+        }
+    }
+}
  void Application::Run(){
     std::atomic<bool> ThreadRunning(true);
     Application* app = GetApplication();
@@ -387,7 +419,7 @@ void Application::UpdateRendererStatistics(){
     float updatePerSec{100};
     double updateInterval{1000/updatePerSec};
 
-
+    app->m_LastFrameTime = Time::GetTimeMs();
     while(!glfwWindowShouldClose(app->m_Window->GetHandle())&& app->m_Running){
         //TEMP
         app->UpdateRendererStatistics();
@@ -399,7 +431,7 @@ void Application::UpdateRendererStatistics(){
         app->m_LastFrameTime = Time::GetTimeMs();
         double start = Time::GetTimeNs();
    
-
+        UpdateGlobalTimers();
         app->m_Renderer->SetApplicationThreadFrameTime(app->m_DeltaTime);
 
        // if(app->m_Specs.AppDebugging)

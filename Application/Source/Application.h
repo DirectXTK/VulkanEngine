@@ -101,6 +101,10 @@ public:
     static bool DeleteApplication();
 
     static void DrawRendererStatistics();
+    static void SetGlobalTimer(GUUID id,float TimeInMS,void(*CallbackFn)(void*) = nullptr,void* arg = nullptr);
+    //returns -1 if timer is not found
+    static float GetGlobalTimerTime(GUUID id);
+    static void EndGlobalTimer(GUUID id);
 
     static void SetRendererThreadFrameTime(const float& frameTime){Application::GetApplication()->m_RendererThreadFrameTime = frameTime;}
     static float GetRendererThreadFrameTime(){return Application::GetApplication()->m_RendererThreadFrameTime;}
@@ -116,6 +120,7 @@ private:
 
     void UpdateRendererStatistics();
     static void Shutdown();
+    static void UpdateGlobalTimers();
 
     //Debug
    static void LogSystemAndAppInformation();
@@ -140,6 +145,14 @@ private:
 
     ParticleSystem m_ParticleSystem{};
 
+    //Timer
+    struct GlobalTimerData{
+        float TimerTime{};
+        void(*CallbackFn)(void*){};
+        void* Arg{};
+    };
+    //the second is callback and can be nullptr.
+    std::unordered_map<GUUID,GlobalTimerData> m_GlobalTimers{};
     //selection
     Float2* m_PickBuffer{};
     uint64_t m_PickBufferSize{};

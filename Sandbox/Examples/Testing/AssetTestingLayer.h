@@ -6,9 +6,11 @@ public :
     void OnCreate()override;
 	void OnUpdate(double DeltaTime)override;
 	void OnDestroy()override;
+	void OnEvent(Event& event)override;
 	void OnGUI()override;
 	void OnRender(double deltime)override;
 
 private:
 
+	void OnMouseMoveEvent(MouseEvent& event);
 };

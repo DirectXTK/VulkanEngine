@@ -153,6 +153,23 @@ public:
          return Asset<T>(&m_Resources[ID]);
 	}
 	template<typename T>
+	Asset<T> LoadAsset(const std::string& assetPath,const std::string& customName = ""){
+		std::string Name{};
+		if(customName.empty()){
+			Name = Core::GetFileName(assetPath);
+		}else{
+			Name = customName;
+		}
+		GUUID ID = Core::GetStringHash(Name);
+	 	auto Index = m_Resources.find(ID);
+        if(Index != m_Resources.end()){
+            return Asset<T>(&Index->second);
+		}else{
+			LoadAssetFromPath(assetPath,Name);
+         	return Asset<T>(&m_Resources[ID]);			
+		}
+	}
+	template<typename T>
 	Asset<T> LoadAssetPerma(void* Resource, AssetType type,std::string Name){
 		GUUID ID = Core::GetStringHash(Name);
 	  auto Index = m_Resources.find(ID);
@@ -263,6 +280,9 @@ private:
 	void LoadTextureAtlas(const std::string& filePath,const std::string& fileName);
 	void LoadShader(const std::string& filePath,const std::string& fileName);
 	void LoadDLL(const std::string& filePath,const std::string& fileName);
+
+	//Loads asset from path and determines its type
+	void LoadAssetFromPath(const std::string& path,const std::string& assetName);
 
 	std::string GetFileNameString(const std::string& folderPath,const std::string& currentFile,const std::string& extension);
 
